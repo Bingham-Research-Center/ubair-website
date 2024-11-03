@@ -1,0 +1,63 @@
+.archive-item {
+    padding: 12px;
+    border-left: 4px solid transparent;
+    margin-bottom: 8px;
+    background-color: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+}
+
+.archive-item:hover {
+    background-color: #e9ecef;
+    border-left-color: #6c757d;
+}
+
+.archive-item.active {
+    background-color: #e9ecef;
+    border-left-color: #007bff;
+    font-weight: bold;
+}
+
+.outlook-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.outlook-meta {
+    margin-top: 10px;
+    color: #6c757d;
+    font-size: 0.9em;
+}
+
+#current-outlook {
+    flex: 1;
+    margin-right: 20px;
+    margin-bottom: 30px;
+}
+
+.archive-list {
+    max-height: 500px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 5px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.outlooks-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+#outlook-archive {
+    width: 200px;
+    flex-shrink: 0;
+}

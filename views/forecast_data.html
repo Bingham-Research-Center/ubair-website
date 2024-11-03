@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast Data - Uintah Basin Air Quality</title>
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/forecast.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+<div class="colored-bar"></div>
+
+<div class="sidebar_container">
+    <div class="sidebar">
+        <a href="/"><img src="/public/images/homeicon.png" alt="Home Page Button"></a>
+        <a href="/locations"><img src="/public/images/locationsicon.png" alt="Locations Button"></a>
+        <a href="/forecast_outlooks"><img src="/public/images/clockforecast.png" alt="Forecast Outlooks"></a>
+        <a href="http://ubair.usu.edu/Cams2/index.html"><img src="/public/images/webcamicon.png" alt="Webcams Button"></a>
+        <a href="https://www.usu.edu/binghamresearch/contact-us"><img src="/public/images/Contacticon.png" alt="Contact Us Button"></a>
+    </div>
+</div>
+
+<div class="content">
+    <h1>Forecast Data Visualization</h1>
+
+    <div class="controls">
+        <select id="location-select">
+            <option value="all">All Locations</option>
+            <option value="roosevelt">Roosevelt</option>
+            <option value="vernal">Vernal</option>
+            <option value="horsepool">Horsepool</option>
+        </select>
+
+        <select id="parameter-select">
+            <option value="wind">Wind Speed</option>
+            <option value="ozone">Ozone</option>
+            <option value="temperature">Temperature</option>
+        </select>
+
+        <button id="update-plot">Update Plot</button>
+    </div>
+
+    <div class="plot-container">
+        <div id="time-series" class="plot"></div>
+    </div>
+
+    <div class="data-summary">
+        <h2>Summary Statistics</h2>
+        <div id="stats-container"></div>
+    </div>
+</div>
+
+<script src="/public/js/forecast_data.js"></script>
+</body>
+</html>
