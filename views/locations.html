@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Locations - Uintah Basin Air Quality</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/public/css/main.css">
+  <link rel="stylesheet" href="/public/css/map.css">
+</head>
+<body>
+<div id="map"></div>
+
+<div class="top-bar"></div>
+
+<div class="logo">
+  <img src="/public/images/images-removebg-preview.png" alt="Logo">
+</div>
+
+<div class="overlay-container">
+  <h2>Study Area</h2>
+  <img src="/public/images/utah.png" id="image-overlay" alt="Study Area" height="250">
+  <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Measurement" height="350">
+</div>
+
+<div class="sidebar_container">
+  <div class="sidebar">
+    <a href="/"><img src="/public/images/homeicon.png" alt="Home Page Button"></a>
+    <a href="https://www.usu.edu/binghamresearch/directory/"><img src="/public/images/OURTEAM.png" alt="Our team button"></a>
+    <a href="http://ubair.usu.edu/Cams2/index.html"><img src="/public/images/webcamicon.png" alt="Webcams Button"></a>
+    <a href="/forecast_outlooks"><img src="/public/images/clockforecast.png" alt="forecast"></a>
+    <a href="https://www.usu.edu/binghamresearch/contact-us"><img src="/public/images/Contacticon.png" alt="Contact Us Button"></a>
+  </div>
+</div>
+
+<div class="bottom-right-box">
+  DISCLAIMER: Real-time data are preliminary and have yet to undergo
+  quality control. Some data are obtained in cooperation with other
+  agencies, including the Ute Indian Trove and the Utah Department of
+  Environmental Quality. ©2024, Utah State University.
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="/public/js/map.js"></script>
+</body>
+</html>
