@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const pageType = document.body.getAttribute("data-page-type");
     const outlookContainer = document.getElementById("outlook-summary") || document.querySelector(".outlook-content");
     const archiveContainer = document.querySelector(".archive-list");
-    const maxPreviewLines = 4;
+    const maxPreviewLines = 7;
 
     // Async function to render content with Markdown
     async function renderContent(data, preview = false) {
