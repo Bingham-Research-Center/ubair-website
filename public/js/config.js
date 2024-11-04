@@ -4,6 +4,20 @@ export const stations = {
     'Horsepool': { lat: 40.1433, lng: -109.4674 }
 };
 
+// These are the stations that can be plotted. Eventually, need to expand this stations lookup list
+// - Dinosaur National Monument
+// - Red Wash
+// - Rangely
+// - Seven Sisters
+// - Horsepool
+// - Ouray
+// - Vernal
+// - Dry Fork
+// - Whiterocks
+// - Roosevelt
+// - Myton
+// - Castle Peak
+
 export const thresholds = {
     'Ozone': { warning: 50, danger: 70 },
     'PM2.5': { warning: 35, danger: 55 },
