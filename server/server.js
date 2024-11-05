@@ -25,10 +25,6 @@ app.get('/forecast_data', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_data.html'));
 });
 
-app.get('/sidebar', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/sidebar.html'));
-});
-
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
@@ -47,6 +43,7 @@ async function checkDirectoryStructure() {
         '../public/data/outlooks',
         '../public/images',
         '../public/js',
+        '../public/partials',
     ];
 
     for (const dir of dirs) {

@@ -3,20 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Uintah Basin Air Quality</title>
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 
-<body data-page-type="index">
+<body class="overlay" data-page-type="index">
+<h1>Uintah Basin Winter Ozone Information</h1>
+<div class="sidebar_container">
+</div>
+</body>
 
 <div class="colored-bar"></div>
 
-<div class="header">
-    <h1>Air Quality Forecast Outlooks</h1>
-    <div class="sidebar_container">
-    </div>
-</div>
+<!--<div class="header">-->
+<!--    <h1>Air Quality Forecast Outlooks</h1>-->
+<!--    <div class="sidebar_container">-->
+<!--    </div>-->
+<!--</div>-->
 
 <div id="map-title" style="text-align: center; margin: 10px 0;">
     <a href="/locations" style="text-decoration: none; color: inherit;">
@@ -35,5 +38,5 @@
 <script type="module" src="/public/js/forecast_outlooks.js"></script>
 <script type="module" src="/public/js/index_map.js"></script>
 <script type="module" src="/public/js/loadSidebar.js"></script>
-</body>
+<script type="module" src="/public/js/loadFooter.js"></script>
 </html>

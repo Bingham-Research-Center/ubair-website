@@ -10,13 +10,16 @@
 
 .overlay-container {
     position: fixed;
-    top: 20px;
-    left: 70px;
+    bottom: 50%; /* Anchor to the bottom of the view */
+    left: 1%;
     background-color: rgba(255, 255, 255, 0.4);
     padding: 10px;
     border-radius: 5px;
     z-index: 1000;
     max-width: 300px;
+    height: 50vh; /* Limit height to bottom half of the page */
+    transform: scale(1.2); /* Scales down the overlay to 120% */
+    transform-origin: top left; /* Keeps scaling anchored to top left */
 }
 
 .overlay-container img {
@@ -35,7 +38,25 @@
     z-index: 1000;
 }
 
-/* Popup styles */
+.study-area-toggle {
+    margin-bottom: 10px;
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+}
+
+.study-area-toggle:hover {
+    background-color: #0056b3;
+}
+
+.usu-logo img {
+    transform: scale(0.5); /* Scales down the logo to 50% */
+}
+
 .leaflet-popup-content {
     margin: 10px;
 }
@@ -55,4 +76,19 @@
 .measurement.danger {
     background-color: #f8d7da;
     color: #721c24;
+}
+
+#image-overlay {
+    height: 15vh; /* 10% of the viewport height */
+    width: auto;
+    z-index: 3;
+}
+
+#image-overlay1 {
+    position: fixed;
+    bottom: 5%; /* Anchor to the bottom of the view */
+    right: 5%;  /* Anchor to the right of the view */
+    height: 35vh; /* 30% of the viewport height */
+    width: auto; /* Maintain aspect ratio */
+    z-index: 4;
 }

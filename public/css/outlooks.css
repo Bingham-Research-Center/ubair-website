@@ -7,6 +7,9 @@
     transition: all 0.2s ease;
     writing-mode: vertical-rl;
     text-orientation: mixed;
+    position: fixed;
+    top: 15%;
+    right: 10%;
 }
 
 .archive-item:hover {
@@ -42,14 +45,22 @@
 }
 
 .archive-list {
-    max-height: 500px;
+    max-height: 50%;
     overflow-y: auto;
     border: 1px solid #dee2e6;
-    border-radius: 5px;
+    border-radius: 1px;
     padding: 10px;
-    display: flex;
+    display: inline-block; /* Change to inline-block */
     flex-direction: column;
     gap: 8px;
+    position: sticky;
+    top: 0;
+    text-align: center; /* Center the text horizontally */
+}
+
+.archive-list .archive-entry a {
+    display: block;
+    margin: 0 auto;
 }
 
 .outlooks-container {
@@ -58,6 +69,11 @@
 }
 
 #outlook-archive {
-    width: 200px;
+    width: 20%;
     flex-shrink: 0;
+    position: sticky; /* Change to sticky */
+    top: 15%; /* Adjust this value to change the vertical position */
+    right: 0; /* Remove this line */
+    text-align: center; /* Center the text horizontally */
+    padding-top: 10px; /* Add padding to adjust the vertical position of the text */
 }

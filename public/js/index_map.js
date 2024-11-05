@@ -2,11 +2,11 @@ import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 
 // Initialize a smaller map centered on Uintah Basin
-const map = L.map('map',{
+const map = L.map('map', {
     zoomControl: false,
     scrollWheelZoom: false,
     doubleClickZoom: false
-}).setView([40.3033, -110.0153], 9);
+}).setView([40.3033, -110.0], 9);
 
 // Add OpenStreetMap tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -32,11 +32,17 @@ async function updateMiniMap() {
             const measurements = {
                 'Ozone': data['Ozone']?.[stationName] ?? null,
                 'PM2.5': data['PM2.5']?.[stationName] ?? null,
+                'NOx': data['NOx']?.[stationName] ?? null,
+                'NO': data['NO']?.[stationName] ?? null,
                 'Temperature': data['Temperature']?.[stationName] ?? null
             };
 
-            // Skip if no key measurements are available
-            if (Object.values(measurements).every(v => v === null)) continue;
+            let popupContent;
+            if (Object.values(measurements).every(v => v === null || isNaN(v))) {
+                popupContent = `<div><h3>${stationName}</h3><div>Data missing.</div></div>`;
+            } else {
+                popupContent = createPopupContent(stationName, measurements);
+            }
 
             const markerColor = getMarkerColor(measurements);
             const markerIcon = L.divIcon({
@@ -52,7 +58,7 @@ async function updateMiniMap() {
             });
 
             L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
-                .bindPopup(createPopupContent(stationName, measurements))
+                .bindPopup(popupContent)
                 .addTo(map);
         }
     } catch (error) {

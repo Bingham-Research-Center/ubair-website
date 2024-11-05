@@ -12,12 +12,14 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Overlay toggle setup
 const overlayContainer = document.querySelector('.overlay-container');
+
+// Study Area Toggle Button
 const studyAreaToggle = document.createElement('button');
-studyAreaToggle.textContent = 'Toggle Study Area';
+studyAreaToggle.textContent = 'Hide Study Area'; // Default to "Hide" as it is visible initially
 studyAreaToggle.className = 'study-area-toggle';
 overlayContainer.insertBefore(studyAreaToggle, overlayContainer.firstChild);
 
-let studyAreaVisible = true;
+let studyAreaVisible = true; // Set visible by default
 studyAreaToggle.addEventListener('click', () => {
     const images = overlayContainer.querySelectorAll('img');
     images.forEach(img => {
@@ -26,6 +28,24 @@ studyAreaToggle.addEventListener('click', () => {
     studyAreaVisible = !studyAreaVisible;
     studyAreaToggle.textContent = studyAreaVisible ? 'Hide Study Area' : 'Show Study Area';
 });
+
+// Positioning graphics and adjusting overlay size
+const studyAreaGraphic = document.querySelector('.overlay-container');
+const usuLogo = document.querySelector('.usu-logo');
+
+// Position the study area graphic in the bottom half of the view window
+studyAreaGraphic.style.position = 'fixed';
+studyAreaGraphic.style.bottom = '0'; // Anchor to the bottom of the view window
+studyAreaGraphic.style.left = '10px'; // Adjust as needed for spacing from left
+studyAreaGraphic.style.zIndex = '2';
+studyAreaGraphic.style.height = '30vh'; // Limit height to bottom half of the page
+
+// Position the USU logo 20% from the top
+usuLogo.style.position = 'fixed';
+usuLogo.style.top = '1%';
+usuLogo.style.left = '10px'; // Adjust as needed for spacing from left
+usuLogo.style.transform = 'translateY(0)'; // Remove centering
+usuLogo.style.zIndex = '2';
 
 // Function to update the map with current conditions from live observations
 async function updateMap() {
@@ -49,8 +69,12 @@ async function updateMap() {
             'Temperature': data['Temperature']?.[stationName] ?? null
         };
 
-        // Skip if no measurements
-        if (Object.values(measurements).every(v => v === null)) continue;
+    let popupContent;
+    if (Object.values(measurements).every(v => v === null || isNaN(v))) {
+        popupContent = `<div><h3>${stationName}</h3><div>Data missing.</div></div>`;
+    } else {
+        popupContent = createPopupContent(stationName, measurements);
+    }
 
         const markerColor = getMarkerColor(measurements);
         const markerIcon = L.divIcon({
@@ -67,29 +91,10 @@ async function updateMap() {
         });
 
         L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
-            .bindPopup(createPopupContent(stationName, measurements))
+            .bindPopup(popupContent)
             .addTo(map);
     }
 }
-
-// Add custom CSS for the toggle button
-const style = document.createElement('style');
-style.textContent = `
-    .study-area-toggle {
-        margin-bottom: 10px;
-        padding: 8px 16px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        width: 100%;
-    }
-    .study-area-toggle:hover {
-        background-color: #0056b3;
-    }
-`;
-document.head.appendChild(style);
 
 // Update map initially and every 5 minutes
 updateMap();
