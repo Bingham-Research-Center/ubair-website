@@ -1,99 +1,141 @@
-.content {
-    max-width: 1200px;
-    margin: 20px auto;
-    padding: 0 20px;
-}
-
+/* Controls styling */
 .controls {
     display: flex;
-    gap: 20px;
-    margin: 20px 0;
-    padding: 15px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: #f5f5f5;
+    border-radius: 4px;
 }
 
-select, button {
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-group label {
+    font-weight: 500;
+    color: #333;
 }
 
 select {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
     min-width: 150px;
 }
 
-button {
-    background-color: #007bff;
+.update-button {
+    padding: 0.5rem 1rem;
+    background: #007bff;
     color: white;
     border: none;
+    border-radius: 4px;
     cursor: pointer;
-    transition: background-color 0.2s;
+    align-self: flex-end;
 }
 
-button:hover {
-    background-color: #0056b3;
+.update-button:hover {
+    background: #0056b3;
+}
+
+/* Plot container styling */
+.visualization-container {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
 }
 
 .plot-container {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    border-radius: 4px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 20px 0;
+    padding: 1rem;
+    min-height: 400px;
 }
 
-.plot {
-    width: 100%;
-    height: 500px;
-}
-
+/* Statistics styling */
 .data-summary {
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    border-radius: 4px;
+    padding: 1rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
-#stats-container {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
-    margin-top: 15px;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
 }
 
 .stat-box {
-    padding: 15px;
     background: #f8f9fa;
     border-radius: 4px;
-    text-align: center;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.stat-label {
-    font-size: 0.9em;
-    color: #666;
-    margin-bottom: 5px;
-}
-
-.stat-value {
-    font-size: 1.2em;
-    font-weight: bold;
+.stat-box h3 {
+    margin: 0 0 0.5rem 0;
     color: #333;
 }
 
+.stat-grid {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+}
+
+.stat-label {
+    color: #666;
+}
+
+.stat-value {
+    font-weight: 600;
+    color: #333;
+}
+
+/* Forecast info styling */
+.forecast-info {
+    color: #666;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+}
+
+.update-time {
+    font-style: italic;
+}
+
+.forecast-note {
+    margin-top: 0.5rem;
+}
+
+/* Responsive design */
 @media (max-width: 768px) {
     .controls {
         flex-direction: column;
-        gap: 10px;
     }
 
-    select, button {
+    .control-group {
         width: 100%;
     }
 
-    .plot {
-        height: 300px;
+    .update-button {
+        width: 100%;
+        margin-top: 1rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 }

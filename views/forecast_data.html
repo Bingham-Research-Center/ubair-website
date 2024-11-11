@@ -18,29 +18,57 @@
     <h1>Forecast Data Visualization</h1>
 
     <div class="controls">
-        <select id="location-select">
-            <option value="all">All Locations</option>
-            <option value="roosevelt">Roosevelt</option>
-            <option value="vernal">Vernal</option>
-            <option value="horsepool">Horsepool</option>
-        </select>
+        <div class="control-group">
+            <label for="location-select">Location:</label>
+            <select id="location-select">
+                <option value="all">All Locations</option>
+                <option value="roosevelt">Roosevelt</option>
+                <option value="vernal">Vernal</option>
+                <option value="horsepool">Horsepool</option>
+            </select>
+        </div>
 
-        <select id="parameter-select">
-            <option value="wind">Wind Speed</option>
-            <option value="ozone">Ozone</option>
-            <option value="temperature">Temperature</option>
-        </select>
+        <div class="control-group">
+            <label for="parameter-select">Parameter:</label>
+            <select id="parameter-select">
+                <option value="wind">Wind Speed</option>
+                <option value="ozone">Ozone</option>
+                <option value="temperature">Temperature</option>
+            </select>
+        </div>
 
-        <button id="update-plot">Update Plot</button>
+        <div class="control-group">
+            <label for="timerange-select">Time Range:</label>
+            <select id="timerange-select">
+                <option value="24h">24 Hours</option>
+                <option value="48h">48 Hours</option>
+                <option value="7d">7 Days</option>
+            </select>
+        </div>
+
+        <button id="update-plot" class="update-button">Update Plot</button>
     </div>
 
-    <div class="plot-container">
-        <div id="time-series" class="plot"></div>
+    <div class="visualization-container">
+        <div class="plot-container">
+            <div id="time-series" class="plot"></div>
+        </div>
+
+        <div class="data-summary">
+            <h2>Summary Statistics</h2>
+            <div id="stats-container" class="stats-grid"></div>
+        </div>
+
+        <div class="legend-container">
+            <div class="threshold-legend">
+                <!-- Dynamically populated for ozone data -->
+            </div>
+        </div>
     </div>
 
-    <div class="data-summary">
-        <h2>Summary Statistics</h2>
-        <div id="stats-container"></div>
+    <div class="forecast-info">
+        <p class="update-time">Last Updated: <span id="last-update-time"></span></p>
+        <p class="forecast-note">Note: Forecast uncertainty is shown as shaded regions around the main trend line.</p>
     </div>
 </div>
 
