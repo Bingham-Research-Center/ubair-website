@@ -97,5 +97,6 @@ async function updateMap() {
 }
 
 // Update map initially and every 5 minutes
+// TODO - discuss with team if this is the best interval
 updateMap();
 setInterval(updateMap, 300000);
