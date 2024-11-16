@@ -3,76 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forecast Data - Uintah Basin Air Quality</title>
+    <title>Forecast Data Visualization</title>
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/forecast.css">
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="module" src="/public/js/forecast_data.js"></script>
 </head>
 <body>
-<div class="colored-bar"></div>
+    <!-- Colored bar at top -->
+    <div class="colored-bar"></div>
 
-<div class="sidebar_container">
-</div>
+    <!-- Sidebar container -->
+    <div class="sidebar_container"></div>
 
-<div class="content">
-    <h1>Forecast Data Visualization</h1>
+    <!-- Main content -->
+    <div class="content">
+        <h1>Forecast Data Visualization</h1>
 
-    <div class="controls">
-        <div class="control-group">
-            <label for="location-select">Location:</label>
-            <select id="location-select">
-                <option value="all">All Locations</option>
-                <option value="roosevelt">Roosevelt</option>
-                <option value="vernal">Vernal</option>
-                <option value="horsepool">Horsepool</option>
-            </select>
+        <!-- Controls section -->
+        <div class="controls">
+            <!-- Date Range Selection -->
+            <div class="control-group">
+                <label for="start-date">Start Date:</label>
+                <input type="date" id="start-date" class="date-input">
+
+                <label for="end-date">End Date:</label>
+                <input type="date" id="end-date" class="date-input">
+            </div>
+
+            <!-- Location Selection -->
+            <div class="control-group">
+                <label class="selection-label">Locations:</label>
+                <div class="checkbox-group" id="location-select">
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="roosevelt" checked> Roosevelt
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="vernal" checked> Vernal
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="horsepool" checked> Horsepool
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="ouray"> Ouray
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="myton"> Myton
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="whiterocks"> Whiterocks
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="dinosaur"> Dinosaur NM
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="redwash"> Red Wash
+                    </label>
+                </div>
+            </div>
+
+            <!-- Parameter Selection -->
+            <div class="control-group">
+                <label class="selection-label">Parameters:</label>
+                <div class="checkbox-group" id="parameter-select">
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="wind" checked> Wind Speed
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="ozone"> Ozone
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="temperature"> Temperature
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="pressure"> Pressure
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="snow_depth"> Snow Depth
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" value="humidity"> Humidity
+                    </label>
+                </div>
+            </div>
+
+            <!-- Update Button -->
+            <button id="update-plot" class="update-button">Update Plot</button>
         </div>
 
-        <div class="control-group">
-            <label for="parameter-select">Parameter:</label>
-            <select id="parameter-select">
-                <option value="wind">Wind Speed</option>
-                <option value="ozone">Ozone</option>
-                <option value="temperature">Temperature</option>
-            </select>
+        <!-- Visualization container -->
+        <div class="visualization-container">
+            <!-- Plot container -->
+            <div class="plot-container">
+                <div id="time-series" class="plot"></div>
+            </div>
+
+            <!-- Data summary -->
+            <div class="data-summary">
+                <h2>Summary Statistics</h2>
+                <div id="stats-container" class="stats-grid"></div>
+            </div>
         </div>
 
-        <div class="control-group">
-            <label for="timerange-select">Time Range:</label>
-            <select id="timerange-select">
-                <option value="24h">24 Hours</option>
-                <option value="48h">48 Hours</option>
-                <option value="7d">7 Days</option>
-            </select>
-        </div>
-
-        <button id="update-plot" class="update-button">Update Plot</button>
-    </div>
-
-    <div class="visualization-container">
-        <div class="plot-container">
-            <div id="time-series" class="plot"></div>
-        </div>
-
-        <div class="data-summary">
-            <h2>Summary Statistics</h2>
-            <div id="stats-container" class="stats-grid"></div>
-        </div>
-
-        <div class="legend-container">
-            <div class="threshold-legend">
-                <!-- Dynamically populated for ozone data -->
+        <!-- Forecast info -->
+        <div class="forecast-info">
+            Last Updated: <span id="last-update-time"></span>
+            <div class="forecast-note">
+                Note: Forecast uncertainty is shown as shaded regions around the main trend line.
             </div>
         </div>
     </div>
-
-    <div class="forecast-info">
-        <p class="update-time">Last Updated: <span id="last-update-time"></span></p>
-        <p class="forecast-note">Note: Forecast uncertainty is shown as shaded regions around the main trend line.</p>
-    </div>
-</div>
-
-<script src="/public/js/forecast_data.js"></script>
-<script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
 </html>
