@@ -1,62 +1,69 @@
 #map {
     height: 100vh;
-    width: 100%;
+    width: calc(100% - 250px);
     position: absolute;
     top: 0;
-    left: 0;
+    left: 250px;
     z-index: 1;
-    margin: 20px auto;
-}
-
-.overlay-container {
-    position: fixed;
-    bottom: 50%; /* Anchor to the bottom of the view */
-    left: 1%;
-    background-color: rgba(255, 255, 255, 0.4);
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-    max-width: 300px;
-    height: 50vh; /* Limit height to bottom half of the page */
-    transform: scale(1.2); /* Scales down the overlay to 120% */
-    transform-origin: top left; /* Keeps scaling anchored to top left */
-}
-
-.overlay-container img {
-    width: 50%;
-    height: auto;
-    margin-top: 10px;
 }
 
 .top-bar {
     position: fixed;
     top: 0;
-    left: 0;
+    left: 250px;
     right: 0;
     height: 10px;
     background: linear-gradient(to right, #ff0000, #00ff00, #0000ff);
     z-index: 1000;
 }
 
-.study-area-toggle {
-    margin-bottom: 10px;
-    padding: 8px 16px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    width: 100%;
-}
-
-.study-area-toggle:hover {
-    background-color: #0056b3;
+.usu-logo {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
 }
 
 .usu-logo img {
-    transform: scale(0.5); /* Scales down the logo to 50% */
+    transform: scale(0.5);
 }
 
+/* Study Area Overlay */
+.overlay-container {
+    position: fixed;
+    top: 50px; /* Moved to top */
+    left: calc(250px + 20px); /* Positioned right of sidebar with padding */
+    background-color: rgba(255, 255, 255, 0.4);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+#image-overlay {
+    height: 15vh;
+    width: auto;
+    display: block;
+}
+
+/* Warning Levels Box Styling */
+.warning-levels-overlay {
+    position: fixed;
+    bottom: 80px; /* Increased to stay above footer */
+    right: 20px;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 10px;
+    border-radius: 5px;
+}
+
+#image-overlay1 {
+    height: 35vh;
+    width: auto;
+    display: block;
+}
+
+/* Map Popup Styles */
 .leaflet-popup-content {
     margin: 10px;
 }
@@ -78,17 +85,28 @@
     color: #721c24;
 }
 
-#image-overlay {
-    height: 15vh; /* 10% of the viewport height */
-    width: auto;
-    z-index: 3;
-}
+/* Responsive design */
+@media (max-width: 768px) {
+    #map {
+        width: 100%;
+        left: 0;
+    }
 
-#image-overlay1 {
-    position: fixed;
-    bottom: 5%; /* Anchor to the bottom of the view */
-    right: 5%;  /* Anchor to the right of the view */
-    height: 35vh; /* 30% of the viewport height */
-    width: auto; /* Maintain aspect ratio */
-    z-index: 4;
+    .top-bar {
+        left: 0;
+    }
+
+    .overlay-container {
+        left: 20px;
+        top: 70px;
+    }
+
+    .warning-levels-overlay {
+        bottom: 60px;
+        right: 10px;
+    }
+
+    #image-overlay1 {
+        height: 25vh;
+    }
 }

@@ -1,0 +1,24 @@
+/* styles.css */
+
+/* Styling tables in the stats panels */
+.stats-panel table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stats-panel th, .stats-panel td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.stats-panel th {
+    background-color: #f2f2f2;
+    text-align: left;
+}
+
+.stats-panel td {
+    text-align: right;
+}
+
+/* Additional Styles (Optional) */
+/* Add any other styles you need here */

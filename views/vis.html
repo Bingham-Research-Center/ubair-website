@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uinta Basin Analysis</title>
+    <!-- Plotly.js for plotting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/2.27.0/plotly.min.js"></script>
+    <!-- Math.js for mathematical operations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
+    <!-- Link to the corrected CSS file -->
+    <link rel="stylesheet" href="../public/css/styles.css">
+    <style>
+        /* Base Styles */
+        body {
+            font-family: -apple-system, system-ui, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .tab-container {
+            margin-bottom: 20px;
+        }
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            background: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: background 0.3s, color 0.3s;
+        }
+        .tab-button:hover {
+            background: #f0f0f0;
+        }
+        .tab-button.active {
+            background: #007bff;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .controls {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .plot-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            height: 600px;
+            margin-bottom: 20px;
+        }
+        .stats-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        select, button, input {
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+            min-width: 150px;
+        }
+        .settings-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="tab-container">
+        <div class="tab-buttons">
+            <button class="tab-button active" data-tab="snow">Snow Shadow Analysis</button>
+            <button class="tab-button" data-tab="cold">Cold Pool Detection</button>
+            <button class="tab-button" data-tab="ozone">Ozone Analysis</button>
+            <button class="tab-button" data-tab="combined">Combined Analysis</button>
+        </div>
+
+        <!-- Snow Shadow Analysis Tab -->
+        <div class="tab-content active" id="snow-tab">
+            <div class="controls">
+                <!-- Year Selector -->
+                <div class="settings-group">
+                    <label for="year-select-snow">Select Year:</label>
+                    <select id="year-select-snow" onchange="yearChanged('snow')">
+                        <option value="">Select Year</option>
+                        <!-- Years will be populated via JavaScript -->
+                    </select>
+                </div>
+                <!-- Other Controls -->
+                <select id="snow-location1"></select>
+                <select id="snow-location2"></select>
+                <div class="settings-group">
+                    <label for="snow-filter">Filter Outliers</label>
+                    <input type="checkbox" id="snow-filter" checked>
+                    <label for="snow-winter">Winter Only</label>
+                    <input type="checkbox" id="snow-winter" checked>
+                </div>
+                <button onclick="updateSnowAnalysis()">Update</button>
+            </div>
+            <div id="snow-plot" class="plot-container"></div>
+            <div id="snow-diff" class="plot-container"></div>
+            <div id="snow-stats" class="stats-panel"></div>
+        </div>
+
+        <!-- Cold Pool Detection Tab -->
+        <div class="tab-content" id="cold-tab">
+            <div class="controls">
+                <!-- Year Selector -->
+                <div class="settings-group">
+                    <label for="year-select-cold">Select Year:</label>
+                    <select id="year-select-cold" onchange="yearChanged('cold')">
+                        <option value="">Select Year</option>
+                        <!-- Years will be populated via JavaScript -->
+                    </select>
+                </div>
+                <select id="cold-location"></select>
+                <div class="settings-group">
+                    <label for="cold-threshold">Temperature Threshold (°C)</label>
+                    <input type="number" id="cold-threshold" value="-5" step="0.5">
+                    <label for="cold-duration">Duration (hours)</label>
+                    <input type="number" id="cold-duration" value="72" step="1">
+                </div>
+                <button onclick="updateColdAnalysis()">Update</button>
+            </div>
+            <div id="cold-plot" class="plot-container"></div>
+            <div id="cold-ozone" class="plot-container"></div>
+            <div id="cold-stats" class="stats-panel"></div>
+        </div>
+
+        <!-- Ozone Analysis Tab -->
+        <div class="tab-content" id="ozone-tab">
+            <div class="controls">
+                <!-- Year Selector -->
+                <div class="settings-group">
+                    <label for="year-select-ozone">Select Year:</label>
+                    <select id="year-select-ozone" onchange="yearChanged('ozone')">
+                        <option value="">Select Year</option>
+                        <!-- Years will be populated via JavaScript -->
+                    </select>
+                </div>
+                <select id="ozone-location"></select>
+                <div class="settings-group">
+                    <label for="ozone-snow">Snow Threshold (cm)</label>
+                    <input type="number" id="ozone-snow" value="10" step="1">
+                </div>
+                <button onclick="updateOzoneAnalysis()">Update</button>
+            </div>
+            <div id="ozone-plot" class="plot-container"></div>
+            <div id="ozone-corr" class="plot-container"></div>
+            <div id="ozone-stats" class="stats-panel"></div>
+        </div>
+
+        <!-- Combined Analysis Tab -->
+        <div class="tab-content" id="combined-tab">
+            <div class="controls">
+                <!-- Year Selector -->
+                <div class="settings-group">
+                    <label for="year-select-combined">Select Year:</label>
+                    <select id="year-select-combined" onchange="yearChanged('combined')">
+                        <option value="">Select Year</option>
+                        <!-- Years will be populated via JavaScript -->
+                    </select>
+                </div>
+                <select id="combined-location"></select>
+                <button onclick="updateCombinedAnalysis()">Update</button>
+            </div>
+            <div id="combined-plot" class="plot-container"></div>
+            <div id="combined-stats" class="stats-panel"></div>
+        </div>
+    </div>
+
+    <script>
+        // Mapping of station IDs to station names
+        const stationNames = {
+            "KVEL": "Vernal Airport",
+            "RSVL": "ROOSEVELT-UNION HS",
+            "CUPH": "STARVATION DAM",
+            "MMTU1": "MOSBY MTN.",
+            "TCKU1": "TROUT CREEK",
+            "DIAU1": "DIAMOND RIM",
+            "FIVU1": "FIVE MILE",
+            "MCKU1": "MCCOOK RIDGE",
+            "USWU1": "UPPER SAND WASH",
+            "SFLU1": "YAMPA PLATEAU",
+            "YLSU1": "YELLOWSTONE DRAINAGE",
+            "KGCU1": "KING'S CABIN",
+            "NUTU1": "NUTTERS RANCH NEAR PRICE 28NE",
+            "WHRU1": "WHITEROCKS 9N",
+            "TR383": "ASHLEY #2 PORTABLE",
+            "UINU1": "FORT DUCHESNE",
+            "K74V": "ROOSEVELT",
+            "KU69": "DUCHESNE",
+            "MYT5": "Myton",
+            "KU67": "Roosevelt",
+            "KU71": "Vernal",
+            "C4620": "CW4620 Roosevelt",
+            "UTSTV": "US-40 @ STARVATION",
+            "AS290": "KB7QYH-1 Vernal",
+            "WAXU1": "WATSON 3S",
+            "MHMU1": "MOUNTAIN HOME",
+            "AT569": "W7BYU-1 Roosevelt",
+            "A1388": "Myton",
+            "A1633": "Redwash",
+            "A1622": "Ouray",
+            "A1386": "Whiterocks",
+            "SPMU1": "SPLIT MOUNTAIN",
+            "LRFU1": "LITTLE RED FOX",
+            "LFKU1": "LAKEFORK #3",
+            "QRS": "Roosevelt",
+            "QV4": "Vernal",
+            "UUT01": "Uintah Basin Research Trailer",
+            "WTRU1": "WHITEROCKS RIVER NEAR ROOSEVELT 19NNE",
+            "USU01": "Seven Sisters (Utah State Univ.)",
+            "USU02": "Gusher (Utah State Univ.)",
+            "USU03": "Mountain Home (Utah State Univ.)",
+            "USU04": "Seep Ridge (Utah State Univ.)",
+            "USU05": "Wells Draw (Utah State Univ.)",
+            "USU06": "Sand Wash (Utah State Univ.)",
+            "USU07": "Pariette Draw (Utah State Univ.)",
+            "USU08": "Utah State Univ. Research Trailer",
+            "UTVU1": "VERNAL 23SSW",
+            "E3712": "EW3712 Vernal",
+            "WATU1": "WHITE RIVER NEAR WATSON",
+            "YLLU1": "YELLOWSTONE RIVER NEAR ALTONAH 8NW",
+            "BRUU1": "BIG BRUSH CREEK ABOVE RED FLEET RESERVOIR NEAR VERNAL 10N",
+            "DURU1": "DUCHESNE RIVER NEAR RANDLETT NEAR ROOSEVELT 11SE",
+            "UFD07": "UofU Tripod - SONGNEX 2015",
+            "TRZO3": "TROUT CREEK AM",
+            "E8302": "EW8302 Randlett",
+            "UB7ST": "Seven Sisters",
+            "UBCSP": "Castle Peak",
+            "A3822": "Dinosaur National Monument",
+            "UBDRF": "Dry Fork",
+            "UBFDU": "Fort Duchesne",
+            "UBFLR": "Flat Rock",
+            "UBHSP": "Horsepool",
+            "UBMTH": "Mountain Home",
+            "UBMYT": "Myton",
+            "UBORY": "Ouray",
+            "UBRBM": "Rabbit Mountain",
+            "UBRDW": "Red Wash",
+            "UBWHR": "Whiterocks",
+            "UCC33": "Vernal",
+            "UCC34": "Bluebell",
+            "COOPALMU1": "ALTAMONT",
+            "COOPDINU1": "DINOSAUR NM-QUARRY AREA",
+            "COOPDSNU1": "DUCHESNE",
+            "COOPFTDU1": "FORT DUCHESNE",
+            "COOPJENU1": "JENSEN",
+            "COOPMYTU1": "MYTON",
+            "COOPNELU1": "NEOLA COOPB",
+            "COOPOURU1": "OURAY 4NE",
+            "COOPROSU1": "ROOSEVELT RADIO",
+            "COOPVELU1": "VERNAL",
+            "URHSC": "Uintah River High School",
+            "UCL13": "Duchesne - Agrimet DUCU",
+            "UCL21": "PelicanLake - Agrimet PELU",
+            "UCL22": "PleasantValley - Agrimet PLVU",
+            "PU323": "Lapoint",
+            "PU324": "Lapoint B",
+            "PU659": "Duchesne City Office",
+            "PU660": "Duchesne City Office B",
+            "PU776": "Caravan Lane",
+            "PU777": "Caravan Lane B",
+            "COOPNEOU1": "NEOLA 8 N",
+            "D8628": "DW8628 Tridell",
+            "UTMYT": "US-40 at MP 105 Myton",
+            "UTASH": "US-40 at MP 140 Asphalt Ridge",
+            "UTWPO": "US-191 at MP 369 Windy Point",
+            "UTBAS": "US-191 at MP 377 Bassett Spring",
+            "JESU1": "GREEN RIVER NEAR JENSEN 6ENE",
+            "PC101": "Dry Fork Canyon",
+            "4276P": "Dino Ozone Station",
+            "PC266": "Little Mountain",
+            "PC353": "Vernal West",
+            "UB1UT": "CIGE 226",
+            "PC486": "Little Valley",
+            "UGSDV": "Desert View (Myton) EC",
+            "UTELP": "SR-121 at MP 31.5 East Lapoint",
+            "UTMTH": "SR-87 at MP 16 Mountain Home",
+            "PC558": "Ashley",
+            "PC561": "Duchesne River"
+        };
+
+        // Global data store: { year: Map<stationID, dataArray> }
+        let globalData = {};
+
+        /**
+         * Populates the year selectors with options from 2006 to 2024.
+         */
+        function populateYearSelectors() {
+            const years = Array.from({length: 19}, (_, i) => 2006 + i);
+            const yearSelectors = [
+                'year-select-snow',
+                'year-select-cold',
+                'year-select-ozone',
+                'year-select-combined'
+            ];
+
+            yearSelectors.forEach(id => {
+                const select = document.getElementById(id);
+                years.forEach(year => {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    select.appendChild(option);
+                });
+            });
+        }
+
+        /**
+         * Handles the change event for year selectors.
+         * @param {string} tab - The current tab ('snow', 'cold', 'ozone', 'combined').
+         */
+        function yearChanged(tab) {
+            const yearSelectId = `year-select-${tab}`;
+            const year = document.getElementById(yearSelectId).value;
+
+            if (year && !globalData[year]) {
+                loadData(year).then(data => {
+                    globalData[year] = data;
+                    populateDropdowns(data);
+                });
+            } else if (year) {
+                populateDropdowns(globalData[year]);
+            } else {
+                // If no year is selected, clear dropdowns
+                const dropdowns = {
+                    'snow': ['snow-location1', 'snow-location2'],
+                    'cold': ['cold-location'],
+                    'ozone': ['ozone-location'],
+                    'combined': ['combined-location']
+                };
+
+                dropdowns[tab].forEach(id => {
+                    const select = document.getElementById(id);
+                    select.innerHTML = '<option value="">Select Station</option>';
+                });
+            }
+        }
+
+        /**
+         * Loads the JSON data for a specific year.
+         * @param {number} year - The year to load data for.
+         * @returns {Promise<Map<string, Array<Object>>>} A map of station IDs to their respective data entries.
+         */
+        async function loadData(year) {
+            try {
+                const response = await fetch(`../public/data/UB_obs_${year}.json`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const rawText = await response.text();
+                const yearData = JSON.parse(rawText.replace(/: NaN/g, ': null'));
+
+                if (!Array.isArray(yearData)) {
+                    throw new Error('Invalid JSON format: Expected an array of data entries.');
+                }
+
+                // Organize data by station ID
+                const data = new Map();
+                yearData.forEach(entry => {
+                    if (!entry.stid) return;
+                    if (!data.has(entry.stid)) {
+                        data.set(entry.stid, []);
+                    }
+                    data.get(entry.stid).push(entry);
+                });
+
+                return data;
+            } catch (error) {
+                console.error('Error loading data:', error);
+                alert(`Failed to load data for year ${year}: ${error.message}`);
+                return new Map();
+            }
+        }
+
+        /**
+         * Populates all dropdowns with station options based on the loaded data.
+         * @param {Map<string, Array<Object>>} yearData - The data map for the selected year.
+         */
+        function populateDropdowns(yearData) {
+            const stations = [...yearData.keys()].sort();
+            const dropdowns = [
+                'snow-location1', 'snow-location2',
+                'cold-location',
+                'ozone-location',
+                'combined-location'
+            ];
+
+            dropdowns.forEach(id => {
+                const select = document.getElementById(id);
+                select.innerHTML = '<option value="">Select Station</option>' +
+                    stations.map(s => `<option value="${s}">${stationNames[s] ? stationNames[s] + ' - ' + s : s}</option>`).join('');
+            });
+        }
+
+        /**
+         * Filters the data based on provided settings.
+         * @param {Array<Object>} data - The data array to filter.
+         * @param {Object} settings - The filtering settings.
+         * @returns {Array<Object>} The filtered data array.
+         */
+        function filterData(data, settings) {
+            return data.filter((d, index) => {
+                if (settings.winterOnly) {
+                    const dayOfYear = Math.floor(index / 24); // Assuming hourly data
+                    if (dayOfYear > 90 && dayOfYear < 304) return false; // Exclude non-winter months
+                }
+                if (settings.filterOutliers) {
+                    if (d.snow_depth > settings.maxSnow) return false;
+                }
+                return true;
+            });
+        }
+
+        /**
+         * Updates the Snow Shadow Analysis plots and statistics.
+         */
+        function updateSnowAnalysis() {
+            const year = document.getElementById('year-select-snow').value;
+            if (!year) {
+                alert('Please select a year.');
+                return;
+            }
+
+            const loc1 = document.getElementById('snow-location1').value;
+            const loc2 = document.getElementById('snow-location2').value;
+            if (!loc1 || !loc2) {
+                alert('Please select both stations for Snow Shadow Analysis.');
+                return;
+            }
+
+            const settings = {
+                winterOnly: document.getElementById('snow-winter').checked,
+                filterOutliers: document.getElementById('snow-filter').checked,
+                maxSnow: 2000  // cm
+            };
+
+            const data1 = filterData(globalData[year].get(loc1), settings);
+            const data2 = filterData(globalData[year].get(loc2), settings);
+
+            // Snow depth comparison plot
+            const trace1 = {
+                x: Array.from({length: data1.length}, (_, i) => i / 24),
+                y: data1.map(d => d.snow_depth),
+                type: 'scatter',
+                mode: 'lines',
+                name: `${stationNames[loc1]} (${loc1})`
+            };
+
+            const trace2 = {
+                x: Array.from({length: data2.length}, (_, i) => i / 24),
+                y: data2.map(d => d.snow_depth),
+                type: 'scatter',
+                mode: 'lines',
+                name: `${stationNames[loc2]} (${loc2})`
+            };
+
+            const layout1 = {
+                title: 'Snow Depth Comparison',
+                xaxis: {
+                    title: 'Days',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Snow Depth (cm)',
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('snow-plot', [trace1, trace2], layout1);
+
+            // Difference plot
+            const minLength = Math.min(data1.length, data2.length);
+            const diffData = [];
+            for (let i = 0; i < minLength; i++) {
+                const diff = data1[i].snow_depth - data2[i].snow_depth;
+                diffData.push(diff !== null ? diff : null);
+            }
+
+            const diffTrace = {
+                x: Array.from({length: minLength}, (_, i) => i / 24),
+                y: diffData,
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: 'purple' },
+                name: 'Snow Depth Difference'
+            };
+
+            const layout2 = {
+                title: 'Snow Depth Difference',
+                xaxis: {
+                    title: 'Days',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Difference (cm)',
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('snow-diff', [diffTrace], layout2);
+        }
+
+        /**
+         * Updates the Cold Pool Detection plots and statistics.
+         */
+        function updateColdAnalysis() {
+            const year = document.getElementById('year-select-cold').value;
+            if (!year) {
+                alert('Please select a year.');
+                return;
+            }
+
+            const location = document.getElementById('cold-location').value;
+            if (!location) {
+                alert('Please select a station for Cold Pool Detection.');
+                return;
+            }
+
+            const threshold = parseFloat(document.getElementById('cold-threshold').value);
+            const duration = parseInt(document.getElementById('cold-duration').value);
+            const data = globalData[year].get(location);
+
+            // Find cold pool periods
+            let coldPools = [];
+            let currentPeriod = null;
+
+            data.forEach((entry, index) => {
+                if (entry.air_temp <= threshold) {
+                    if (!currentPeriod) {
+                        currentPeriod = { start: index, duration: 1 };
+                    } else {
+                        currentPeriod.duration++;
+                    }
+                } else if (currentPeriod) {
+                    if (currentPeriod.duration >= duration) {
+                        coldPools.push(currentPeriod);
+                    }
+                    currentPeriod = null;
+                }
+            });
+
+            // Handle case where cold period extends to the end
+            if (currentPeriod && currentPeriod.duration >= duration) {
+                coldPools.push(currentPeriod);
+            }
+
+            // Temperature plot with cold pool indicators
+            const tempTrace = {
+                x: Array.from({length: data.length}, (_, i) => i / 24),
+                y: data.map(d => d.air_temp),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Temperature'
+            };
+
+            const layout = {
+                title: 'Temperature with Cold Pool Detection',
+                xaxis: {
+                    title: 'Days',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Temperature (°C)',
+                    gridcolor: '#eee'
+                },
+                shapes: coldPools.map(period => ({
+                    type: 'rect',
+                    xref: 'x',
+                    yref: 'paper',
+                    x0: period.start / 24,
+                    x1: (period.start + period.duration) / 24,
+                    y0: 0,
+                    y1: 1,
+                    fillcolor: 'rgba(255,0,0,0.2)',
+                    line: { width: 0 }
+                })),
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('cold-plot', [tempTrace], layout);
+
+            // Ozone correlation during cold pools
+            const ozoneTrace = {
+                x: data.map(d => d.air_temp),
+                y: data.map(d => d.ozone_concentration),
+                type: 'scatter',
+                mode: 'markers',
+                marker: {
+                    color: data.map((d, i) => {
+                        const inColdPool = coldPools.some(pool =>
+                            i >= pool.start && i < pool.start + pool.duration
+                        );
+                        return inColdPool ? 'red' : 'blue';
+                    }),
+                    size: 8,
+                    opacity: 0.6
+                },
+                name: 'Ozone Concentration'
+            };
+
+            const ozoneLayout = {
+                title: 'Temperature-Ozone Correlation',
+                xaxis: {
+                    title: 'Temperature (°C)',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Ozone Concentration',
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('cold-ozone', [ozoneTrace], ozoneLayout);
+        }
+
+        /**
+         * Updates the Ozone Analysis plots and statistics.
+         */
+        function updateOzoneAnalysis() {
+            const year = document.getElementById('year-select-ozone').value;
+            if (!year) {
+                alert('Please select a year.');
+                return;
+            }
+
+            const location = document.getElementById('ozone-location').value;
+            if (!location) {
+                alert('Please select a station for Ozone Analysis.');
+                return;
+            }
+
+            const snowThreshold = parseFloat(document.getElementById('ozone-snow').value);
+            const data = globalData[year].get(location);
+
+            // Time series plot
+            const ozoneTrace = {
+                x: Array.from({length: data.length}, (_, i) => i / 24),
+                y: data.map(d => d.ozone_concentration),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Ozone Concentration'
+            };
+
+            const snowTrace = {
+                x: Array.from({length: data.length}, (_, i) => i / 24),
+                y: data.map(d => d.snow_depth),
+                type: 'scatter',
+                mode: 'lines',
+                name: 'Snow Depth',
+                yaxis: 'y2'
+            };
+
+            const layout = {
+                title: 'Ozone and Snow Depth Time Series',
+                xaxis: {
+                    title: 'Days',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Ozone Concentration',
+                    gridcolor: '#eee'
+                },
+                yaxis2: {
+                    title: 'Snow Depth (cm)',
+                    overlaying: 'y',
+                    side: 'right',
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('ozone-plot', [ozoneTrace, snowTrace], layout);
+
+            // Correlation plot
+            const validPairs = data.map(d => ({
+                ozone: d.ozone_concentration,
+                snow: d.snow_depth,
+                temp: d.air_temp
+            })).filter(d =>
+                d.ozone !== null && !isNaN(d.ozone) &&
+                d.snow !== null && !isNaN(d.snow) &&
+                d.temp !== null && !isNaN(d.temp)
+            );
+
+            const corrTrace = {
+                x: validPairs.map(d => d.temp),
+                y: validPairs.map(d => d.ozone),
+                type: 'scatter',
+                mode: 'markers',
+                marker: {
+                    color: validPairs.map(d => d.snow),
+                    colorscale: 'Viridis',
+                    colorbar: {
+                        title: 'Snow Depth (cm)'
+                    },
+                    size: 8
+                },
+                name: 'Ozone vs Temperature'
+            };
+
+            const corrLayout = {
+                title: 'Temperature-Ozone-Snow Correlation',
+                xaxis: {
+                    title: 'Temperature (°C)',
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Ozone Concentration',
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white'
+            };
+
+            Plotly.newPlot('ozone-corr', [corrTrace], corrLayout);
+        }
+
+        /**
+         * Updates the Combined Analysis plots and statistics.
+         */
+        function updateCombinedAnalysis() {
+            const year = document.getElementById('year-select-combined').value;
+            if (!year) {
+                alert('Please select a year.');
+                return;
+            }
+
+            const location = document.getElementById('combined-location').value;
+            if (!location) {
+                alert('Please select a station for Combined Analysis.');
+                return;
+            }
+
+            const data = globalData[year].get(location);
+
+            // Create a combined plot showing relationships between all variables
+            const traces = [
+                {
+                    x: Array.from({length: data.length}, (_, i) => i / 24),
+                    y: data.map(d => d.air_temp),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Temperature',
+                    yaxis: 'y1'
+                },
+                {
+                    x: Array.from({length: data.length}, (_, i) => i / 24),
+                    y: data.map(d => d.ozone_concentration),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Ozone Concentration',
+                    yaxis: 'y2'
+                },
+                {
+                    x: Array.from({length: data.length}, (_, i) => i / 24),
+                    y: data.map(d => d.snow_depth),
+                    type: 'scatter',
+                    mode: 'lines',
+                    name: 'Snow Depth',
+                    yaxis: 'y3'
+                }
+            ];
+
+            const layout = {
+                title: 'Combined Analysis',
+                xaxis: {
+                    title: 'Days',
+                    domain: [0.1, 0.9],
+                    gridcolor: '#eee'
+                },
+                yaxis: {
+                    title: 'Temperature (°C)',
+                    gridcolor: '#eee'
+                },
+                yaxis2: {
+                    title: 'Ozone Concentration',
+                    overlaying: 'y',
+                    side: 'right',
+                    gridcolor: '#eee'
+                },
+                yaxis3: {
+                    title: 'Snow Depth (cm)',
+                    anchor: 'free',
+                    overlaying: 'y',
+                    side: 'right',
+                    position: 0.95,
+                    gridcolor: '#eee'
+                },
+                plot_bgcolor: 'white',
+                showlegend: true,
+                legend: {
+                    x: 1.05,
+                    y: 1
+                }
+            };
+
+            Plotly.newPlot('combined-plot', traces, layout);
+
+            // Calculate and display stats
+            const validData = data.filter(d =>
+                d.air_temp !== null && !isNaN(d.air_temp) &&
+                d.ozone_concentration !== null && !isNaN(d.ozone_concentration) &&
+                d.snow_depth !== null && !isNaN(d.snow_depth)
+            );
+
+            const stats = {
+                temp: {
+                    mean: math.mean(validData.map(d => d.air_temp)),
+                    std: math.std(validData.map(d => d.air_temp))
+                },
+                ozone: {
+                    mean: math.mean(validData.map(d => d.ozone_concentration)),
+                    std: math.std(validData.map(d => d.ozone_concentration))
+                },
+                snow: {
+                    mean: math.mean(validData.map(d => d.snow_depth)),
+                    std: math.std(validData.map(d => d.snow_depth))
+                }
+            };
+
+            document.getElementById('combined-stats').innerHTML = `
+                <h3>Statistical Summary</h3>
+                <table>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Mean</th>
+                        <th>Std Dev</th>
+                    </tr>
+                    <tr>
+                        <td>Temperature</td>
+                        <td>${stats.temp.mean.toFixed(2)} °C</td>
+                        <td>${stats.temp.std.toFixed(2)} °C</td>
+                    </tr>
+                    <tr>
+                        <td>Ozone Concentration</td>
+                        <td>${stats.ozone.mean.toFixed(2)}</td>
+                        <td>${stats.ozone.std.toFixed(2)}</td>
+                    </tr>
+                    <tr>
+                        <td>Snow Depth</td>
+                        <td>${stats.snow.mean.toFixed(2)} cm</td>
+                        <td>${stats.snow.std.toFixed(2)} cm</td>
+                    </tr>
+                </table>
+            `;
+        }
+
+        /**
+         * Initializes the application by populating year selectors and loading default data.
+         */
+        async function init() {
+            populateYearSelectors();
+
+            // Optionally, set a default year (e.g., the latest year)
+            const defaultYear = '2024';
+            const yearSelectors = [
+                'year-select-snow',
+                'year-select-cold',
+                'year-select-ozone',
+                'year-select-combined'
+            ];
+
+            yearSelectors.forEach(id => {
+                const select = document.getElementById(id);
+                select.value = defaultYear;
+            });
+
+            if (!globalData[defaultYear]) {
+                const data = await loadData(defaultYear);
+                globalData[defaultYear] = data;
+            }
+            populateDropdowns(globalData[defaultYear]);
+        }
+
+        // Run initialization on page load
+        window.onload = init;
+    </script>
+
+    <script>
+        // Tab switching logic
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.getAttribute('data-tab');
+
+                // Remove the 'active' class from all buttons
+                tabButtons.forEach(btn => btn.classList.remove('active'));
+
+                // Add 'active' class to clicked button
+                button.classList.add('active');
+
+                // Hide all tab content
+                tabContents.forEach(content => content.classList.remove('active'));
+
+                // Show the selected tab content
+                const selectedContent = document.getElementById(`${tabName}-tab`);
+                if (selectedContent) {
+                    selectedContent.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,43 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Locations - Uintah Basin Air Quality</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-  <link rel="stylesheet" href="/public/css/main.css">
-  <link rel="stylesheet" href="/public/css/map.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Locations - Uintah Basin Air Quality</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/map.css">
 </head>
 <body>
-<div id="map"></div>
+    <!-- Map Container -->
+    <div id="map"></div>
 
-<div class="top-bar"></div>
+    <!-- Top Bar -->
+    <div class="top-bar"></div>
 
-<div class="usu-logo">
-  <img src="/public/images/images-removebg-preview.png" alt="Logo">
-</div>
+    <!-- USU Logo -->
+    <div class="usu-logo">
+        <img src="/public/images/images-removebg-preview.png" alt="Logo">
+    </div>
 
-<div class="overlay-container">
-  <img src="/public/images/utah.png" id="image-overlay" alt="Study Area">
-</div>
+    <!-- Study Area Overlay -->
+    <div class="overlay-container">
+        <img src="/public/images/utah.png" id="image-overlay" alt="Study Area">
+    </div>
 
-<div class="overlay-container1">
-    <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Warning Levels">
-</div>
+    <!-- Warning Levels Overlay -->
+    <div class="warning-levels-overlay">
+        <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Warning Levels">
+    </div>
 
-<div class="sidebar_container">
-</div>
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
 
-<div class="bottom-right-box">
-  DISCLAIMER: Real-time data are preliminary and have yet to undergo
-  quality control. Some data are obtained in cooperation with other
-  agencies, including the Ute Indian Trove and the Utah Department of
-  Environmental Quality. ©2024, Utah State University.
-</div>
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
+        </div>
+    </footer>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="/public/js/map.js"></script>
-<script type="module" src="/public/js/loadSidebar.js"></script>
-<script type="module" src="/public/js/loadFooter.js"></script>
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="/public/js/map.js"></script>
+    <script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
 </html>

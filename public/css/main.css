@@ -1,18 +1,28 @@
-/* Default page without overlay */
+/* Root Variables */
+:root {
+    --usu-blue: #00263A;
+    --usu-light-blue: #627C8B;
+    --usu-accent: #8B9299;
+    --usu-gray: #A7A9AC;
+    --usu-light-gray: #E6E7E8;
+}
+
+/* Base Styles */
 html, body {
     height: 100%;
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
+    font-family: 'Roboto', Arial, sans-serif;
 }
 
 body {
     background: url('/public/images/webpagepic.png') no-repeat center center fixed;
     background-size: cover;
     position: relative;
+    color: var(--usu-blue);
 }
 
-/* Overlay class */
+/* Overlay Effect */
 body.overlay::before {
     content: "";
     position: fixed;
@@ -20,18 +30,124 @@ body.overlay::before {
     left: 0;
     width: 100%;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5); /* Adjust opacity */
+    background: rgba(0, 0, 0, 0.5);
     z-index: 1;
     pointer-events: none;
 }
 
-/* Other styles */
-.colored-bar {
-    height: 10px;
-    background-color: #00263A;
-    margin-bottom: 20px;
+/* Content layout with sidebar */
+.content {
+    margin-left: 250px;
+    padding: 2rem;
+    max-width: 1200px;
+    position: relative;
+    z-index: 2;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 8px;
+    margin-right: 2rem;
 }
 
+/* Sidebar Styles */
+/* Sidebar Styles */
+.sidebar_container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    width: 250px;
+    box-sizing: border-box;
+}
+
+.sidebar {
+    background-color: var(--usu-blue);
+    color: white;
+    height: 100vh;
+    width: 100%;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow-y: auto;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Sidebar Logo */
+.sidebar-logo {
+    padding: 0 20px 30px 20px;
+    text-align: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar-logo a {
+    display: block;
+    text-decoration: none;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar-logo a:hover {
+    opacity: 0.8;
+    cursor: pointer;
+}
+
+/* Sidebar Logo */
+.sidebar-logo {
+    padding: 0 20px 30px 20px;
+    text-align: center;
+}
+
+.sidebar-logo img {
+    width: 200px;
+    height: auto;
+    max-width: 100%;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar ul li {
+    padding: 15px 20px;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li:hover {
+    background-color: var(--usu-light-blue);
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sidebar ul li i {
+    width: 24px;
+    font-size: 18px;
+    text-align: center;
+    margin-right: 8px;
+}
+
+/* Colored Bar */
+.colored-bar {
+    height: 10px;
+    background-color: var(--usu-blue);
+    margin-bottom: 20px;
+    width: 100%;
+    position: relative;
+    z-index: 2;
+}
+
+/* Center Bar */
 .center-bar {
     height: 2px;
     background-color: #000;
@@ -39,7 +155,7 @@ body.overlay::before {
     width: 80%;
 }
 
-/* Container for navigation icons */
+/* Container Styles */
 .container {
     display: flex;
     justify-content: space-around;
@@ -48,8 +164,11 @@ body.overlay::before {
     padding: 20px;
     max-width: 1200px;
     margin: 0 auto;
+    position: relative;
+    z-index: 2;
 }
 
+/* Tab Styles */
 .tab {
     text-decoration: none;
     margin: 10px;
@@ -60,7 +179,7 @@ body.overlay::before {
     transform: scale(1.1);
 }
 
-/* Latest post section */
+/* Latest Post Section */
 .post {
     margin: 20px auto;
     padding: 20px;
@@ -71,74 +190,143 @@ body.overlay::before {
     position: relative;
 }
 
-/* Common elements */
+/* Headers */
 h1 {
-    margin-left: 20px; /* Adjust as needed */
-    display: inline-block;
-    vertical-align: middle;
-    horiz-align: center;
-    z-index: 1001; /* Set z-index higher than other elements */
-    position: relative; /* Ensure z-index is applied */
+    color: var(--usu-blue);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    position: relative;
+    z-index: 2;
 }
 
-/* Sidebar styles */
-.sidebar_container {
-    display: flex;
-    flex-direction: row; /* Align items horizontally */
-    justify-content: space-around;
-    background-color: #333; /* Dark grey background */
-    position: absolute;
-    top: 20px; /* Adjust as needed */
-    right: 20px; /* Adjust as needed */
-    z-index: 1000;
-    padding: 20px; /* Increase padding to make the sidebar larger */
+/* Sidebar Disclaimer */
+.sidebar-disclaimer {
+    padding: 15px 20px;
+    font-size: 0.75rem;
+    color: var(--usu-light-gray);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background-color: rgba(0, 0, 0, 0.1);
+    margin-top: auto; /* Push to bottom of sidebar */
+}
+
+.sidebar-disclaimer p {
+    margin: 0.5em 0;
+    line-height: 1.4;
+    opacity: 0.9;
+}
+
+/* Map Page Disclaimer */
+.overlay-container .disclaimer {
+    padding: 15px;
+    font-size: 0.75rem;
+    color: var(--usu-light-gray);
+    background-color: var(--usu-blue);
     border-radius: 5px;
+    margin-top: 10px;
 }
 
-.sidebar img {
-    width: 50px; /* Keep the desired width */
-    height: auto; /* Keep the desired height */
-    object-fit: contain; /* Ensure the image fits within the specified dimensions */
-    transition: transform 0.2s;
-}
-
-.sidebar img:hover {
-    transform: scale(1.2);
-}
-
-/* Disclaimer box */
-.bottom-right-box {
-    position: fixed;
-    bottom: 10px;
-    right: 10px;
-    background-color: rgba(255, 255, 255, 0.4);
-    padding: 10px;
+/* Outlook Page Disclaimer */
+.outlook-content .disclaimer {
+    padding: 15px;
+    font-size: 0.75rem;
+    color: var(--usu-light-gray);
+    background-color: var(--usu-blue);
     border-radius: 5px;
-    font-size: 0.8em;
-    max-width: 300px;
+    margin-top: 20px;
 }
 
-/* Logo styles */
-.logo {
+/* Homepage Disclaimer */
+.post .disclaimer {
+    padding: 15px;
+    font-size: 0.75rem;
+    color: var(--usu-light-gray);
+    background-color: var(--usu-blue);
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+/* Footer Styles */
+.main-footer {
     position: fixed;
-    top: 20px;
-    left: 20px;
+    bottom: 0;
+    right: 0;
+    width: calc(100% - 250px); /* Adjust for sidebar width */
+    background-color: var(--usu-blue);
+    color: white;
+    text-align: center;
+    padding: 15px 20px;
     z-index: 1000;
+    margin-left: 250px; /* Match sidebar width */
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
 
-.logo img {
-    height: 60px;
-    width: auto;
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* Responsive design */
+.footer-content p {
+    margin: 0;
+    font-size: 0.875rem;
+    opacity: 0.9;
+}
+
 @media (max-width: 768px) {
+    .main-footer {
+        width: 100%;
+        margin-left: 0;
+        padding: 10px 15px;
+    }
+}
+
+/* Header */
+.header {
+    text-align: center;
+}
+
+/* Visualization Container */
+.visualization-container {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    padding: 1.5rem;
+    margin: 2rem 0;
+    min-height: 500px;
+    position: relative;
+    z-index: 2;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .sidebar-disclaimer {
+        position: relative;
+        margin-top: 20px;
+    }
+
+    .overlay-container .disclaimer,
+    .outlook-content .disclaimer,
+    .post .disclaimer {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 10px 0;
+    }
+    .content {
+        margin-left: 0;
+        margin-right: 1rem;
+        padding: 1rem;
+    }
+
     .container {
         flex-direction: column;
     }
 
-    .sidebar_container {
-        display: none;
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding-top: 0;
     }
 
     .bottom-right-box {
@@ -146,18 +334,16 @@ h1 {
         margin: 20px auto;
         max-width: 90%;
     }
-}
 
-footer {
-    background-color: rgba(0, 0, 0, 0.7);
-    color: white;
-    text-align: center;
-    padding: 10px 0;
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-}
+    h1 {
+        font-size: 1.5rem;
+    }
 
-.header {
-    text-align: center; /* Center the text within the header */
+    #map {
+        width: 90% !important;
+    }
+
+    footer {
+        position: relative;
+    }
 }

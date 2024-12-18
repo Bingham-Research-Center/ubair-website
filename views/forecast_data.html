@@ -3,115 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Forecast Data Visualization Dashboard for Uintah Basin">
     <title>Forecast Data Visualization</title>
-    <link rel="stylesheet" href="/public/css/main.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
     <link rel="stylesheet" href="/public/css/forecast.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script type="module" src="/public/js/forecast_data.js"></script>
+
+    <!-- Plotly (load before our scripts) -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body>
-    <!-- Colored bar at top -->
+    <!-- Colored Bar -->
     <div class="colored-bar"></div>
 
-    <!-- Sidebar container -->
-    <div class="sidebar_container"></div>
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
 
-    <!-- Main content -->
-    <div class="content">
+    <!-- Main Content -->
+    <main class="content">
         <h1>Forecast Data Visualization</h1>
 
-        <!-- Controls section -->
-        <div class="controls">
-            <!-- Date Range Selection -->
-            <div class="control-group">
-                <label for="start-date">Start Date:</label>
-                <input type="date" id="start-date" class="date-input">
-
-                <label for="end-date">End Date:</label>
-                <input type="date" id="end-date" class="date-input">
-            </div>
-
-            <!-- Location Selection -->
-            <div class="control-group">
-                <label class="selection-label">Locations:</label>
-                <div class="checkbox-group" id="location-select">
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="roosevelt" checked> Roosevelt
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="vernal" checked> Vernal
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="horsepool" checked> Horsepool
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="ouray"> Ouray
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="myton"> Myton
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="whiterocks"> Whiterocks
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="dinosaur"> Dinosaur NM
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="redwash"> Red Wash
-                    </label>
-                </div>
-            </div>
-
-            <!-- Parameter Selection -->
-            <div class="control-group">
-                <label class="selection-label">Parameters:</label>
-                <div class="checkbox-group" id="parameter-select">
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="wind" checked> Wind Speed
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="ozone"> Ozone
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="temperature"> Temperature
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="pressure"> Pressure
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="snow_depth"> Snow Depth
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" value="humidity"> Humidity
-                    </label>
-                </div>
-            </div>
-
-            <!-- Update Button -->
-            <button id="update-plot" class="update-button">Update Plot</button>
+        <!-- Error container for initialization errors -->
+        <div id="error-container" style="display: none;" role="alert">
+            <!-- Errors will be dynamically inserted here -->
         </div>
 
-        <!-- Visualization container -->
-        <div class="visualization-container">
-            <!-- Plot container -->
-            <div class="plot-container">
-                <div id="time-series" class="plot"></div>
+        <!-- Main visualization container -->
+        <section id="visualization-container" class="visualization-container" aria-label="Data visualization dashboard">
+            <!-- DataViz will be initialized here -->
+            <div class="loading" aria-live="polite">
+                Initializing visualization...
+                <div class="loading-spinner" role="status" aria-hidden="true"></div>
             </div>
+        </section>
+    </main>
 
-            <!-- Data summary -->
-            <div class="data-summary">
-                <h2>Summary Statistics</h2>
-                <div id="stats-container" class="stats-grid"></div>
-            </div>
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
         </div>
+    </footer>
 
-        <!-- Forecast info -->
-        <div class="forecast-info">
-            Last Updated: <span id="last-update-time"></span>
-            <div class="forecast-note">
-                Note: Forecast uncertainty is shown as shaded regions around the main trend line.
-            </div>
-        </div>
-    </div>
+    <!-- Scripts -->
+    <!-- Load dependencies first -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Initialize sidebar -->
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+
+    <!-- Initialize DataViz (type="module" is important) -->
+    <script type="module" src="/public/js/forecast_data.js"></script>
+
+    <!-- Error handling for script loading -->
+    <script>
+        window.addEventListener('error', function(event) {
+            if (event.target.tagName === 'SCRIPT') {
+                const errorContainer = document.getElementById('error-container');
+                if (errorContainer) {
+                    errorContainer.style.display = 'block';
+                    errorContainer.innerHTML = `
+                        <div class="error-message">
+                            <h3>Script Loading Error</h3>
+                            <p>Failed to load required resources. Please check your internet connection and try again.</p>
+                            <button onclick="window.location.reload()" class="reset-button">Retry</button>
+                        </div>
+                    `;
+                }
+            }
+        }, true);
+    </script>
 </body>
 </html>

@@ -1,10 +1,43 @@
-<div class="sidebar_container">
-    <div class="sidebar">
-        <a href="/"><img src="/public/images/homeicon.png" alt="Home Page Button"></a>
-        <a href="/locations"><img src="/public/images/locationsicon.png" alt="Locations Button"></a>
-        <a href="/forecast_outlooks"><img src="/public/images/clockforecast.png" alt="Forecast Outlooks"></a>
-        <a href="/forecast_data"><img src="/public/images/linegraphicon.png" alt="Forecast Data"></a>
-        <a href="http://ubair.usu.edu/Cams2/index.html" target="_blank"><img src="/public/images/webcamicon.png" alt="Webcams Button"></a>
-        <a href="https://www.usu.edu/binghamresearch/contact-us" target="_blank"><img src="/public/images/Contacticon.png" alt="Contact Us Button"></a>
+<!-- public/partials/sidebar.html -->
+<nav class="sidebar">
+    <!-- USU Logo - now clickable -->
+    <div class="sidebar-logo">
+        <a href="/" title="Return to Home">
+            <img src="/public/images/BRS_01_UStateLeft_White.png" alt="Utah State University Logo">
+        </a>
     </div>
-</div>
+
+    <!-- Main Navigation -->
+    <ul class="sidebar-nav">
+        <li>
+            <a href="/locations">
+                <i class="fas fa-map-marker-alt"></i> Locations
+            </a>
+        </li>
+        <li>
+            <a href="/forecast_outlooks">
+                <i class="fas fa-clock"></i> Forecast Outlooks
+            </a>
+        </li>
+        <li>
+            <a href="/forecast_data">
+                <i class="fas fa-chart-line"></i> Forecast Data
+            </a>
+        </li>
+        <li>
+            <a href="http://ubair.usu.edu/Cams2/index.html" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-camera"></i> Webcams
+            </a>
+        </li>
+        <li>
+            <a href="https://www.usu.edu/binghamresearch/contact-us" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-envelope"></i> Contact Us
+            </a>
+        </li>
+    </ul>
+
+    <!-- Disclaimer (hidden by default) -->
+    <div class="sidebar-disclaimer" style="display: none;">
+        <p></p>
+    </div>
+</nav>

@@ -3,40 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uintah Basin Winter Ozone Information</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 
-<body class="overlay" data-page-type="index">
-<h1>Uintah Basin Winter Ozone Information</h1>
-<div class="sidebar_container">
-</div>
+<body class="overlay">
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container - Note the underscore in the class name -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <h1>Uintah Basin Winter Ozone Information</h1>
+
+        <!-- Map Title and Link -->
+        <div id="map-title" style="text-align: center; margin: 10px 0;">
+            <a href="/locations" style="text-decoration: none; color: inherit;">
+                Current Conditions. Click here for a detailed map.
+            </a>
+        </div>
+
+        <!-- Map Container -->
+        <div id="map" style="width: 30%; height: 300px; margin: 20px auto" aria-label="Map"></div>
+
+        <!-- Latest Post Section -->
+        <div id="latest-post" class="post">
+            <div id="outlook-summary">Loading latest outlook...</div>
+            <a href="#" id="see-more">See more</a>
+        </div>
+    </main>
+
+    <!-- Disclaimer Box -->
+    <div class="bottom-right-box">
+        <p>Disclaimer: This is a forecast tool. For official air quality data please visit the Utah DEQ website.</p>
+    </div>
+
+    <!-- Load Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Load JavaScript Modules -->
+    <script type="module" src="/public/js/forecast_outlooks.js"></script>
+    <script type="module" src="/public/js/index_map.js"></script>
+    <script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
-
-<div class="colored-bar"></div>
-
-<!--<div class="header">-->
-<!--    <h1>Air Quality Forecast Outlooks</h1>-->
-<!--    <div class="sidebar_container">-->
-<!--    </div>-->
-<!--</div>-->
-
-<div id="map-title" style="text-align: center; margin: 10px 0;">
-    <a href="/locations" style="text-decoration: none; color: inherit;">
-        Current Conditions. Click here for a detailed map.
-    </a>
-</div>
-
-<div id="map" style="width: 30%; height: 300px; margin: 20px auto"></div>
-
-<div id="latest-post" class="post">
-    <div id="outlook-summary">Loading latest outlook...</div>
-    <a href="#" id="see-more">See more</a>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script type="module" src="/public/js/forecast_outlooks.js"></script>
-<script type="module" src="/public/js/index_map.js"></script>
-<script type="module" src="/public/js/loadSidebar.js"></script>
-<script type="module" src="/public/js/loadFooter.js"></script>
 </html>

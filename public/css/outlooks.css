@@ -1,32 +1,85 @@
+/* Outlooks container layout */
+.outlooks-container {
+    display: flex;
+    gap: 2rem;
+    margin: 2rem 0;
+}
+
+#current-outlook {
+    flex: 1;
+    margin-right: 20px;
+}
+
+/* Archive box styling to match sidebar */
+#outlook-archive {
+    width: 250px;
+    flex-shrink: 0;
+}
+
+.archive-box {
+    background-color: var(--usu-blue);
+    color: white;
+    border-radius: 8px;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.archive-box h2 {
+    padding: 1rem;
+    margin: 0;
+    color: white;
+    font-size: 1.2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.archive-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+/* Scrollbar styling for archive list */
+.archive-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.archive-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.archive-list::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+}
+
+/* Archive items styling */
 .archive-item {
-    padding: 12px;
-    border-left: 4px solid transparent;
-    margin-bottom: 8px;
-    background-color: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: white;
     cursor: pointer;
-    transition: all 0.2s ease;
-    writing-mode: vertical-rl;
+    transition: background-color 0.3s;
+    writing-mode: horizontal-tb;
     text-orientation: mixed;
-    position: fixed;
-    top: 15%;
-    right: 10%;
+    display: block;
+    text-decoration: none;
 }
 
 .archive-item:hover {
-    background-color: #e9ecef;
-    border-left-color: #6c757d;
+    background-color: var(--usu-light-blue);
 }
 
 .archive-item.active {
-    background-color: #e9ecef;
-    border-left-color: #007bff;
-    font-weight: bold;
+    background-color: var(--usu-light-blue);
+    border-left: 4px solid var(--usu-light-gray);
 }
 
+/* Current outlook styling */
 .outlook-content {
     background-color: white;
     padding: 20px;
-    border-radius: 5px;
+    border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     line-height: 1.6;
     white-space: pre-wrap;
@@ -34,46 +87,22 @@
 
 .outlook-meta {
     margin-top: 10px;
-    color: #6c757d;
+    color: var(--usu-accent);
     font-size: 0.9em;
 }
 
-#current-outlook {
-    flex: 1;
-    margin-right: 20px;
-    margin-bottom: 30px;
-}
+/* Responsive design */
+@media (max-width: 768px) {
+    .outlooks-container {
+        flex-direction: column;
+    }
 
-.archive-list {
-    max-height: 50%;
-    overflow-y: auto;
-    border: 1px solid #dee2e6;
-    border-radius: 1px;
-    padding: 10px;
-    display: inline-block; /* Change to inline-block */
-    flex-direction: column;
-    gap: 8px;
-    position: sticky;
-    top: 0;
-    text-align: center; /* Center the text horizontally */
-}
+    #outlook-archive {
+        width: 100%;
+        margin-top: 2rem;
+    }
 
-.archive-list .archive-entry a {
-    display: block;
-    margin: 0 auto;
-}
-
-.outlooks-container {
-    display: flex;
-    justify-content: space-between;
-}
-
-#outlook-archive {
-    width: 20%;
-    flex-shrink: 0;
-    position: sticky; /* Change to sticky */
-    top: 15%; /* Adjust this value to change the vertical position */
-    right: 0; /* Remove this line */
-    text-align: center; /* Center the text horizontally */
-    padding-top: 10px; /* Add padding to adjust the vertical position of the text */
+    .archive-list {
+        max-height: 300px;
+    }
 }
