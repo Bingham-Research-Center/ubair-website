@@ -1,5 +1,5 @@
-import { stations } from './config.js';
-import { getMarkerColor, createPopupContent } from './mapUtils.js';
+const { stations } = require('./config.js');
+const { getMarkerColor, createPopupContent } = require('./mapUtils.js');
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -110.0153], 9);
