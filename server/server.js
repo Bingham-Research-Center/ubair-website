@@ -1,6 +1,6 @@
-import express from 'express';
-import path from 'path';
-import { promises as fs } from 'fs';
+const express = require('express');
+const path = require('path');
+const fs = require('fs').promises;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
