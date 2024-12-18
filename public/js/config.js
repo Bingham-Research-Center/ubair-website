@@ -7,21 +7,26 @@ export const stations = {
     'Whiterocks': { lat: 40.48380, lng: -109.90620 },
     'Dinosaur NM': { lat: 40.4372, lng: -109.3047},
     'Red Wash': { lat: 40.20443, lng: -109.35321},
+    // 'Rangely': {},
+    'Seven Sisters': { lat: 39.981, lng: -109.345},
+    // 'Dry Fork': {},
+    'Castle Peak': {lat: 40.051, lng: -110.020},
 };
 
 // These are the stations that can be plotted. Eventually, need to expand this stations lookup list
 // - Dinosaur National Monument (A3822)
 // - Red Wash (A1633)
-// - Rangely
-// - Seven Sisters
-// - Horsepool
+// - Rangely (?)
+// - Seven Sisters (UB7ST)
+// - Horsepool (UBHSP)
 // - Ouray (A1622 - Tribe)
 // - Vernal (QV4)
 // - Dry Fork
 // - Whiterocks (A1386)
-// - Roosevelt (QRS)
+// - Roosevelt (QRS, UBRVT) <-- co-located but which to use?
 // - Myton (A1388)
-// - Castle Peak
+// - Castle Peak (UBCSP)
+
 
 // TODO - make ozone the main thing to determine colour of marker?
 export const thresholds = {
