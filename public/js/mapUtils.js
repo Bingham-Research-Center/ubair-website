@@ -1,5 +1,3 @@
-// mapUtils.js
-
 import { thresholds } from './config.js';
 
 // Determine marker color based on measurements
@@ -48,3 +46,4 @@ export function createPopupContent(stationName, measurements) {
 
     return content;
 }
+

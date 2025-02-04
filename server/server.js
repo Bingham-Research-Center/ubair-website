@@ -1,12 +1,20 @@
-const express = require('express');
-const path = require('path');
-const fs = require('fs').promises;
+import express from 'express';
+import path from 'path';
+import { promises as fs } from 'fs';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Serve static files from the public directory
-app.use('/public', express.static('public'));
+// Single static files middleware with all headers
+app.use('/public', express.static('public', {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
 
 // HTML Routes
 app.get('/', (req, res) => {
@@ -25,25 +33,32 @@ app.get('/forecast_data', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_data.html'));
 });
 
+app.get('/api/live-observations', async (req, res) => {
+    try {
+        const data = await fs.readFile('./public/data/liveobs.json');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch data' });
+    }
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
 
-import { fileURLToPath } from 'url';
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function checkDirectoryStructure() {
     const dirs = [
-        '../public/css',
-        '../public/data',
-        '../public/data/outlooks',
-        '../public/images',
-        '../public/js',
-        '../public/partials',
+        '../../public/css',
+        '../../public/data',
+        '../../public/data/outlooks',
+        '../../public/images',
+        '../../public/js',
+        '../../public/partials',
     ];
 
     for (const dir of dirs) {

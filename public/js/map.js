@@ -1,5 +1,5 @@
-const { stations } = require('./config.js');
-const { getMarkerColor, createPopupContent } = require('./mapUtils.js');
+import { stations } from './config.js';
+import { getMarkerColor, createPopupContent } from './mapUtils.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -110.0153], 9);
@@ -49,50 +49,55 @@ usuLogo.style.zIndex = '2';
 
 // Function to update the map with current conditions from live observations
 async function updateMap() {
-    const response = await fetch('/public/data/test_liveobs.json');
-    const data = await response.json();
+    try {
+        const response = await fetch('/api/live-observations');
+        if (!response.ok) throw new Error('Network response was not ok');
+        const data = await response.json();
 
-    // Clear existing markers
-    map.eachLayer((layer) => {
-        if (layer instanceof L.Marker) {
-            map.removeLayer(layer);
-        }
-    });
-
-    // Create markers for each station
-    for (const [stationName, coordinates] of Object.entries(stations)) {
-        const measurements = {
-            'Ozone': data['Ozone']?.[stationName] ?? null,
-            'PM2.5': data['PM2.5']?.[stationName] ?? null,
-            'NOx': data['NOx']?.[stationName] ?? null,
-            'NO': data['NO']?.[stationName] ?? null,
-            'Temperature': data['Temperature']?.[stationName] ?? null
-        };
-
-    let popupContent;
-    if (Object.values(measurements).every(v => v === null || isNaN(v))) {
-        popupContent = `<div><h3>${stationName}</h3><div>Data missing.</div></div>`;
-    } else {
-        popupContent = createPopupContent(stationName, measurements);
-    }
-
-        const markerColor = getMarkerColor(measurements);
-        const markerIcon = L.divIcon({
-            className: 'custom-marker',
-            html: `<div style="
-                background-color: ${markerColor};
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                border: 2px solid white;
-                box-shadow: 0 0 5px rgba(0,0,0,0.5);"
-            ></div>`,
-            iconSize: [24, 24]
+        // Clear existing markers
+        map.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+                map.removeLayer(layer);
+            }
         });
 
-        L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
-            .bindPopup(popupContent)
-            .addTo(map);
+        // Create markers for each station
+        for (const [stationName, coordinates] of Object.entries(stations)) {
+            const measurements = {
+                'Ozone': data['Ozone']?.[stationName] ?? null,
+                'PM2.5': data['PM2.5']?.[stationName] ?? null,
+                'NOx': data['NOx']?.[stationName] ?? null,
+                'NO': data['NO']?.[stationName] ?? null,
+                'Temperature': data['Temperature']?.[stationName] ?? null
+            };
+
+            let popupContent;
+            if (Object.values(measurements).every(v => v === null || isNaN(v))) {
+                popupContent = `<div><h3>${stationName}</h3><div>Data missing.</div></div>`;
+            } else {
+                popupContent = createPopupContent(stationName, measurements);
+            }
+
+            const markerColor = getMarkerColor(measurements);
+            const markerIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background-color: ${markerColor};
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    border: 2px solid white;
+                    box-shadow: 0 0 5px rgba(0,0,0,0.5);"
+                ></div>`,
+                iconSize: [24, 24]
+            });
+
+            L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
+                .bindPopup(popupContent)
+                .addTo(map);
+        }
+    } catch (error) {
+        console.error('Error fetching data:', error);
     }
 }
 

@@ -365,3 +365,16 @@ h1 {
 .study-area-toggle:hover {
     background-color: #0056b3;
 }
+
+.transparent-text {
+    position: absolute;
+    opacity: 0.5;
+}
+
+.sidebar-logo-title {
+    display: block;
+    font-size: 0.875rem; /* Adjust as needed */
+    color: var(--usu-light-gray); /* Adjust as needed */
+    margin-top: 5px; /* Adjust as needed */
+    text-align: center; /* Center the text under the logo */
+}
