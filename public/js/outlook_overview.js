@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", async function() {
     try {
         // Step 1: Fetch the list of files in the outlooks directory
         // TODO - json file list via cron job
-        const response = await fetch('/public/data/outlooks/file_list.json');
+        const response = await fetch('/dev/public/data/outlooks/file_list.json');
         const files = await response.json();
 
         // Step 2: Sort files by date in descending order to get the most recent file
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         // Step 3: Fetch the content of the latest file
         const latestFile = files.find(file => file.endsWith(".md"));
         if (latestFile) {
-            const fileResponse = await fetch(`/public/data/outlooks/${latestFile}`);
+            const fileResponse = await fetch(`/dev/public/data/outlooks/${latestFile}`);
             const data = await fileResponse.text();
 
             // Display only the first few lines of the latest outlook

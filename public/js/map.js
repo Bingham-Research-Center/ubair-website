@@ -50,7 +50,7 @@ usuLogo.style.zIndex = '2';
 // Function to update the map with current conditions from live observations
 async function updateMap() {
     try {
-        const response = await fetch('/api/live-observations');
+        const response = await fetch('/dev/api/live-observations');
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
 

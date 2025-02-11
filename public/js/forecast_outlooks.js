@@ -16,18 +16,19 @@ document.addEventListener("DOMContentLoaded", function() {
     // Fetch the latest outlook data
     async function fetchLatestOutlook() {
         try {
-            const response = await fetch('/public/data/outlooks/file_list.json');
+            const response = await fetch('/dev/public/data/outlooks/file_list.json');
             const files = await response.json();
             if (files.length === 0) throw new Error("No forecast files found.");
 
             const latestFile = files[0];
-            const latestFileUrl = `/public/data/outlooks/${latestFile}`;
+            // I think this needs the /dev prefix
+            const latestFileUrl = `/dev/public/data/outlooks/${latestFile}`;
             const fileResponse = await fetch(latestFileUrl);
             const content = await fileResponse.text();
 
             if (pageType === "index") {
                 outlookContainer.innerHTML = await renderContent(content, true);
-                document.getElementById("see-more").href = `/forecast_outlooks?file=${latestFile}`;
+                document.getElementById("see-more").href = `/dev/forecast_outlooks?file=${latestFile}`;
             } else if (pageType === "forecast_outlooks") {
                 outlookContainer.innerHTML = await renderContent(content);
             }
@@ -40,12 +41,12 @@ document.addEventListener("DOMContentLoaded", function() {
     // Render the archive list with links to previous forecasts
     async function renderArchiveList() {
         try {
-            const response = await fetch('/public/data/outlooks/file_list.json');
+            const response = await fetch('/dev/public/data/outlooks/file_list.json');
             const files = await response.json();
 
             const archiveLinks = files.map(file => `
                 <div class="archive-entry">
-                    <a href="/forecast_outlooks?file=${file}" target="_self">${file}</a>
+                    <a href="/dev/forecast_outlooks?file=${file}" target="_self">${file}</a>
                 </div>
             `).join('');
             archiveContainer.innerHTML = archiveLinks;
@@ -58,7 +59,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Load a specific outlook file by name
     async function loadSpecificOutlook(file) {
         try {
-            const fileUrl = `/public/data/outlooks/${file}`;
+            const fileUrl = `/dev/public/data/outlooks/${file}`;
             const response = await fetch(fileUrl);
             const content = await response.text();
             outlookContainer.innerHTML = await renderContent(content);

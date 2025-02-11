@@ -23,7 +23,7 @@ async function loadSidebar() {
             throw new Error('Sidebar container not found');
         }
 
-        const response = await fetch('/public/partials/sidebar.html');
+        const response = await fetch('/dev/public/partials/sidebar.html');
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
