@@ -4,10 +4,11 @@ import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;  // Changed from 3000
+const BASE_PATH = '/dev';
 
 // Single static files middleware with all headers
-app.use('/public', express.static('public', {
+app.use(`${BASE_PATH}/public`, express.static('public', {
     setHeaders: (res, path) => {
         if (path.endsWith('.js')) {
             res.setHeader('Content-Type', 'application/javascript');
@@ -17,23 +18,23 @@ app.use('/public', express.static('public', {
 }));
 
 // HTML Routes
-app.get('/', (req, res) => {
+app.get(`${BASE_PATH}/`, (req, res) => {
     res.sendFile(path.join(__dirname, '../views/index.html'));
 });
 
-app.get('/locations', (req, res) => {
+app.get(`${BASE_PATH}/locations`, (req, res) => {
     res.sendFile(path.join(__dirname, '../views/locations.html'));
 });
 
-app.get('/forecast_outlooks', (req, res) => {
+app.get(`${BASE_PATH}/forecast_outlooks`, (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_outlooks.html'));
 });
 
-app.get('/forecast_data', (req, res) => {
+app.get(`${BASE_PATH}/forecast_data`, (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_data.html'));
 });
 
-app.get('/api/live-observations', async (req, res) => {
+app.get(`${BASE_PATH}/api/live-observations`, async (req, res) => {
     try {
         const data = await fs.readFile('./public/data/liveobs.json');
         res.json(JSON.parse(data));
