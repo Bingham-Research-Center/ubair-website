@@ -57,8 +57,8 @@ export class DataViz {
 
         // Initialize Components
         this.dataLoader = new DataLoader({
-            liveObs: '/public/data/test_liveobs.json',
-            wind: '/public/data/test_wind_ts.json'
+            liveObs: '/dev/public/data/test_liveobs.json',
+            wind: '/dev/public/data/test_wind_ts.json'
         });
 
         // Initialize UIManager first
