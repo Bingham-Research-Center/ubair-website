@@ -4,7 +4,7 @@ import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 
 const app = express();
-const PORT = process.env.PORT || 3000;  // Changed from 3000
+const PORT = process.env.PORT || 3000;
 const BASE_PATH = '/dev';
 
 // Single static files middleware with all headers
@@ -75,8 +75,8 @@ async function checkDirectoryStructure() {
 // Start server
 checkDirectoryStructure()
     .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`Server running on port ${PORT}`);
             console.log('Directory structure verified');
         });
     })
