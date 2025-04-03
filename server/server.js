@@ -112,12 +112,12 @@ checkDirectoryStructure()
     });
 
 // In server.js, add:
-// import { generateOutlooksList } from './generateOutlooksList.js';
+import { generateOutlooksList } from './generateOutlooksList.js';
 
 // Run initially when server starts
-// generateOutlooksList();
-generateOutlookFileList()
+generateOutlooksList();
+// generateOutlookFileList()
 
 // Schedule to run every hour
-setInterval(generateOutlookFileList, 60 * 60 * 1000);
-// setInterval(generateOutlooksList, 60 * 60 * 1000);
+// setInterval(generateOutlookFileList, 60 * 60 * 1000);
+setInterval(generateOutlooksList, 60 * 60 * 1000);

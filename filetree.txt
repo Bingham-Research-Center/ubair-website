@@ -1,0 +1,117 @@
+.
+|____.DS_Store
+|____filetree.txt
+|____node_modules
+|____server
+| |____process_outlooks.py
+| |____server.js
+|____docs
+|____README.md
+|____public
+| |____.DS_Store
+| |____css
+| | |____outlooks.css
+| | |____map.css
+| | |____styles.css
+| | |____main.css
+| | |____forecast.css
+| |____images
+| | |____OurTeam1.png
+| | |____homeicon.png
+| | |____SEVENSISTERS.png
+| | |____GOOD.png
+| | |____images-removebg-preview.png
+| | |____ozone-graphOZONE2.png
+| | |____FAQicon.png
+| | |____DRYFORK.png
+| | |____DINOSAURMONUMENT.png
+| | |____OURAY.png
+| | |____.DS_Store
+| | |____UNHEALTHY.png
+| | |____moderate.png
+| | |____clockforecast.png
+| | |____screenshot_warning_scale.png
+| | |____ozone-graph1.png
+| | |____HOTcircle.png
+| | |____UNHEALTHYfsg.png
+| | |____ozone-graph2.png
+| | |____linegraphicon.png
+| | |____home.png
+| | |____Contacticon.png
+| | |____utah.png
+| | |____ozone-graph4.png
+| | |____MYTON.png
+| | |____BRS_01_UStateLeft_White.png
+| | |____Our_team.png
+| | |____vernalweb.png
+| | |____temp2.png
+| | |____VERYUNHEALTHY.png
+| | |____horsepool.png
+| | |____redwash1.png
+| | |____hazardous.png
+| | |____temp1.png
+| | |____temp5.png
+| | |____whiterocks.png
+| | |____NEUTRALcircle.png
+| | |____ozone-graph.png
+| | |____OurTeamFinal.png
+| | |____locationsicon.png
+| | |____COLDcircle.png
+| | |____ROOSEVELT.png
+| | |____temp.png
+| | |____forecast.png
+| | |____OURTEAM.png
+| | |____DANGEROUS.png
+| | |____forecast2.png
+| | |____forecast3.png
+| | |____utahstate_logo1.png
+| | |____CASTLEPEAK.png
+| | |____ozone-graphONLY.png
+| | |____images.png
+| | |____hoticon.png
+| | |____coldicon.png
+| | |____webcamicon.png
+| | |____forecast4.png
+| | |____webpagepic.png
+| | |____RANGELY.png
+| |____js
+| | |____constants.js
+| | |____loadSidebar.js
+| | |____index_map.js
+| | |____loadFooter.js
+| | |____plotManager.js
+| | |____outlook_overview.js
+| | |____config.js
+| | |____dataloader.js
+| | |____forecast_data.js
+| | |____data.js
+| | |____uiManager.js
+| | |____utils.js
+| | |____mapUtils.js
+| | |____forecast_outlooks.js
+| | |____api.js
+| | |____DataViz.js
+| | |____map.js
+| |____data
+| | |____DATA_INFO.md
+| | |____test_wind_ts.json
+| | |____README.md
+| | |____outlooks
+| | | |____template.md
+| | |____test_liveobs.json
+| |____partials
+| | |____footer.html
+| | |____sidebar.html
+|____.gitignore
+|____package-lock.json
+|____package.json
+|____.github
+| |____workflows
+|____.git
+|____views
+| |____forecast_data.html
+| |____index.html
+| |____forecast_outlooks.html
+| |____vis.html
+| |____locations.html
+|____.idea

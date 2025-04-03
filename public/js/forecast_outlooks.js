@@ -1,62 +1,107 @@
 // public/js/forecast_outlooks.js
 document.addEventListener("DOMContentLoaded", function() {
-    // Render markdown content with proper styling
-    const markdownIt = window.markdownit({
+    // Initialize markdown renderer
+    const md = window.markdownit({
         html: true,
         linkify: true,
         typographer: true
     });
 
+    // DOM elements
     const outlookContainer = document.getElementById("current-outlook");
-    const outlookContent = outlookContainer.querySelector(".outlook-content");
+    const outlookContent = outlookContainer?.querySelector(".outlook-content");
     const archiveContainer = document.getElementById("outlook-archive");
-    const archiveList = archiveContainer.querySelector(".archive-list");
+    const archiveList = archiveContainer?.querySelector(".archive-list");
+
+    // On home page, we only have the outlook summary element
+    const outlookSummary = document.getElementById("outlook-summary");
 
     let currentFile = null;
 
-    // Function to load and render a specific outlook file
-    async function loadOutlook(filename) {
+    /**
+     * Load and render a specific outlook file
+     * @param {string} filename - The outlook file to load
+     * @param {boolean} summaryOnly - Whether to only load a summary (for homepage)
+     */
+    async function loadOutlook(filename, summaryOnly = false) {
         try {
-            outlookContent.innerHTML = '<div class="loading">Loading outlook...</div>';
+            // Show loading indicator
+            if (outlookContent && !summaryOnly) {
+                outlookContent.innerHTML = '<div class="loading">Loading outlook...</div>';
+            } else if (outlookSummary && summaryOnly) {
+                outlookSummary.innerHTML = '<div class="loading">Loading latest outlook...</div>';
+            }
 
+            // Fetch the markdown file
             const response = await fetch(`/public/data/outlooks/${filename}`);
             if (!response.ok) throw new Error(`Failed to load outlook: ${response.status}`);
 
             const markdown = await response.text();
-            outlookContent.innerHTML = `
-        <div class="markdown-content">
-          ${markdownIt.render(markdown)}
-        </div>
-        <div class="outlook-meta">
-          Issued: ${extractDateFromFilename(filename)}
-        </div>
-      `;
 
-            // Update URL without page reload
-            history.pushState(
-                { filename },
-                '',
-                `/forecast_outlooks?file=${filename}`
-            );
+            // For summary (homepage), only show the first few lines
+            if (summaryOnly && outlookSummary) {
+                const firstLines = markdown.split('\n').slice(0, 5).join('\n');
+                outlookSummary.innerHTML = md.render(firstLines);
 
-            currentFile = filename;
+                // Add "See more" link that directs to the full outlook page
+                const linkContainer = document.getElementById('see-more');
+                if (linkContainer) {
+                    linkContainer.href = `/forecast_outlooks?file=${filename}`;
+                }
+                return;
+            }
 
-            // Update active state in archive list
-            document.querySelectorAll('.archive-item').forEach(item => {
-                item.classList.toggle('active', item.dataset.filename === filename);
-            });
+            // For full view (outlooks page)
+            if (outlookContent) {
+                outlookContent.innerHTML = `
+                    <div class="markdown-content">
+                        ${md.render(markdown)}
+                    </div>
+                    <div class="outlook-meta">
+                        Issued: ${formatDateFromFilename(filename)}
+                    </div>
+                `;
+
+                // Update URL without page reload
+                history.pushState(
+                    { filename },
+                    '',
+                    `/forecast_outlooks?file=${filename}`
+                );
+
+                currentFile = filename;
+
+                // Update active state in archive list
+                if (archiveList) {
+                    document.querySelectorAll('.archive-item').forEach(item => {
+                        item.classList.toggle('active', item.dataset.filename === filename);
+                    });
+                }
+            }
         } catch (error) {
             console.error("Error loading outlook:", error);
-            outlookContent.innerHTML = `
-        <div class="error">
-          <p>Failed to load outlook: ${error.message}</p>
-        </div>
-      `;
+            if (outlookContent && !summaryOnly) {
+                outlookContent.innerHTML = `
+                    <div class="error">
+                        <p>Failed to load outlook: ${error.message}</p>
+                    </div>
+                `;
+            } else if (outlookSummary && summaryOnly) {
+                outlookSummary.innerHTML = `
+                    <div class="error">
+                        <p>Failed to load latest outlook.</p>
+                    </div>
+                `;
+            }
         }
     }
 
-    // Function to extract a readable date from filename
-    function extractDateFromFilename(filename) {
+    /**
+     * Format a readable date from the outlook filename
+     * @param {string} filename - The filename to parse
+     * @returns {string} Formatted date string
+     */
+    function formatDateFromFilename(filename) {
         const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
         if (!match) return "Unknown date";
 
@@ -73,8 +118,19 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    // Load the list of available outlooks
+    /**
+     * Load the list of available outlooks
+     */
     async function loadOutlooksList() {
+        // If we're on the homepage, just load the latest outlook
+        if (outlookSummary && !outlookContent) {
+            loadLatestOutlook(true);
+            return;
+        }
+
+        // Only proceed if we're on the outlooks page
+        if (!archiveList) return;
+
         try {
             archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
 
@@ -83,19 +139,22 @@ document.addEventListener("DOMContentLoaded", function() {
 
             const outlooks = await response.json();
 
-            if (outlooks.length === 0) {
+            if (!outlooks || outlooks.length === 0) {
                 archiveList.innerHTML = '<div class="empty-message">No outlooks available</div>';
                 return;
             }
 
             // Generate archive list HTML
-            archiveList.innerHTML = outlooks.map(outlook => `
-        <div class="archive-item ${currentFile === outlook.filename ? 'active' : ''}" 
-             data-filename="${outlook.filename}">
-          <div class="archive-item-date">${new Date(outlook.date).toLocaleDateString()}</div>
-          <div class="archive-item-time">${new Date(outlook.date).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-        </div>
-      `).join('');
+            archiveList.innerHTML = outlooks.map(outlook => {
+                // Extract date from filename directly instead of using the JSON date
+                const formattedDate = formatDateFromFilename(outlook.filename);
+                return `
+                <div class="archive-item ${currentFile === outlook.filename ? 'active' : ''}" 
+                     data-filename="${outlook.filename}">
+                    <div class="archive-item-date">${formattedDate}</div>
+                </div>
+                `;
+            }).join('');
 
             // Add click handlers to archive items
             document.querySelectorAll('.archive-item').forEach(item => {
@@ -111,25 +170,68 @@ document.addEventListener("DOMContentLoaded", function() {
         } catch (error) {
             console.error("Error loading outlooks list:", error);
             archiveList.innerHTML = `
-        <div class="error">
-          <p>Failed to load outlooks list: ${error.message}</p>
-        </div>
-      `;
+                <div class="error">
+                    <p>Failed to load outlooks list: ${error.message}</p>
+                </div>
+            `;
         }
     }
 
-    // Initialize the page
-    function init() {
-        // Check if a specific file was requested in the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const fileParam = urlParams.get('file');
+    /**
+     * Load the most recent outlook
+     * @param {boolean} summaryOnly - Whether to only load a summary (for homepage)
+     */
+    async function loadLatestOutlook(summaryOnly = false) {
+        try {
+            const response = await fetch('/public/data/outlooks/outlooks_list.json');
+            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
 
-        if (fileParam) {
-            currentFile = fileParam;
-            loadOutlook(fileParam);
+            const outlooks = await response.json();
+
+            if (!outlooks || outlooks.length === 0) {
+                if (outlookSummary && summaryOnly) {
+                    outlookSummary.innerHTML = 'No outlooks available.';
+                }
+                return;
+            }
+
+            // Load the first (most recent) outlook
+            loadOutlook(outlooks[0].filename, summaryOnly);
+        } catch (error) {
+            console.error("Error loading latest outlook:", error);
+            if (outlookSummary && summaryOnly) {
+                outlookSummary.innerHTML = 'Error loading latest outlook.';
+            }
+        }
+    }
+
+    /**
+     * Initialize the page
+     */
+    function init() {
+        // Check if we're on the homepage or the outlooks page
+        const isHomepage = !!outlookSummary && !outlookContent;
+        const isOutlooksPage = !!outlookContent;
+
+        if (isHomepage) {
+            // Just load the latest outlook summary
+            loadLatestOutlook(true);
+            return;
         }
 
-        loadOutlooksList();
+        if (isOutlooksPage) {
+            // Check if a specific file was requested in the URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const fileParam = urlParams.get('file');
+
+            if (fileParam) {
+                currentFile = fileParam;
+                loadOutlook(fileParam);
+            }
+
+            // Load the archive list
+            loadOutlooksList();
+        }
     }
 
     // Start the application
