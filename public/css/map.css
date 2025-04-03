@@ -1,12 +1,31 @@
+/* Base map styles for all pages */
 #map {
-    height: 100vh;
-    width: calc(100% - 250px);
-    position: absolute;
-    top: 0;
-    left: 250px;
-    z-index: 1;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
 }
 
+/* Homepage mini map styles */
+body:not([data-page-type="locations"]) #map {
+    width: 30% !important;
+    height: 300px !important;
+    margin: 20px auto !important;
+    pointer-events: none;
+}
+
+/* Locations page full map styles */
+body[data-page-type="locations"] #map {
+    height: 100vh !important;
+    width: calc(100% - 250px) !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 250px !important;
+    z-index: 1 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Additional styles for map elements */
 .top-bar {
     position: fixed;
     top: 0;
@@ -17,7 +36,6 @@
     z-index: 1000;
 }
 
-/* Updated CSS rules for map.css */
 .usu-logo {
     position: fixed;
     top: 20px;
@@ -30,28 +48,28 @@
     height: auto;
 }
 
-/* Study Area Overlay */
-.overlay-container {
-    position: fixed;
-    top: 50px;
-    left: calc(250px + 20px);
-    background-color: rgba(255, 255, 255, 0.4);
-    padding: 10px;
-    border-radius: 5px;
-    z-index: 1000;
-    max-width: 300px;
-}
-
 #image-overlay {
     display: block;
     max-width: 100%;
     height: auto;
 }
 
-/* Warning Levels Box Styling */
+/* Study area overlay container */
+.overlay-container {
+    position: fixed;
+    top: 50px;
+    left: calc(250px + 20px);
+    background-color: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 1000;
+    max-width: 300px;
+}
+
+/* Warning levels overlay */
 .warning-levels-overlay {
     position: fixed;
-    bottom: 80px; /* Increased to stay above footer */
+    bottom: 80px;
     right: 20px;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.8);
@@ -87,11 +105,17 @@
     color: #721c24;
 }
 
+/* Allow pointer events for popups and markers on all maps */
+.leaflet-marker-pane,
+.leaflet-popup-pane {
+    pointer-events: auto !important;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
-    #map {
-        width: 100%;
-        left: 0;
+    body[data-page-type="locations"] #map {
+        width: 100% !important;
+        left: 0 !important;
     }
 
     .top-bar {

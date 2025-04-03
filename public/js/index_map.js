@@ -3,15 +3,10 @@ import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
-// Initialize a smaller map centered on Uintah Basin with limited interactivity
 const map = L.map('map', {
-    zoomControl: false,       // Remove zoom controls
-    scrollWheelZoom: false,   // Disable scroll wheel zoom
-    dragging: false,          // Disable map dragging/panning
-    doubleClickZoom: false,   // Disable double-click zoom
-    touchZoom: false,         // Disable touch zoom on mobile
-    boxZoom: false,           // Disable box zoom
-    keyboard: false           // Disable keyboard navigation
+    zoomControl: false,
+    scrollWheelZoom: false,
+    doubleClickZoom: false
 }).setView([40.3033, -110.0], 9);
 
 // Add OpenStreetMap tile layer
