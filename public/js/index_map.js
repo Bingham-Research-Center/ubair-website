@@ -20,7 +20,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Function to update the map with key conditions from live observations
+// Function to update the map with current conditions from live observations
 async function updateMiniMap() {
     try {
         // Use the same data source as the main map for consistency

@@ -393,3 +393,16 @@ body:not([data-page-type="locations"]) .leaflet-marker-pane,
 body:not([data-page-type="locations"]) .leaflet-popup-pane {
     pointer-events: auto; /* Re-enable pointer events for markers and popups */
 }
+
+/* Add to public/css/main.css */
+.home-map {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    pointer-events: none; /* Disable map interactions by default */
+}
+
+/* Allow pointer events only for markers/popups on the homepage map */
+.home-map .leaflet-marker-pane,
+.home-map .leaflet-popup-pane {
+    pointer-events: auto; /* Re-enable pointer events for markers and popups */
+}
