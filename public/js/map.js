@@ -1,5 +1,6 @@
 import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
+import { fetchLiveObservations } from './api.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -110.0153], 9);
@@ -50,9 +51,7 @@ usuLogo.style.zIndex = '2';
 // Function to update the map with current conditions from live observations
 async function updateMap() {
     try {
-        const response = await fetch('/api/live-observations');
-        if (!response.ok) throw new Error('Network response was not ok');
-        const data = await response.json();
+        const data = await fetchLiveObservations();
 
         // Clear existing markers
         map.eachLayer((layer) => {
@@ -97,7 +96,7 @@ async function updateMap() {
                 .addTo(map);
         }
     } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error updating map:', error);
     }
 }
 
