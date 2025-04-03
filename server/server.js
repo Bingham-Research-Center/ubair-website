@@ -83,3 +83,12 @@ checkDirectoryStructure()
         console.error('Failed to verify directory structure:', err);
         process.exit(1);
     });
+
+// In server.js, add:
+import { generateOutlooksList } from './generateOutlooksList.js';
+
+// Run initially when server starts
+generateOutlooksList();
+
+// Schedule to run every hour
+setInterval(generateOutlooksList, 60 * 60 * 1000);
