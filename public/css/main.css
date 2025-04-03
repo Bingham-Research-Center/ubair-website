@@ -406,3 +406,83 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
 .home-map .leaflet-popup-pane {
     pointer-events: auto; /* Re-enable pointer events for markers and popups */
 }
+
+/* Add to public/css/main.css or create a new section */
+
+/* Outlook Preview Styling */
+.outlook-preview {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.outlook-preview-header {
+    color: var(--usu-blue);
+    border-bottom: 2px solid var(--usu-light-gray);
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.outlook-preview-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.outlook-preview-date {
+    color: var(--usu-accent);
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+.outlook-preview-content {
+    line-height: 1.6;
+    color: var(--usu-blue);
+    margin-bottom: 15px;
+}
+
+.outlook-preview-link {
+    text-align: right;
+}
+
+.outlook-preview-link a {
+    display: inline-block;
+    color: white;
+    background-color: var(--usu-blue);
+    padding: 8px 16px;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: background-color 0.2s;
+}
+
+.outlook-preview-link a:hover {
+    background-color: var(--usu-light-blue);
+}
+
+/* Risk level indicators */
+.risk-indicator {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: bold;
+    margin-right: 8px;
+}
+
+.risk-low {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.risk-moderate {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.risk-high {
+    background-color: #f8d7da;
+    color: #721c24;
+}

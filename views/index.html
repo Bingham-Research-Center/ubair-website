@@ -40,9 +40,15 @@
         <div id="map" class="home-map" style="width: 30%; height: 300px; margin: 20px auto" aria-label="Map"></div>
 
         <!-- Latest Post Section -->
-        <div id="latest-post" class="post">
-            <div id="outlook-summary">Loading latest outlook...</div>
-            <a href="#" id="see-more">See more</a>
+        <div id="latest-post" class="post outlook-preview">
+            <div class="outlook-preview-header">
+                <h2>Latest Forecast Outlook</h2>
+                <div class="outlook-preview-date" id="outlook-date">Loading...</div>
+            </div>
+            <div class="outlook-preview-content" id="outlook-summary">Loading latest outlook...</div>
+            <div class="outlook-preview-link">
+                <a href="/forecast_outlooks" id="see-more">See Full Outlook</a>
+            </div>
         </div>
     </main>
 
@@ -55,10 +61,56 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
     <!-- Load JavaScript Modules -->
-    <!-- Load JavaScript Modules -->
     <script type="module" src="/public/js/config.js"></script>
-    <script type="module" src="/public/js/forecast_outlooks.js"></script>
     <script type="module" src="/public/js/index_map.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/index_outlook.js"></script>
+
+    <!-- Add this before the closing </body> tag in views/index.html -->
+    <script>
+    document.addEventListener("DOMContentLoaded", async function() {
+        const outlookSummary = document.getElementById("outlook-summary");
+        const seeMoreLink = document.getElementById("see-more");
+
+        if (!outlookSummary || !seeMoreLink) return;
+
+        try {
+            // Fetch the list of outlooks
+            const response = await fetch('/public/data/outlooks/outlooks_list.json');
+            if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
+
+            const outlooks = await response.json();
+
+            if (outlooks.length === 0) {
+                outlookSummary.textContent = "No recent outlook available.";
+                return;
+            }
+
+            // Get the latest outlook
+            const latestOutlook = outlooks[0];
+
+            // Fetch its content
+            const outlookResponse = await fetch(`/public/data/outlooks/${latestOutlook.filename}`);
+            if (!outlookResponse.ok) throw new Error(`Failed to load outlook: ${outlookResponse.status}`);
+
+            const markdownContent = await outlookResponse.text();
+
+            // Extract a preview (first few lines)
+            const previewLines = markdownContent.split('\n')
+                .filter(line => line.trim() !== '')
+                .slice(0, 5);
+
+            outlookSummary.innerHTML = previewLines.join('<br>');
+
+            // Update the "See more" link
+            seeMoreLink.href = `/forecast_outlooks?file=${latestOutlook.filename}`;
+
+        } catch (error) {
+            console.error("Error loading outlook preview:", error);
+            outlookSummary.textContent = "Unable to load the latest outlook.";
+            seeMoreLink.href = "/forecast_outlooks";
+        }
+    });
+    </script>
 </body>
 </html>
