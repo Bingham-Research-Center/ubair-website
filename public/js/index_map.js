@@ -1,11 +1,17 @@
+// Modified version of public/js/index_map.js
 import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
+import { fetchLiveObservations } from './api.js';
 
-// Initialize a smaller map centered on Uintah Basin
+// Initialize a smaller map centered on Uintah Basin with limited interactivity
 const map = L.map('map', {
-    zoomControl: false,
-    scrollWheelZoom: false,
-    doubleClickZoom: false
+    zoomControl: false,       // Remove zoom controls
+    scrollWheelZoom: false,   // Disable scroll wheel zoom
+    dragging: false,          // Disable map dragging/panning
+    doubleClickZoom: false,   // Disable double-click zoom
+    touchZoom: false,         // Disable touch zoom on mobile
+    boxZoom: false,           // Disable box zoom
+    keyboard: false           // Disable keyboard navigation
 }).setView([40.3033, -110.0], 9);
 
 // Add OpenStreetMap tile layer
@@ -17,8 +23,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Function to update the map with key conditions from live observations
 async function updateMiniMap() {
     try {
-        const response = await fetch('/public/data/test_liveobs.json');
-        const data = await response.json();
+        // Use the same data source as the main map for consistency
+        const data = await fetchLiveObservations();
 
         // Clear existing markers
         map.eachLayer((layer) => {

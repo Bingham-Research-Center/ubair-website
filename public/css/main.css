@@ -378,3 +378,18 @@ h1 {
     margin-top: 5px; /* Adjust as needed */
     text-align: center; /* Center the text under the logo */
 }
+
+body:not([data-page-type="locations"]) #map {
+    width: 100% !important;
+    height: 300px !important;
+    margin: 20px 0 !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    pointer-events: none; /* Disable map interactions by default */
+}
+
+/* Allow pointer events only for markers/popups but not map dragging */
+body:not([data-page-type="locations"]) .leaflet-marker-pane,
+body:not([data-page-type="locations"]) .leaflet-popup-pane {
+    pointer-events: auto; /* Re-enable pointer events for markers and popups */
+}
