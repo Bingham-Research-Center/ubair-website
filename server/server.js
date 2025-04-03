@@ -72,8 +72,35 @@ async function checkDirectoryStructure() {
 }
 
 // Start server
+// Add this function to server.js
+async function generateOutlookFileList() {
+    try {
+        const directory = path.join(__dirname, '../public/data/outlooks');
+        const files = await fs.readdir(directory);
+
+        // Filter for markdown files and sort by name (assuming names include dates)
+        const markdownFiles = files
+            .filter(file => file.endsWith('.md') && file !== 'template.md')
+            .sort((a, b) => b.localeCompare(a)); // Sort in reverse alphabetical order (newest first)
+
+        // Write the file list to a JSON file
+        await fs.writeFile(
+            path.join(directory, 'file_list.json'),
+            JSON.stringify(markdownFiles)
+        );
+
+        console.log('Outlook file list generated successfully');
+    } catch (error) {
+        console.error('Error generating outlook file list:', error);
+    }
+}
+
+// Call this function when the server starts and set up a periodic refresh
 checkDirectoryStructure()
     .then(() => {
+        generateOutlookFileList(); // Generate initial file list
+        setInterval(generateOutlookFileList, 60 * 60 * 1000); // Refresh every hour
+
         app.listen(PORT, () => {
             console.log(`Server running at http://localhost:${PORT}`);
             console.log('Directory structure verified');
@@ -85,10 +112,12 @@ checkDirectoryStructure()
     });
 
 // In server.js, add:
-import { generateOutlooksList } from './generateOutlooksList.js';
+// import { generateOutlooksList } from './generateOutlooksList.js';
 
 // Run initially when server starts
-generateOutlooksList();
+// generateOutlooksList();
+generateOutlookFileList()
 
 // Schedule to run every hour
-setInterval(generateOutlooksList, 60 * 60 * 1000);
+setInterval(generateOutlookFileList, 60 * 60 * 1000);
+// setInterval(generateOutlooksList, 60 * 60 * 1000);

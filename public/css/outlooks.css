@@ -32,9 +32,10 @@
 }
 
 .archive-list {
-    padding: 0;
-    margin: 0;
-    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
     max-height: 600px;
     overflow-y: auto;
 }
@@ -53,26 +54,30 @@
     border-radius: 4px;
 }
 
-/* Archive items styling */
 .archive-item {
-    padding: 15px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.3s;
-    writing-mode: horizontal-tb;
-    text-orientation: mixed;
-    display: block;
+    padding: 0.75rem 1rem;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
     text-decoration: none;
+    color: white;
 }
 
 .archive-item:hover {
     background-color: var(--usu-light-blue);
+    transform: translateX(4px);
 }
 
 .archive-item.active {
     background-color: var(--usu-light-blue);
     border-left: 4px solid var(--usu-light-gray);
+}
+
+.archive-date {
+    font-weight: 500;
+    margin-right: 10px;
 }
 
 /* Current outlook styling */
@@ -88,6 +93,20 @@
 .outlook-meta {
     margin-top: 10px;
     color: var(--usu-accent);
+    font-size: 0.9em;
+}
+
+.archive-title {
+    font-size: 0.9em;
+    opacity: 0.8;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.archive-icon {
+    margin-right: 10px;
     font-size: 0.9em;
 }
 
