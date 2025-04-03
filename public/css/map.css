@@ -17,6 +17,7 @@
     z-index: 1000;
 }
 
+/* Updated CSS rules for map.css */
 .usu-logo {
     position: fixed;
     top: 20px;
@@ -25,14 +26,15 @@
 }
 
 .usu-logo img {
-    transform: scale(0.5);
+    max-width: 150px;
+    height: auto;
 }
 
 /* Study Area Overlay */
 .overlay-container {
     position: fixed;
-    top: 50px; /* Moved to top */
-    left: calc(250px + 20px); /* Positioned right of sidebar with padding */
+    top: 50px;
+    left: calc(250px + 20px);
     background-color: rgba(255, 255, 255, 0.4);
     padding: 10px;
     border-radius: 5px;
@@ -41,9 +43,9 @@
 }
 
 #image-overlay {
-    height: 15vh;
-    width: auto;
     display: block;
+    max-width: 100%;
+    height: auto;
 }
 
 /* Warning Levels Box Styling */

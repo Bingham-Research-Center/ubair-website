@@ -1,3 +1,4 @@
+// Modified portion of map.js to fix image display issues
 import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
@@ -11,42 +12,88 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Overlay toggle setup
-const overlayContainer = document.querySelector('.overlay-container');
+// Add this to your map.js file for USU logo positioning and study area sizing
+document.addEventListener('DOMContentLoaded', function() {
+    // Get references to the overlay container and image
+    const overlayContainer = document.querySelector('.overlay-container');
+    const studyAreaImage = document.getElementById('image-overlay');
 
-// Study Area Toggle Button
-const studyAreaToggle = document.createElement('button');
-studyAreaToggle.textContent = 'Hide Study Area'; // Default to "Hide" as it is visible initially
-studyAreaToggle.className = 'study-area-toggle';
-overlayContainer.insertBefore(studyAreaToggle, overlayContainer.firstChild);
+    if (!overlayContainer || !studyAreaImage) {
+        console.error('Study area elements not found');
+        return;
+    }
 
-let studyAreaVisible = true; // Set visible by default
-studyAreaToggle.addEventListener('click', () => {
-    const images = overlayContainer.querySelectorAll('img');
-    images.forEach(img => {
-        img.style.display = studyAreaVisible ? 'none' : 'block';
+    // Position the overlay container correctly
+    overlayContainer.style.position = 'fixed';
+    overlayContainer.style.top = '10vh' // 10% of viewport height
+    overlayContainer.style.right = '2%';
+    overlayContainer.style.left = 'auto'; // Override any left positioning
+    overlayContainer.style.zIndex = '1000';
+    overlayContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+    overlayContainer.style.padding = '10px';
+    overlayContainer.style.borderRadius = '5px';
+    overlayContainer.style.width = 'auto'; // Make container width fit the content
+    overlayContainer.style.maxWidth = '12vw'; // Limit maximum width
+
+    // Make the study area image smaller
+    studyAreaImage.style.display = 'block';
+    studyAreaImage.style.maxWidth = '8vw';
+    studyAreaImage.style.minWidth = '80px'; // Stops it becoming too small on, e.g., mobile
+    studyAreaImage.style.height = 'auto';
+
+    // Create and position the toggle button separate from the container
+    const studyAreaToggle = document.createElement('button');
+    studyAreaToggle.textContent = 'Hide Study Area';
+    studyAreaToggle.className = 'study-area-toggle';
+
+    // Style the toggle button
+    studyAreaToggle.style.position = 'fixed';
+    studyAreaToggle.style.top = '2vh';
+    studyAreaToggle.style.right = '2%';
+    studyAreaToggle.style.padding = '0.5em 1em'; // Relative to font size instead of 8px 12px
+    studyAreaToggle.style.zIndex = '1001'; // Above the container
+    studyAreaToggle.style.backgroundColor = '#00263A'; // USU blue
+    studyAreaToggle.style.color = 'white';
+    studyAreaToggle.style.border = 'none';
+    studyAreaToggle.style.borderRadius = '4px';
+    studyAreaToggle.style.cursor = 'pointer';
+
+    // Add the button to the body
+    document.body.appendChild(studyAreaToggle);
+
+    // Setup toggle functionality
+    let studyAreaVisible = true;
+    studyAreaToggle.addEventListener('click', () => {
+        overlayContainer.style.display = studyAreaVisible ? 'none' : 'block';
+        studyAreaVisible = !studyAreaVisible;
+        studyAreaToggle.textContent = studyAreaVisible ? 'Hide Study Area' : 'Show Study Area';
     });
-    studyAreaVisible = !studyAreaVisible;
-    studyAreaToggle.textContent = studyAreaVisible ? 'Hide Study Area' : 'Show Study Area';
+
+    const usuLogoContainer = document.querySelector('.usu-logo');
+    if (usuLogoContainer) {
+        // Remove any existing styles
+        usuLogoContainer.removeAttribute('style');
+
+        // Apply new positioning styles
+        usuLogoContainer.style.position = 'fixed';
+        usuLogoContainer.style.bottom = '5vh';
+        usuLogoContainer.style.left = 'calc(250px + 2%)'; // Keep relative to sidebar width
+        usuLogoContainer.style.top = 'auto'; // Clear top positioning
+        usuLogoContainer.style.right = 'auto'; // Clear right positioning
+        usuLogoContainer.style.zIndex = '1000';
+
+        // Fix the logo image as well
+        const usuLogoImage = usuLogoContainer.querySelector('img');
+        if (usuLogoImage) {
+            usuLogoImage.style.transform = 'none'; // Remove any transform
+            usuLogoImage.style.height = 'auto';
+            usuLogoImage.style.minWidth = '60px';
+            usuLogoImage.style.maxWidth = '100px';
+        }
+    } else {
+        console.error('USU logo container not found');
+    }
 });
-
-// Positioning graphics and adjusting overlay size
-const studyAreaGraphic = document.querySelector('.overlay-container');
-const usuLogo = document.querySelector('.usu-logo');
-
-// Position the study area graphic in the bottom half of the view window
-studyAreaGraphic.style.position = 'fixed';
-studyAreaGraphic.style.bottom = '0'; // Anchor to the bottom of the view window
-studyAreaGraphic.style.left = '10px'; // Adjust as needed for spacing from left
-studyAreaGraphic.style.zIndex = '2';
-studyAreaGraphic.style.height = '30vh'; // Limit height to bottom half of the page
-
-// Position the USU logo 20% from the top
-usuLogo.style.position = 'fixed';
-usuLogo.style.top = '1%';
-usuLogo.style.left = '10px'; // Adjust as needed for spacing from left
-usuLogo.style.transform = 'translateY(0)'; // Remove centering
-usuLogo.style.zIndex = '2';
 
 // Function to update the map with current conditions from live observations
 async function updateMap() {
