@@ -3,8 +3,20 @@ import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 
+// JRL - this is the data route
+import dataUploadRoutes from './routes/dataUpload.js';
+
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Get current directory (needed for ES modules?)
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+
+app.use(express.json());
+
+// Routes in dataUpload.js will be prefixed with '/api/data'...
+app.use('/api/data', dataUploadRoutes);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -40,6 +52,11 @@ app.get('/api/live-observations', async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch data' });
     }
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running at http://localhost:${PORT}`);
+    console.log('Data upload API available at /api/data/upload/:dataType');
 });
 
 // Error handling middleware
