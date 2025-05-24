@@ -5,13 +5,13 @@ import { fileURLToPath } from 'url';
 
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
+// import { generateOutlooksList } from './generateOutlooksList.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Get current directory (needed for ES modules?)
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 
@@ -65,9 +65,6 @@ app.use((err, req, res, next) => {
     res.status(500).send('Something broke!');
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
 async function checkDirectoryStructure() {
     const dirs = [
         '../../public/css',
@@ -117,19 +114,11 @@ checkDirectoryStructure()
     .then(() => {
         generateOutlookFileList(); // Generate initial file list
         setInterval(generateOutlookFileList, 60 * 60 * 1000); // Refresh every hour
-
-        app.listen(PORT, () => {
-            console.log(`Server running at http://localhost:${PORT}`);
-            console.log('Directory structure verified');
-        });
     })
     .catch(err => {
         console.error('Failed to verify directory structure:', err);
         process.exit(1);
     });
-
-// In server.js, add:
-import { generateOutlooksList } from './generateOutlooksList.js';
 
 // Run initially when server starts
 // generateOutlooksList();
