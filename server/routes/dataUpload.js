@@ -46,7 +46,8 @@ function validateApiKey(req, res, next) {
     if (providedKey !== validKey) {
         return res.status(401).json({
             success: false,
-            message: `Invalid API key: ${providedKey ? providedKey.slice(0, 5) : 'none'}`
+            // message: `Invalid API key is: ${providedKey ? providedKey.slice(0, 5) : 'none'}`
+            message: `Invalid API key is: ${validKey ? validKey.slice(0, 5) : 'none'}`
         });
         }
     next();
