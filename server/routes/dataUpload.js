@@ -44,8 +44,11 @@ function validateApiKey(req, res, next) {
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
     if (providedKey !== validKey) {
-        return res.status(401).json({ success: false, message: 'Invalid API key' });
-    }
+        return res.status(401).json({
+            success: false,
+            message: `Invalid API key: ${providedKey ? providedKey.slice(0, 5) : 'none'}`
+        });
+        }
     next();
 }
 
