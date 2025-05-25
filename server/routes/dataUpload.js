@@ -43,13 +43,36 @@ function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
+    // Debug logging (remove in production)
+    console.log('API Key validation:');
+    console.log('- Valid key exists:', !!validKey);
+    console.log('- Valid key length:', validKey ? validKey.length : 0);
+    console.log('- Provided key exists:', !!providedKey);
+    console.log('- Provided key length:', providedKey ? providedKey.length : 0);
+    console.log('- Keys match:', providedKey === validKey);
+
+    if (!validKey) {
+        console.error('ERROR: DATA_UPLOAD_API_KEY environment variable is not set!');
+        return res.status(500).json({
+            success: false,
+            message: 'Server configuration error: API key not configured'
+        });
+    }
+
+    if (!providedKey) {
+        return res.status(401).json({
+            success: false,
+            message: 'No API key provided in x-api-key header'
+        });
+    }
+
     if (providedKey !== validKey) {
         return res.status(401).json({
             success: false,
-            // message: `Invalid API key is: ${providedKey ? providedKey.slice(0, 5) : 'none'}`
-            message: `Invalid API key is: ${validKey ? validKey.slice(0, 5) : 'none'}`
+            message: `Invalid API key provided: ${providedKey.slice(0, 5)}...`
         });
-        }
+    }
+
     next();
 }
 
