@@ -69,19 +69,25 @@ function validateApiKey(req, res, next) {
     next();
 }
 
-// Additional middleware for IP whitelisting
+// Middleward to check IP against whitelisting
 function validateIpAddress(req, res, next) {
-    const clientIp = req.ip;
-    // Notchpeak1, Notchpeak2
+    // Get the real client IP (handles proxies/load balancers)
+    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] ||
+        req.headers['x-real-ip'] ||
+        req.connection.remoteAddress ||
+        req.ip;
+
     const allowedIps = ['155.101.26.78', '155.101.26.79'];
 
     if (!allowedIps.includes(clientIp)) {
+        console.log(`Access denied from IP: ${clientIp}`);
         return res.status(403).json({
             success: false,
-            message: 'Forbidden: Access denied from this IP address'
+            message: `Forbidden: Access denied from IP ${clientIp}`
         });
     }
 
+    console.log(`Access granted to IP: ${clientIp}`);
     next();
 }
 
