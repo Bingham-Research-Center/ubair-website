@@ -43,57 +43,58 @@ function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
-    if (!providedKey) {
-        return res.status(401).json({
-            success: false,
-            message: 'Missing API key in X-API-Key header'
-        });
-    }
-
-    if (!validKey) {
-        console.error('Server configuration error: DATA_UPLOAD_API_KEY not set');
-        return res.status(500).json({
-            success: false,
-            message: 'Server configuration error'
-        });
-    }
-
     if (providedKey !== validKey) {
-        console.log(`Invalid API key attempt from ${req.ip}`);
-        return res.status(401).json({
-            success: false,
-            message: 'Invalid API key'
-        });
+        return res.status(401).json({ success: false, message: 'Invalid API key' });
     }
-
     next();
 }
 
-// Middleward to check IP against whitelisting
-function validateIpAddress(req, res, next) {
-    // Get the real client IP (handles proxies/load balancers)
-    const clientIp = req.headers['x-forwarded-for']?.split(',')[0] ||
-        req.headers['x-real-ip'] ||
-        req.connection.remoteAddress ||
-        req.ip;
+async function validateCHPCOrigin(req, res, next) {
+    try {
+        const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+        const clientHostname = req.headers['x-client-hostname'];
 
-    const allowedIps = ['155.101.26.78', '155.101.26.79'];
+        console.log(`Validating request from IP: ${clientIp}, Hostname: ${clientHostname}`);
 
-    if (!allowedIps.includes(clientIp)) {
-        console.log(`Access denied from IP: ${clientIp}`);
+        // Method 1: Check custom hostname header
+        if (clientHostname && clientHostname.endsWith('chpc.utah.edu')) {
+            console.log('Access granted via hostname header');
+            return next();
+        }
+
+        // Method 2: Fallback to reverse DNS lookup
+        try {
+            const hostnames = await reverseLookup(clientIp);
+            const isValidHostname = hostnames.some(hostname =>
+                hostname.endsWith('chpc.utah.edu')
+            );
+
+            if (isValidHostname) {
+                console.log('Access granted via reverse DNS');
+                return next();
+            }
+        } catch (dnsError) {
+            console.log('Reverse DNS lookup failed:', dnsError.message);
+        }
+
+        // Both methods failed
+        console.log(`Access denied from ${clientIp}`);
         return res.status(403).json({
             success: false,
-            message: `Forbidden: Access denied from IP ${clientIp}`
+            message: 'Forbidden: Not from authorized CHPC system'
+        });
+
+    } catch (error) {
+        console.error('Origin validation error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Server error during validation'
         });
     }
-
-    console.log(`Access granted to IP: ${clientIp}`);
-    next();
 }
 
-
 // Main upload route
-router.post('/upload/:dataType', validateIpAddress, validateApiKey, upload.single('file'), (req, res) => {
+router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.single('file'), (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({
