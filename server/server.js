@@ -33,8 +33,8 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/index.html'));
 });
 
-app.get('/locations', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/locations.html'));
+app.get('/live_aq', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/live_aq.html'));
 });
 
 app.get('/forecast_outlooks', (req, res) => {

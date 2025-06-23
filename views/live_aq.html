@@ -3,20 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Locations - Uintah Basin Air Quality</title>
+    <title>Map of Uintah Basin Air Quality</title>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="/public/css/main.css">
-    <link rel="stylesheet" href="/public/css/map.css">
+    <link rel="stylesheet" href="/public/css/live_aq.css">
 </head>
-<body data-page-type="locations">    <!-- Map Container -->
-    <div id="map"></div>
-
-    <!-- Top Bar -->
-    <div class="top-bar"></div>
+<body data-page-type="live_aq">    <!-- Map Container -->
+    <div id="live_aq"></div>
 
     <!-- USU Logo -->
     <div class="usu-logo">
@@ -48,7 +45,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="/public/js/map.js"></script>
+    <script type="module" src="/js/live_aq.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
 </html>
