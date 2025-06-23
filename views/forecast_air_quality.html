@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Air Quality Forecasts for Uintah Basin using Clyfar AI model">
+    <title>Air Quality Forecasts - Uintah Basin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/forecast_air_quality.css">
+</head>
+<body data-page-type="forecast_air_quality">
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <h1>Air Quality Forecasts</h1>
+
+        <!-- Latest Written Outlook -->
+        <section class="outlook-preview-section" aria-label="Latest Written Outlook">
+            <div class="section-header">
+                <h2><i class="fas fa-file-text"></i> Latest Written Outlook</h2>
+                <div class="info-icon" data-tooltip="Professional forecast outlook written by our meteorologists">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+            </div>
+            <div class="outlook-preview-content">
+                <div class="outlook-text" id="outlook-preview">
+                    Loading latest outlook preview...
+                </div>
+                <div class="outlook-actions">
+                    <a href="/forecast_outlooks" class="outlook-link">
+                        <i class="fas fa-external-link-alt"></i> View Full Outlook
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Clyfar AI Forecasting -->
+        <section class="clyfar-section" aria-label="Clyfar AI Forecasting System">
+            <div class="section-header clyfar-header">
+                <h2><i class="fas fa-brain"></i> Clyfar AI Forecasting</h2>
+                <div class="clyfar-info">
+                    <div class="info-icon clyfar-info-icon" data-tooltip="Clyfar (Welsh for 'clever') is our proprietary AI model for ozone forecasting">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <div class="clyfar-links">
+                        <a href="/about/clyfar" target="_blank" rel="noopener" class="info-link">
+                            <i class="fas fa-info"></i> About Clyfar
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clyfar-content">
+                <!-- Forecast Summary Cards -->
+                <div class="forecast-summary-grid">
+                    <div class="summary-card current">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Today's Forecast</h3>
+                            <p class="forecast-level">Moderate</p>
+                            <p class="confidence">High Confidence</p>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card tomorrow">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-plus"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>Tomorrow</h3>
+                            <p class="forecast-level">Elevated</p>
+                            <p class="confidence">Medium Confidence</p>
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card week">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-week"></i>
+                        </div>
+                        <div class="card-content">
+                            <h3>7-Day Trend</h3>
+                            <p class="forecast-level">Increasing</p>
+                            <p class="confidence">Variable Confidence</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Probability Heatmap -->
+                <div class="heatmap-container">
+                    <div class="visualization-header">
+                        <h3><i class="fas fa-fire"></i> 15-Day Ozone Probability Forecast</h3>
+                        <div class="info-icon" data-tooltip="Heatmap showing probability of different ozone levels over the next 15 days">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="heatmap-display">
+                        <div class="heatmap-placeholder">
+                            <img src="/public/images/clyfar_heatmap_placeholder.png" alt="Clyfar Ozone Probability Heatmap" class="heatmap-image">
+                            <div class="heatmap-overlay">
+                                <p>Interactive heatmap will be displayed here</p>
+                                <i class="fas fa-chart-bar fa-3x"></i>
+                            </div>
+                        </div>
+                        <div class="heatmap-legend">
+                            <h4>Ozone Levels</h4>
+                            <div class="legend-items">
+                                <div class="legend-item background">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Background (&lt;50 ppb)</span>
+                                </div>
+                                <div class="legend-item moderate">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Moderate (50-70 ppb)</span>
+                                </div>
+                                <div class="legend-item elevated">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Elevated (70-100 ppb)</span>
+                                </div>
+                                <div class="legend-item extreme">
+                                    <span class="legend-color"></span>
+                                    <span class="legend-label">Extreme (&gt;100 ppb)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scenario Time Series -->
+                <div class="timeseries-container">
+                    <div class="visualization-header">
+                        <h3><i class="fas fa-chart-line"></i> Forecast Scenarios</h3>
+                        <div class="info-icon" data-tooltip="Best case, average, and worst case ozone forecasts for the next 15 days">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="timeseries-display" id="scenario-chart">
+                        <div class="chart-placeholder">
+                            <div class="scenario-legend">
+                                <div class="scenario-item best-case">
+                                    <span class="scenario-line"></span>
+                                    <span>Best Case</span>
+                                </div>
+                                <div class="scenario-item average">
+                                    <span class="scenario-line"></span>
+                                    <span>Average</span>
+                                </div>
+                                <div class="scenario-item worst-case">
+                                    <span class="scenario-line"></span>
+                                    <span>Worst Case</span>
+                                </div>
+                            </div>
+                            <div class="chart-area">
+                                <i class="fas fa-chart-line fa-4x"></i>
+                                <p>Interactive time series chart will be displayed here</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Model Performance -->
+                <div class="performance-container">
+                    <div class="visualization-header">
+                        <h3><i class="fas fa-tachometer-alt"></i> Model Performance</h3>
+                        <div class="info-icon" data-tooltip="Recent accuracy and performance metrics for Clyfar forecasts">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="performance-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Accuracy</h4>
+                                <p class="metric-value">87%</p>
+                                <p class="metric-period">Last 30 days</p>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Lead Time</h4>
+                                <p class="metric-value">5 days</p>
+                                <p class="metric-period">Reliable forecast</p>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="metric-content">
+                                <h4>Skill Score</h4>
+                                <p class="metric-value">0.73</p>
+                                <p class="metric-period">vs. climatology</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tooltip Container -->
+        <div id="tooltip" class="tooltip" role="tooltip"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Clyfar forecasts are experimental research products. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/forecast_air_quality.js"></script>
+</body>
+</html>

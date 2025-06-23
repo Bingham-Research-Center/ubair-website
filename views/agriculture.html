@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Agricultural Weather Forecasts for Uintah Basin">
+    <title>Agricultural Weather - Uintah Basin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/agriculture.css">
+</head>
+<body data-page-type="agriculture">
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <h1>Agricultural Weather Forecasts</h1>
+
+        <!-- Current Conditions Summary -->
+        <section class="weather-summary" aria-label="Current Agricultural Conditions">
+            <div class="summary-grid">
+                <div class="condition-card">
+                    <div class="card-icon">
+                        <i class="fas fa-thermometer-half"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Temperature</h3>
+                        <p class="current-value">--°F</p>
+                        <p class="trend">Loading...</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card">
+                    <div class="card-icon">
+                        <i class="fas fa-snowflake"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Frost Risk</h3>
+                        <p class="current-value">--</p>
+                        <p class="trend">Next 48 hours</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card">
+                    <div class="card-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Precipitation</h3>
+                        <p class="current-value">-- in</p>
+                        <p class="trend">24-hour forecast</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card">
+                    <div class="card-icon">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Wind Speed</h3>
+                        <p class="current-value">-- mph</p>
+                        <p class="trend">Spray conditions</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Agricultural Forecast Sections -->
+        <div class="forecast-container">
+            <!-- Growing Conditions -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-seedling"></i> Growing Conditions</h2>
+                <div class="forecast-content">
+                    <div class="placeholder-content">
+                        <p>Growing degree day accumulation, soil temperature forecasts, and crop development guidance will be displayed here.</p>
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-line fa-3x"></i>
+                            <p>Temperature & Growing Degree Days Chart</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Irrigation Planning -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-tint"></i> Irrigation Planning</h2>
+                <div class="forecast-content">
+                    <div class="placeholder-content">
+                        <p>Evapotranspiration rates, soil moisture forecasts, and irrigation scheduling recommendations.</p>
+                        <div class="chart-placeholder">
+                            <i class="fas fa-chart-bar fa-3x"></i>
+                            <p>ET Rates & Precipitation Forecast</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Field Operations -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-tractor"></i> Field Operations</h2>
+                <div class="forecast-content">
+                    <div class="placeholder-content">
+                        <p>Wind speed forecasts for spraying, soil conditions for fieldwork, and weather windows for operations.</p>
+                        <div class="chart-placeholder">
+                            <i class="fas fa-wind fa-3x"></i>
+                            <p>Wind Speed & Field Conditions</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Agricultural Alerts -->
+        <section class="alerts-section">
+            <h2><i class="fas fa-exclamation-triangle"></i> Agricultural Alerts</h2>
+            <div class="alerts-container">
+                <div class="alert-placeholder">
+                    <p>Frost warnings, severe weather alerts, and growing condition advisories will appear here.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Agricultural forecasts are experimental. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/agriculture.js"></script>
+</body>
+</html>

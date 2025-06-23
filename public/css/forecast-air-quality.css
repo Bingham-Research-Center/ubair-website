@@ -1,0 +1,695 @@
+/* Forecast Air Quality - Welsh-inspired color scheme */
+:root {
+    /* Welsh-inspired colors (Clyfar = Welsh for clever) */
+    --welsh-red: #c8102e;           /* Welsh dragon red */
+    --welsh-green: #00a950;         /* Welsh leek green */
+    --welsh-gold: #ffb612;          /* Welsh daffodil yellow */
+    --welsh-slate: #2f4f4f;         /* Welsh slate gray */
+    --welsh-sea: #006994;           /* Welsh coastal blue */
+    --welsh-mist: #e6f2ff;          /* Light Welsh mist */
+    
+    /* Air quality specific colors */
+    --air-primary: var(--welsh-slate);
+    --air-secondary: var(--welsh-sea);
+    --air-accent: var(--welsh-green);
+    --air-warning: var(--welsh-gold);
+    --air-danger: var(--welsh-red);
+    --air-background: var(--welsh-mist);
+    
+    /* Ozone level colors */
+    --ozone-background: #4ade80;    /* Green */
+    --ozone-moderate: #facc15;      /* Yellow */
+    --ozone-elevated: #fb923c;      /* Orange */
+    --ozone-extreme: #ef4444;       /* Red */
+}
+
+/* Override main header for air quality theme */
+body[data-page-type="forecast_air_quality"] h1 {
+    background: linear-gradient(135deg, var(--air-primary), var(--air-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+body[data-page-type="forecast_air_quality"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--air-primary), var(--air-accent));
+    border-radius: 2px;
+}
+
+/* Latest Outlook Section */
+.outlook-preview-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    border-left: 4px solid var(--air-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.outlook-preview-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--air-primary), var(--air-secondary));
+    border-radius: 16px 16px 0 0;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.section-header h2 {
+    color: var(--air-primary);
+    font-size: 1.4rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.section-header h2 i {
+    color: var(--air-secondary);
+}
+
+.outlook-preview-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+}
+
+.outlook-text {
+    flex: 1;
+    color: #555;
+    line-height: 1.6;
+    font-size: 0.95rem;
+    background: var(--air-background);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 3px solid var(--air-accent);
+}
+
+.outlook-actions {
+    flex-shrink: 0;
+}
+
+.outlook-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--air-secondary);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.outlook-link:hover {
+    background: var(--air-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(47, 79, 79, 0.3);
+}
+
+/* Clyfar Section - Welsh theme */
+.clyfar-section {
+    background: linear-gradient(135deg, #ffffff, var(--air-background));
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 30px rgba(47, 79, 79, 0.12);
+    border: 2px solid rgba(47, 79, 79, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.clyfar-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 6px;
+    background: linear-gradient(90deg, var(--welsh-red), var(--welsh-gold), var(--welsh-green));
+    border-radius: 20px 20px 0 0;
+}
+
+.clyfar-section::after {
+    content: '🏴󠁧󠁢󠁷󠁬󠁳󠁿';
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 2rem;
+    opacity: 0.1;
+}
+
+.clyfar-header {
+    margin-bottom: 2rem;
+}
+
+.clyfar-header h2 {
+    color: var(--welsh-red);
+    font-size: 1.6rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.clyfar-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.clyfar-info-icon {
+    color: var(--welsh-gold);
+}
+
+.info-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--welsh-sea);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    background: rgba(0, 105, 148, 0.1);
+    transition: all 0.2s ease;
+}
+
+.info-link:hover {
+    background: var(--welsh-sea);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Forecast Summary Grid */
+.forecast-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(47, 79, 79, 0.1);
+    border-left: 4px solid var(--air-accent);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, var(--air-accent) 0%, transparent 70%);
+    opacity: 0.1;
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(47, 79, 79, 0.15);
+}
+
+.summary-card.current {
+    border-left-color: var(--welsh-green);
+}
+
+.summary-card.tomorrow {
+    border-left-color: var(--welsh-gold);
+}
+
+.summary-card.week {
+    border-left-color: var(--welsh-red);
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--air-primary), var(--air-secondary));
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.summary-card.current .card-icon {
+    background: linear-gradient(135deg, var(--welsh-green), #16a34a);
+}
+
+.summary-card.tomorrow .card-icon {
+    background: linear-gradient(135deg, var(--welsh-gold), #eab308);
+}
+
+.summary-card.week .card-icon {
+    background: linear-gradient(135deg, var(--welsh-red), #dc2626);
+}
+
+.card-content h3 {
+    color: var(--air-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.forecast-level {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0.5rem 0;
+    color: var(--air-secondary);
+}
+
+.confidence {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+    font-style: italic;
+}
+
+/* Heatmap Container */
+.heatmap-container {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    border: 1px solid rgba(47, 79, 79, 0.1);
+}
+
+.visualization-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.visualization-header h3 {
+    color: var(--welsh-red);
+    font-size: 1.3rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.heatmap-display {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 2rem;
+    align-items: start;
+}
+
+.heatmap-placeholder {
+    position: relative;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    min-height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--welsh-gold);
+}
+
+.heatmap-image {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.heatmap-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    color: var(--welsh-slate);
+}
+
+.heatmap-legend {
+    background: var(--air-background);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(47, 79, 79, 0.1);
+    min-width: 200px;
+}
+
+.heatmap-legend h4 {
+    color: var(--air-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.legend-color {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.legend-item.background .legend-color {
+    background: var(--ozone-background);
+}
+
+.legend-item.moderate .legend-color {
+    background: var(--ozone-moderate);
+}
+
+.legend-item.elevated .legend-color {
+    background: var(--ozone-elevated);
+}
+
+.legend-item.extreme .legend-color {
+    background: var(--ozone-extreme);
+}
+
+.legend-label {
+    font-size: 0.9rem;
+    color: var(--air-primary);
+    font-weight: 500;
+}
+
+/* Time Series Container */
+.timeseries-container {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    border: 1px solid rgba(47, 79, 79, 0.1);
+}
+
+.timeseries-display {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    padding: 2rem;
+    border: 2px dashed var(--welsh-sea);
+    min-height: 350px;
+}
+
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 2rem;
+}
+
+.scenario-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.scenario-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    color: var(--air-primary);
+}
+
+.scenario-line {
+    width: 30px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.scenario-item.best-case .scenario-line {
+    background: var(--welsh-green);
+}
+
+.scenario-item.average .scenario-line {
+    background: var(--welsh-gold);
+}
+
+.scenario-item.worst-case .scenario-line {
+    background: var(--welsh-red);
+}
+
+.chart-area {
+    text-align: center;
+    color: var(--air-primary);
+}
+
+.chart-area i {
+    color: var(--welsh-sea);
+    opacity: 0.7;
+    margin-bottom: 1rem;
+}
+
+.chart-area p {
+    margin: 0;
+    font-weight: 500;
+}
+
+/* Performance Container */
+.performance-container {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    border: 1px solid rgba(47, 79, 79, 0.1);
+}
+
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.metric-card {
+    background: linear-gradient(135deg, var(--air-background), #f0f9ff);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(47, 79, 79, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--welsh-green), var(--welsh-gold), var(--welsh-red));
+    border-radius: 0 12px 12px 0;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(47, 79, 79, 0.1);
+    background: white;
+}
+
+.metric-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--welsh-sea), var(--air-secondary));
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1rem;
+}
+
+.metric-content h4 {
+    color: var(--air-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.metric-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--welsh-red);
+    margin: 0.5rem 0;
+}
+
+.metric-period {
+    color: #666;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+/* Info Icons and Tooltips */
+.info-icon {
+    cursor: help;
+    color: var(--welsh-gold);
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.info-icon:hover {
+    color: var(--welsh-red);
+    transform: scale(1.1);
+}
+
+.tooltip {
+    position: absolute;
+    background: var(--air-primary);
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    max-width: 250px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 5px solid var(--air-primary);
+}
+
+.tooltip.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .outlook-preview-content {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .heatmap-display {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .scenario-legend {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: center;
+    }
+    
+    .clyfar-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .clyfar-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .forecast-summary-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .performance-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Animations */
+@keyframes pulse-welsh {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.forecast-level:empty::after {
+    content: '...';
+    animation: pulse-welsh 1.5s infinite;
+    color: var(--welsh-gold);
+}
+
+/* Focus states for accessibility */
+.summary-card:focus-within,
+.metric-card:focus-within,
+.outlook-link:focus,
+.info-link:focus {
+    outline: 2px solid var(--welsh-gold);
+    outline-offset: 2px;
+}
+
+/* Special hover effects */
+.clyfar-section:hover {
+    box-shadow: 0 12px 40px rgba(47, 79, 79, 0.15);
+    transition: all 0.3s ease;
+}
+
+.visualization-header h3 i {
+    transition: all 0.3s ease;
+}
+
+.heatmap-container:hover .visualization-header h3 i,
+.timeseries-container:hover .visualization-header h3 i,
+.performance-container:hover .visualization-header h3 i {
+    transform: scale(1.1);
+    color: var(--welsh-gold);
+}

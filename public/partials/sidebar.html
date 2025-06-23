@@ -10,10 +10,18 @@
     </div>
 
     <!-- Main Navigation -->
+    <!-- Replace the existing sidebar navigation in public/partials/sidebar.html -->
+    <!-- Keep the existing logo section, then replace the <ul class="sidebar-nav"> section with this: -->
+
     <ul class="sidebar-nav">
         <li>
             <a href="/locations">
                 <i class="fas fa-map-marker-alt"></i> Locations
+            </a>
+        </li>
+        <li>
+            <a href="/forecast_air_quality">
+                <i class="fas fa-lungs"></i> Air Quality Forecasts
             </a>
         </li>
         <li>
@@ -22,10 +30,27 @@
             </a>
         </li>
         <li>
-            <a href="/forecast_data">
-                <i class="fas fa-chart-line"></i> Forecast Data
+            <a href="/forecast_weather">
+                <i class="fas fa-cloud-sun"></i> Weather Forecasts
             </a>
         </li>
+        <!-- New weather-specific pages -->
+        <li>
+            <a href="/agriculture">
+                <i class="fas fa-seedling"></i> Agriculture
+            </a>
+        </li>
+        <li>
+            <a href="/roads">
+                <i class="fas fa-road"></i> Road Weather
+            </a>
+        </li>
+        <li>
+            <a href="/aviation">
+                <i class="fas fa-plane"></i> Aviation
+            </a>
+        </li>
+        <!-- External links -->
         <li>
             <a href="http://ubair.usu.edu/Cams2/index.html" target="_blank" rel="noopener noreferrer">
                 <i class="fas fa-camera"></i> Webcams

@@ -1,0 +1,601 @@
+/* Aviation-specific styles */
+:root {
+    --aviation-primary: #1e40af;       /* Deep blue */
+    --aviation-secondary: #2563eb;     /* Medium blue */
+    --aviation-accent: #3b82f6;        /* Light blue */
+    --aviation-sky: #0ea5e9;           /* Sky blue */
+    --aviation-warning: #f59e0b;       /* Amber for weather warnings */
+    --aviation-danger: #dc2626;        /* Red for severe conditions */
+    --aviation-success: #10b981;       /* Green for good conditions */
+    --aviation-altitude: #6366f1;      /* Indigo for altitude */
+    --aviation-cloud: #e5e7eb;         /* Light gray for clouds */
+}
+
+/* Override main header for aviation theme */
+body[data-page-type="aviation"] h1 {
+    background: linear-gradient(135deg, var(--aviation-primary), var(--aviation-sky));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+body[data-page-type="aviation"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 120px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--aviation-primary), var(--aviation-sky));
+    border-radius: 2px;
+}
+
+/* Airport Summary Section */
+.airport-summary {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(30, 64, 175, 0.1);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(30, 64, 175, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.airport-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--aviation-primary), var(--aviation-sky), var(--aviation-accent));
+    border-radius: 16px 16px 0 0;
+}
+
+.airport-summary::after {
+    content: '✈';
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    font-size: 3rem;
+    color: var(--aviation-sky);
+    opacity: 0.1;
+    transform: rotate(45deg);
+}
+
+.airport-header {
+    margin-bottom: 2rem;
+}
+
+.airport-header h2 {
+    color: var(--aviation-primary);
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.airport-details {
+    display: flex;
+    gap: 2rem;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.elevation {
+    font-weight: 500;
+    color: var(--aviation-altitude);
+}
+
+.coordinates {
+    font-family: 'Courier New', monospace;
+}
+
+/* Conditions Grid */
+.conditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.condition-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    border-left: 4px solid var(--aviation-primary);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.condition-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--aviation-accent), transparent);
+    border-radius: 0 12px 0 100%;
+    opacity: 0.08;
+}
+
+.condition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 64, 175, 0.15);
+    border-left-color: var(--aviation-accent);
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--aviation-primary), var(--aviation-secondary));
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.card-content h3 {
+    color: var(--aviation-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.current-value,
+.metar-text {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--aviation-secondary);
+    margin: 0.5rem 0;
+    font-family: 'Courier New', monospace;
+}
+
+.observation-time,
+.trend {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Specific condition card styling */
+.metar {
+    border-left-color: var(--aviation-sky);
+    grid-column: 1 / -1;
+}
+
+.metar .card-icon {
+    background: linear-gradient(135deg, var(--aviation-sky), var(--aviation-accent));
+}
+
+.metar .metar-text {
+    font-size: 1rem;
+    line-height: 1.4;
+    background: rgba(14, 165, 233, 0.05);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 3px solid var(--aviation-sky);
+}
+
+.ceiling {
+    border-left-color: var(--aviation-altitude);
+}
+
+.ceiling .card-icon {
+    background: linear-gradient(135deg, var(--aviation-altitude), #8b5cf6);
+}
+
+.winds {
+    border-left-color: #6b7280;
+}
+
+.winds .card-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+.density-altitude {
+    border-left-color: var(--aviation-warning);
+}
+
+.density-altitude .card-icon {
+    background: linear-gradient(135deg, var(--aviation-warning), #f97316);
+}
+
+/* Forecast Container */
+.forecast-container {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.forecast-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(30, 64, 175, 0.08);
+    border: 1px solid rgba(30, 64, 175, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.forecast-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--aviation-primary), var(--aviation-accent), var(--aviation-sky));
+    border-radius: 16px 16px 0 0;
+}
+
+.forecast-section h2 {
+    color: var(--aviation-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.forecast-section h2 i {
+    color: var(--aviation-secondary);
+    font-size: 1.1rem;
+}
+
+/* TAF Display */
+.taf-display {
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 2px dashed var(--aviation-accent);
+}
+
+/* Flight Planning Grid */
+.flight-planning-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.planning-card {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(30, 64, 175, 0.1);
+    transition: all 0.3s ease;
+}
+
+.planning-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(30, 64, 175, 0.1);
+    background: white;
+}
+
+.planning-card h3 {
+    color: var(--aviation-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.planning-card h3 i {
+    color: var(--aviation-accent);
+}
+
+/* Chart Placeholders */
+.placeholder-content {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    border: 2px dashed var(--aviation-accent);
+    margin-top: 1rem;
+}
+
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 8px rgba(30, 64, 175, 0.05);
+}
+
+.chart-placeholder i {
+    color: var(--aviation-accent);
+    opacity: 0.7;
+}
+
+.chart-placeholder p {
+    color: var(--aviation-primary);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Aviation Hazards */
+.hazards-content {
+    margin-top: 1rem;
+}
+
+.hazard-item {
+    background: rgba(245, 158, 11, 0.05);
+    border-left: 4px solid var(--aviation-warning);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0 8px 8px 0;
+}
+
+.hazard-item h4 {
+    color: var(--aviation-warning);
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.hazard-item p {
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+}
+
+/* Nearby Airports */
+.nearby-airports {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(30, 64, 175, 0.08);
+    margin-bottom: 2rem;
+    border: 1px solid rgba(30, 64, 175, 0.1);
+}
+
+.nearby-airports h2 {
+    color: var(--aviation-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.airports-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+}
+
+.airport-card {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(30, 64, 175, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.airport-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(180deg, var(--aviation-primary), var(--aviation-accent));
+    border-radius: 12px 0 0 12px;
+}
+
+.airport-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(30, 64, 175, 0.15);
+    background: white;
+}
+
+.airport-card h3 {
+    color: var(--aviation-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-family: 'Courier New', monospace;
+}
+
+.airport-card p {
+    color: #666;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+}
+
+.weather-summary {
+    color: var(--aviation-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.5rem;
+    background: rgba(30, 64, 175, 0.05);
+    border-radius: 6px;
+    border-left: 3px solid var(--aviation-accent);
+}
+
+/* Resources Section */
+.resources-section {
+    margin-bottom: 2rem;
+}
+
+.resources-section h2 {
+    color: var(--aviation-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.resource-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    border: 1px solid rgba(30, 64, 175, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.resource-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 50px;
+    height: 50px;
+    background: radial-gradient(circle, var(--aviation-accent) 0%, transparent 70%);
+    opacity: 0.1;
+}
+
+.resource-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 64, 175, 0.15);
+}
+
+.resource-card h3 {
+    color: var(--aviation-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.resource-card p {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.resource-card a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--aviation-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    background: rgba(37, 99, 235, 0.1);
+    transition: all 0.2s ease;
+}
+
+.resource-card a:hover {
+    background: var(--aviation-secondary);
+    color: white;
+    transform: translateX(2px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .conditions-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .metar {
+        grid-column: 1;
+    }
+    
+    .flight-planning-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .airports-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .resources-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .airport-details {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .forecast-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Animation for loading states */
+@keyframes pulse-aviation {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.condition-card .current-value:empty::after,
+.metar-text:empty::after {
+    content: 'Loading...';
+    animation: pulse-aviation 1.5s infinite;
+    color: var(--aviation-accent);
+}
+
+/* Weather condition indicators */
+.weather-good {
+    border-left-color: var(--aviation-success) !important;
+}
+
+.weather-caution {
+    border-left-color: var(--aviation-warning) !important;
+}
+
+.weather-poor {
+    border-left-color: var(--aviation-danger) !important;
+}
+
+/* Hover effects for interactivity */
+.forecast-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 35px rgba(30, 64, 175, 0.12);
+    transition: all 0.3s ease;
+}
+
+/* Focus states for accessibility */
+.condition-card:focus-within,
+.forecast-section:focus-within,
+.airport-card:focus-within,
+.resource-card:focus-within {
+    outline: 2px solid var(--aviation-accent);
+    outline-offset: 2px;
+}
+
+/* Special METAR formatting */
+.metar-code {
+    font-family: 'Courier New', monospace;
+    background: rgba(30, 64, 175, 0.05);
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.9rem;
+}

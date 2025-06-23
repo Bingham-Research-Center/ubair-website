@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Weather Forecasts for Uintah Basin with interactive maps and analysis">
+    <title>Weather Forecasts - Uintah Basin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/forecast_weather.css">
+</head>
+<body data-page-type="forecast_weather">
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <h1>Weather Forecasts</h1>
+
+        <!-- Control Panel -->
+        <section class="control-panel" aria-label="Forecast Controls">
+            <div class="controls-row">
+                <div class="variable-selector">
+                    <label for="weather-variable">Weather Variable:</label>
+                    <select id="weather-variable" class="control-select">
+                        <option value="temperature">Temperature</option>
+                        <option value="precipitation">Precipitation</option>
+                        <option value="wind">Wind Speed</option>
+                        <option value="pressure">Pressure</option>
+                        <option value="humidity">Humidity</option>
+                        <option value="snow">Snow Depth</option>
+                    </select>
+                </div>
+                
+                <div class="time-selector">
+                    <label for="forecast-time">Forecast Time:</label>
+                    <select id="forecast-time" class="control-select">
+                        <option value="current">Current</option>
+                        <option value="6h">+6 Hours</option>
+                        <option value="12h">+12 Hours</option>
+                        <option value="24h">+24 Hours</option>
+                        <option value="48h">+48 Hours</option>
+                        <option value="72h">+72 Hours</option>
+                    </select>
+                </div>
+                
+                <div class="layer-toggles">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="contours-toggle" checked>
+                        <span class="toggle-text">Contours</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="stations-toggle" checked>
+                        <span class="toggle-text">Stations</span>
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="annotations-toggle">
+                        <span class="toggle-text">Annotations</span>
+                    </label>
+                </div>
+                
+                <div class="kiosk-controls">
+                    <button id="kiosk-toggle" class="kiosk-button">
+                        <i class="fas fa-play"></i> Start Kiosk Mode
+                    </button>
+                    <div class="kiosk-status" id="kiosk-status">
+                        <span class="status-text">Manual Mode</span>
+                        <div class="kiosk-timer" id="kiosk-timer" style="display: none;">
+                            <span id="timer-countdown">30</span>s
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weather Map Container -->
+        <section class="weather-map-section" aria-label="Interactive Weather Map">
+            <div class="map-container">
+                <div id="weather-map" class="weather-map"></div>
+                <div class="map-overlay">
+                    <div class="current-display">
+                        <h3 id="current-variable">Temperature</h3>
+                        <p id="current-time">Current Conditions</p>
+                    </div>
+                    <div class="legend-container" id="weather-legend">
+                        <!-- Dynamic legend will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Weather Analysis -->
+        <section class="analysis-section" aria-label="Weather Analysis and Summary">
+            <div class="analysis-grid">
+                <div class="summary-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-clipboard-list"></i> Current Summary</h3>
+                        <div class="info-icon" data-tooltip="Automated analysis of current weather patterns">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="summary-content" id="weather-summary">
+                        <p>Current weather conditions across the Uintah Basin show typical winter patterns with temperature inversions common in valley areas. Snow cover remains variable across elevation gradients.</p>
+                        <div class="summary-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Basin Average:</span>
+                                <span class="stat-value" id="basin-average">--°F</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Range:</span>
+                                <span class="stat-value" id="temperature-range">-- to --°F</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Trend:</span>
+                                <span class="stat-value" id="trend-indicator">Stable</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="forecast-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-crystal-ball"></i> 48-Hour Outlook</h3>
+                        <div class="info-icon" data-tooltip="Short-term forecast highlighting key changes">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="forecast-content" id="forecast-outlook">
+                        <div class="outlook-timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-time">Tonight</div>
+                                <div class="timeline-desc">Clear skies, continued cold</div>
+                                <div class="timeline-temp">Low: 15°F</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-time">Tomorrow</div>
+                                <div class="timeline-desc">Sunny, warming trend begins</div>
+                                <div class="timeline-temp">High: 32°F</div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-time">Tuesday</div>
+                                <div class="timeline-desc">Increasing clouds, snow possible</div>
+                                <div class="timeline-temp">High: 28°F</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conditions-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-exclamation-triangle"></i> Special Conditions</h3>
+                        <div class="info-icon" data-tooltip="Notable weather conditions affecting the Basin">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="conditions-content" id="special-conditions">
+                        <div class="condition-alert">
+                            <div class="alert-icon">
+                                <i class="fas fa-snowflake"></i>
+                            </div>
+                            <div class="alert-content">
+                                <h4>Temperature Inversion</h4>
+                                <p>Strong inversion present with 20°F difference between valley floor and ridgetops.</p>
+                            </div>
+                        </div>
+                        <div class="condition-note">
+                            <div class="note-icon">
+                                <i class="fas fa-info"></i>
+                            </div>
+                            <div class="note-content">
+                                <h4>Snow Cover</h4>
+                                <p>Variable snow depth: 2-8 inches in valleys, 12-18 inches at higher elevations.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-panel">
+                    <div class="panel-header">
+                        <h3><i class="fas fa-cogs"></i> Model Information</h3>
+                        <div class="info-icon" data-tooltip="Weather model sources and update times">
+                            <i class="fas fa-info-circle"></i>
+                        </div>
+                    </div>
+                    <div class="model-content" id="model-info">
+                        <div class="model-source">
+                            <h4>Primary Model: NAM 12km</h4>
+                            <p>Last Update: <span id="model-update-time">06:00 UTC</span></p>
+                            <p>Next Update: <span id="next-update-time">12:00 UTC</span></p>
+                        </div>
+                        <div class="model-performance">
+                            <div class="performance-metric">
+                                <span class="metric-label">Basin Accuracy:</span>
+                                <span class="metric-value">89%</span>
+                            </div>
+                            <div class="performance-metric">
+                                <span class="metric-label">Temperature RMSE:</span>
+                                <span class="metric-value">2.1°F</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tooltip Container -->
+        <div id="tooltip" class="tooltip" role="tooltip"></div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Weather forecasts are experimental research products. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/forecast_weather.js"></script>
+</body>
+</html>

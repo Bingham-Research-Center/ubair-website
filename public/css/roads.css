@@ -1,0 +1,462 @@
+/* Roads-specific styles */
+:root {
+    --roads-primary: #1e3a8a;         /* Deep blue */
+    --roads-secondary: #3b82f6;       /* Medium blue */
+    --roads-accent: #60a5fa;          /* Light blue */
+    --roads-warning: #f59e0b;         /* Amber for caution */
+    --roads-danger: #dc2626;          /* Red for poor conditions */
+    --roads-good: #10b981;            /* Green for good conditions */
+    --roads-surface: #374151;         /* Asphalt gray */
+    --roads-ice: #bfdbfe;             /* Ice blue */
+}
+
+/* Override main header for roads theme */
+body[data-page-type="roads"] h1 {
+    background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+body[data-page-type="roads"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--roads-primary), var(--roads-accent));
+    border-radius: 2px;
+}
+
+/* Road Summary Grid */
+.road-summary {
+    margin-bottom: 2rem;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.condition-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.1);
+    border-left: 4px solid var(--roads-primary);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.condition-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--roads-accent), transparent);
+    border-radius: 0 12px 0 100%;
+    opacity: 0.08;
+}
+
+.condition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 58, 138, 0.15);
+    border-left-color: var(--roads-accent);
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.card-content h3 {
+    color: var(--roads-primary);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+
+.current-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--roads-secondary);
+    margin: 0.5rem 0;
+}
+
+.trend {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Specific road condition styling */
+.road-temp {
+    border-left-color: var(--roads-surface);
+}
+
+.road-temp .card-icon {
+    background: linear-gradient(135deg, var(--roads-surface), #4b5563);
+}
+
+.visibility {
+    border-left-color: var(--roads-accent);
+}
+
+.visibility .card-icon {
+    background: linear-gradient(135deg, var(--roads-accent), var(--roads-secondary));
+}
+
+.precipitation {
+    border-left-color: #3b82f6;
+}
+
+.precipitation .card-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+.wind {
+    border-left-color: #6b7280;
+}
+
+.wind .card-icon {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+}
+
+/* Routes Container */
+.routes-container {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.route-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(30, 58, 138, 0.08);
+    border: 1px solid rgba(30, 58, 138, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.route-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--roads-primary), var(--roads-accent), var(--roads-secondary));
+    border-radius: 16px 16px 0 0;
+}
+
+.route-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, var(--roads-accent) 0%, transparent 70%);
+    opacity: 0.03;
+    pointer-events: none;
+}
+
+.route-section h2 {
+    color: var(--roads-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.route-section h2 i {
+    color: var(--roads-secondary);
+    font-size: 1.1rem;
+}
+
+.route-content {
+    color: #555;
+    line-height: 1.6;
+}
+
+.route-details p {
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.route-details strong {
+    color: var(--roads-primary);
+}
+
+/* Chart Placeholders */
+.placeholder-content {
+    text-align: center;
+    padding: 2rem;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    border: 2px dashed var(--roads-accent);
+    margin-top: 1rem;
+}
+
+.chart-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding: 2rem;
+    background: white;
+    border-radius: 8px;
+    box-shadow: inset 0 2px 8px rgba(30, 58, 138, 0.05);
+}
+
+.chart-placeholder i {
+    color: var(--roads-accent);
+    opacity: 0.7;
+}
+
+.chart-placeholder p {
+    color: var(--roads-primary);
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Travel Advisory Section */
+.advisory-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(245, 158, 11, 0.1);
+    border-left: 5px solid var(--roads-warning);
+    margin-bottom: 2rem;
+}
+
+.advisory-section h2 {
+    color: var(--roads-warning);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.advisory-placeholder {
+    padding: 2rem;
+    background: linear-gradient(135deg, #fefce8, #fef3c7);
+    border-radius: 12px;
+    border: 2px dashed var(--roads-warning);
+    text-align: center;
+    color: #92400e;
+}
+
+.advisory-levels {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 2rem;
+    gap: 1rem;
+}
+
+.level-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease;
+    min-width: 120px;
+}
+
+.level-indicator:hover {
+    transform: translateY(-2px);
+}
+
+.level-indicator.good {
+    border: 2px solid var(--roads-good);
+    color: var(--roads-good);
+}
+
+.level-indicator.caution {
+    border: 2px solid var(--roads-warning);
+    color: var(--roads-warning);
+}
+
+.level-indicator.poor {
+    border: 2px solid var(--roads-danger);
+    color: var(--roads-danger);
+}
+
+.level-indicator i {
+    font-size: 1.5rem;
+}
+
+.level-indicator span {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* Resources Section */
+.resources-section {
+    margin-bottom: 2rem;
+}
+
+.resources-section h2 {
+    color: var(--roads-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.resource-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.1);
+    border: 1px solid rgba(30, 58, 138, 0.1);
+    transition: all 0.3s ease;
+}
+
+.resource-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(30, 58, 138, 0.15);
+}
+
+.resource-card h3 {
+    color: var(--roads-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.resource-card p {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.5;
+}
+
+.resource-card a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--roads-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    background: rgba(59, 130, 246, 0.1);
+    transition: all 0.2s ease;
+}
+
+.resource-card a:hover {
+    background: var(--roads-secondary);
+    color: white;
+    transform: translateX(2px);
+}
+
+/* Route-specific styling */
+.route-section:nth-child(1) {
+    border-left: 4px solid #f59e0b;
+}
+
+.route-section:nth-child(1)::before {
+    background: linear-gradient(90deg, #f59e0b, var(--roads-warning));
+}
+
+.route-section:nth-child(2) {
+    border-left: 4px solid #10b981;
+}
+
+.route-section:nth-child(2)::before {
+    background: linear-gradient(90deg, #10b981, var(--roads-good));
+}
+
+.route-section:nth-child(3) {
+    border-left: 4px solid #8b5cf6;
+}
+
+.route-section:nth-child(3)::before {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .advisory-levels {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .level-indicator {
+        min-width: auto;
+    }
+    
+    .resources-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .route-section {
+        padding: 1.5rem;
+    }
+}
+
+/* Animation for loading states */
+@keyframes pulse-blue {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
+.condition-card .current-value:empty::after {
+    content: '...';
+    animation: pulse-blue 1.5s infinite;
+    color: var(--roads-accent);
+}
+
+/* Hover effects for interactivity */
+.route-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 35px rgba(30, 58, 138, 0.12);
+    transition: all 0.3s ease;
+}
+
+/* Focus states for accessibility */
+.condition-card:focus-within,
+.route-section:focus-within,
+.resource-card:focus-within {
+    outline: 2px solid var(--roads-accent);
+    outline-offset: 2px;
+}

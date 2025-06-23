@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Aviation Weather Forecasts for Uintah Basin Airports">
+    <title>Aviation Weather - Uintah Basin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/aviation.css">
+</head>
+<body data-page-type="aviation">
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <h1>Aviation Weather Forecasts</h1>
+
+        <!-- Current KVEL Conditions -->
+        <section class="airport-summary" aria-label="KVEL Current Conditions">
+            <div class="airport-header">
+                <h2><i class="fas fa-plane"></i> KVEL - Vernal Regional Airport</h2>
+                <div class="airport-details">
+                    <span class="elevation">Elevation: 5,278 ft MSL</span>
+                    <span class="coordinates">40.44°N, 109.51°W</span>
+                </div>
+            </div>
+            
+            <div class="conditions-grid">
+                <div class="condition-card metar">
+                    <div class="card-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Current METAR</h3>
+                        <p class="metar-text">Loading current conditions...</p>
+                        <p class="observation-time">--:-- UTC</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card ceiling">
+                    <div class="card-icon">
+                        <i class="fas fa-arrows-alt-v"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Ceiling</h3>
+                        <p class="current-value">-- ft AGL</p>
+                        <p class="trend">Visibility: -- SM</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card winds">
+                    <div class="card-icon">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Winds</h3>
+                        <p class="current-value">---° at -- kt</p>
+                        <p class="trend">Gusts: -- kt</p>
+                    </div>
+                </div>
+                
+                <div class="condition-card density-altitude">
+                    <div class="card-icon">
+                        <i class="fas fa-thermometer-three-quarters"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Density Altitude</h3>
+                        <p class="current-value">-- ft</p>
+                        <p class="trend">Performance impact</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Aviation Forecast Sections -->
+        <div class="forecast-container">
+            <!-- TAF Forecast -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-clock"></i> Terminal Aerodrome Forecast (TAF)</h2>
+                <div class="forecast-content">
+                    <div class="taf-display">
+                        <div class="placeholder-content">
+                            <p>30-hour terminal forecast for KVEL will be displayed here in both raw and decoded formats.</p>
+                            <div class="chart-placeholder">
+                                <i class="fas fa-chart-line fa-3x"></i>
+                                <p>TAF Timeline Visualization</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Flight Planning -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-route"></i> Flight Planning Weather</h2>
+                <div class="forecast-content">
+                    <div class="flight-planning-grid">
+                        <div class="planning-card">
+                            <h3><i class="fas fa-mountain"></i> Turbulence Forecast</h3>
+                            <div class="chart-placeholder">
+                                <i class="fas fa-water fa-3x"></i>
+                                <p>Turbulence Intensity Map</p>
+                            </div>
+                        </div>
+                        
+                        <div class="planning-card">
+                            <h3><i class="fas fa-snowflake"></i> Icing Conditions</h3>
+                            <div class="chart-placeholder">
+                                <i class="fas fa-icicles fa-3x"></i>
+                                <p>Icing Probability & Intensity</p>
+                            </div>
+                        </div>
+                        
+                        <div class="planning-card">
+                            <h3><i class="fas fa-wind"></i> Winds Aloft</h3>
+                            <div class="chart-placeholder">
+                                <i class="fas fa-wind fa-3x"></i>
+                                <p>Wind Speed & Direction by Altitude</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Basin-Specific Aviation Hazards -->
+            <section class="forecast-section">
+                <h2><i class="fas fa-exclamation-triangle"></i> Basin Aviation Hazards</h2>
+                <div class="forecast-content">
+                    <div class="hazards-content">
+                        <div class="hazard-item">
+                            <h4><i class="fas fa-smog"></i> Low-Level Inversions</h4>
+                            <p>Temperature inversions common in winter can create challenging visibility conditions and performance impacts.</p>
+                        </div>
+                        
+                        <div class="hazard-item">
+                            <h4><i class="fas fa-mountain"></i> Terrain-Induced Turbulence</h4>
+                            <p>Mountainous terrain surrounding the Basin can generate significant turbulence and downdrafts.</p>
+                        </div>
+                        
+                        <div class="hazard-item">
+                            <h4><i class="fas fa-thermometer-full"></i> High Density Altitude</h4>
+                            <p>Summer conditions and high elevation can significantly impact aircraft performance.</p>
+                        </div>
+                        
+                        <div class="chart-placeholder">
+                            <i class="fas fa-map fa-3x"></i>
+                            <p>Basin Hazard Areas Map</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Nearby Airports -->
+        <section class="nearby-airports">
+            <h2><i class="fas fa-map-marker-alt"></i> Nearby Airports</h2>
+            <div class="airports-grid">
+                <div class="airport-card">
+                    <h3>KSLC - Salt Lake City</h3>
+                    <p>119 nm SW • Class B Airspace</p>
+                    <div class="weather-summary">Current conditions loading...</div>
+                </div>
+                
+                <div class="airport-card">
+                    <h3>KCEZ - Cortez, CO</h3>
+                    <p>89 nm SE • Uncontrolled</p>
+                    <div class="weather-summary">Current conditions loading...</div>
+                </div>
+                
+                <div class="airport-card">
+                    <h3>KRKS - Rock Springs, WY</h3>
+                    <p>87 nm N • Uncontrolled</p>
+                    <div class="weather-summary">Current conditions loading...</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- External Aviation Resources -->
+        <section class="resources-section">
+            <h2><i class="fas fa-external-link-alt"></i> Aviation Weather Resources</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <h3>Aviation Weather Center</h3>
+                    <p>Official aviation weather products and forecasts</p>
+                    <a href="https://aviationweather.gov/" target="_blank" rel="noopener">
+                        <i class="fas fa-external-link-alt"></i> Visit AWC
+                    </a>
+                </div>
+                
+                <div class="resource-card">
+                    <h3>DUATS Flight Planning</h3>
+                    <p>Official weather briefings and flight planning</p>
+                    <a href="https://www.1800wxbrief.com/" target="_blank" rel="noopener">
+                        <i class="fas fa-external-link-alt"></i> Get Weather Briefing
+                    </a>
+                </div>
+                
+                <div class="resource-card">
+                    <h3>KVEL Airport Info</h3>
+                    <p>Airport operations and services information</p>
+                    <a href="https://airnav.com/airport/KVEL" target="_blank" rel="noopener">
+                        <i class="fas fa-external-link-alt"></i> Airport Details
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Aviation weather for planning only - obtain official briefing. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/aviation.js"></script>
+</body>
+</html>

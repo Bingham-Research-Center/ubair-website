@@ -41,8 +41,24 @@ app.get('/forecast_outlooks', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_outlooks.html'));
 });
 
-app.get('/forecast_data', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/forecast_data.html'));
+app.get('/forecast_air_quality', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/forecast_air_quality.html'));
+});
+
+app.get('/forecast_weather', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/forecast_weather.html'));
+});
+
+app.get('/agriculture', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/agriculture.html'));
+});
+
+app.get('/roads', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/roads.html'));
+});
+
+app.get('/aviation', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/aviation.html'));
 });
 
 app.get('/api/live-observations', async (req, res) => {
