@@ -10,7 +10,8 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.3033, -110.0], 9);
+}).setView([40.3033, -109.7], 10); // Changed from -110.0 to -109.7, zoom from 9 to 10
+
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 15,
@@ -22,15 +23,13 @@ let kioskInterval;
 let currentStationIndex = 0;
 let markers = [];
 
-// Create kiosk toggle button
-// Create kiosk toggle switch (outside map)
 const kioskContainer = document.createElement('div');
 kioskContainer.className = 'kiosk-switch-container';
 kioskContainer.innerHTML = `
-    <div class="kiosk-switch ${kioskMode ? 'active' : ''}" id="kiosk-switch">
+    <label for="kiosk-switch" style="color: var(--usu-blue); font-weight: 500; margin-right: 0.5rem;">Auto-cycle stations:</label>
+    <div class="kiosk-switch ${kioskMode ? 'active' : ''}" id="kiosk-switch" title="Automatically cycle through station popups for displays">
         <div class="switch-slider"></div>
     </div>
-    <i class="fas fa-question-circle kiosk-info" data-tooltip="Cycles through station popups automatically for displays"></i>
 `;
 
 // Add to page after map loads

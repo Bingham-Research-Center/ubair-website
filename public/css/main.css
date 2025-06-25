@@ -317,16 +317,16 @@ main.content {
     box-sizing: border-box;
 }
 
-/* Replace the existing map styles in main.css with this: */
-
 /* Homepage map - small and centered */
 body[data-page-type="index"] #map {
-    width: 100% !important;
+    width: 80% !important;
     height: 300px !important;
     margin: 20px auto !important;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
     pointer-events: none; /* Disable map interactions on homepage */
+    display: block;
+    max-width: 600px; /* Center the map frame */
 }
 
 /* Homepage map - allow only marker interactions */
@@ -644,6 +644,23 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
+}
+
+/* Add tooltip styles */
+.kiosk-switch[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--usu-blue);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .kiosk-switch.active {

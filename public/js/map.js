@@ -66,14 +66,19 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.appendChild(studyAreaToggle);
 
         // Add kiosk control
-        const kioskControl = L.control({position: 'topright'});
+        const kioskControl = L.control({position: 'bottomcenter'});
         kioskControl.onAdd = function (map) {
-            const div = L.DomUtil.create('div', 'kiosk-control');
+            const div = L.DomUtil.create('div', 'kiosk-control-bottom');
             div.innerHTML = `
-            <button id="map-kiosk-toggle" class="kiosk-map-btn">
-                <i class="fas fa-play"></i>
-            </button>
-        `;
+        <div class="kiosk-container-bottom">
+            <label for="map-kiosk-toggle" class="kiosk-label">Auto-cycle stations:</label>
+            <div class="kiosk-switch-map ${mapKioskMode ? 'active' : ''}" id="map-kiosk-toggle">
+                <div class="switch-slider-map">
+                    <div class="timer-fill" id="timer-fill"></div>
+                </div>
+            </div>
+        </div>
+    `;
             return div;
         };
         kioskControl.addTo(map);
@@ -84,17 +89,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
         document.getElementById('map-kiosk-toggle').addEventListener('click', function () {
             mapKioskMode = !mapKioskMode;
-            const btn = this;
+            const switchEl = this;
+            const timerFill = document.getElementById('timer-fill');
 
             if (mapKioskMode) {
                 startKioskMode();
-                btn.innerHTML = '<i class="fas fa-stop"></i>';
-                btn.style.background = '#dc2626';
+                switchEl.classList.add('active');
+                // Start timer animation
+                timerFill.style.animation = 'timer-fill 5s linear infinite';
             } else {
                 clearInterval(mapKioskInterval);
                 map.closePopup();
-                btn.innerHTML = '<i class="fas fa-play"></i>';
-                btn.style.background = 'var(--usu-blue)';
+                switchEl.classList.remove('active');
+                timerFill.style.animation = 'none';
             }
         });
 

@@ -123,64 +123,49 @@ document.addEventListener("DOMContentLoaded", function() {
             hour12: true
         });
     }
-
-    /**
-     * Load the list of available outlooks
-     */
+// Update the loadOutlooksList function to ensure proper JSON handling
     async function loadOutlooksList() {
-        // If we're on the homepage, just load the latest outlook
         if (outlookSummary && !outlookContent) {
             loadLatestOutlook(true);
             return;
         }
 
-        // Only proceed if we're on the outlooks page
         if (!archiveList) return;
 
         try {
             archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
 
+            // Use the corrected filename
             const response = await fetch('/public/data/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
+            if (!response.ok) {
+                // Fallback to file_list.json if outlooks_list.json doesn't exist
+                const fallbackResponse = await fetch('/public/data/outlooks/file_list.json');
+                if (!fallbackResponse.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
 
-            const outlooks = await response.json();
+                const filenames = await fallbackResponse.json();
+                const outlooks = filenames.map(filename => ({
+                    filename,
+                    date: extractDateFromFilename(filename)
+                })).sort((a, b) => new Date(b.date) - new Date(a.date));
 
-            if (!outlooks || outlooks.length === 0) {
-                archiveList.innerHTML = '<div class="empty-message">No outlooks available</div>';
+                populateArchiveList(outlooks);
                 return;
             }
 
-            // Generate archive list HTML
-            archiveList.innerHTML = outlooks.map(outlook => {
-                // Extract date from filename directly instead of using the JSON date
-                const formattedDate = formatDateFromFilename(outlook.filename);
-                return `
-                <div class="archive-item ${currentFile === outlook.filename ? 'active' : ''}" 
-                     data-filename="${outlook.filename}">
-                    <div class="archive-item-date">${formattedDate}</div>
-                </div>
-                `;
-            }).join('');
+            const outlooks = await response.json();
+            populateArchiveList(outlooks);
 
-            // Add click handlers to archive items
-            document.querySelectorAll('.archive-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    loadOutlook(item.dataset.filename);
-                });
-            });
-
-            // If no outlook is currently loaded, load the latest one
-            if (!currentFile && outlooks.length > 0) {
-                loadOutlook(outlooks[0].filename);
-            }
         } catch (error) {
             console.error("Error loading outlooks list:", error);
-            archiveList.innerHTML = `
-                <div class="error">
-                    <p>Failed to load outlooks list: ${error.message}</p>
-                </div>
-            `;
+            archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks list: ${error.message}</p></div>`;
         }
+    }
+
+    function extractDateFromFilename(filename) {
+        const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
+        if (!match) return new Date().toISOString();
+        const [_, year, month, day, hour, minute] = match;
+        return new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
     }
 
     function makeCollapsible() {
