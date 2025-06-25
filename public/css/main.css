@@ -297,52 +297,82 @@ h1 {
     z-index: 2;
 }
 
-/* Responsive Design */
+/* Add this to your existing main.css */
+
+/* Content Layout - Fix for all pages */
+.content {
+    margin-left: 270px; /* Slightly more than sidebar width for breathing room */
+    padding: 2rem;
+    max-width: calc(100vw - 290px); /* Prevent overflow */
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+}
+
+/* Ensure main content areas don't overlap */
+main.content {
+    margin-left: 270px;
+    padding: 2rem;
+    min-height: calc(100vh - 120px); /* Account for header/footer */
+    box-sizing: border-box;
+}
+
+/* Replace the existing map styles in main.css with this: */
+
+/* Homepage map - small and centered */
+body[data-page-type="index"] #map {
+    width: 100% !important;
+    height: 300px !important;
+    margin: 20px auto !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    pointer-events: none; /* Disable map interactions on homepage */
+}
+
+/* Homepage map - allow only marker interactions */
+body[data-page-type="index"] #map .leaflet-marker-pane,
+body[data-page-type="index"] #map .leaflet-popup-pane {
+    pointer-events: auto;
+}
+
+/* Full-page map for live_aq page */
+body[data-page-type="live_aq"] #map {
+    position: fixed !important;
+    top: 0 !important;
+    left: 250px !important; /* Account for sidebar */
+    width: calc(100vw - 250px) !important;
+    height: 100vh !important;
+    z-index: 1 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Responsive - full width on mobile */
 @media (max-width: 768px) {
-    .sidebar-disclaimer {
-        position: relative;
-        margin-top: 20px;
+    body[data-page-type="live_aq"] #map {
+        left: 0 !important;
+        width: 100vw !important;
     }
+}
 
-    .overlay-container .disclaimer,
-    .outlook-content .disclaimer,
-    .post .disclaimer {
-        width: 100%;
-        box-sizing: border-box;
-        margin: 10px 0;
-    }
-    .content {
+/* Responsive fixes */
+@media (max-width: 768px) {
+    .content,
+    main.content {
         margin-left: 0;
-        margin-right: 1rem;
         padding: 1rem;
+        max-width: 100%;
     }
 
-    .container {
-        flex-direction: column;
+    .sidebar_container {
+        position: relative;
+        width: 100%;
     }
 
     .sidebar {
         width: 100%;
         height: auto;
-        position: relative;
-        padding-top: 0;
-    }
-
-    .bottom-right-box {
-        position: static;
-        margin: 20px auto;
-        max-width: 90%;
-    }
-
-    h1 {
-        font-size: 1.5rem;
-    }
-
-    #map {
-        width: 90% !important;
-    }
-
-    footer {
         position: relative;
     }
 }

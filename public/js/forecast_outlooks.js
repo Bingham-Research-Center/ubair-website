@@ -1,7 +1,13 @@
 // public/js/forecast_outlooks.js
 document.addEventListener("DOMContentLoaded", function() {
+    // Wait for markdown-it to load, then initialize
+    if (typeof markdownit === 'undefined') {
+        console.error('markdown-it library not loaded');
+        return;
+    }
+
     // Initialize markdown renderer
-    const md = window.markdownit({
+    const md = markdownit({
         html: true,
         linkify: true,
         typographer: true

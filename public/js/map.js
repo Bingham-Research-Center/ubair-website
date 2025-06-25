@@ -1,18 +1,18 @@
-// Modified portion of live_aq.js to fix image display issues
+// Modified portion of map.js to fix image display issues
 import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
-// Initialize the live_aq centered on Uintah Basin
-const live_aq = L.map('map').setView([40.3033, -110.0153], 9);
+// Initialize the map centered on Uintah Basin
+const map = L.map('map').setView([40.3033, -110.0153], 9);
 
 // Add OpenStreetMap tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '© OpenStreetMap contributors'
-}).addTo(live_aq);
+}).addTo(map);
 
-// Add this to your live_aq.js file for USU logo positioning and study area sizing
+// Add this to your map.js file for USU logo positioning and study area sizing
 document.addEventListener('DOMContentLoaded', function() {
     // Get references to the overlay container and image
     const overlayContainer = document.querySelector('.overlay-container');
@@ -95,15 +95,15 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Function to update the live_aq with current conditions from live observations
+// Function to update the map with current conditions from live observations
 async function updateMap() {
     try {
         const data = await fetchLiveObservations();
 
         // Clear existing markers
-        live_aq.eachLayer((layer) => {
+        map.eachLayer((layer) => {
             if (layer instanceof L.Marker) {
-                live_aq.removeLayer(layer);
+                map.removeLayer(layer);
             }
         });
 
@@ -140,14 +140,14 @@ async function updateMap() {
 
             L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
                 .bindPopup(popupContent)
-                .addTo(live_aq);
+                .addTo(map);
         }
     } catch (error) {
-        console.error('Error updating live_aq:', error);
+        console.error('Error updating map:', error);
     }
 }
 
-// Update live_aq initially and every 5 minutes
+// Update map initially and every 5 minutes
 updateMap();
 setInterval(updateMap, 300000);
 

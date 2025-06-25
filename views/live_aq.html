@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Map of Uintah Basin Air Quality</title>
+    <title>Live Air Quality - Uintah Basin</title>
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -12,40 +12,40 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/live_aq.css">
 </head>
-<body data-page-type="live_aq">    <!-- Map Container -->
-    <div id="live_aq"></div>
+<body data-page-type="live_aq">
+<!-- Map Container -->
+<div id="map"></div>
 
-    <!-- USU Logo -->
-    <div class="usu-logo">
-        <img src="/public/images/images-removebg-preview.png" alt="Logo">
+<!-- USU Logo -->
+<div class="usu-logo">
+    <img src="/public/images/images-removebg-preview.png" alt="Logo">
+</div>
+
+<!-- Study Area Overlay -->
+<div class="overlay-container">
+    <img src="/public/images/utah.png" id="image-overlay" alt="Study Area">
+</div>
+
+<!-- Warning Levels Overlay -->
+<div class="warning-levels-overlay">
+    <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Warning Levels">
+</div>
+
+<!-- Sidebar Container -->
+<div class="sidebar_container">
+    <!-- Sidebar will be loaded here via loadSidebar.js -->
+</div>
+
+<!-- Footer -->
+<footer class="main-footer">
+    <div class="footer-content">
+        <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
     </div>
+</footer>
 
-    <!-- Study Area Overlay -->
-    <!-- TODO - not sure why this is done here and the js file etc, conflict? -->
-    <div class="overlay-container">
-        <img src="/public/images/utah.png" id="image-overlay" alt="Study Area">
-    </div>
-
-    <!-- Warning Levels Overlay -->
-    <div class="warning-levels-overlay">
-        <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Warning Levels">
-    </div>
-
-    <!-- Sidebar Container -->
-    <div class="sidebar_container">
-        <!-- Sidebar will be loaded here via loadSidebar.js -->
-    </div>
-
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-content">
-            <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
-        </div>
-    </footer>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script type="module" src="/js/live_aq.js"></script>
-    <script type="module" src="/public/js/loadSidebar.js"></script>
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="module" src="/public/js/map.js"></script>
+<script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
 </html>

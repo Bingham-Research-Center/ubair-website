@@ -363,7 +363,7 @@
         /**
          * Loads the JSON data for a specific year.
          * @param {number} year - The year to load data for.
-         * @returns {Promise<Map<string, Array<Object>>>} A live_aq of station IDs to their respective data entries.
+         * @returns {Promise<Map<string, Array<Object>>>} A map of station IDs to their respective data entries.
          */
         async function loadData(year) {
             try {
@@ -398,7 +398,7 @@
 
         /**
          * Populates all dropdowns with station options based on the loaded data.
-         * @param {Map<string, Array<Object>>} yearData - The data live_aq for the selected year.
+         * @param {Map<string, Array<Object>>} yearData - The data map for the selected year.
          */
         function populateDropdowns(yearData) {
             const stations = [...yearData.keys()].sort();
@@ -412,7 +412,7 @@
             dropdowns.forEach(id => {
                 const select = document.getElementById(id);
                 select.innerHTML = '<option value="">Select Station</option>' +
-                    stations.live_aq(s => `<option value="${s}">${stationNames[s] ? stationNames[s] + ' - ' + s : s}</option>`).join('');
+                    stations.map(s => `<option value="${s}">${stationNames[s] ? stationNames[s] + ' - ' + s : s}</option>`).join('');
             });
         }
 
@@ -464,7 +464,7 @@
             // Snow depth comparison plot
             const trace1 = {
                 x: Array.from({length: data1.length}, (_, i) => i / 24),
-                y: data1.live_aq(d => d.snow_depth),
+                y: data1.map(d => d.snow_depth),
                 type: 'scatter',
                 mode: 'lines',
                 name: `${stationNames[loc1]} (${loc1})`
@@ -472,7 +472,7 @@
 
             const trace2 = {
                 x: Array.from({length: data2.length}, (_, i) => i / 24),
-                y: data2.live_aq(d => d.snow_depth),
+                y: data2.map(d => d.snow_depth),
                 type: 'scatter',
                 mode: 'lines',
                 name: `${stationNames[loc2]} (${loc2})`
@@ -573,7 +573,7 @@
             // Temperature plot with cold pool indicators
             const tempTrace = {
                 x: Array.from({length: data.length}, (_, i) => i / 24),
-                y: data.live_aq(d => d.air_temp),
+                y: data.map(d => d.air_temp),
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Temperature'
@@ -589,7 +589,7 @@
                     title: 'Temperature (°C)',
                     gridcolor: '#eee'
                 },
-                shapes: coldPools.live_aq(period => ({
+                shapes: coldPools.map(period => ({
                     type: 'rect',
                     xref: 'x',
                     yref: 'paper',
@@ -607,12 +607,12 @@
 
             // Ozone correlation during cold pools
             const ozoneTrace = {
-                x: data.live_aq(d => d.air_temp),
-                y: data.live_aq(d => d.ozone_concentration),
+                x: data.map(d => d.air_temp),
+                y: data.map(d => d.ozone_concentration),
                 type: 'scatter',
                 mode: 'markers',
                 marker: {
-                    color: data.live_aq((d, i) => {
+                    color: data.map((d, i) => {
                         const inColdPool = coldPools.some(pool =>
                             i >= pool.start && i < pool.start + pool.duration
                         );
@@ -662,7 +662,7 @@
             // Time series plot
             const ozoneTrace = {
                 x: Array.from({length: data.length}, (_, i) => i / 24),
-                y: data.live_aq(d => d.ozone_concentration),
+                y: data.map(d => d.ozone_concentration),
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Ozone Concentration'
@@ -670,7 +670,7 @@
 
             const snowTrace = {
                 x: Array.from({length: data.length}, (_, i) => i / 24),
-                y: data.live_aq(d => d.snow_depth),
+                y: data.map(d => d.snow_depth),
                 type: 'scatter',
                 mode: 'lines',
                 name: 'Snow Depth',
@@ -699,7 +699,7 @@
             Plotly.newPlot('ozone-plot', [ozoneTrace, snowTrace], layout);
 
             // Correlation plot
-            const validPairs = data.live_aq(d => ({
+            const validPairs = data.map(d => ({
                 ozone: d.ozone_concentration,
                 snow: d.snow_depth,
                 temp: d.air_temp
@@ -710,12 +710,12 @@
             );
 
             const corrTrace = {
-                x: validPairs.live_aq(d => d.temp),
-                y: validPairs.live_aq(d => d.ozone),
+                x: validPairs.map(d => d.temp),
+                y: validPairs.map(d => d.ozone),
                 type: 'scatter',
                 mode: 'markers',
                 marker: {
-                    color: validPairs.live_aq(d => d.snow),
+                    color: validPairs.map(d => d.snow),
                     colorscale: 'Viridis',
                     colorbar: {
                         title: 'Snow Depth (cm)'
@@ -763,7 +763,7 @@
             const traces = [
                 {
                     x: Array.from({length: data.length}, (_, i) => i / 24),
-                    y: data.live_aq(d => d.air_temp),
+                    y: data.map(d => d.air_temp),
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Temperature',
@@ -771,7 +771,7 @@
                 },
                 {
                     x: Array.from({length: data.length}, (_, i) => i / 24),
-                    y: data.live_aq(d => d.ozone_concentration),
+                    y: data.map(d => d.ozone_concentration),
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Ozone Concentration',
@@ -779,7 +779,7 @@
                 },
                 {
                     x: Array.from({length: data.length}, (_, i) => i / 24),
-                    y: data.live_aq(d => d.snow_depth),
+                    y: data.map(d => d.snow_depth),
                     type: 'scatter',
                     mode: 'lines',
                     name: 'Snow Depth',
@@ -831,16 +831,16 @@
 
             const stats = {
                 temp: {
-                    mean: math.mean(validData.live_aq(d => d.air_temp)),
-                    std: math.std(validData.live_aq(d => d.air_temp))
+                    mean: math.mean(validData.map(d => d.air_temp)),
+                    std: math.std(validData.map(d => d.air_temp))
                 },
                 ozone: {
-                    mean: math.mean(validData.live_aq(d => d.ozone_concentration)),
-                    std: math.std(validData.live_aq(d => d.ozone_concentration))
+                    mean: math.mean(validData.map(d => d.ozone_concentration)),
+                    std: math.std(validData.map(d => d.ozone_concentration))
                 },
                 snow: {
-                    mean: math.mean(validData.live_aq(d => d.snow_depth)),
-                    std: math.std(validData.live_aq(d => d.snow_depth))
+                    mean: math.mean(validData.map(d => d.snow_depth)),
+                    std: math.std(validData.map(d => d.snow_depth))
                 }
             };
 
