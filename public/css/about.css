@@ -1,0 +1,22 @@
+:root {
+    --about-primary: #b8860b;    /* Dark goldenrod */
+    --about-secondary: #daa520;  /* Goldenrod */
+    --about-accent: #ffd700;     /* Gold */
+    --about-background: #fffbf0; /* Cornsilk */
+}
+
+body[data-page-type="about"] {
+    background: linear-gradient(135deg, var(--about-background) 0%, #faf0e6 100%);
+}
+
+body[data-page-type="about"] .sidebar {
+    background: linear-gradient(180deg, var(--about-primary), var(--about-secondary));
+}
+
+.about-content {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(184, 134, 11, 0.1);
+    border-left: 4px solid var(--about-accent);
+}

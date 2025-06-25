@@ -46,8 +46,14 @@ async function loadSidebar() {
         const content = await response.text();
         sidebarContainer.innerHTML = content;
 
-        // Get current page disclaimer
         const currentPath = window.location.pathname;
+        const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
+        if (currentPageLink) {
+            currentPageLink.parentElement.classList.add('nav-active');
+        }
+
+
+        // Get current page disclaimer
         const pageDisclaimer = PAGE_DISCLAIMERS[currentPath];
 
         // If there's a disclaimer for this page, show it
@@ -60,7 +66,7 @@ async function loadSidebar() {
         }
 
         // Highlight current page in navigation
-        const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
+        // const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
         if (currentPageLink) {
             currentPageLink.classList.add('active');
         }

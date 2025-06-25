@@ -12,88 +12,118 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap contributors'
 }).addTo(map);
 
-// Add this to your map.js file for USU logo positioning and study area sizing
+
+// Get references to the overlay container and image
 document.addEventListener('DOMContentLoaded', function() {
-    // Get references to the overlay container and image
     const overlayContainer = document.querySelector('.overlay-container');
     const studyAreaImage = document.getElementById('image-overlay');
 
-    if (!overlayContainer || !studyAreaImage) {
-        console.error('Study area elements not found');
-        return;
-    }
+    if (overlayContainer && studyAreaImage) {
+        // Hide by default
+        overlayContainer.style.display = 'none';
+        let studyAreaVisible = false;
+        // Create and position the toggle button separate from the container
+        const studyAreaToggle = document.createElement('button');
+        studyAreaToggle.textContent = 'Show Study Area';
+        studyAreaToggle.className = 'study-area-toggle';
 
-    // Position the overlay container correctly
-    overlayContainer.style.position = 'fixed';
-    overlayContainer.style.top = '10vh' // 10% of viewport height
-    overlayContainer.style.right = '2%';
-    overlayContainer.style.left = 'auto'; // Override any left positioning
-    overlayContainer.style.zIndex = '1000';
-    overlayContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
-    overlayContainer.style.padding = '10px';
-    overlayContainer.style.borderRadius = '5px';
-    overlayContainer.style.width = 'auto'; // Make container width fit the content
-    overlayContainer.style.maxWidth = '12vw'; // Limit maximum width
 
-    // Make the study area image smaller
-    studyAreaImage.style.display = 'block';
-    studyAreaImage.style.maxWidth = '8vw';
-    studyAreaImage.style.minWidth = '80px'; // Stops it becoming too small on, e.g., mobile
-    studyAreaImage.style.height = 'auto';
+        // Position the overlay container correctly
+        overlayContainer.style.position = 'fixed';
+        overlayContainer.style.top = '10vh' // 10% of viewport height
+        overlayContainer.style.right = '2%';
+        overlayContainer.style.left = 'auto'; // Override any left positioning
+        overlayContainer.style.zIndex = '1000';
+        overlayContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+        overlayContainer.style.padding = '10px';
+        overlayContainer.style.borderRadius = '5px';
+        overlayContainer.style.width = 'auto'; // Make container width fit the content
+        overlayContainer.style.maxWidth = '12vw'; // Limit maximum width
 
-    // Create and position the toggle button separate from the container
-    const studyAreaToggle = document.createElement('button');
-    studyAreaToggle.textContent = 'Hide Study Area';
-    studyAreaToggle.className = 'study-area-toggle';
+        // Make the study area image smaller
+        studyAreaImage.style.display = 'block';
+        studyAreaImage.style.maxWidth = '8vw';
+        studyAreaImage.style.minWidth = '80px'; // Stops it becoming too small on, e.g., mobile
+        studyAreaImage.style.height = 'auto';
 
-    // Style the toggle button
-    studyAreaToggle.style.position = 'fixed';
-    studyAreaToggle.style.top = '2vh';
-    studyAreaToggle.style.right = '2%';
-    studyAreaToggle.style.padding = '0.5em 1em'; // Relative to font size instead of 8px 12px
-    studyAreaToggle.style.zIndex = '1001'; // Above the container
-    studyAreaToggle.style.backgroundColor = '#00263A'; // USU blue
-    studyAreaToggle.style.color = 'white';
-    studyAreaToggle.style.border = 'none';
-    studyAreaToggle.style.borderRadius = '4px';
-    studyAreaToggle.style.cursor = 'pointer';
+        // Create and position the toggle button separate from the container
+        studyAreaToggle.textContent = 'Hide Study Area';
+        studyAreaToggle.className = 'study-area-toggle';
 
-    // Add the button to the body
-    document.body.appendChild(studyAreaToggle);
+        // Style the toggle button
+        studyAreaToggle.style.position = 'fixed';
+        studyAreaToggle.style.top = '2vh';
+        studyAreaToggle.style.right = '2%';
+        studyAreaToggle.style.padding = '0.5em 1em'; // Relative to font size instead of 8px 12px
+        studyAreaToggle.style.zIndex = '1001'; // Above the container
+        studyAreaToggle.style.backgroundColor = '#00263A'; // USU blue
+        studyAreaToggle.style.color = 'white';
+        studyAreaToggle.style.border = 'none';
+        studyAreaToggle.style.borderRadius = '4px';
+        studyAreaToggle.style.cursor = 'pointer';
 
-    // Setup toggle functionality
-    let studyAreaVisible = true;
-    studyAreaToggle.addEventListener('click', () => {
-        overlayContainer.style.display = studyAreaVisible ? 'none' : 'block';
-        studyAreaVisible = !studyAreaVisible;
-        studyAreaToggle.textContent = studyAreaVisible ? 'Hide Study Area' : 'Show Study Area';
-    });
+        // Add the button to the body
+        document.body.appendChild(studyAreaToggle);
 
-    const usuLogoContainer = document.querySelector('.usu-logo');
-    if (usuLogoContainer) {
-        // Remove any existing styles
-        usuLogoContainer.removeAttribute('style');
+        // Add kiosk control
+        const kioskControl = L.control({position: 'topright'});
+        kioskControl.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'kiosk-control');
+            div.innerHTML = `
+            <button id="map-kiosk-toggle" class="kiosk-map-btn">
+                <i class="fas fa-play"></i>
+            </button>
+        `;
+            return div;
+        };
+        kioskControl.addTo(map);
 
-        // Apply new positioning styles
-        usuLogoContainer.style.position = 'fixed';
-        usuLogoContainer.style.bottom = '5vh';
-        usuLogoContainer.style.left = 'calc(250px + 2%)'; // Keep relative to sidebar width
-        usuLogoContainer.style.top = 'auto'; // Clear top positioning
-        usuLogoContainer.style.right = 'auto'; // Clear right positioning
-        usuLogoContainer.style.zIndex = '1000';
+        // Kiosk functionality
+        let mapKioskMode = false;
+        let mapKioskInterval;
 
-        // Fix the logo image as well
-        const usuLogoImage = usuLogoContainer.querySelector('img');
-        if (usuLogoImage) {
-            usuLogoImage.style.transform = 'none'; // Remove any transform
-            usuLogoImage.style.height = 'auto';
-            usuLogoImage.style.minWidth = '60px';
-            usuLogoImage.style.maxWidth = '100px';
+        document.getElementById('map-kiosk-toggle').addEventListener('click', function () {
+            mapKioskMode = !mapKioskMode;
+            const btn = this;
+
+            if (mapKioskMode) {
+                startKioskMode();
+                btn.innerHTML = '<i class="fas fa-stop"></i>';
+                btn.style.background = '#dc2626';
+            } else {
+                clearInterval(mapKioskInterval);
+                map.closePopup();
+                btn.innerHTML = '<i class="fas fa-play"></i>';
+                btn.style.background = 'var(--usu-blue)';
+            }
+        });
+
+        const usuLogoContainer = document.querySelector('.usu-logo');
+        if (usuLogoContainer) {
+            // Remove any existing styles
+            usuLogoContainer.removeAttribute('style');
+
+            // Apply new positioning styles
+            usuLogoContainer.style.position = 'fixed';
+            usuLogoContainer.style.bottom = '5vh';
+            usuLogoContainer.style.left = 'calc(250px + 2%)'; // Keep relative to sidebar width
+            usuLogoContainer.style.top = 'auto'; // Clear top positioning
+            usuLogoContainer.style.right = 'auto'; // Clear right positioning
+            usuLogoContainer.style.zIndex = '1000';
+
+            // Fix the logo image as well
+            const usuLogoImage = usuLogoContainer.querySelector('img');
+            if (usuLogoImage) {
+                usuLogoImage.style.transform = 'none'; // Remove any transform
+                usuLogoImage.style.height = 'auto';
+                usuLogoImage.style.minWidth = '60px';
+                usuLogoImage.style.maxWidth = '100px';
+            }
+        } else {
+            console.error('USU logo container not found');
         }
-    } else {
-        console.error('USU logo container not found');
     }
-});
+    });
 
 // Function to update the map with current conditions from live observations
 async function updateMap() {

@@ -183,6 +183,22 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    function makeCollapsible() {
+        const dayHeaders = document.querySelectorAll('.markdown-content h3');
+        dayHeaders.forEach(header => {
+            if (header.textContent.includes('Day ')) {
+                header.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                    let nextEl = this.nextElementSibling;
+                    while (nextEl && !nextEl.matches('h3')) {
+                        nextEl.style.display = this.classList.contains('collapsed') ? 'none' : 'block';
+                        nextEl = nextEl.nextElementSibling;
+                    }
+                });
+            }
+        });
+    }
+
     /**
      * Load the most recent outlook
      * @param {boolean} summaryOnly - Whether to only load a summary (for homepage)
@@ -210,6 +226,18 @@ document.addEventListener("DOMContentLoaded", function() {
             }
         }
     }
+
+    // Call after loading content
+    outlookContent.innerHTML = `
+    <div class="markdown-content">
+        ${md.render(markdown)}
+    </div>
+    <div class="outlook-meta">
+        Issued: ${formatDateFromFilename(filename)}
+    </div>
+    `;
+
+    makeCollapsible();
 
     /**
      * Initialize the page

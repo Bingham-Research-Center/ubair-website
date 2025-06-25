@@ -851,3 +851,40 @@ body[data-page-type="forecast_weather"] h1::after {
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
+
+.weather-summaries-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    border-left: 4px solid var(--weather-primary);
+    max-width: 50%;
+}
+
+.weather-summaries-section .summary-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--weather-background);
+}
+
+.weather-summaries-section .tab-button {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--weather-primary);
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+}
+
+.weather-summaries-section .tab-button:hover {
+    background: var(--weather-background);
+}
+
+.weather-summaries-section .tab-button.active {
+    background: var(--weather-primary);
+    color: white;
+}

@@ -12,17 +12,25 @@ body:not([data-page-type="locations"]) #map {
     pointer-events: none;
 }
 
-/* Locations page full map styles */
-body[data-page-type="locations"] #map {
-    height: 100vh !important;
-    width: calc(100% - 250px) !important;
-    position: absolute !important;
+/* Full-page map for live_aq page */
+body[data-page-type="live_aq"] #map {
+    position: fixed !important;
     top: 0 !important;
     left: 250px !important;
+    width: calc(100vw - 250px) !important;
+    height: 100vh !important;
     z-index: 1 !important;
     margin: 0 !important;
     border-radius: 0 !important;
     pointer-events: auto !important;
+}
+
+/* Responsive - full width on mobile */
+@media (max-width: 768px) {
+    body[data-page-type="live_aq"] #map {
+        left: 0 !important;
+        width: 100vw !important;
+    }
 }
 
 /* Additional styles for map elements */
@@ -135,4 +143,25 @@ body[data-page-type="locations"] #map {
     #image-overlay1 {
         height: 25vh;
     }
+}
+
+.kiosk-control {
+    background: none;
+    border: none;
+}
+
+.kiosk-map-btn {
+    width: 40px;
+    height: 40px;
+    background: var(--usu-blue);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+}
+
+.kiosk-map-btn:hover {
+    transform: scale(1.05);
 }

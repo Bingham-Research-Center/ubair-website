@@ -1,0 +1,3 @@
+# Clyfar: Intelligent Ozone Forecasting
+### Some filler stuff.
+Clyfar (Welsh for "clever") represents our cutting-edge approach to predicting winter ozone episodes in the Uintah Basin...

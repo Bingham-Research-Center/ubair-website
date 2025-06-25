@@ -1,5 +1,8 @@
 <footer class="main-footer">
     <div class="footer-content">
-        <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
+        <p>&copy; <span id="current-year">2025</span> Bingham Research Center/Utah State University. Experimental use only. All rights reserved.</p>
     </div>
 </footer>
+<script>
+    document.getElementById('current-year').textContent = new Date().getFullYear();
+</script>

@@ -30,7 +30,7 @@
     font-size: 1.2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
-
+/* Archive List & Items */
 .archive-list {
     display: flex;
     flex-direction: column;
@@ -38,162 +38,17 @@
     padding: 1rem;
     max-height: 600px;
     overflow-y: auto;
+    /* Scrollbar styling */
 }
-
-/* Scrollbar styling for archive list */
 .archive-list::-webkit-scrollbar {
     width: 8px;
 }
-
 .archive-list::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
 }
-
 .archive-list::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 4px;
-}
-
-.archive-item {
-    padding: 0.75rem 1rem;
-    border-radius: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: white;
-}
-
-.archive-item:hover {
-    background-color: var(--usu-light-blue);
-    transform: translateX(4px);
-}
-
-.archive-item.active {
-    background-color: var(--usu-light-blue);
-    border-left: 4px solid var(--usu-light-gray);
-}
-
-.archive-date {
-    font-weight: 500;
-    margin-right: 10px;
-}
-
-/* Current outlook styling */
-.outlook-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    line-height: 1.6;
-    white-space: pre-wrap;
-}
-
-.outlook-meta {
-    margin-top: 10px;
-    color: var(--usu-accent);
-    font-size: 0.9em;
-}
-
-.archive-title {
-    font-size: 0.9em;
-    opacity: 0.8;
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.archive-icon {
-    margin-right: 10px;
-    font-size: 0.9em;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-    .outlooks-container {
-        flex-direction: column;
-    }
-
-    #outlook-archive {
-        width: 100%;
-        margin-top: 2rem;
-    }
-
-    .archive-list {
-        max-height: 300px;
-    }
-}
-
-/* Add to public/css/outlooks.css */
-
-/* Markdown content styling */
-.markdown-content {
-    line-height: 1.6;
-    color: var(--usu-blue);
-}
-
-.markdown-content h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: var(--usu-blue);
-}
-
-.markdown-content h2 {
-    font-size: 1.4rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-}
-
-.markdown-content h3 {
-    font-size: 1.2rem;
-    margin-top: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.markdown-content p {
-    margin-bottom: 1rem;
-}
-
-.markdown-content ul, .markdown-content ol {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-}
-
-.markdown-content blockquote {
-    border-left: 4px solid var(--usu-light-blue);
-    padding-left: 1rem;
-    margin-left: 0;
-    color: var(--usu-accent);
-}
-
-.markdown-content a {
-    color: var(--usu-light-blue);
-    text-decoration: none;
-}
-
-.markdown-content a:hover {
-    text-decoration: underline;
-}
-
-.markdown-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-}
-
-.markdown-content hr {
-    border: 0;
-    height: 1px;
-    background-color: var(--usu-gray);
-    margin: 2rem 0;
-}
-
-/* Archive list enhancements */
-.archive-list {
-    max-height: 600px;
-    overflow-y: auto;
 }
 
 .archive-item {
@@ -202,17 +57,162 @@
     align-items: center;
     padding: 10px 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: white;
 }
-
-.archive-item:hover {
+.archive-item:hover,
+.archive-item.active {
     background-color: var(--usu-light-blue);
 }
-
+.archive-item.active {
+    border-left: 4px solid var(--usu-light-gray);
+}
+.archive-date,
 .archive-item-date {
     font-weight: 500;
+    margin-right: 10px;
 }
-
 .archive-item-time {
     opacity: 0.8;
     font-size: 0.85em;
 }
+.archive-title {
+    font-size: 0.9em;
+    opacity: 0.8;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.archive-icon {
+    margin-right: 10px;
+    font-size: 0.9em;
+}
+
+/* Markdown Content */
+.markdown-content {
+    line-height: 1.6;
+    color: var(--usu-blue);
+}
+.markdown-content h1 {
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    color: var(--usu-blue);
+    border-bottom: 3px solid var(--usu-light-blue);
+    padding-bottom: 0.5rem;
+}
+.markdown-content h2 {
+    font-size: 1.4rem;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: var(--usu-light-blue);
+}
+.markdown-content h3 {
+    font-size: 1.2rem;
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+    color: var(--usu-blue);
+    cursor: pointer;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--usu-light-blue);
+    position: relative;
+}
+.markdown-content h3:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+}
+.markdown-content h3::after {
+    content: '▼';
+    position: absolute;
+    right: 1rem;
+    transition: transform 0.3s ease;
+    color: var(--usu-light-blue);
+}
+.markdown-content h3.collapsed::after {
+    transform: rotate(-90deg);
+}
+.markdown-content p {
+    margin-bottom: 0.8rem;
+}
+.markdown-content strong {
+    color: var(--usu-blue);
+    font-weight: 600;
+}
+.markdown-content ul,
+.markdown-content ol {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+.markdown-content blockquote {
+    border-left: 4px solid var(--usu-light-blue);
+    padding-left: 1rem;
+    margin-left: 0;
+    color: var(--usu-accent);
+}
+.markdown-content a {
+    color: var(--usu-light-blue);
+    text-decoration: none;
+}
+.markdown-content a:hover {
+    text-decoration: underline;
+}
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 1rem 0;
+}
+.markdown-content hr {
+    border: 0;
+    height: 1px;
+    background-color: var(--usu-gray);
+    margin: 2rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .outlooks-container {
+        flex-direction: column;
+    }
+    #outlook-archive {
+        width: 100%;
+        margin-top: 2rem;
+    }
+    .archive-list {
+        max-height: 300px;
+    }
+}
+
+.day-section {
+    margin-bottom: 1.5rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,38,58,0.1);
+}
+
+.day-content {
+    padding: 1rem;
+    background: white;
+    border-left: 4px solid var(--usu-accent);
+}
+
+.day-content.collapsed {
+    display: none;
+}
+
+.markdown-content p {
+    margin-bottom: 0.8rem; /* Reduced from 1rem */
+}
+
+.markdown-content strong {
+    color: var(--usu-blue);
+    font-weight: 600;
+}
+
+/* Risk Level Styling */
+.risk-high { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 3px; }
+.risk-moderate { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; }
+.risk-low { background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 3px; }

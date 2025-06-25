@@ -460,3 +460,28 @@ body[data-page-type="roads"] h1::after {
     outline: 2px solid var(--roads-accent);
     outline-offset: 2px;
 }
+
+.road-map-section {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.road-network-map {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+    .road-map-section {
+        height: 250px;
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+}

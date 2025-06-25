@@ -585,18 +585,19 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .tooltip {
-    position: absolute;
+    position: fixed !important;
     background: var(--air-primary);
     color: white;
     padding: 0.75rem 1rem;
     border-radius: 8px;
     font-size: 0.9rem;
     max-width: 250px;
-    z-index: 1000;
+    z-index: 10000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    pointer-events: none;
 }
 
 .tooltip::before {
@@ -692,4 +693,70 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .performance-container:hover .visualization-header h3 i {
     transform: scale(1.1);
     color: var(--welsh-gold);
+}
+
+.llm-summaries-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    border-left: 4px solid var(--air-primary);
+    max-width: 50%; /* Half page width */
+}
+
+.summary-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 2px solid var(--air-background);
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    background: transparent;
+    border: none;
+    color: var(--air-primary);
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 8px 8px 0 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tab-button:hover {
+    background: var(--air-background);
+}
+
+.tab-button.active {
+    background: var(--air-primary);
+    color: white;
+}
+
+.tab-content {
+    position: relative;
+}
+
+.summary-content {
+    display: none;
+    background: var(--air-background);
+    padding: 1.5rem;
+    border-radius: 8px;
+    line-height: 1.6;
+}
+
+.summary-content.active {
+    display: block;
+}
+
+.summary-content .markdown-content h1,
+.summary-content .markdown-content h2,
+.summary-content .markdown-content h3 {
+    color: var(--air-primary);
+    margin-top: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.summary-content .markdown-content p {
+    margin-bottom: 1rem;
 }

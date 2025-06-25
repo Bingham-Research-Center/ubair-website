@@ -1,11 +1,6 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    // Initialize tooltips
     initializeTooltips();
-
-    // Load latest outlook preview
-    await loadOutlookPreview();
-
-    // Initialize Clyfar visualizations (placeholder for now)
+    await loadLLMSummaries();
     initializeClyfarpages();
 });
 
@@ -30,29 +25,96 @@ function initializeTooltips() {
     });
 }
 
-async function loadOutlookPreview() {
-    try {
-        const response = await fetch('/public/data/outlooks/outlooks_list.json');
-        const outlooks = await response.json();
+async function loadLLMSummaries() {
+    const md = markdownit({ html: true, linkify: true, typographer: true });
 
-        if (outlooks.length === 0) return;
+    // Setup tab switching
+    const tabButtons = document.querySelectorAll('.tab-button');
+    const summaryContents = document.querySelectorAll('.summary-content');
 
-        const latestOutlook = outlooks[0];
-        const outlookResponse = await fetch(`/public/data/outlooks/${latestOutlook.filename}`);
-        const content = await outlookResponse.text();
+    tabButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.preventDefault();
+            const tab = button.dataset.tab;
 
-        // Extract first two lines
-        const lines = content.split('\n').filter(line => line.trim() !== '').slice(0, 2);
-        document.getElementById('outlook-preview').innerHTML = lines.join('<br>');
+            // Update active states
+            tabButtons.forEach(b => b.classList.remove('active'));
+            summaryContents.forEach(c => c.classList.remove('active'));
 
-    } catch (error) {
-        console.error('Error loading outlook preview:', error);
-        document.getElementById('outlook-preview').textContent = 'Error loading outlook preview.';
+            button.classList.add('active');
+            const targetContent = document.getElementById(`${tab}-content`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+            }
+        });
+    });
+
+    // Load content for each tab
+    const levels = ['plain', 'extended', 'detailed'];
+    for (const level of levels) {
+        try {
+            const response = await fetch(`/public/data/clyfar/${level}.md`);
+            if (response.ok) {
+                const content = await response.text();
+                const targetElement = document.getElementById(`${level}-content`);
+                if (targetElement) {
+                    targetElement.innerHTML =
+                        `<div class="markdown-content">${md.render(content)}</div>`;
+                }
+            } else {
+                console.log(`${level}.md not found, using placeholder`);
+                const targetElement = document.getElementById(`${level}-content`);
+                if (targetElement) {
+                    targetElement.innerHTML = `<p>${level.charAt(0).toUpperCase() + level.slice(1)} summary will be available here.</p>`;
+                }
+            }
+        } catch (error) {
+            console.error(`Error loading ${level} summary:`, error);
+            const targetElement = document.getElementById(`${level}-content`);
+            if (targetElement) {
+                targetElement.innerHTML = `<p>Error loading ${level} summary.</p>`;
+            }
+        }
     }
 }
 
+// Fix tooltip positioning
+function initializeTooltips() {
+    const tooltipTriggers = document.querySelectorAll('[data-tooltip]');
+    let tooltip = document.getElementById('tooltip');
+
+    if (!tooltip) {
+        tooltip = document.createElement('div');
+        tooltip.id = 'tooltip';
+        tooltip.className = 'tooltip';
+        document.body.appendChild(tooltip);
+    }
+
+    tooltipTriggers.forEach(trigger => {
+        trigger.addEventListener('mouseenter', (e) => {
+            const text = e.target.getAttribute('data-tooltip');
+            tooltip.textContent = text;
+            tooltip.classList.add('show');
+
+            const rect = e.target.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
+
+            // Position tooltip to the left if too far right
+            let left = rect.left;
+            if (left + tooltipRect.width > window.innerWidth - 20) {
+                left = window.innerWidth - tooltipRect.width - 20;
+            }
+
+            tooltip.style.left = left + 'px';
+            tooltip.style.top = (rect.top - tooltipRect.height - 10) + 'px';
+        });
+
+        trigger.addEventListener('mouseleave', () => {
+            tooltip.classList.remove('show');
+        });
+    });
+}
+
 function initializeClyfarpages() {
-    // Placeholder for Clyfar visualization initialization
-    // This would eventually connect to your Clyfar data APIs
     console.log('Clyfar visualizations initialized');
 }

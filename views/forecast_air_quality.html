@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Air Quality Forecasts for Uintah Basin using Clyfar AI model">
-    <title>Air Quality Forecasts - Uintah Basin</title>
+    <title>Clyfar AI Ozone Forecasts: Uintah Basin</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,32 +29,34 @@
 
     <!-- Main Content -->
     <main class="content">
-        <h1><span style="font-variant: small-caps;">Clyfar</span>: Experimental Ozone Forecasts</h1>
+        <h1><span style="font-variant: small-caps;">Clyfar</span>: AI Ozone Forecasts</h1>
 
-        <!-- Latest Written Outlook -->
-        <section class="outlook-preview-section" aria-label="Latest Written Outlook">
+        <!-- LLM Summaries Section -->
+        <section class="llm-summaries-section" aria-label="Experimental LLM Summaries">
             <div class="section-header">
-                <h2><i class="fas fa-file-text"></i> Latest Written Outlook</h2>
-                <div class="info-icon" data-tooltip="Professional forecast outlook written by our meteorologists">
+                <h2><i class="fas fa-comments"></i> Experimental LLM Summaries</h2>
+                <div class="info-icon" data-tooltip="AI-generated summaries at different complexity levels">
                     <i class="fas fa-info-circle"></i>
                 </div>
             </div>
-            <div class="outlook-preview-content">
-                <div class="outlook-text" id="outlook-preview">
-                    Loading latest outlook preview...
-                </div>
-                <div class="outlook-actions">
-                    <a href="/forecast_outlooks" class="outlook-link">
-                        <i class="fas fa-external-link-alt"></i> View Full Outlook
-                    </a>
-                </div>
+
+            <div class="summary-tabs">
+                <button class="tab-button active" data-tab="plain" data-tooltip="For general public">Plain</button>
+                <button class="tab-button" data-tab="extended" data-tooltip="For oil, gas, and public stakeholders">Extended</button>
+                <button class="tab-button" data-tab="detailed" data-tooltip="For researchers with meteorology, chemistry, statistics background">Detailed</button>
+            </div>
+
+            <div class="tab-content">
+                <div id="plain-content" class="summary-content active">Loading plain summary...</div>
+                <div id="extended-content" class="summary-content">Loading extended summary...</div>
+                <div id="detailed-content" class="summary-content">Loading detailed summary...</div>
             </div>
         </section>
 
         <!-- Clyfar AI Forecasting -->
         <section class="clyfar-section" aria-label="Clyfar AI Forecasting System">
             <div class="section-header clyfar-header">
-                <h2><i class="fas fa-brain"></i> Clyfar AI Forecasting</h2>
+                <h2><i class="fas fa-dragon"></i> Clyfar AI Forecasting</h2>
                 <div class="clyfar-info">
                     <div class="info-icon clyfar-info-icon" data-tooltip="Clyfar (Welsh for 'clever') is our proprietary AI model for ozone forecasting">
                         <i class="fas fa-question-circle"></i>

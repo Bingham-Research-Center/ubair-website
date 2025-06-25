@@ -515,3 +515,186 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     background-color: #f8d7da;
     color: #721c24;
 }
+
+.sidebar ul li.nav-active {
+    background-color: var(--usu-light-blue);
+    border-left: 4px solid #ffd700;
+    box-shadow: inset 0 0 10px rgba(255, 215, 0, 0.3);
+}
+
+/* Subtle animations */
+@keyframes gentle-pulse {
+    0%, 100% { opacity: 0.8; }
+    50% { opacity: 1; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-3px); }
+}
+
+.condition-card:hover {
+    animation: float 2s ease-in-out infinite;
+}
+
+.sidebar-logo img {
+    animation: gentle-pulse 4s ease-in-out infinite;
+}
+
+/* Add subtle gradient overlays */
+.visualization-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 0%, rgba(0, 38, 58, 0.02) 50%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Enhanced shadows and depth */
+.summary-card, .condition-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.summary-card:hover, .condition-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 40px rgba(0, 38, 58, 0.15);
+}
+
+/* Dropdown Menu Styles */
+.nav-dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    display: flex !important;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.dropdown-arrow {
+    transition: transform 0.3s ease;
+    font-size: 0.8em;
+}
+
+.nav-dropdown:hover .dropdown-arrow {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    left: 0;
+    top: 100%;
+    width: 100%;
+    background: var(--usu-light-blue);
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    z-index: 1000;
+}
+
+.nav-dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.dropdown-menu li {
+    padding: 8px 20px;
+}
+
+.dropdown-menu li:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.dropdown-menu a {
+    font-size: 0.9em;
+    padding-left: 1.5em;
+}
+
+/* Two-column popup styling */
+.two-column-popup .leaflet-popup-content {
+    margin: 8px 12px;
+    line-height: 1.4;
+    font-size: 13px;
+}
+
+.two-column-popup .leaflet-popup-content h3 {
+    color: var(--usu-blue);
+    font-size: 14px;
+}
+
+/* Kiosk Switch Styling */
+.kiosk-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 10px;
+    padding-right: 20px;
+}
+
+.kiosk-switch {
+    width: 50px;
+    height: 25px;
+    background: #ccc;
+    border-radius: 25px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.kiosk-switch.active {
+    background: var(--usu-blue);
+}
+
+.switch-slider {
+    width: 21px;
+    height: 21px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.kiosk-switch.active .switch-slider {
+    transform: translateX(25px);
+}
+
+.kiosk-info {
+    color: var(--usu-accent);
+    cursor: help;
+    font-size: 0.9em;
+}
+
+.nav-divider {
+    margin: 1rem 0 0.5rem 0;
+    padding: 0 20px;
+}
+
+.divider-line {
+    height: 1px;
+    background: rgba(255,255,255,0.2);
+    margin-bottom: 0.5rem;
+}
+
+.divider-label {
+    color: #daa520; /* Goldenrod */
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.external-link a {
+    opacity: 0.8;
+}
+
+.external-link:hover a {
+    opacity: 1;
+}
