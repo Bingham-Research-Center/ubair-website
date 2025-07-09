@@ -61,6 +61,10 @@ app.get('/aviation', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/aviation.html'));
 });
 
+app.get('/fire', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/fire.html'));
+});
+
 app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });
