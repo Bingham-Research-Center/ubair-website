@@ -2,6 +2,7 @@ import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
+// Initialize map with proper center and zoom for dashboard view
 const map = L.map('map', {
     zoomControl: false,
     scrollWheelZoom: false,
@@ -10,8 +11,7 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.3033, -109.7], 10); // Changed from -110.0 to -109.7, zoom from 9 to 10
-
+}).setView([40.3033, -109.7], 8); // Slightly more zoomed out
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 15,
@@ -23,30 +23,22 @@ let kioskInterval;
 let currentStationIndex = 0;
 let markers = [];
 
-const kioskContainer = document.createElement('div');
-kioskContainer.className = 'kiosk-switch-container';
-kioskContainer.innerHTML = `
-    <label for="kiosk-switch" style="color: var(--usu-blue); font-weight: 500; margin-right: 0.5rem;">Auto-cycle stations:</label>
-    <div class="kiosk-switch ${kioskMode ? 'active' : ''}" id="kiosk-switch" title="Automatically cycle through station popups for displays">
-        <div class="switch-slider"></div>
-    </div>
-`;
-
-// Add to page after map loads
+// Wait for DOM to load before setting up
 document.addEventListener('DOMContentLoaded', () => {
-    const mapContainer = document.getElementById('map');
-    if (mapContainer) {
-        mapContainer.style.height = '350px'; // More square
-        mapContainer.style.maxWidth = '600px'; // Limit width
-        mapContainer.style.margin = '20px auto';
+    setupKioskControl();
+    updateMiniMap();
 
-        // Insert switch after map
-        mapContainer.parentNode.insertBefore(kioskContainer, mapContainer.nextSibling);
-
-        // Add event listener
-        document.getElementById('kiosk-switch').addEventListener('click', toggleKiosk);
-    }
+    // Auto-refresh every 5 minutes
+    setInterval(updateMiniMap, 300000);
 });
+
+function setupKioskControl() {
+    // The kiosk control is now part of the HTML structure
+    const kioskSwitch = document.getElementById('kiosk-switch');
+    if (kioskSwitch) {
+        kioskSwitch.addEventListener('click', toggleKiosk);
+    }
+}
 
 function toggleKiosk() {
     kioskMode = !kioskMode;
@@ -71,7 +63,7 @@ function startKioskMode() {
             markers[currentStationIndex].openPopup();
         }
         currentStationIndex = (currentStationIndex + 1) % markers.length;
-    }, 5000);
+    }, 4000); // 4 second intervals
 }
 
 function stopKioskMode() {
@@ -81,12 +73,20 @@ function stopKioskMode() {
 
 async function updateMiniMap() {
     try {
-        const data = await fetchLiveObservations();
+        // Try to fetch real data, fall back to synthetic
+        let data;
+        try {
+            data = await fetchLiveObservations();
+        } catch (error) {
+            console.log('Using synthetic data for homepage demo');
+            data = generateSyntheticData();
+        }
 
         // Clear existing markers
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
+        // Add markers for each station
         for (const [stationName, coordinates] of Object.entries(stations)) {
             const measurements = {
                 'Ozone': data['Ozone']?.[stationName] ?? null,
@@ -96,14 +96,13 @@ async function updateMiniMap() {
                 'Temperature': data['Temperature']?.[stationName] ?? null
             };
 
-            // Create two-column popup content
             const popupContent = createTwoColumnPopup(stationName, measurements);
-
             const markerColor = getMarkerColor(measurements);
+
             const markerIcon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="background-color: ${markerColor}; width: 15px; height: 15px; border-radius: 50%; border: 1px solid white;"></div>`,
-                iconSize: [18, 18]
+                html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`,
+                iconSize: [24, 24]
             });
 
             const marker = L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
@@ -111,12 +110,43 @@ async function updateMiniMap() {
                     maxWidth: 300,
                     className: 'two-column-popup'
                 });
+
             marker.addTo(map);
             markers.push(marker);
         }
+
+        // Fit map to show all stations with extra padding for dashboard view
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds(), {
+                padding: [30, 30], // More padding for better view
+                maxZoom: 9
+            });
+        }
+
     } catch (error) {
         console.error('Error loading observation data:', error);
     }
+}
+
+function generateSyntheticData() {
+    const syntheticData = {
+        'Ozone': {},
+        'PM2.5': {},
+        'Temperature': {},
+        'NOx': {},
+        'NO': {}
+    };
+
+    Object.keys(stations).forEach(station => {
+        syntheticData['Ozone'][station] = Math.round(35 + Math.random() * 40);
+        syntheticData['PM2.5'][station] = Math.round(5 + Math.random() * 35);
+        syntheticData['Temperature'][station] = Math.round(-5 + Math.random() * 20);
+        syntheticData['NOx'][station] = Math.round(20 + Math.random() * 80);
+        syntheticData['NO'][station] = Math.round(10 + Math.random() * 50);
+    });
+
+    return syntheticData;
 }
 
 function createTwoColumnPopup(stationName, measurements) {
@@ -131,7 +161,7 @@ function createTwoColumnPopup(stationName, measurements) {
 
     validMeasurements.forEach(([pollutant, value], index) => {
         const unit = pollutant === 'Temperature' ? '°C' : ' ppb';
-        const item = `<div style="margin: 2px 0;"><strong>${pollutant}:</strong> ${value}${unit}</div>`;
+        const item = `<div style="margin: 4px 0;"><strong>${pollutant}:</strong> ${value}${unit}</div>`;
 
         if (index % 2 === 0) {
             leftCol += item;
@@ -141,15 +171,12 @@ function createTwoColumnPopup(stationName, measurements) {
     });
 
     return `
-        <div style="min-width: 250px;">
-            <h3 style="text-align: center; margin: 0 0 8px 0;">${stationName}</h3>
-            <div style="display: flex; gap: 15px;">
+        <div style="min-width: 280px;">
+            <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--usu-blue);">${stationName}</h3>
+            <div style="display: flex; gap: 20px;">
                 <div style="flex: 1;">${leftCol}</div>
                 <div style="flex: 1;">${rightCol}</div>
             </div>
         </div>
     `;
 }
-
-updateMiniMap();
-setInterval(updateMiniMap, 300000);

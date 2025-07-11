@@ -30,26 +30,61 @@
 <main class="content">
     <h1>TEST DATA! Uintah Basin Winter Ozone Information</h1>
 
-    <div id="map-title" style="text-align: center; margin: 10px 0;">
-        <a href="/live_aq" style="text-decoration: none; color: inherit; display: flex; align-items: center; justify-content: center; gap: 8px;">
-            TEST DATA! Current Conditions
-            <i class="fas fa-map-marked-alt" style="font-size: 1.2em; color: var(--usu-blue);"></i>
-        </a>
-    </div>
-
-    <div id="map" class="home-map" style="width: 100%; height: 300px; margin: 20px auto" aria-label="Map"></div>
-
-    <!-- Latest Post Section -->
-    <div id="latest-post" class="post outlook-preview">
-        <div class="outlook-preview-header">
-            <h2>TEST DATA! Latest Forecast Outlook</h2>
-            <div class="outlook-preview-date" id="outlook-date">Loading...</div>
+    <!-- Air Quality Overview Dashboard -->
+    <section class="dashboard-section" aria-label="Air Quality Overview">
+        <div class="section-header">
+            <h2><i class="fas fa-lungs"></i> Current Air Quality Overview</h2>
+            <div class="section-subtitle">Real-time monitoring and latest forecasts</div>
         </div>
-        <div class="outlook-preview-content" id="outlook-summary">Loading latest outlook...</div>
-        <div class="outlook-preview-link">
-            <a href="/forecast_outlooks" id="see-more">See Full Outlook</a>
+
+        <div class="dashboard-grid">
+            <!-- Live Map Panel -->
+            <div class="dashboard-panel map-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-map-marked-alt"></i> Live Monitoring Stations</h3>
+                    <a href="/live_aq" class="panel-link">
+                        <i class="fas fa-external-link-alt"></i> Full Map
+                    </a>
+                </div>
+                <div class="map-container-dashboard">
+                    <div id="map" class="dashboard-map" aria-label="Air Quality Monitoring Map"></div>
+                    <div class="kiosk-switch-container">
+                        <label for="kiosk-switch">Auto-cycle stations:</label>
+                        <div class="kiosk-switch" id="kiosk-switch" title="Automatically cycle through station popups">
+                            <div class="switch-slider"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Latest Forecast Panel -->
+            <div class="dashboard-panel forecast-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-crystal-ball"></i> Latest Forecast Outlook</h3>
+                    <a href="/forecast_outlooks" class="panel-link" id="see-more">
+                        <i class="fas fa-external-link-alt"></i> All Outlooks
+                    </a>
+                </div>
+                <div class="forecast-container-dashboard">
+                    <div class="outlook-preview-date" id="outlook-date">Loading...</div>
+                    <div class="outlook-preview-content" id="outlook-summary">Loading latest outlook...</div>
+                </div>
+            </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Future sections for weather, alerts, etc. -->
+    <!--
+    <section class="dashboard-section" aria-label="Weather Overview">
+        <div class="section-header">
+            <h2><i class="fas fa-cloud-sun"></i> Weather Conditions</h2>
+            <div class="section-subtitle">Current conditions and short-term forecasts</div>
+        </div>
+        <div class="dashboard-grid">
+            // Weather content will go here
+        </div>
+    </section>
+    -->
 </main>
 
 <!-- Load Leaflet JS -->

@@ -35,8 +35,9 @@ body::before {
     pointer-events: none;
 }
 
-/* Ensure map containers have higher z-index */
 #map {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
     position: relative;
     z-index: 1;
 }
@@ -317,29 +318,33 @@ main.content {
     box-sizing: border-box;
 }
 
-/* Homepage map - small and centered */
+/* Homepage map specific overrides */
 body[data-page-type="index"] #map {
-    width: 80% !important;
-    height: 300px !important;
-    margin: 20px auto !important;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
-    pointer-events: none; /* Disable map interactions on homepage */
-    display: block;
-    max-width: 600px; /* Center the map frame */
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    pointer-events: none;
 }
 
-/* Homepage map - allow only marker interactions */
+/* Allow marker interactions */
 body[data-page-type="index"] #map .leaflet-marker-pane,
 body[data-page-type="index"] #map .leaflet-popup-pane {
     pointer-events: auto;
 }
 
-/* Full-page map for live_aq page */
+/* Remove overlays from homepage */
+body[data-page-type="index"] .overlay-container,
+body[data-page-type="index"] .warning-levels-overlay,
+body[data-page-type="index"] .usu-logo {
+    display: none;
+}
+
+/* Full-page map for live air quality page */
 body[data-page-type="live_aq"] #map {
     position: fixed !important;
     top: 0 !important;
-    left: 250px !important; /* Account for sidebar */
+    left: 250px !important;
     width: calc(100vw - 250px) !important;
     height: 100vh !important;
     z-index: 1 !important;
@@ -348,57 +353,154 @@ body[data-page-type="live_aq"] #map {
     pointer-events: auto !important;
 }
 
-/* Responsive - full width on mobile */
+/* Responsive design */
 @media (max-width: 768px) {
     body[data-page-type="live_aq"] #map {
         left: 0 !important;
         width: 100vw !important;
     }
+
+    .overlay-container {
+        left: 20px;
+        max-width: 150px;
+    }
+
+    .usu-logo {
+        left: 20px;
+    }
+
+    .warning-levels-overlay {
+        bottom: 80px;
+        right: 10px;
+    }
+
+    #image-overlay1 {
+        height: 20vh;
+    }
 }
 
-/* Responsive fixes */
-@media (max-width: 768px) {
-    .content,
-    main.content {
-        margin-left: 0;
-        padding: 1rem;
-        max-width: 100%;
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .sidebar_container {
-        position: relative;
-        width: 100%;
-    }
-
-    .sidebar {
-        width: 100%;
+    .dashboard-panel {
         height: auto;
-        position: relative;
+        min-height: 400px;
     }
+}
+
+@media (max-width: 768px) {
+    .dashboard-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.4rem;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .dashboard-map {
+        min-height: 300px;
+    }
+
+    .kiosk-switch-container {
+        justify-content: center;
+    }
+}
+
+/* Warning levels overlay */
+.warning-levels-overlay {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+}
+
+#image-overlay1 {
+    height: 30vh;
+    width: auto;
+    display: block;
+    border-radius: 4px;
+}
+
+/* Study area overlay */
+.overlay-container {
+    position: fixed;
+    top: 20px;
+    left: calc(250px + 20px); /* Account for sidebar */
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 1000;
+    max-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+}
+
+#image-overlay {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
 }
 
 .study-area-toggle {
     position: fixed;
-    top: 5%;
-    right: 5%;
-    z-index: 1000;
-    padding: 2% 4%;
-    background-color: #007bff;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    padding: 8px 16px;
+    background-color: var(--usu-blue);
     color: white;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     cursor: pointer;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
 }
 
 .study-area-toggle:hover {
-    background-color: #0056b3;
+    background-color: var(--usu-light-blue);
+    transform: translateY(-2px);
 }
+
 
 .transparent-text {
     position: absolute;
     opacity: 0.5;
 }
+
+/* USU Logo positioning */
+.usu-logo {
+    position: fixed;
+    bottom: 20px;
+    left: calc(250px + 20px);
+    z-index: 1000;
+}
+
+.usu-logo img {
+    height: 60px;
+    width: auto;
+    opacity: 0.8;
+}
+
 
 .sidebar-logo-title {
     display: block;
@@ -462,16 +564,38 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     font-size: 1.5rem;
 }
 
+/* Forecast Panel Specific */
+.forecast-panel {
+    border-left: 4px solid var(--usu-light-blue);
+}
+
+.forecast-container-dashboard {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
 .outlook-preview-date {
     color: var(--usu-accent);
     font-size: 0.9rem;
     font-style: italic;
+    margin-bottom: 1rem;
+    text-align: center;
+    padding: 0.5rem;
+    background: rgba(0, 38, 58, 0.05);
+    border-radius: 6px;
 }
 
 .outlook-preview-content {
+    flex: 1;
     line-height: 1.6;
     color: var(--usu-blue);
-    margin-bottom: 15px;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 38, 58, 0.1);
+    overflow-y: auto;
 }
 
 .outlook-preview-link {
@@ -626,24 +750,37 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     font-size: 14px;
 }
 
-/* Kiosk Switch Styling */
+/* Kiosk control for homepage - outside map, top right */
 .kiosk-switch-container {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 10px;
-    margin-top: 10px;
-    padding-right: 20px;
+    gap: 8px;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.kiosk-switch-container label {
+    color: var(--usu-blue);
+    font-weight: 500;
+    margin: 0;
 }
 
 .kiosk-switch {
-    width: 50px;
-    height: 25px;
+    width: 45px;
+    height: 22px;
     background: #ccc;
-    border-radius: 25px;
+    border-radius: 22px;
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
+}
+
+.kiosk-switch.active {
+    background: var(--usu-blue);
 }
 
 /* Add tooltip styles */
@@ -663,13 +800,9 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.kiosk-switch.active {
-    background: var(--usu-blue);
-}
-
 .switch-slider {
-    width: 21px;
-    height: 21px;
+    width: 18px;
+    height: 18px;
     background: white;
     border-radius: 50%;
     position: absolute;
@@ -680,7 +813,7 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
 }
 
 .kiosk-switch.active .switch-slider {
-    transform: translateX(25px);
+    transform: translateX(23px);
 }
 
 .kiosk-info {
@@ -715,3 +848,146 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
 .external-link:hover a {
     opacity: 1;
 }
+
+/* Dashboard Section Styling */
+.dashboard-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(0, 38, 58, 0.08);
+    border: 1px solid rgba(0, 38, 58, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+.dashboard-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--usu-blue), var(--usu-light-blue), var(--usu-accent));
+    border-radius: 16px 16px 0 0;
+}
+
+/* Section Header */
+.section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--usu-light-gray);
+}
+
+.section-header h2 {
+    color: var(--usu-blue);
+    font-size: 1.6rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin: 0 0 0.5rem 0;
+}
+
+.section-header h2 i {
+    color: var(--usu-light-blue);
+}
+
+.section-subtitle {
+    color: var(--usu-accent);
+    font-size: 1rem;
+    font-style: italic;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+/* Dashboard Panels */
+.dashboard-panel {
+    background: linear-gradient(135deg, #f8f9fa, #f1f3f4);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid rgba(0, 38, 58, 0.1);
+    transition: all 0.3s ease;
+    height: 500px; /* Fixed height for consistency */
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-panel:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0, 38, 58, 0.12);
+    background: white;
+}
+
+/* Panel Headers */
+.panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--usu-light-gray);
+}
+
+.panel-header h3 {
+    color: var(--usu-blue);
+    font-size: 1.2rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+.panel-header h3 i {
+    color: var(--usu-light-blue);
+}
+
+.panel-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: var(--usu-light-blue);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    background: rgba(98, 124, 139, 0.1);
+    transition: all 0.2s ease;
+}
+
+.panel-link:hover {
+    background: var(--usu-light-blue);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Map Panel Specific */
+.map-panel {
+    border-left: 4px solid var(--usu-blue);
+}
+
+.map-container-dashboard {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.dashboard-map {
+    flex: 1;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 38, 58, 0.1);
+    border: 2px solid rgba(0, 38, 58, 0.1);
+    min-height: 350px; /* Ensure minimum height */
+}
+

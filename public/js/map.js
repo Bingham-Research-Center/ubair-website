@@ -1,10 +1,9 @@
-// Fixed map.js with all features restored
 import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
 // Initialize the map centered on Uintah Basin
-const map = L.map('map').setView([40.3033, -110.0153], 9);
+const map = L.map('map').setView([40.3033, -109.7], 9);
 
 // Add OpenStreetMap tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -24,6 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setupKioskControl();
     fixUSULogo();
     updateMap(); // Initial data load
+
+    // Auto-refresh every 5 minutes
+    setInterval(updateMap, 300000);
 });
 
 function setupStudyAreaToggle() {
@@ -32,43 +34,14 @@ function setupStudyAreaToggle() {
 
     if (!overlayContainer || !studyAreaImage) return;
 
-    // Show by default
-    overlayContainer.style.display = 'block';
-    let studyAreaVisible = true;
-
-    // Style the container
-    overlayContainer.style.position = 'fixed';
-    overlayContainer.style.top = '10vh';
-    overlayContainer.style.right = '2%';
-    overlayContainer.style.zIndex = '1000';
-    overlayContainer.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
-    overlayContainer.style.padding = '10px';
-    overlayContainer.style.borderRadius = '5px';
-    overlayContainer.style.maxWidth = '12vw';
-    overlayContainer.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
-
-    // Style the image
-    studyAreaImage.style.display = 'block';
-    studyAreaImage.style.maxWidth = '100%';
-    studyAreaImage.style.height = 'auto';
+    // Start hidden by default
+    overlayContainer.style.display = 'none';
+    let studyAreaVisible = false;
 
     // Create toggle button
     const studyAreaToggle = document.createElement('button');
-    studyAreaToggle.textContent = 'Hide Study Area';
+    studyAreaToggle.textContent = 'Show Study Area';
     studyAreaToggle.className = 'study-area-toggle';
-    studyAreaToggle.style.cssText = `
-        position: fixed;
-        top: 2vh;
-        right: 2%;
-        padding: 0.5em 1em;
-        z-index: 1001;
-        background-color: #00263A;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    `;
 
     studyAreaToggle.addEventListener('click', function() {
         studyAreaVisible = !studyAreaVisible;
@@ -120,23 +93,19 @@ function setupKioskControl() {
 
 function fixUSULogo() {
     const usuLogoContainer = document.querySelector('.usu-logo');
-    if (!usuLogoContainer) return;
+    if (usuLogoContainer) {
+        // Ensure proper positioning for live AQ page
+        usuLogoContainer.style.position = 'fixed';
+        usuLogoContainer.style.bottom = '20px';
+        usuLogoContainer.style.left = 'calc(250px + 20px)';
+        usuLogoContainer.style.zIndex = '1000';
 
-    // Reset and apply correct styles
-    usuLogoContainer.style.cssText = `
-        position: fixed;
-        bottom: 5vh;
-        left: calc(250px + 2%);
-        z-index: 1000;
-    `;
-
-    const usuLogoImage = usuLogoContainer.querySelector('img');
-    if (usuLogoImage) {
-        usuLogoImage.style.cssText = `
-            height: auto;
-            width: 80px;
-            max-width: 100px;
-        `;
+        const usuLogoImage = usuLogoContainer.querySelector('img');
+        if (usuLogoImage) {
+            usuLogoImage.style.height = '60px';
+            usuLogoImage.style.width = 'auto';
+            usuLogoImage.style.opacity = '0.8';
+        }
     }
 }
 
@@ -193,7 +162,7 @@ async function updateMap() {
         try {
             data = await fetchLiveObservations();
         } catch (error) {
-            console.log('Using synthetic data for demo');
+            console.log('Using synthetic data for live AQ demo');
             data = generateSyntheticData();
         }
 
@@ -218,28 +187,38 @@ async function updateMap() {
                 className: 'custom-marker',
                 html: `<div style="
                     background-color: ${markerColor};
-                    width: 20px;
-                    height: 20px;
+                    width: 24px;
+                    height: 24px;
                     border-radius: 50%;
-                    border: 2px solid white;
-                    box-shadow: 0 0 5px rgba(0,0,0,0.5);"
+                    border: 3px solid white;
+                    box-shadow: 0 0 8px rgba(0,0,0,0.6);"
                 ></div>`,
-                iconSize: [24, 24]
+                iconSize: [30, 30]
             });
 
             const marker = L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
-                .bindPopup(popupContent);
+                .bindPopup(popupContent, {
+                    maxWidth: 300,
+                    className: 'station-popup'
+                });
 
             marker.addTo(map);
             markers.push(marker);
         }
+
+        // Fit map to show all stations on first load
+        if (markers.length > 0) {
+            const group = new L.featureGroup(markers);
+            map.fitBounds(group.getBounds(), {
+                padding: [30, 30],
+                maxZoom: 11
+            });
+        }
+
     } catch (error) {
         console.error('Error updating map:', error);
     }
 }
-
-// Update map every 5 minutes
-setInterval(updateMap, 300000);
 
 // Export for use in other modules if needed
 window.mapInstance = map;
