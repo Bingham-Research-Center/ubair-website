@@ -1,3 +1,202 @@
+/* Enhanced Markdown Content Styling */
+.markdown-content {
+    line-height: 1.7;
+    color: var(--usu-blue);
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    max-width: none;
+}
+
+.markdown-content h1 {
+    font-size: 2rem;
+    margin: 0 0 1.5rem 0;
+    color: var(--usu-blue);
+    border-bottom: 3px solid var(--usu-light-blue);
+    padding-bottom: 0.75rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.markdown-content h2 {
+    font-size: 1.4rem;
+    margin: 2rem 0 1rem 0;
+    color: var(--usu-light-blue);
+    font-weight: 600;
+}
+
+.markdown-content h3 {
+    font-size: 1.2rem;
+    margin: 1.5rem 0 0.75rem 0;
+    color: var(--usu-blue);
+    font-weight: 600;
+    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--usu-light-blue);
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.markdown-content h3:hover {
+    background: linear-gradient(135deg, #e9ecef, #dee2e6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,38,58,0.1);
+}
+
+.markdown-content h4 {
+    font-size: 1.1rem;
+    margin: 1.25rem 0 0.5rem 0;
+    color: var(--usu-blue);
+    font-weight: 600;
+}
+
+.markdown-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+    hyphens: auto;
+}
+
+.markdown-content strong {
+    color: var(--usu-blue);
+    font-weight: 600;
+}
+
+/* Risk Level Color Coding - Applied via JavaScript */
+.risk-word-no { color: #22c55e !important; font-weight: 600; }
+.risk-word-low { color: #3b82f6 !important; font-weight: 600; }
+.risk-word-moderate { color: #f59e0b !important; font-weight: 600; }
+.risk-word-high { color: #dc2626 !important; font-weight: 600; }
+
+/* Enhanced risk indicators with background styling */
+.risk-indicator {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    margin: 0 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.risk-no, .risk-low {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #15803d;
+    border: 1px solid #22c55e;
+}
+
+.risk-moderate {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #a16207;
+    border: 1px solid #f59e0b;
+}
+
+.risk-high {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: #b91c1c;
+    border: 1px solid #dc2626;
+}
+
+/* Confidence indicators */
+.confidence-indicator {
+    font-style: italic;
+    opacity: 0.8;
+    font-size: 0.9rem;
+    margin-left: 8px;
+}
+
+/* Professional blockquotes */
+.markdown-content blockquote {
+    border-left: 4px solid var(--usu-light-blue);
+    padding: 1.5rem;
+    margin: 1.5rem 0;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    border-radius: 0 8px 8px 0;
+    color: var(--usu-accent);
+    font-style: italic;
+    position: relative;
+}
+
+.markdown-content blockquote::before {
+    content: '"';
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    font-size: 3rem;
+    color: var(--usu-light-blue);
+    opacity: 0.3;
+}
+
+/* Enhanced lists */
+.markdown-content ul, .markdown-content ol {
+    margin: 1rem 0 1.5rem 0;
+    padding-left: 2rem;
+}
+
+.markdown-content li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+}
+
+/* Horizontal rules */
+.markdown-content hr {
+    border: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--usu-light-blue), transparent);
+    margin: 2.5rem 0;
+    border-radius: 1px;
+}
+
+/* Links */
+.markdown-content a {
+    color: var(--usu-light-blue);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.markdown-content a:hover {
+    color: var(--usu-blue);
+    border-bottom-color: var(--usu-blue);
+}
+
+/* Images */
+.markdown-content img {
+    max-width: 100%;
+    height: auto;
+    margin: 2rem auto;
+    display: block;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,38,58,0.1);
+}
+
+/* Day sections with enhanced collapsible styling */
+.day-section {
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,38,58,0.08);
+    border: 1px solid rgba(0,38,58,0.1);
+    transition: all 0.3s ease;
+}
+
+.day-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,38,58,0.12);
+}
+
+.day-content {
+    padding: 1.5rem;
+    background: white;
+    border-left: 4px solid var(--usu-accent);
+    transition: all 0.3s ease;
+}
+
+.day-content.collapsed {
+    display: none;
+}
+
 /* Outlooks container layout */
 .outlooks-container {
     display: flex;
@@ -30,6 +229,7 @@
     font-size: 1.2rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
+
 /* Archive List & Items */
 .archive-list {
     display: flex;
@@ -38,14 +238,16 @@
     padding: 1rem;
     max-height: 600px;
     overflow-y: auto;
-    /* Scrollbar styling */
 }
+
 .archive-list::-webkit-scrollbar {
     width: 8px;
 }
+
 .archive-list::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.1);
 }
+
 .archive-list::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.3);
     border-radius: 4px;
@@ -62,157 +264,89 @@
     transition: all 0.2s ease;
     text-decoration: none;
     color: white;
+    cursor: pointer;
 }
-.archive-item:hover,
+
+.archive-item:hover {
+    background-color: var(--usu-light-blue);
+    transform: translateX(4px);
+}
+
 .archive-item.active {
     background-color: var(--usu-light-blue);
+    border-left: 4px solid #ffd700;
+    box-shadow: inset 0 0 8px rgba(255,215,0,0.2);
 }
-.archive-item.active {
-    border-left: 4px solid var(--usu-light-gray);
-}
+
 .archive-date,
 .archive-item-date {
     font-weight: 500;
     margin-right: 10px;
+    font-size: 0.85rem;
 }
+
 .archive-item-time {
     opacity: 0.8;
-    font-size: 0.85em;
+    font-size: 0.75rem;
 }
+
 .archive-title {
-    font-size: 0.9em;
+    font-size: 0.9rem;
     opacity: 0.8;
     flex: 1;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
 .archive-icon {
     margin-right: 10px;
-    font-size: 0.9em;
+    font-size: 0.9rem;
 }
 
-/* Markdown Content */
-.markdown-content {
-    line-height: 1.6;
-    color: var(--usu-blue);
-}
-.markdown-content h1 {
-    font-size: 1.8rem;
-    margin-bottom: 1rem;
-    color: var(--usu-blue);
-    border-bottom: 3px solid var(--usu-light-blue);
-    padding-bottom: 0.5rem;
-}
-.markdown-content h2 {
-    font-size: 1.4rem;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
-    color: var(--usu-light-blue);
-}
-.markdown-content h3 {
-    font-size: 1.2rem;
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-    color: var(--usu-blue);
-    cursor: pointer;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 0.75rem;
-    border-radius: 6px;
-    border-left: 4px solid var(--usu-light-blue);
-    position: relative;
-}
-.markdown-content h3:hover {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-}
-.markdown-content h3::after {
-    content: '▼';
-    position: absolute;
-    right: 1rem;
-    transition: transform 0.3s ease;
-    color: var(--usu-light-blue);
-}
-.markdown-content h3.collapsed::after {
-    transform: rotate(-90deg);
-}
-.markdown-content p {
-    margin-bottom: 0.8rem;
-}
-.markdown-content strong {
-    color: var(--usu-blue);
-    font-weight: 600;
-}
-.markdown-content ul,
-.markdown-content ol {
-    margin-bottom: 1rem;
-    padding-left: 1.5rem;
-}
-.markdown-content blockquote {
-    border-left: 4px solid var(--usu-light-blue);
-    padding-left: 1rem;
-    margin-left: 0;
-    color: var(--usu-accent);
-}
-.markdown-content a {
-    color: var(--usu-light-blue);
-    text-decoration: none;
-}
-.markdown-content a:hover {
-    text-decoration: underline;
-}
-.markdown-content img {
-    max-width: 100%;
-    height: auto;
-    margin: 1rem 0;
-}
-.markdown-content hr {
-    border: 0;
-    height: 1px;
-    background-color: var(--usu-gray);
-    margin: 2rem 0;
-}
-
-/* Responsive Design */
+/* Responsive typography */
 @media (max-width: 768px) {
-    .outlooks-container {
-        flex-direction: column;
+    .markdown-content h1 {
+        font-size: 1.6rem;
     }
-    #outlook-archive {
-        width: 100%;
-        margin-top: 2rem;
+
+    .markdown-content h2 {
+        font-size: 1.3rem;
     }
-    .archive-list {
-        max-height: 300px;
+
+    .markdown-content h3 {
+        font-size: 1.1rem;
+        padding: 0.75rem;
+    }
+
+    .markdown-content blockquote {
+        margin: 1rem 0;
+        padding: 1rem;
     }
 }
 
-.day-section {
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,38,58,0.1);
+/* Loading states */
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: var(--usu-accent);
+    font-style: italic;
 }
 
-.day-content {
-    padding: 1rem;
-    background: white;
-    border-left: 4px solid var(--usu-accent);
+.loading::after {
+    content: '';
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--usu-light-gray);
+    border-top-color: var(--usu-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-top: 1rem;
 }
 
-.day-content.collapsed {
-    display: none;
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
-
-.markdown-content p {
-    margin-bottom: 0.8rem; /* Reduced from 1rem */
-}
-
-.markdown-content strong {
-    color: var(--usu-blue);
-    font-weight: 600;
-}
-
-/* Risk Level Styling */
-.risk-high { background: #fee2e2; color: #991b1b; padding: 2px 6px; border-radius: 3px; }
-.risk-moderate { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; }
-.risk-low { background: #d1fae5; color: #065f46; padding: 2px 6px; border-radius: 3px; }

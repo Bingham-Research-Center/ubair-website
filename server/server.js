@@ -110,44 +110,55 @@ async function checkDirectoryStructure() {
 }
 
 // Start server
-// Add this function to server.js
-async function generateOutlookFileList() {
+async function generateOutlooksList() {
     try {
         const directory = path.join(__dirname, '../public/data/outlooks');
         const files = await fs.readdir(directory);
 
-        // Filter for markdown files and sort by name (assuming names include dates)
-        const markdownFiles = files
+        const outlooks = files
             .filter(file => file.endsWith('.md') && file !== 'template.md')
-            .sort((a, b) => b.localeCompare(a)); // Sort in reverse alphabetical order (newest first)
+            .map(filename => {
+                // Extract date from filename (format: outlook_YYYYMMDD_HHMM.md)
+                const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
+                if (match) {
+                    const [_, year, month, day, hour, minute] = match;
+                    const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
+                    const formattedDate = new Date(date).toLocaleString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: 'numeric',
+                        minute: '2-digit',
+                        hour12: true
+                    });
+                    return { filename, date, formattedDate };
+                }
+                return { filename, date: new Date().toISOString(), formattedDate: 'Unknown date' };
+            })
+            .sort((a, b) => new Date(b.date) - new Date(a.date));
 
-        // Write the file list to a JSON file
+        // Write to outlooks_list.json (not file_list.json)
         await fs.writeFile(
-            path.join(directory, 'file_list.json'),
-            JSON.stringify(markdownFiles)
+            path.join(directory, 'outlooks_list.json'),
+            JSON.stringify(outlooks, null, 2)
         );
 
-        console.log('Outlook file list generated successfully');
+        console.log(`Generated outlooks list with ${outlooks.length} entries`);
+        return outlooks;
     } catch (error) {
-        console.error('Error generating outlook file list:', error);
+        console.error('Error generating outlooks list:', error);
+        return [];
     }
 }
 
-// Call this function when the server starts and set up a periodic refresh
+// Update the server startup and intervals
 checkDirectoryStructure()
     .then(() => {
-        generateOutlookFileList(); // Generate initial file list
-        setInterval(generateOutlookFileList, 60 * 60 * 1000); // Refresh every hour
+        generateOutlooksList(); // Initial generation
+        // Refresh every 5 minutes (300000ms) instead of 1 hour
+        setInterval(generateOutlooksList, 300000);
     })
     .catch(err => {
         console.error('Failed to verify directory structure:', err);
         process.exit(1);
     });
-
-// Run initially when server starts
-// generateOutlooksList();
-generateOutlookFileList()
-
-// Schedule to run every hour
-setInterval(generateOutlookFileList, 60 * 60 * 1000);
-// setInterval(generateOutlooksList, 60 * 60 * 1000);
