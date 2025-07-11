@@ -108,8 +108,8 @@
                     </select>
                 </div>
                 <!-- Other Controls -->
-                <select id="snow-location1"></select>
-                <select id="snow-location2"></select>
+                <label for="snow-location1"></label><select id="snow-location1"></select>
+                <label for="snow-location2"></label><select id="snow-location2"></select>
                 <div class="settings-group">
                     <label for="snow-filter">Filter Outliers</label>
                     <input type="checkbox" id="snow-filter" checked>
@@ -134,7 +134,7 @@
                         <!-- Years will be populated via JavaScript -->
                     </select>
                 </div>
-                <select id="cold-location"></select>
+                <label for="cold-location"></label><select id="cold-location"></select>
                 <div class="settings-group">
                     <label for="cold-threshold">Temperature Threshold (°C)</label>
                     <input type="number" id="cold-threshold" value="-5" step="0.5">
@@ -159,7 +159,7 @@
                         <!-- Years will be populated via JavaScript -->
                     </select>
                 </div>
-                <select id="ozone-location"></select>
+                <label for="ozone-location"></label><select id="ozone-location"></select>
                 <div class="settings-group">
                     <label for="ozone-snow">Snow Threshold (cm)</label>
                     <input type="number" id="ozone-snow" value="10" step="1">
@@ -182,7 +182,7 @@
                         <!-- Years will be populated via JavaScript -->
                     </select>
                 </div>
-                <select id="combined-location"></select>
+                <label for="combined-location"></label><select id="combined-location"></select>
                 <button onclick="updateCombinedAnalysis()">Update</button>
             </div>
             <div id="combined-plot" class="plot-container"></div>

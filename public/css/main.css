@@ -705,7 +705,7 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     font-size: 0.8rem;
     font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 .external-link a {
