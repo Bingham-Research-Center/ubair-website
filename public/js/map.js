@@ -19,6 +19,9 @@ let markers = [];
 
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, setting up live_aq map...');
+    console.log('Available stations:', Object.keys(stations));
+
     setupStudyAreaToggle();
     setupKioskControl();
     fixUSULogo();
@@ -32,7 +35,10 @@ function setupStudyAreaToggle() {
     const overlayContainer = document.querySelector('.overlay-container');
     const studyAreaImage = document.getElementById('image-overlay');
 
-    if (!overlayContainer || !studyAreaImage) return;
+    if (!overlayContainer || !studyAreaImage) {
+        console.log('Study area elements not found');
+        return;
+    }
 
     // Start hidden by default
     overlayContainer.style.display = 'none';
@@ -53,42 +59,72 @@ function setupStudyAreaToggle() {
 }
 
 function setupKioskControl() {
-    // Add kiosk control to map
-    const kioskControl = L.control({position: 'bottomcenter'});
+    console.log('Setting up kiosk control...');
 
-    kioskControl.onAdd = function(map) {
-        const div = L.DomUtil.create('div', 'kiosk-control-bottom');
-        div.innerHTML = `
-            <div class="kiosk-container-bottom">
-                <label for="map-kiosk-toggle" class="kiosk-label">Auto-cycle stations:</label>
-                <div class="kiosk-switch-map" id="map-kiosk-toggle">
-                    <div class="switch-slider-map">
-                        <div class="timer-fill" id="timer-fill"></div>
+    // Wait for map to be fully initialized
+    setTimeout(() => {
+        // Create kiosk control using bottomright position (Leaflet standard)
+        const kioskControl = L.control({position: 'bottomright'});
+
+        kioskControl.onAdd = function(map) {
+            const div = L.DomUtil.create('div', 'kiosk-control-bottom');
+            div.innerHTML = `
+                <div class="kiosk-container-bottom">
+                    <label for="map-kiosk-toggle" class="kiosk-label">Auto-cycle stations:</label>
+                    <div class="kiosk-switch-map" id="map-kiosk-toggle">
+                        <div class="switch-slider-map">
+                            <div class="timer-fill" id="timer-fill"></div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        `;
-        return div;
-    };
+            `;
 
-    kioskControl.addTo(map);
+            // Prevent map interactions on the control
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
 
-    // Add event listener
-    document.getElementById('map-kiosk-toggle').addEventListener('click', function() {
-        mapKioskMode = !mapKioskMode;
-        const switchEl = this;
-        const timerFill = document.getElementById('timer-fill');
+            return div;
+        };
 
-        if (mapKioskMode) {
-            switchEl.classList.add('active');
-            timerFill.style.animation = 'timer-fill 5s linear infinite';
-            startKioskMode();
-        } else {
-            switchEl.classList.remove('active');
-            timerFill.style.animation = 'none';
-            stopKioskMode();
+        try {
+            kioskControl.addTo(map);
+            console.log('Kiosk control added to map successfully');
+
+            // Add event listener after control is added to DOM
+            setTimeout(() => {
+                const kioskToggle = document.getElementById('map-kiosk-toggle');
+                if (kioskToggle) {
+                    kioskToggle.addEventListener('click', function() {
+                        console.log('Kiosk toggle clicked, current mode:', mapKioskMode);
+                        mapKioskMode = !mapKioskMode;
+                        const switchEl = this;
+                        const timerFill = document.getElementById('timer-fill');
+
+                        if (mapKioskMode) {
+                            console.log('Starting kiosk mode...');
+                            switchEl.classList.add('active');
+                            if (timerFill) {
+                                timerFill.style.animation = 'timer-fill 5s linear infinite';
+                            }
+                            startKioskMode();
+                        } else {
+                            console.log('Stopping kiosk mode...');
+                            switchEl.classList.remove('active');
+                            if (timerFill) {
+                                timerFill.style.animation = 'none';
+                            }
+                            stopKioskMode();
+                        }
+                    });
+                    console.log('Kiosk control event listener attached');
+                } else {
+                    console.error('Kiosk toggle element not found after timeout');
+                }
+            }, 200);
+        } catch (error) {
+            console.error('Error adding kiosk control to map:', error);
         }
-    });
+    }, 500);
 }
 
 function fixUSULogo() {
@@ -110,12 +146,18 @@ function fixUSULogo() {
 }
 
 function startKioskMode() {
-    if (markers.length === 0) return;
+    if (markers.length === 0) {
+        console.log('No markers available for kiosk mode');
+        return;
+    }
 
+    console.log(`Starting kiosk mode with ${markers.length} markers`);
     currentStationIndex = 0;
+
     // Open first popup immediately
     if (markers[0]) {
         markers[0].openPopup();
+        console.log('Opened popup for first station');
     }
 
     // Start interval for subsequent popups
@@ -124,17 +166,23 @@ function startKioskMode() {
         currentStationIndex = (currentStationIndex + 1) % markers.length;
         if (markers[currentStationIndex]) {
             markers[currentStationIndex].openPopup();
+            console.log(`Opened popup for station ${currentStationIndex}`);
         }
     }, 5000);
 }
 
 function stopKioskMode() {
-    clearInterval(mapKioskInterval);
+    console.log('Stopping kiosk mode...');
+    if (mapKioskInterval) {
+        clearInterval(mapKioskInterval);
+        mapKioskInterval = null;
+    }
     map.closePopup();
 }
 
-// Generate synthetic data for demo
+// Generate synthetic data for demo - improved to match station structure
 function generateSyntheticData() {
+    console.log('Generating synthetic data for stations...');
     const syntheticData = {
         'Ozone': {},
         'PM2.5': {},
@@ -143,6 +191,7 @@ function generateSyntheticData() {
         'NO': {}
     };
 
+    // Only generate data for stations that exist in our config
     Object.keys(stations).forEach(station => {
         // Generate realistic values with some variation
         syntheticData['Ozone'][station] = Math.round(35 + Math.random() * 40); // 35-75 ppb
@@ -152,15 +201,19 @@ function generateSyntheticData() {
         syntheticData['NO'][station] = Math.round(10 + Math.random() * 50); // 10-60 ppb
     });
 
+    console.log('Generated synthetic data for stations:', Object.keys(syntheticData['Ozone']));
     return syntheticData;
 }
 
 async function updateMap() {
     try {
+        console.log('Updating map with station data...');
+
         // Try to fetch real data, fall back to synthetic
         let data;
         try {
             data = await fetchLiveObservations();
+            console.log('Using real data');
         } catch (error) {
             console.log('Using synthetic data for live AQ demo');
             data = generateSyntheticData();
@@ -171,7 +224,13 @@ async function updateMap() {
         markers = [];
 
         // Create markers for each station
+        let validStations = 0;
         for (const [stationName, coordinates] of Object.entries(stations)) {
+            if (!coordinates || !coordinates.lat || !coordinates.lng) {
+                console.warn(`Invalid coordinates for station ${stationName}:`, coordinates);
+                continue;
+            }
+
             const measurements = {
                 'Ozone': data['Ozone']?.[stationName] ?? null,
                 'PM2.5': data['PM2.5']?.[stationName] ?? null,
@@ -204,21 +263,48 @@ async function updateMap() {
 
             marker.addTo(map);
             markers.push(marker);
+            validStations++;
+
+            console.log(`Added marker for ${stationName} at [${coordinates.lat}, ${coordinates.lng}]`);
         }
 
-        // Fit map to show all stations on first load
+        console.log(`Added ${validStations} station markers to map`);
+
+        // Fit map to show all stations with proper bounds
         if (markers.length > 0) {
             const group = new L.featureGroup(markers);
-            map.fitBounds(group.getBounds(), {
-                padding: [30, 30],
-                maxZoom: 11
-            });
+            const bounds = group.getBounds();
+
+            // Ensure bounds are valid
+            if (bounds.isValid()) {
+                map.fitBounds(bounds, {
+                    padding: [50, 50], // More padding for better visibility
+                    maxZoom: 11
+                });
+                console.log('Map bounds set successfully');
+            } else {
+                console.warn('Invalid bounds, using default view');
+                map.setView([40.3033, -109.7], 9);
+            }
+        } else {
+            console.warn('No markers created, using default view');
+            map.setView([40.3033, -109.7], 9);
         }
 
     } catch (error) {
         console.error('Error updating map:', error);
+        // Fallback to default view
+        map.setView([40.3033, -109.7], 9);
     }
 }
 
-// Export for use in other modules if needed
+// Export for debugging
 window.mapInstance = map;
+window.debugMap = {
+    stations,
+    markers: () => markers,
+    kioskMode: () => mapKioskMode,
+    updateMap,
+    startKiosk: startKioskMode,
+    stopKiosk: stopKioskMode
+};

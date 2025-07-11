@@ -11,16 +11,22 @@ body[data-page-type="live_aq"] #map {
     pointer-events: auto !important;
 }
 
-/* Study area overlay container - starts hidden */
+/* Ensure map tiles load properly */
+body[data-page-type="live_aq"] #map .leaflet-container {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Study area overlay container - positioned below toggle button */
 .overlay-container {
     position: fixed;
-    top: 20px;
-    left: calc(250px + 20px);
+    top: 70px; /* Below the toggle button */
+    right: 20px; /* Align with toggle button */
     background-color: rgba(255, 255, 255, 0.95);
-    padding: 15px;
+    padding: 10px;
     border-radius: 8px;
     z-index: 1000;
-    max-width: 200px;
+    max-width: 150px; /* Reduced width */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     border: 2px solid var(--usu-blue);
     display: none; /* Start hidden */
@@ -30,6 +36,7 @@ body[data-page-type="live_aq"] #map {
     display: block;
     max-width: 100%;
     height: auto;
+    max-height: 120px; /* Reduced height - about half */
     border-radius: 4px;
 }
 
@@ -58,7 +65,7 @@ body[data-page-type="live_aq"] #map {
 /* Warning levels overlay */
 .warning-levels-overlay {
     position: fixed;
-    bottom: 100px;
+    bottom: 140px; /* Adjusted to avoid footer overlap */
     right: 20px;
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.95);
@@ -69,7 +76,7 @@ body[data-page-type="live_aq"] #map {
 }
 
 #image-overlay1 {
-    height: 30vh;
+    height: 25vh; /* Slightly smaller */
     width: auto;
     display: block;
     border-radius: 4px;
@@ -78,7 +85,7 @@ body[data-page-type="live_aq"] #map {
 /* USU Logo positioning */
 .usu-logo {
     position: fixed;
-    bottom: 20px;
+    bottom: 80px; /* Adjusted to avoid footer overlap */
     left: calc(250px + 20px);
     z-index: 1000;
 }
@@ -125,27 +132,32 @@ body[data-page-type="live_aq"] #map {
     border-left-color: #dc3545;
 }
 
-/* Kiosk control styling */
+/* Kiosk control styling - positioned in bottom right */
 .kiosk-control-bottom {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(10px);
     border-radius: 12px;
     padding: 1rem 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    border: 1px solid rgba(0, 38, 58, 0.1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+    min-width: 200px;
+    margin-bottom: 80px; /* Space from bottom for footer */
+    margin-right: 10px; /* Space from right edge */
 }
 
 .kiosk-container-bottom {
     display: flex;
     align-items: center;
     gap: 1rem;
+    justify-content: center;
 }
 
 .kiosk-label {
     color: var(--usu-blue);
-    font-weight: 500;
-    font-size: 0.9rem;
+    font-weight: 600;
+    font-size: 0.95rem;
     margin: 0;
+    white-space: nowrap;
 }
 
 .kiosk-switch-map {
@@ -156,6 +168,11 @@ body[data-page-type="live_aq"] #map {
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
+    border: 2px solid var(--usu-blue);
+}
+
+.kiosk-switch-map:hover {
+    background: #bbb;
 }
 
 .kiosk-switch-map.active {
@@ -163,15 +180,15 @@ body[data-page-type="live_aq"] #map {
 }
 
 .switch-slider-map {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     background: white;
     border-radius: 50%;
     position: absolute;
-    top: 2px;
-    left: 2px;
+    top: 1px;
+    left: 1px;
     transition: transform 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
     overflow: hidden;
 }
 
@@ -193,13 +210,15 @@ body[data-page-type="live_aq"] #map {
 
 @keyframes timer-fill {
     0% { transform: scale(0); }
+    50% { transform: scale(0.8); }
     100% { transform: scale(1); }
 }
 
-/* Bottom-centered kiosk control */
+/* Bottom-centered kiosk control - override Leaflet positioning */
 .leaflet-control-container .leaflet-bottom.leaflet-center {
     display: flex;
     justify-content: center;
+    bottom: 100px !important; /* Move up to avoid footer */
 }
 
 /* Responsive design */
@@ -210,16 +229,23 @@ body[data-page-type="live_aq"] #map {
     }
 
     .overlay-container {
-        left: 20px;
-        max-width: 150px;
+        top: 70px; /* Keep below toggle button */
+        right: 10px;
+        max-width: 120px; /* Even smaller on mobile */
+        padding: 8px;
+    }
+
+    #image-overlay {
+        max-height: 80px; /* Smaller on mobile */
     }
 
     .usu-logo {
         left: 20px;
+        bottom: 120px; /* More space on mobile */
     }
 
     .warning-levels-overlay {
-        bottom: 80px;
+        bottom: 160px;
         right: 10px;
     }
 
@@ -229,6 +255,7 @@ body[data-page-type="live_aq"] #map {
 
     .kiosk-control-bottom {
         padding: 0.75rem 1rem;
+        min-width: 180px;
     }
 
     .kiosk-container-bottom {
@@ -236,16 +263,25 @@ body[data-page-type="live_aq"] #map {
         gap: 0.5rem;
         text-align: center;
     }
+
+    .kiosk-label {
+        font-size: 0.85rem;
+    }
+
+    /* Adjust Leaflet control position for mobile */
+    .leaflet-control-container .leaflet-bottom.leaflet-center {
+        bottom: 140px !important;
+    }
 }
 
-/* Custom marker styling */
+/* Custom marker styling - Enhanced */
 .custom-marker {
     background: transparent !important;
     border: none !important;
 }
 
 .custom-marker div {
-    animation: pulse-marker 2s infinite;
+    animation: pulse-marker 3s infinite ease-in-out;
 }
 
 @keyframes pulse-marker {
@@ -263,15 +299,50 @@ body[data-page-type="live_aq"] #map {
     }
 }
 
-/* Station popup styling */
+/* Hover effect for markers */
+.leaflet-marker-icon:hover {
+    filter: brightness(1.2);
+    transform: scale(1.1);
+    transition: all 0.2s ease;
+}
+
+/* Station popup styling - Enhanced */
 .station-popup .leaflet-popup-content-wrapper {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 38, 58, 0.15);
-    border: 1px solid var(--usu-light-gray);
+    border-radius: 12px;
+    box-shadow: 0 6px 25px rgba(0, 38, 58, 0.2);
+    border: 2px solid var(--usu-light-gray);
 }
 
 .station-popup .leaflet-popup-tip {
     background: white;
-    border: 1px solid var(--usu-light-gray);
+    border: 2px solid var(--usu-light-gray);
+}
+
+/* Loading state for map */
+.map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 8px;
+    text-align: center;
+    z-index: 2000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--usu-blue);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
