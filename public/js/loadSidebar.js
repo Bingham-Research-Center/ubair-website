@@ -20,7 +20,12 @@ const PAGE_DISCLAIMERS = {
         weather briefings from Flight Service or approved sources before flight operations. 
         ©2024, Utah State University.`,
 
-    '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control. Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
+    '/water': `DISCLAIMER: Water recreation forecasts are experimental. 
+        Always check current conditions and weather warnings before water activities. 
+        ©2025, Utah State University.`,
+
+    '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
+        Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
 
     '/forecast_outlooks': `DISCLAIMER: Forecasts are experimental and subject to change. 
         For official air quality forecasts, please visit the Utah Department of Environmental Quality. 
