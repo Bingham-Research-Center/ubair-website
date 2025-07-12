@@ -1,4 +1,3 @@
-import { stations } from './config.js';
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
@@ -20,7 +19,7 @@ let markers = [];
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM loaded, setting up live_aq map...');
-    console.log('Available stations:', Object.keys(stations));
+    // console.log('Available stations:', Object.keys(stations));
 
     setupStudyAreaToggle();
     setupKioskControl();
@@ -182,34 +181,60 @@ function stopKioskMode() {
 
 // Generate synthetic data for demo - improved to match station structure
 function generateSyntheticData() {
-    console.log('Generating synthetic data for stations...');
-    const syntheticData = {
-        'Ozone': {},
-        'PM2.5': {},
-        'Temperature': {},
-        'NOx': {},
-        'NO': {}
+    console.log('Generating synthetic data...');
+
+    return {
+        metadata: {
+            timestamp: new Date().toISOString(),
+            data_version: "1.2",
+            basin_status: "operational"
+        },
+        stations: {
+            'Roosevelt': { lat: 40.29430, lng: -110.009, active: true },
+            'Vernal': { lat: 40.46472, lng: -109.56083, active: true },
+            'Horsepool': { lat: 40.1433, lng: -109.4674, active: true },
+            'Ouray': { lat: 40.05485, lng: -109.68737, active: true },
+            'Myton': { lat: 40.21690, lng: -110.18230, active: false }, // Example offline station
+            'Whiterocks': { lat: 40.48380, lng: -109.90620, active: true }
+        },
+        observations: {
+            'Ozone': {
+                'Roosevelt': Math.round(35 + Math.random() * 40),
+                'Vernal': Math.round(35 + Math.random() * 40),
+                'Horsepool': Math.round(35 + Math.random() * 40),
+                'Ouray': null, // Example missing sensor
+                'Whiterocks': Math.round(35 + Math.random() * 40)
+            },
+            'PM2.5': {
+                'Roosevelt': Math.round(5 + Math.random() * 35 * 10) / 10,
+                'Vernal': Math.round(5 + Math.random() * 35 * 10) / 10,
+                'Horsepool': null,
+                'Ouray': Math.round(5 + Math.random() * 35 * 10) / 10,
+                'Whiterocks': Math.round(5 + Math.random() * 35 * 10) / 10
+            },
+            'Temperature': {
+                'Roosevelt': Math.round((-5 + Math.random() * 20) * 10) / 10,
+                'Vernal': Math.round((-5 + Math.random() * 20) * 10) / 10,
+                'Horsepool': Math.round((-5 + Math.random() * 20) * 10) / 10,
+                'Ouray': Math.round((-5 + Math.random() * 20) * 10) / 10,
+                'Whiterocks': null
+            },
+            'NOx': {
+                'Roosevelt': Math.round(20 + Math.random() * 80),
+                'Vernal': Math.round(20 + Math.random() * 80),
+                'Horsepool': Math.round(20 + Math.random() * 80),
+                'Ouray': Math.round(20 + Math.random() * 80),
+                'Whiterocks': Math.round(20 + Math.random() * 80)
+            }
+        }
     };
-
-    // Only generate data for stations that exist in our config
-    Object.keys(stations).forEach(station => {
-        // Generate realistic values with some variation
-        syntheticData['Ozone'][station] = Math.round(35 + Math.random() * 40); // 35-75 ppb
-        syntheticData['PM2.5'][station] = Math.round(5 + Math.random() * 35); // 5-40 µg/m³
-        syntheticData['Temperature'][station] = Math.round(-5 + Math.random() * 20); // -5 to 15°C
-        syntheticData['NOx'][station] = Math.round(20 + Math.random() * 80); // 20-100 ppb
-        syntheticData['NO'][station] = Math.round(10 + Math.random() * 50); // 10-60 ppb
-    });
-
-    console.log('Generated synthetic data for stations:', Object.keys(syntheticData['Ozone']));
-    return syntheticData;
 }
 
 async function updateMap() {
     try {
         console.log('Updating map with station data...');
 
-        // Try to fetch real data, fall back to synthetic
+        // Fetch data using the new structure
         let data;
         try {
             data = await fetchLiveObservations();
@@ -223,21 +248,20 @@ async function updateMap() {
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
-        // Create markers for each station
+        // Create markers from the new structure
         let validStations = 0;
-        for (const [stationName, coordinates] of Object.entries(stations)) {
-            if (!coordinates || !coordinates.lat || !coordinates.lng) {
-                console.warn(`Invalid coordinates for station ${stationName}:`, coordinates);
+        for (const [stationName, stationInfo] of Object.entries(data.stations)) {
+            // Skip if station is inactive or has invalid coordinates
+            if (!stationInfo.active || !stationInfo.lat || !stationInfo.lng) {
+                console.warn(`Skipping inactive/invalid station: ${stationName}`);
                 continue;
             }
 
-            const measurements = {
-                'Ozone': data['Ozone']?.[stationName] ?? null,
-                'PM2.5': data['PM2.5']?.[stationName] ?? null,
-                'NOx': data['NOx']?.[stationName] ?? null,
-                'NO': data['NO']?.[stationName] ?? null,
-                'Temperature': data['Temperature']?.[stationName] ?? null
-            };
+            // Extract measurements for this station from all variables
+            const measurements = {};
+            for (const [variable, stationValues] of Object.entries(data.observations)) {
+                measurements[variable] = stationValues[stationName] ?? null;
+            }
 
             const popupContent = createPopupContent(stationName, measurements);
             const markerColor = getMarkerColor(measurements);
@@ -255,7 +279,7 @@ async function updateMap() {
                 iconSize: [30, 30]
             });
 
-            const marker = L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
+            const marker = L.marker([stationInfo.lat, stationInfo.lng], { icon: markerIcon })
                 .bindPopup(popupContent, {
                     maxWidth: 300,
                     className: 'station-popup'
@@ -265,20 +289,19 @@ async function updateMap() {
             markers.push(marker);
             validStations++;
 
-            console.log(`Added marker for ${stationName} at [${coordinates.lat}, ${coordinates.lng}]`);
+            console.log(`Added marker for ${stationName} at [${stationInfo.lat}, ${stationInfo.lng}]`);
         }
 
         console.log(`Added ${validStations} station markers to map`);
 
-        // Fit map to show all stations with proper bounds
+        // Fit map bounds
         if (markers.length > 0) {
             const group = new L.featureGroup(markers);
             const bounds = group.getBounds();
 
-            // Ensure bounds are valid
             if (bounds.isValid()) {
                 map.fitBounds(bounds, {
-                    padding: [50, 50], // More padding for better visibility
+                    padding: [50, 50],
                     maxZoom: 11
                 });
                 console.log('Map bounds set successfully');
@@ -293,18 +316,17 @@ async function updateMap() {
 
     } catch (error) {
         console.error('Error updating map:', error);
-        // Fallback to default view
         map.setView([40.3033, -109.7], 9);
     }
 }
 
 // Export for debugging
 window.mapInstance = map;
-window.debugMap = {
-    stations,
-    markers: () => markers,
-    kioskMode: () => mapKioskMode,
-    updateMap,
-    startKiosk: startKioskMode,
-    stopKiosk: stopKioskMode
-};
+// window.debugMap = {
+//     stations,
+//     markers: () => markers,
+//     kioskMode: () => mapKioskMode,
+//     updateMap,
+//     startKiosk: startKioskMode,
+//     stopKiosk: stopKioskMode
+// };
