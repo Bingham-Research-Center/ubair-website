@@ -1,5 +1,6 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
+// import { STATION_METADATA, getStationInfo } from './stationMetadata.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -109.7], 9);
@@ -234,11 +235,11 @@ async function updateMap() {
     try {
         console.log('Updating map with station data...');
 
-        // Fetch data using the new structure
+        // Fetch data using existing API
         let data;
         try {
             data = await fetchLiveObservations();
-            console.log('Using real data');
+            console.log('Using real data:', data);
         } catch (error) {
             console.log('Using synthetic data for live AQ demo');
             data = generateSyntheticData();
@@ -248,75 +249,76 @@ async function updateMap() {
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
-        // Create markers from the new structure
+        // Station coordinates (hardcoded for now)
+        const stationCoords = {
+            'Roosevelt': { lat: 40.29430, lng: -110.009, active: true },
+            'Vernal': { lat: 40.46472, lng: -109.56083, active: true },
+            'Horsepool': { lat: 40.1433, lng: -109.4674, active: true },
+            'Ouray': { lat: 40.05485, lng: -109.68737, active: true },
+            'Whiterocks': { lat: 40.48380, lng: -109.90620, active: true },
+            'Castle Peak': { lat: 40.1433, lng: -109.4674, active: true },
+            'Myton': { lat: 40.21690, lng: -110.18230, active: true }
+        };
+
+        // Create markers for each station that has coordinates
         let validStations = 0;
-        for (const [stationName, stationInfo] of Object.entries(data.stations)) {
-            // Skip if station is inactive or has invalid coordinates
+        for (const [stationName, stationInfo] of Object.entries(stationCoords)) {
             if (!stationInfo.active || !stationInfo.lat || !stationInfo.lng) {
                 console.warn(`Skipping inactive/invalid station: ${stationName}`);
                 continue;
             }
 
-            // Extract measurements for this station from all variables
+            // Extract measurements for this station from data
             const measurements = {};
-            for (const [variable, stationValues] of Object.entries(data.observations)) {
+            for (const [variable, stationValues] of Object.entries(data)) {
                 measurements[variable] = stationValues[stationName] ?? null;
             }
 
-            const popupContent = createPopupContent(stationName, measurements);
-            const markerColor = getMarkerColor(measurements);
-
-            const markerIcon = L.divIcon({
-                className: 'custom-marker',
-                html: `<div style="
-                    background-color: ${markerColor};
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    border: 3px solid white;
-                    box-shadow: 0 0 8px rgba(0,0,0,0.6);"
-                ></div>`,
-                iconSize: [30, 30]
-            });
-
-            const marker = L.marker([stationInfo.lat, stationInfo.lng], { icon: markerIcon })
-                .bindPopup(popupContent, {
-                    maxWidth: 300,
-                    className: 'station-popup'
-                });
-
-            marker.addTo(map);
-            markers.push(marker);
-            validStations++;
-
-            console.log(`Added marker for ${stationName} at [${stationInfo.lat}, ${stationInfo.lng}]`);
-        }
-
-        console.log(`Added ${validStations} station markers to map`);
-
-        // Fit map bounds
-        if (markers.length > 0) {
-            const group = new L.featureGroup(markers);
-            const bounds = group.getBounds();
-
-            if (bounds.isValid()) {
-                map.fitBounds(bounds, {
-                    padding: [50, 50],
-                    maxZoom: 11
-                });
-                console.log('Map bounds set successfully');
-            } else {
-                console.warn('Invalid bounds, using default view');
-                map.setView([40.3033, -109.7], 9);
+            // Create marker
+            const marker = createStationMarker(stationName, stationInfo, measurements);
+            if (marker) {
+                markers.push(marker);
+                validStations++;
             }
-        } else {
-            console.warn('No markers created, using default view');
-            map.setView([40.3033, -109.7], 9);
         }
+
+        console.log(`Map updated with ${validStations} active stations`);
 
     } catch (error) {
-        console.error('Error updating map:', error);
-        map.setView([40.3033, -109.7], 9);
+        console.error('Failed to update map:', error);
+    }
+}
+
+// Helper function to create station markers (if not already defined)
+function createStationMarker(stationName, stationInfo, measurements) {
+    try {
+        // Get primary measurement for color (prefer Ozone, then PM2.5)
+        let primaryValue = measurements['Ozone'] || measurements['PM2.5'] || null;
+        let primaryVariable = measurements['Ozone'] ? 'Ozone' : 'PM2.5';
+
+        // Create marker with appropriate color
+        const color = getMarkerColor(primaryVariable, primaryValue);
+
+        const marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
+            color: '#fff',
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8,
+            radius: 12
+        });
+
+        // Create popup content
+        const popupContent = createPopupContent(stationName, measurements);
+        marker.bindPopup(popupContent);
+
+        // Add to map
+        marker.addTo(map);
+
+        return marker;
+
+    } catch (error) {
+        console.error(`Error creating marker for ${stationName}:`, error);
+        return null;
     }
 }
 

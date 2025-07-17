@@ -75,7 +75,7 @@ app.get('/about/:page', (req, res) => {
 
 app.get('/api/live-observations', async (req, res) => {
     try {
-        const data = await fs.readFile('./public/data/liveobs.json');
+        const data = await fs.readFile('./public/data/json/latest_obs.json'); // Fixed path
         res.json(JSON.parse(data));
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch data' });
