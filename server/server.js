@@ -15,8 +15,9 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 
-// Routes in dataUpload.js will be prefixed with '/api/data'...
-app.use('/api/data', dataUploadRoutes);
+// Routes in dataUpload.js will be prefixed with ...
+app.use('/api', dataUploadRoutes);
+app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {

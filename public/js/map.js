@@ -1,6 +1,5 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
-// import { STATION_METADATA, getStationInfo } from './stationMetadata.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -109.7], 9);
@@ -27,8 +26,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fixUSULogo();
     updateMap(); // Initial data load
 
-    // Auto-refresh every 5 minutes
-    setInterval(updateMap, 300000);
+    // Auto-refresh every x minutes
+    setInterval(updateMap, 10 * 60 * 1000);
 });
 
 function setupStudyAreaToggle() {
@@ -180,113 +179,46 @@ function stopKioskMode() {
     map.closePopup();
 }
 
-// Generate synthetic data for demo - improved to match station structure
-function generateSyntheticData() {
-    console.log('Generating synthetic data...');
-
-    return {
-        metadata: {
-            timestamp: new Date().toISOString(),
-            data_version: "1.2",
-            basin_status: "operational"
-        },
-        stations: {
-            'Roosevelt': { lat: 40.29430, lng: -110.009, active: true },
-            'Vernal': { lat: 40.46472, lng: -109.56083, active: true },
-            'Horsepool': { lat: 40.1433, lng: -109.4674, active: true },
-            'Ouray': { lat: 40.05485, lng: -109.68737, active: true },
-            'Myton': { lat: 40.21690, lng: -110.18230, active: false }, // Example offline station
-            'Whiterocks': { lat: 40.48380, lng: -109.90620, active: true }
-        },
-        observations: {
-            'Ozone': {
-                'Roosevelt': Math.round(35 + Math.random() * 40),
-                'Vernal': Math.round(35 + Math.random() * 40),
-                'Horsepool': Math.round(35 + Math.random() * 40),
-                'Ouray': null, // Example missing sensor
-                'Whiterocks': Math.round(35 + Math.random() * 40)
-            },
-            'PM2.5': {
-                'Roosevelt': Math.round(5 + Math.random() * 35 * 10) / 10,
-                'Vernal': Math.round(5 + Math.random() * 35 * 10) / 10,
-                'Horsepool': null,
-                'Ouray': Math.round(5 + Math.random() * 35 * 10) / 10,
-                'Whiterocks': Math.round(5 + Math.random() * 35 * 10) / 10
-            },
-            'Temperature': {
-                'Roosevelt': Math.round((-5 + Math.random() * 20) * 10) / 10,
-                'Vernal': Math.round((-5 + Math.random() * 20) * 10) / 10,
-                'Horsepool': Math.round((-5 + Math.random() * 20) * 10) / 10,
-                'Ouray': Math.round((-5 + Math.random() * 20) * 10) / 10,
-                'Whiterocks': null
-            },
-            'NOx': {
-                'Roosevelt': Math.round(20 + Math.random() * 80),
-                'Vernal': Math.round(20 + Math.random() * 80),
-                'Horsepool': Math.round(20 + Math.random() * 80),
-                'Ouray': Math.round(20 + Math.random() * 80),
-                'Whiterocks': Math.round(20 + Math.random() * 80)
-            }
-        }
-    };
-}
-
 async function updateMap() {
-    try {
-        console.log('Updating map with station data...');
+  try {
+    console.log('Updating map with station data...');
 
-        // Fetch data using existing API
-        let data;
-        try {
-            data = await fetchLiveObservations();
-            console.log('Using real data:', data);
-        } catch (error) {
-            console.log('Using synthetic data for live AQ demo');
-            data = generateSyntheticData();
-        }
+    // Destructure observations and metadata from the API
+    const { observations, metadata } = await fetchLiveObservations();
+    console.log('Observations:', observations);
+    console.log('Metadata:', metadata);
 
-        // Clear existing markers
-        markers.forEach(marker => map.removeLayer(marker));
-        markers = [];
+    // Clear existing markers
+    markers.forEach(m => map.removeLayer(m));
+    markers = [];
 
-        // Station coordinates (hardcoded for now)
-        const stationCoords = {
-            'Roosevelt': { lat: 40.29430, lng: -110.009, active: true },
-            'Vernal': { lat: 40.46472, lng: -109.56083, active: true },
-            'Horsepool': { lat: 40.1433, lng: -109.4674, active: true },
-            'Ouray': { lat: 40.05485, lng: -109.68737, active: true },
-            'Whiterocks': { lat: 40.48380, lng: -109.90620, active: true },
-            'Castle Peak': { lat: 40.1433, lng: -109.4674, active: true },
-            'Myton': { lat: 40.21690, lng: -110.18230, active: true }
-        };
+    // Build stationCoords from the metadata array
+    const stationCoords = metadata.reduce((acc, { stid, latitude: lat, longitude: lng }) => {
+      acc[stid] = { lat, lng };
+      return acc;
+    }, {});
 
-        // Create markers for each station that has coordinates
-        let validStations = 0;
-        for (const [stationName, stationInfo] of Object.entries(stationCoords)) {
-            if (!stationInfo.active || !stationInfo.lat || !stationInfo.lng) {
-                console.warn(`Skipping inactive/invalid station: ${stationName}`);
-                continue;
-            }
+    let validStations = 0;
+    for (const stationName of Object.keys(stationCoords)) {
+      const stationInfo = stationCoords[stationName];
+      const measurements = {};
 
-            // Extract measurements for this station from data
-            const measurements = {};
-            for (const [variable, stationValues] of Object.entries(data)) {
-                measurements[variable] = stationValues[stationName] ?? null;
-            }
+      // Map each variable's values by station
+      for (const [variable, stationValues] of Object.entries(observations)) {
+        measurements[variable] = stationValues[stationName] ?? null;
+      }
 
-            // Create marker
-            const marker = createStationMarker(stationName, stationInfo, measurements);
-            if (marker) {
-                markers.push(marker);
-                validStations++;
-            }
-        }
-
-        console.log(`Map updated with ${validStations} active stations`);
-
-    } catch (error) {
-        console.error('Failed to update map:', error);
+      const marker = createStationMarker(stationName, stationInfo, measurements);
+      if (marker) {
+        markers.push(marker);
+        validStations++;
+      }
     }
+
+    console.log(`Map updated with ${validStations} stations`);
+  } catch (error) {
+    console.error('Failed to update map:', error);
+  }
 }
 
 // Helper function to create station markers (if not already defined)
@@ -322,13 +254,4 @@ function createStationMarker(stationName, stationInfo, measurements) {
     }
 }
 
-// Export for debugging
-window.mapInstance = map;
-// window.debugMap = {
-//     stations,
-//     markers: () => markers,
-//     kioskMode: () => mapKioskMode,
-//     updateMap,
-//     startKiosk: startKioskMode,
-//     stopKiosk: stopKioskMode
-// };
+// window.mapInstance = map;

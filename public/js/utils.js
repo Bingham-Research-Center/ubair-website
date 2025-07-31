@@ -41,3 +41,28 @@ export const createElement = (tag, attributes = {}, ...children) => {
     });
     return element;
 };
+
+export async function loadVariableMapping(path = '/reference/variable_mapping.txt') {
+    const mapping = {};
+    const res     = await fetch(path);
+    const text    = await res.text();
+    text.split('\n').forEach(line => {
+        line = line.trim().replace(/,$/, '');
+        if (!line || line.startsWith('#')) return;
+        const [key, val] = line.split(/=(.+)/);
+        mapping[key] = val;
+    });
+    return mapping;
+}
+
+export function rawToPretty(key, mapping) {
+    return mapping[key] || key;
+}
+
+export function prettyToRaw(pretty, mapping) {
+    const inv = Object.fromEntries(
+        Object.entries(mapping).map(([k,v]) => [v,k])
+    );
+    return inv[pretty] || pretty;
+}
+

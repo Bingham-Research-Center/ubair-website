@@ -47,5 +47,25 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="/public/js/map.js"></script>
 <script type="module" src="/public/js/loadSidebar.js"></script>
+
+<!--JRL: below is an example of looking up pretty variable names-->
+
+<!--<script type="module">-->
+<!--    import {-->
+<!--        loadVariableMapping,-->
+<!--        rawToPretty,-->
+<!--        prettyToRaw-->
+<!--    } from '/public/js/utils.js';-->
+
+<!--    (async () => {-->
+<!--        const map = await loadVariableMapping();-->
+<!--        document.querySelectorAll('.ozone-val').forEach(el => {-->
+<!--            const raw = el.dataset.raw;          // e.g. data-raw="ozone_concentration"-->
+<!--            el.textContent = rawToPretty(raw, map);-->
+<!--        });-->
+<!--    })();-->
+<!--</script>-->
+
+
 </body>
 </html>

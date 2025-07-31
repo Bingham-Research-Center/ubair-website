@@ -1,0 +1,394 @@
+[
+  {
+    "stid":"BUNUT",
+    "name":"Bunnells Ridge",
+    "elevation":8800.0,
+    "latitude":40.314757,
+    "longitude":-111.563976
+  },
+  {
+    "stid":"CEN",
+    "name":"Centerville",
+    "elevation":4231.0,
+    "latitude":40.94968,
+    "longitude":-111.891629
+  },
+  {
+    "stid":"CHPU1",
+    "name":"CHEPETA",
+    "elevation":12120.0,
+    "latitude":40.81028,
+    "longitude":-110.07333
+  },
+  {
+    "stid":"CLN",
+    "name":"ALTA - COLLINS",
+    "elevation":9662.0,
+    "latitude":40.5763,
+    "longitude":-111.6383
+  },
+  {
+    "stid":"COOPALMU1",
+    "name":"ALTAMONT",
+    "elevation":6456.0,
+    "latitude":40.36696,
+    "longitude":-110.29858
+  },
+  {
+    "stid":"COOPDINU1",
+    "name":"DINOSAUR NM-QUARRY AREA",
+    "elevation":4802.0,
+    "latitude":40.4384,
+    "longitude":-109.307
+  },
+  {
+    "stid":"COOPDSNU1",
+    "name":"DUCHESNE",
+    "elevation":5551.0,
+    "latitude":40.1703,
+    "longitude":-110.3978
+  },
+  {
+    "stid":"COOPFTDU1",
+    "name":"FORT DUCHESNE",
+    "elevation":5052.0,
+    "latitude":40.2841,
+    "longitude":-109.8611
+  },
+  {
+    "stid":"COOPNELU1",
+    "name":"NEOLA COOPB",
+    "elevation":5950.0,
+    "latitude":40.42,
+    "longitude":-110.05
+  },
+  {
+    "stid":"COOPROSU1",
+    "name":"ROOSEVELT RADIO",
+    "elevation":5014.0,
+    "latitude":40.2878,
+    "longitude":-109.9586
+  },
+  {
+    "stid":"COOPVELU1",
+    "name":"VERNAL",
+    "elevation":5345.0,
+    "latitude":40.44002,
+    "longitude":-109.53547
+  },
+  {
+    "stid":"HANU1",
+    "name":"HANNA NEAR DUSCHENE 24NW",
+    "elevation":6745.0,
+    "latitude":40.40056,
+    "longitude":-110.75861
+  },
+  {
+    "stid":"K40U",
+    "name":"MANILA",
+    "elevation":6175.0,
+    "latitude":40.9833,
+    "longitude":-109.6833
+  },
+  {
+    "stid":"K74V",
+    "name":"ROOSEVELT",
+    "elevation":5171.0,
+    "latitude":40.28,
+    "longitude":-110.05
+  },
+  {
+    "stid":"KCDC",
+    "name":"Cedar City Municipal Airport",
+    "elevation":5581.0,
+    "latitude":37.70675,
+    "longitude":-113.09695
+  },
+  {
+    "stid":"KENV",
+    "name":"Wendover Airport",
+    "elevation":4236.0,
+    "latitude":40.72056,
+    "longitude":-114.03583
+  },
+  {
+    "stid":"KHCR",
+    "name":"Heber Valley Airport",
+    "elevation":5597.0,
+    "latitude":40.47742,
+    "longitude":-111.43295
+  },
+  {
+    "stid":"KHIF",
+    "name":"Hill Air Force Base",
+    "elevation":4783.0,
+    "latitude":41.11112,
+    "longitude":-111.96229
+  },
+  {
+    "stid":"KMS",
+    "name":"WOLF CREEK",
+    "elevation":7205.0,
+    "latitude":40.5574,
+    "longitude":-111.1345
+  },
+  {
+    "stid":"KOGD",
+    "name":"Ogden-Hinckley Airport",
+    "elevation":4440.0,
+    "latitude":41.19406,
+    "longitude":-112.01681
+  },
+  {
+    "stid":"KPVU",
+    "name":"Provo Municipal Airport",
+    "elevation":4495.0,
+    "latitude":40.2239,
+    "longitude":-111.7253
+  },
+  {
+    "stid":"KSPK",
+    "name":"Spanish Fork Municipal Airport",
+    "elevation":4530.0,
+    "latitude":40.145,
+    "longitude":-111.6677
+  },
+  {
+    "stid":"KSVR",
+    "name":"South Valley Regional Airport",
+    "elevation":4596.0,
+    "latitude":40.6196,
+    "longitude":-111.99016
+  },
+  {
+    "stid":"KU69",
+    "name":"DUCHESNE",
+    "elevation":5826.0,
+    "latitude":40.1919,
+    "longitude":-110.38099
+  },
+  {
+    "stid":"KVEL",
+    "name":"Vernal Airport",
+    "elevation":5262.0,
+    "latitude":40.44295,
+    "longitude":-109.51273
+  },
+  {
+    "stid":"OGP",
+    "name":"SNOWBASIN - MOUNT OGDEN",
+    "elevation":9570.0,
+    "latitude":41.2,
+    "longitude":-111.881
+  },
+  {
+    "stid":"QCV",
+    "name":"Copperview",
+    "elevation":4409.0,
+    "latitude":40.59806,
+    "longitude":-111.89417
+  },
+  {
+    "stid":"QHV",
+    "name":"Harrisville",
+    "elevation":4324.0,
+    "latitude":41.3028,
+    "longitude":-111.9883
+  },
+  {
+    "stid":"QHW",
+    "name":"Hawthorne",
+    "elevation":4301.0,
+    "latitude":40.7335,
+    "longitude":-111.8717
+  },
+  {
+    "stid":"QSM",
+    "name":"Smithfield",
+    "elevation":4508.0,
+    "latitude":41.84278,
+    "longitude":-111.85194
+  },
+  {
+    "stid":"RDN",
+    "name":"Red Narrows",
+    "elevation":5699.0,
+    "latitude":39.989,
+    "longitude":-111.3701
+  },
+  {
+    "stid":"RVZU1",
+    "name":"RAYS VALLEY",
+    "elevation":7273.0,
+    "latitude":40.11776,
+    "longitude":-111.28036
+  },
+  {
+    "stid":"UB7ST",
+    "name":"Seven Sisters",
+    "elevation":5308.0,
+    "latitude":39.981,
+    "longitude":-109.345
+  },
+  {
+    "stid":"UBCSP",
+    "name":"Castle Peak",
+    "elevation":5266.0,
+    "latitude":40.051,
+    "longitude":-110.02
+  },
+  {
+    "stid":"UBHSP",
+    "name":"Horsepool",
+    "elevation":5148.0,
+    "latitude":40.144,
+    "longitude":-109.467
+  },
+  {
+    "stid":"UCC34",
+    "name":"Bluebell",
+    "elevation":6188.0,
+    "latitude":40.37263,
+    "longitude":-110.20924
+  },
+  {
+    "stid":"UFD04",
+    "name":"Glover's Lane - 12\/01\/11 Downslope Event",
+    "elevation":4242.0,
+    "latitude":40.966465,
+    "longitude":-111.90075
+  },
+  {
+    "stid":"UFD05",
+    "name":"Bountiful B - 12\/01\/11 Downslope Event",
+    "elevation":5795.0,
+    "latitude":40.899352,
+    "longitude":-111.83798
+  },
+  {
+    "stid":"UFD06",
+    "name":"Morgan - 12\/01\/11 Downslope Event",
+    "elevation":5097.0,
+    "latitude":41.040407,
+    "longitude":-111.657247
+  },
+  {
+    "stid":"UINU1",
+    "name":"FORT DUCHESNE",
+    "elevation":4928.0,
+    "latitude":40.28477,
+    "longitude":-109.86183
+  },
+  {
+    "stid":"UP028",
+    "name":"CENWWS",
+    "elevation":4228.0,
+    "latitude":40.933621,
+    "longitude":-111.892094
+  },
+  {
+    "stid":"UTASH",
+    "name":"US-40 at MP 140 Asphalt Ridge",
+    "elevation":5710.0,
+    "latitude":40.41635,
+    "longitude":-109.58215
+  },
+  {
+    "stid":"UTCOP",
+    "name":"US-40 at MP 41 Co-Op Creek",
+    "elevation":7637.0,
+    "latitude":40.2418,
+    "longitude":-111.1771
+  },
+  {
+    "stid":"UTDAN",
+    "name":"US-40 @ Daniels Summit",
+    "elevation":8000.0,
+    "latitude":40.3033,
+    "longitude":-111.2578
+  },
+  {
+    "stid":"UTDCD",
+    "name":"US-189 at Deer Creek Dam",
+    "elevation":5429.0,
+    "latitude":40.40525,
+    "longitude":-111.5266
+  },
+  {
+    "stid":"UTECO",
+    "name":"I-80 at MP 172 Echo Canyon",
+    "elevation":5748.0,
+    "latitude":41.01025,
+    "longitude":-111.37445
+  },
+  {
+    "stid":"UTFRT",
+    "name":"US-40 at MP 66 Fruitland",
+    "elevation":6479.0,
+    "latitude":40.20525,
+    "longitude":-110.77125
+  },
+  {
+    "stid":"UTHEB",
+    "name":"US-40 Heber",
+    "elevation":5733.0,
+    "latitude":40.5636,
+    "longitude":-111.4288
+  },
+  {
+    "stid":"UTICS",
+    "name":"Indian Canyon Summit",
+    "elevation":9050.0,
+    "latitude":39.8857,
+    "longitude":-110.7479
+  },
+  {
+    "stid":"UTMTH",
+    "name":"SR-87 at MP 16 Mountain Home",
+    "elevation":6695.0,
+    "latitude":40.358,
+    "longitude":-110.3876
+  },
+  {
+    "stid":"UTMYT",
+    "name":"US-40 at MP 105 Myton",
+    "elevation":5087.0,
+    "latitude":40.19943,
+    "longitude":-110.06792
+  },
+  {
+    "stid":"UTORM",
+    "name":"I-15 @ Orem",
+    "elevation":4650.0,
+    "latitude":40.31925,
+    "longitude":-111.7267
+  },
+  {
+    "stid":"UTPET",
+    "name":"I-84 at MP 97 Peterson",
+    "elevation":4961.0,
+    "latitude":41.114,
+    "longitude":-111.7631
+  },
+  {
+    "stid":"UTSLD",
+    "name":"Soldier Summit",
+    "elevation":7487.0,
+    "latitude":39.92872,
+    "longitude":-111.08382
+  },
+  {
+    "stid":"UTSTV",
+    "name":"US-40 @ Starvation",
+    "elevation":5720.0,
+    "latitude":40.17258,
+    "longitude":-110.493
+  },
+  {
+    "stid":"WBB",
+    "name":"U of U William Browning Building",
+    "elevation":4806.0,
+    "latitude":40.76623,
+    "longitude":-111.84755
+  }
+]

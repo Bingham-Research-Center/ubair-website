@@ -3,12 +3,24 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
+// Add this helper at the top (after imports)
+function updateFileList(uploadDir) {
+  const files = fs.readdirSync(uploadDir);
+  const filtered = files.filter(name =>
+    /^map_obs(_meta)?_\d{8}_\d{4}Z\.json$/.test(name)
+  );
+  fs.writeFileSync(
+    path.join(uploadDir, 'filelist.json'),
+    JSON.stringify(filtered, null, 2)
+  );
+}
+
 const router = express.Router();
 
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(process.cwd(), 'public', 'data');
+        const uploadDir = path.join(process.cwd(), 'public', 'api');
 
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
@@ -24,17 +36,9 @@ const storage = multer.diskStorage({
 });
 
 const upload = multer({
-    storage: storage,
+    storage,
     limits: {
         fileSize: 10 * 1024 * 1024 // 10MB limit
-    },
-    fileFilter: function (req, file, cb) {
-        // Only allow JSON files
-        if (file.mimetype === 'application/json' || file.originalname.endsWith('.json')) {
-            cb(null, true);
-        } else {
-            cb(new Error('Only JSON files are allowed'));
-        }
     }
 });
 
@@ -121,49 +125,57 @@ async function validateCHPCOrigin(req, res, next) {
 }
 
 // Main upload route
-router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.single('file'), (req, res) => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({
-                success: false,
-                message: 'No file uploaded'
-            });
-        }
-
-        const { dataType } = req.params;
-        const filename = req.file.filename;
-        const fileSize = req.file.size;
-
-        console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${fileSize} bytes) - Type: ${dataType}`);
-
-        // Validate JSON content
-        try {
-            const fileContent = fs.readFileSync(req.file.path, 'utf8');
-            JSON.parse(fileContent); // This will throw if invalid JSON
-        } catch (jsonError) {
-            // Delete the invalid file
-            fs.unlinkSync(req.file.path);
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid JSON file'
-            });
-        }
-
-        // Success response
-        res.status(200).json({
-            success: true,
-            message: `${dataType} data uploaded successfully`,
-            filename: filename,
-            size: fileSize
-        });
-
-    } catch (error) {
-        console.error('Error handling file upload:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Server error processing upload'
-        });
+router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
+
+    const ext = path.extname(req.file.originalname).toLowerCase();
+    const textExts = ['.md', '.txt'];
+
+    // Invalid type
+    if (ext !== '.json' && !textExts.includes(ext)) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ success: false, message: 'Invalid file type' });
+    }
+
+    const content = fs.readFileSync(req.file.path, 'utf8');
+
+    if (ext === '.json') {
+      // JSON validation
+      try {
+        JSON.parse(content);
+      } catch {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ success: false, message: 'Invalid JSON file' });
+      }
+    } else {
+      // Plain-text validation (ASCII only)
+      if (!/^[\x00-\x7F]*$/.test(content)) {
+        fs.unlinkSync(req.file.path);
+        return res.status(400).json({ success: false, message: 'Invalid text file' });
+      }
+    }
+
+    // Success
+    const { dataType } = req.params;
+    const { filename, size } = req.file;
+    console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
+
+    const uploadDir = path.join(process.cwd(), 'public', 'data','api');
+    updateFileList(uploadDir);
+
+    res.status(200).json({
+      success: true,
+      message: `${dataType} data uploaded successfully`,
+      filename,
+      size
+    });
+  } catch (error) {
+    console.error('Error handling file upload:', error);
+    res.status(500).json({ success: false, message: 'Server error processing upload' });
+  }
 });
 
 // Health check route for this API
