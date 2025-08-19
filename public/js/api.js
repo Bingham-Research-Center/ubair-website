@@ -53,7 +53,7 @@ function processObservationData(rawData) {
     // Group by station first
     const stationData = {};
     rawData.forEach(obs => {
-        const { stid, variable, value, units } = obs;
+        const { stid, variable, value, date_time, units } = obs;
 
         if (!stid || value === null || value === undefined) return;
 

@@ -424,7 +424,7 @@ export class DataViz {
      */
     async refreshData() {
         try {
-            console.log('Refreshing data...');
+            // Refreshing data silently - automatic background update
             const { liveObsData, windData } = await this.dataLoader.fetchData();
             this.processData(liveObsData, windData);
             this.updatePlot();

@@ -73,14 +73,8 @@ function stopKioskMode() {
 
 async function updateMiniMap() {
     try {
-        // Try to fetch real data, fall back to synthetic
-        let data;
-        try {
-            data = await fetchLiveObservations();
-        } catch (error) {
-            console.log('Using synthetic data for homepage demo');
-            data = generateSyntheticData();
-        }
+        // Fetch live observations data
+        const data = await fetchLiveObservations();
 
         // Clear existing markers
         markers.forEach(marker => map.removeLayer(marker));
@@ -129,25 +123,6 @@ async function updateMiniMap() {
     }
 }
 
-function generateSyntheticData() {
-    const syntheticData = {
-        'Ozone': {},
-        'PM2.5': {},
-        'Temperature': {},
-        'NOx': {},
-        'NO': {}
-    };
-
-    Object.keys(stations).forEach(station => {
-        syntheticData['Ozone'][station] = Math.round(35 + Math.random() * 40);
-        syntheticData['PM2.5'][station] = Math.round(5 + Math.random() * 35);
-        syntheticData['Temperature'][station] = Math.round(-5 + Math.random() * 20);
-        syntheticData['NOx'][station] = Math.round(20 + Math.random() * 80);
-        syntheticData['NO'][station] = Math.round(10 + Math.random() * 50);
-    });
-
-    return syntheticData;
-}
 
 function createTwoColumnPopup(stationName, measurements) {
     const validMeasurements = Object.entries(measurements).filter(([_, value]) => value !== null && !isNaN(value));

@@ -2,6 +2,10 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { promisify } from 'util';
+import dns from 'dns';
+
+const reverseLookup = promisify(dns.reverse);
 
 // Add this helper at the top (after imports)
 function updateFileList(uploadDir) {
@@ -20,8 +24,7 @@ const router = express.Router();
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(process.cwd(), 'public', 'api');
-
+        const uploadDir = path.join(process.cwd(), 'public', 'api', 'static');
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -47,13 +50,7 @@ function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
-    // Debug logging (remove in production)
-    console.log('API Key validation:');
-    console.log('- Valid key exists:', !!validKey);
-    console.log('- Valid key length:', validKey ? validKey.length : 0);
-    console.log('- Provided key exists:', !!providedKey);
-    console.log('- Provided key length:', providedKey ? providedKey.length : 0);
-    console.log('- Keys match:', providedKey === validKey);
+    // Production: minimal logging for security
 
     if (!validKey) {
         console.error('ERROR: DATA_UPLOAD_API_KEY environment variable is not set!');
@@ -85,7 +82,8 @@ async function validateCHPCOrigin(req, res, next) {
         const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
         const clientHostname = req.headers['x-client-hostname'];
 
-        console.log(`Validating request from IP: ${clientIp}, Hostname: ${clientHostname}`);
+        // Log access attempts for security monitoring
+        console.log(`Access attempt from IP: ${clientIp}, Hostname: ${clientHostname}`);
 
         // Method 1: Check custom hostname header
         if (clientHostname && clientHostname.endsWith('chpc.utah.edu')) {

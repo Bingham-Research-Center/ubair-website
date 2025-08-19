@@ -74,6 +74,15 @@ app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });
 
+app.get('/api/filelist.json', async (req, res) => {
+    try {
+        const data = await fs.readFile('./public/api/static/filelist.json');
+        res.json(JSON.parse(data));
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch file list' });
+    }
+});
+
 app.get('/api/live-observations', async (req, res) => {
     try {
         const data = await fs.readFile('./public/data/json/latest_obs.json'); // Fixed path

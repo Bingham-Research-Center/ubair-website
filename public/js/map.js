@@ -18,7 +18,7 @@ let markers = [];
 
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, setting up live_aq map...');
+    // DOM loaded, setting up live_aq map...
     // console.log('Available stations:', Object.keys(stations));
 
     setupStudyAreaToggle();
@@ -35,7 +35,7 @@ function setupStudyAreaToggle() {
     const studyAreaImage = document.getElementById('image-overlay');
 
     if (!overlayContainer || !studyAreaImage) {
-        console.log('Study area elements not found');
+        // Study area elements not found, skipping setup
         return;
     }
 
@@ -58,7 +58,7 @@ function setupStudyAreaToggle() {
 }
 
 function setupKioskControl() {
-    console.log('Setting up kiosk control...');
+    // Setting up kiosk control...
 
     // Wait for map to be fully initialized
     setTimeout(() => {
@@ -87,27 +87,27 @@ function setupKioskControl() {
 
         try {
             kioskControl.addTo(map);
-            console.log('Kiosk control added to map successfully');
+            // Kiosk control added to map successfully
 
             // Add event listener after control is added to DOM
             setTimeout(() => {
                 const kioskToggle = document.getElementById('map-kiosk-toggle');
                 if (kioskToggle) {
                     kioskToggle.addEventListener('click', function() {
-                        console.log('Kiosk toggle clicked, current mode:', mapKioskMode);
+                        // Kiosk toggle clicked, toggling mode
                         mapKioskMode = !mapKioskMode;
                         const switchEl = this;
                         const timerFill = document.getElementById('timer-fill');
 
                         if (mapKioskMode) {
-                            console.log('Starting kiosk mode...');
+                            // Starting kiosk mode...
                             switchEl.classList.add('active');
                             if (timerFill) {
                                 timerFill.style.animation = 'timer-fill 5s linear infinite';
                             }
                             startKioskMode();
                         } else {
-                            console.log('Stopping kiosk mode...');
+                            // Stopping kiosk mode...
                             switchEl.classList.remove('active');
                             if (timerFill) {
                                 timerFill.style.animation = 'none';
@@ -115,7 +115,7 @@ function setupKioskControl() {
                             stopKioskMode();
                         }
                     });
-                    console.log('Kiosk control event listener attached');
+                    // Kiosk control event listener attached
                 } else {
                     console.error('Kiosk toggle element not found after timeout');
                 }
@@ -146,17 +146,17 @@ function fixUSULogo() {
 
 function startKioskMode() {
     if (markers.length === 0) {
-        console.log('No markers available for kiosk mode');
+        // No markers available for kiosk mode
         return;
     }
 
-    console.log(`Starting kiosk mode with ${markers.length} markers`);
+    // Starting kiosk mode with available markers
     currentStationIndex = 0;
 
     // Open first popup immediately
     if (markers[0]) {
         markers[0].openPopup();
-        console.log('Opened popup for first station');
+        // Opened popup for first station
     }
 
     // Start interval for subsequent popups
@@ -165,13 +165,13 @@ function startKioskMode() {
         currentStationIndex = (currentStationIndex + 1) % markers.length;
         if (markers[currentStationIndex]) {
             markers[currentStationIndex].openPopup();
-            console.log(`Opened popup for station ${currentStationIndex}`);
+            // Cycling to next station popup
         }
     }, 5000);
 }
 
 function stopKioskMode() {
-    console.log('Stopping kiosk mode...');
+    // Stopping kiosk mode...
     if (mapKioskInterval) {
         clearInterval(mapKioskInterval);
         mapKioskInterval = null;
@@ -181,12 +181,11 @@ function stopKioskMode() {
 
 async function updateMap() {
   try {
-    console.log('Updating map with station data...');
+    // Updating map with station data...
 
     // Destructure observations and metadata from the API
     const { observations, metadata } = await fetchLiveObservations();
-    console.log('Observations:', observations);
-    console.log('Metadata:', metadata);
+    // Processing observations and metadata for map update
 
     // Clear existing markers
     markers.forEach(m => map.removeLayer(m));
@@ -215,7 +214,7 @@ async function updateMap() {
       }
     }
 
-    console.log(`Map updated with ${validStations} stations`);
+    // Map updated successfully with station data
   } catch (error) {
     console.error('Failed to update map:', error);
   }

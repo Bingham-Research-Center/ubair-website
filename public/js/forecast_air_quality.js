@@ -125,11 +125,8 @@ function initializeTooltips() {
 }
 
 function initializeClyfar() {
-    // Initialize synthetic data for demo
-    updateForecastCards();
-    generateHeatmapDemo();
-    generateTimeSeriesDemo();
-    updatePerformanceMetrics();
+    // Initialize with real data from JSON files
+    loadAirQualityForecastData();
 }
 
 function updateForecastCards() {
@@ -178,7 +175,7 @@ function generateTimeSeriesDemo() {
     const chartArea = document.querySelector('.chart-area');
     if (chartArea) {
         chartArea.innerHTML = `
-            <div class="demo-chart">
+            <div class="forecast-chart">
                 <canvas id="forecast-chart" width="400" height="200"></canvas>
                 <p class="chart-caption">15-day ozone forecast scenarios</p>
             </div>
