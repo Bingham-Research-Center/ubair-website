@@ -1,23 +1,28 @@
 import { thresholds } from './config.js';
 
-// Determine marker color based on measurements
+// Determine marker color based on OZONE levels only
 export function getMarkerColor(measurements) {
-    let maxSeverity = 0;
-
-    for (const [pollutant, value] of Object.entries(measurements)) {
-        if (value === null) continue;
-
-        const threshold = thresholds[pollutant];
-        if (!threshold) continue;
-
-        if (value >= threshold.danger) {
-            return 'red';
-        } else if (value >= threshold.warning && maxSeverity < 1) {
-            maxSeverity = 1;
-        }
+    const ozoneValue = measurements['Ozone'];
+    
+    // No ozone data = gray marker
+    if (ozoneValue === null || ozoneValue === undefined) {
+        return 'gray';
     }
-
-    return maxSeverity === 1 ? 'orange' : 'green';
+    
+    const ozoneThreshold = thresholds['Ozone'];
+    
+    // Red for dangerous levels (≥70 ppb)
+    if (ozoneValue >= ozoneThreshold.danger) {
+        return 'red';
+    }
+    // Orange for warning levels (≥50 ppb) 
+    else if (ozoneValue >= ozoneThreshold.warning) {
+        return 'orange';
+    }
+    // Green for good levels (<50 ppb)
+    else {
+        return 'green';
+    }
 }
 
 // Create popup content for a station

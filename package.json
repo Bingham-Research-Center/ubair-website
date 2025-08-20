@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js"
+    "dev": "nodemon server/server.js --ignore public/data/outlooks/outlooks_list.json --ignore public/api/static/",
+    "test-api": "node scripts/test-api.js"
   },
   "dependencies": {
     "express": "^4.18.2",

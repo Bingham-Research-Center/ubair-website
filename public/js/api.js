@@ -3,8 +3,8 @@
 async function getLatestFilename(prefix) {
   const res = await fetch(`/api/filelist.json`);
   if (!res.ok) throw new Error(`Unable to list files: ${res.status}`);
-  const files = await res.json(); // e.g. ['map_obs_20250731_0228Z', ...]
-  const regex = new RegExp(`^${prefix}(\\d{8}_\\d{4}Z)$`);
+  const files = await res.json(); // e.g. ['map_obs_20250731_0228Z.json', ...]
+  const regex = new RegExp(`^${prefix}(\\d{8}_\\d{4}Z)\\.json$`);
   const latest = files
     .map(name => {
       const m = name.match(regex);
@@ -32,8 +32,8 @@ export async function fetchLiveObservations() {
     const rawData = await dataRes.json();
     const rawMeta = await metaRes.json();
 
-    const observations = processObservationData(rawData);
-    const metadata     = processObservationData(rawMeta);
+    const metadata = processMetadata(rawMeta);
+    const observations = processObservationData(rawData, metadata);
 
     return { observations, metadata };
   } catch (err) {
@@ -42,16 +42,43 @@ export async function fetchLiveObservations() {
 }
 
 /**
+ * Process metadata into a lookup table
+ * Transforms [{stid, name, elevation, latitude, longitude}...] to {stid: {name, elevation, lat, lng}}
+ */
+function processMetadata(rawMeta) {
+    if (!Array.isArray(rawMeta)) {
+        console.warn('Expected array for metadata, got:', typeof rawMeta);
+        return {};
+    }
+    
+    const metadata = {};
+    rawMeta.forEach(station => {
+        if (station.stid) {
+            metadata[station.stid] = {
+                name: station.name,
+                elevation: station.elevation,
+                lat: station.latitude,
+                lng: station.longitude
+            };
+        }
+    });
+    
+    return metadata;
+}
+
+/**
  * Process raw observation data from pandas export format
  * Transforms [{stid, variable, value, units}...] to {variable: {station: value}}
  */
-function processObservationData(rawData) {
+function processObservationData(rawData, metadata = {}) {
     if (!Array.isArray(rawData)) {
         throw new Error('Expected array of observations');
     }
 
     // Group by station first
     const stationData = {};
+    const stationTimestamps = {}; // Store timestamps for each station
+    
     rawData.forEach(obs => {
         const { stid, variable, value, date_time, units } = obs;
 
@@ -59,6 +86,11 @@ function processObservationData(rawData) {
 
         if (!stationData[stid]) {
             stationData[stid] = {};
+        }
+        
+        // Store the timestamp for this station (will be the same for all variables from same observation)
+        if (date_time) {
+            stationTimestamps[stid] = date_time;
         }
 
         const mappedVar = mapVariableName(variable);
@@ -69,6 +101,7 @@ function processObservationData(rawData) {
 
     // Convert to map format: {variable: {stationName: value}}
     const result = {};
+    const timestamps = {}; // Store timestamps by station name
     const allVariables = new Set();
 
     // Collect all unique variables
@@ -76,26 +109,45 @@ function processObservationData(rawData) {
         Object.keys(station).forEach(variable => allVariables.add(variable));
     });
 
-    // Reorganize by variable
+    // Reorganize by variable and create timestamp mapping
     allVariables.forEach(variable => {
         result[variable] = {};
         Object.entries(stationData).forEach(([stid, data]) => {
-            const stationName = mapStationName(stid);
+            const metadataName = metadata[stid]?.name;
+            const stationName = mapStationName(stid, metadataName);
             if (stationName && data[variable] !== undefined) {
                 result[variable][stationName] = data[variable];
+                // Store timestamp for this station
+                if (stationTimestamps[stid]) {
+                    timestamps[stationName] = stationTimestamps[stid];
+                }
             }
         });
     });
 
+    // Add timestamps to the result
+    result._timestamps = timestamps;
+    
     return result;
 }
 
 function mapVariableName(variable) {
+    // Load mappings from reference/variable-mapping.txt
     const mappings = {
-        // 'ozone_concentration': 'Ozone',
-        // 'pm25_concentration': 'PM2.5',
-        // 'relative_humidity': 'Humidity'
-        // TODO: get from lookup file
+        'air_temp': 'Temperature',
+        'ozone_concentration': 'Ozone',
+        'pm25_concentration': 'PM2.5', 
+        'particulate_concentration': 'PM2.5',
+        'relative_humidity': 'Humidity',
+        'wind_speed': 'Wind Speed',
+        'wind_direction': 'Wind Direction',
+        'dew_point_temperature': 'Dew Point',
+        'snow_depth': 'Snow Depth',
+        'soil_temp': 'Soil Temperature',
+        'sea_level_pressure': 'Pressure',
+        'black_carbon_concentration': 'NOx',
+        'ppb': 'NO',  // From your mapping file
+        'NO_concentration': 'NO2'
     };
 
     return mappings[variable] || variable;
@@ -105,12 +157,41 @@ function mapVariableName(variable) {
 /**
  * Map station IDs to display names
  */
-function mapStationName(stid) {
-    const mappings = {
-        // 'UTORM': 'Orem',
-        // 'UTSTV': 'Starvation'
-        // TODO: get from metadata file
+function mapStationName(stid, metadataName = null) {
+    // Priority 1: Pretty hardcoded names for key Uintah Basin stations
+    const prettyNames = {
+        'UBHSP': 'Horsepool',
+        'UB7ST': 'Seven Sisters', 
+        'UBCSP': 'Castle Peak',
+        'KVEL': 'Vernal',
+        'BUNUT': 'Roosevelt',
+        'CHPU1': 'Ouray',
+        'CEN': 'Vernal',
+        'UTMYT': 'Myton',
+        'QHW': 'Whiterocks',
+        'RDN': 'Red Wash'
     };
+    
+    // Priority 2: Clean up metadata names if no pretty name exists
+    if (!prettyNames[stid] && metadataName) {
+        return cleanMetadataName(metadataName);
+    }
+    
+    // Priority 3: Fallback to pretty name, metadata name, or station ID
+    return prettyNames[stid] || metadataName || stid;
+}
 
-    return mappings[stid] || stid;
+function cleanMetadataName(name) {
+    if (!name) return name;
+    
+    // Clean up common ugly patterns in weather station names
+    return name
+        .replace(/\s+COOPB?$/, '') // Remove "COOP" suffix
+        .replace(/\s+RADIO$/, '') // Remove "RADIO" suffix  
+        .replace(/^ALTA\s*-\s*/, 'Alta ') // Clean "ALTA - COLLINS" -> "Alta Collins"
+        .replace(/\s*NM\s*-\s*/, ' ') // Clean "DINOSAUR NM-QUARRY" -> "DINOSAUR QUARRY"
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 }

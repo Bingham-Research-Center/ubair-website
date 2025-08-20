@@ -11,7 +11,16 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.3033, -109.7], 8); // Slightly more zoomed out
+}).setView([40.3033, -109.7], 9); // Better zoom level to show all stations
+
+// Add window resize handler to re-fit map
+window.addEventListener('resize', function() {
+    setTimeout(() => {
+        map.invalidateSize();
+        // Re-center on Uintah Basin after resize
+        map.setView([40.3033, -109.7], 9);
+    }, 100);
+});
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 15,
@@ -22,6 +31,7 @@ let kioskMode = false;
 let kioskInterval;
 let currentStationIndex = 0;
 let markers = [];
+let useCelsius = false; // Default to Fahrenheit
 
 // Wait for DOM to load before setting up
 document.addEventListener('DOMContentLoaded', () => {
@@ -37,6 +47,12 @@ function setupKioskControl() {
     const kioskSwitch = document.getElementById('kiosk-switch');
     if (kioskSwitch) {
         kioskSwitch.addEventListener('click', toggleKiosk);
+    }
+    
+    // Setup temperature toggle
+    const tempToggle = document.getElementById('temp-toggle');
+    if (tempToggle) {
+        tempToggle.addEventListener('click', toggleTemperature);
     }
 }
 
@@ -71,10 +87,50 @@ function stopKioskMode() {
     map.closePopup();
 }
 
+function toggleTemperature() {
+    useCelsius = !useCelsius;
+    const toggleEl = document.getElementById('temp-toggle');
+    const labelEl = document.getElementById('temp-label');
+    
+    if (useCelsius) {
+        toggleEl.classList.add('celsius');
+        labelEl.textContent = '°C';
+    } else {
+        toggleEl.classList.remove('celsius');
+        labelEl.textContent = '°F';
+    }
+    
+    // Close any open popups
+    map.closePopup();
+    
+    // Update all marker popups
+    markers.forEach(marker => {
+        const stationName = marker.options.stationName;
+        const measurements = marker.options.measurements;
+        const dateTime = marker.options.dateTime;
+        
+        if (stationName && measurements) {
+            const popupContent = createTwoColumnPopup(stationName, measurements, dateTime);
+            marker.bindPopup(popupContent, {
+                maxWidth: 300,
+                className: 'two-column-popup'
+            });
+        }
+    });
+}
+
 async function updateMiniMap() {
     try {
         // Fetch live observations data
-        const data = await fetchLiveObservations();
+        const result = await fetchLiveObservations();
+        
+        // Check if we got valid data
+        if (!result || !result.observations) {
+            console.error('No observation data available');
+            return;
+        }
+        
+        const data = result.observations;
 
         // Clear existing markers
         markers.forEach(marker => map.removeLayer(marker));
@@ -87,10 +143,16 @@ async function updateMiniMap() {
                 'PM2.5': data['PM2.5']?.[stationName] ?? null,
                 'NOx': data['NOx']?.[stationName] ?? null,
                 'NO': data['NO']?.[stationName] ?? null,
-                'Temperature': data['Temperature']?.[stationName] ?? null
+                'NO2': data['NO2']?.[stationName] ?? null,
+                'Temperature': data['Temperature']?.[stationName] ?? null,
+                'Wind Speed': data['Wind Speed']?.[stationName] ?? null,
+                'Wind Direction': data['Wind Direction']?.[stationName] ?? null,
+                'Pressure': data['Pressure']?.[stationName] ?? null,
+                'Humidity': data['Humidity']?.[stationName] ?? null
             };
 
-            const popupContent = createTwoColumnPopup(stationName, measurements);
+            const stationTimestamp = data._timestamps?.[stationName] ?? null;
+            const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp);
             const markerColor = getMarkerColor(measurements);
 
             const markerIcon = L.divIcon({
@@ -99,7 +161,12 @@ async function updateMiniMap() {
                 iconSize: [24, 24]
             });
 
-            const marker = L.marker([coordinates.lat, coordinates.lng], { icon: markerIcon })
+            const marker = L.marker([coordinates.lat, coordinates.lng], { 
+                icon: markerIcon,
+                stationName: stationName,
+                measurements: measurements,
+                dateTime: stationTimestamp
+            })
                 .bindPopup(popupContent, {
                     maxWidth: 300,
                     className: 'two-column-popup'
@@ -109,13 +176,9 @@ async function updateMiniMap() {
             markers.push(marker);
         }
 
-        // Fit map to show all stations with extra padding for dashboard view
+        // Set map to balanced Uintah Basin view
         if (markers.length > 0) {
-            const group = new L.featureGroup(markers);
-            map.fitBounds(group.getBounds(), {
-                padding: [30, 30], // More padding for better view
-                maxZoom: 9
-            });
+            map.setView([40.3033, -109.7], 9); // Better zoom level to show all stations
         }
 
     } catch (error) {
@@ -123,8 +186,60 @@ async function updateMiniMap() {
     }
 }
 
+function formatMeasurement(pollutant, value) {
+    if (value === null || value === undefined || isNaN(value)) {
+        return { displayValue: 'N/A', unit: '' };
+    }
+    
+    const numValue = parseFloat(value);
+    
+    switch (pollutant) {
+        case 'Temperature':
+            let tempValue = numValue;
+            let tempUnit = '°C';
+            
+            // Convert to Fahrenheit if needed
+            if (!useCelsius) {
+                tempValue = (numValue * 9/5) + 32;
+                tempUnit = '°F';
+            }
+            
+            return { displayValue: Math.round(tempValue), unit: tempUnit };
+        case 'Ozone':
+            return { displayValue: Math.round(numValue), unit: ' ppb' };
+        case 'Wind Speed':
+            const roundedWind = Math.round(numValue);
+            if (roundedWind === 0) {
+                return { displayValue: 'Calm', unit: '' };
+            }
+            return { displayValue: roundedWind, unit: ' m/s' };
+        case 'Wind Direction':
+            return { displayValue: getCardinalDirection(numValue), unit: '' };
+        case 'Pressure':
+            // Convert Pascals to hectopascals (hPa) by dividing by 100
+            return { displayValue: Math.round(numValue / 100), unit: ' hPa' };
+        case 'PM2.5':
+        case 'PM10':
+        case 'NOx':
+        case 'NO':
+        case 'NO2':
+            return { displayValue: Math.round(numValue), unit: ' ppb' };
+        case 'Humidity':
+            return { displayValue: Math.round(numValue), unit: '%' };
+        default:
+            return { displayValue: Math.round(numValue * 10) / 10, unit: '' };
+    }
+}
 
-function createTwoColumnPopup(stationName, measurements) {
+function getCardinalDirection(degrees) {
+    if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
+    
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
+
+function createTwoColumnPopup(stationName, measurements, timestamp = null) {
     const validMeasurements = Object.entries(measurements).filter(([_, value]) => value !== null && !isNaN(value));
 
     if (validMeasurements.length === 0) {
@@ -135,8 +250,8 @@ function createTwoColumnPopup(stationName, measurements) {
     let rightCol = '';
 
     validMeasurements.forEach(([pollutant, value], index) => {
-        const unit = pollutant === 'Temperature' ? '°C' : ' ppb';
-        const item = `<div style="margin: 4px 0;"><strong>${pollutant}:</strong> ${value}${unit}</div>`;
+        const { displayValue, unit } = formatMeasurement(pollutant, value);
+        const item = `<div style="margin: 4px 0;"><strong>${pollutant}:</strong> ${displayValue}${unit}</div>`;
 
         if (index % 2 === 0) {
             leftCol += item;
@@ -145,6 +260,26 @@ function createTwoColumnPopup(stationName, measurements) {
         }
     });
 
+    // Format timestamp
+    let timestampHtml = '';
+    if (timestamp) {
+        try {
+            const date = new Date(timestamp);
+            const formatOptions = {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZoneName: 'short'
+            };
+            const formattedTime = date.toLocaleString('en-US', formatOptions);
+            timestampHtml = `<div style="text-align: center; font-size: 0.85em; color: #666; margin-top: 8px; font-style: italic;">Data from: ${formattedTime}</div>`;
+        } catch (e) {
+            // If timestamp parsing fails, don't show it
+            console.warn('Failed to parse timestamp:', timestamp);
+        }
+    }
+
     return `
         <div style="min-width: 280px;">
             <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--usu-blue);">${stationName}</h3>
@@ -152,6 +287,7 @@ function createTwoColumnPopup(stationName, measurements) {
                 <div style="flex: 1;">${leftCol}</div>
                 <div style="flex: 1;">${rightCol}</div>
             </div>
+            ${timestampHtml}
         </div>
     `;
 }

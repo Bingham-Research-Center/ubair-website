@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TEST DATA! Uintah Basin Winter Ozone Information</title>
+    
+    <!-- Use PNG as favicon (browsers will accept it) -->
+    <link rel="icon" type="image/png" href="/public/images/BRS_01_UStateLeft_White.png">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -54,6 +57,35 @@
                         <div class="kiosk-switch" id="kiosk-switch" title="Automatically cycle through station popups">
                             <div class="switch-slider"></div>
                         </div>
+                        
+                        <label for="temp-toggle">Temperature:</label>
+                        <div class="temp-toggle" id="temp-toggle" title="Toggle between Celsius and Fahrenheit">
+                            <div class="temp-slider"></div>
+                            <span class="temp-label" id="temp-label">°F</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Map Legend - moved outside container -->
+                <div class="map-legend">
+                    <h4>Map Marker Colors: Ozone Levels (ppb)</h4>
+                    <div class="legend-items">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: green;"></div>
+                            <span>Good (&lt;50 ppb)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: orange;"></div>
+                            <span>Warning (50-69 ppb)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: red;"></div>
+                            <span>Dangerous (≥70 ppb)</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: gray;"></div>
+                            <span>No Ozone Data</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -92,9 +124,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- Load JavaScript Modules -->
+<script type="module" src="/public/js/loadSidebar.js"></script>
+<script src="/public/js/nineties-mode.js"></script>
 <script type="module" src="/public/js/config.js"></script>
 <script type="module" src="/public/js/index_map.js"></script>
-<script type="module" src="/public/js/loadSidebar.js"></script>
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>

@@ -18,6 +18,51 @@ html, body {
 body {
     background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
     position: relative;
+    transition: background 0.5s ease;
+}
+
+/* 90s Iridescent Background Mode */
+body.nineties-mode {
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(238, 174, 202, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(148, 187, 233, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 183, 195, 0.15) 0%, transparent 50%),
+        conic-gradient(from 45deg at 50% 50%, 
+            rgba(217, 175, 217, 0.08), 
+            rgba(151, 217, 225, 0.08), 
+            rgba(255, 204, 188, 0.08), 
+            rgba(255, 179, 186, 0.08), 
+            rgba(217, 175, 217, 0.08)
+        ),
+        linear-gradient(135deg, 
+            rgba(240, 248, 255, 0.95) 0%, 
+            rgba(250, 240, 230, 0.95) 25%,
+            rgba(245, 255, 250, 0.95) 50%, 
+            rgba(255, 240, 245, 0.95) 75%,
+            rgba(248, 248, 255, 0.95) 100%
+        );
+    background-size: 
+        400px 400px,
+        300px 300px, 
+        500px 500px,
+        200% 200%,
+        100% 100%;
+    animation: shimmer 45s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { 
+        background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%, 0% 0%; 
+    }
+    25% { 
+        background-position: 100% 0%, 0% 100%, 0% 100%, 100% 0%, 0% 0%; 
+    }
+    50% { 
+        background-position: 100% 100%, 0% 0%, 100% 0%, 50% 50%, 0% 0%; 
+    }
+    75% { 
+        background-position: 0% 100%, 100% 0%, 50% 50%, 0% 100%, 0% 0%; 
+    }
 }
 
 body::before {
@@ -35,11 +80,63 @@ body::before {
     pointer-events: none;
 }
 
+/* 90s Mode Toggle Button */
+.nineties-toggle-container {
+    margin: 15px 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nineties-toggle-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nineties-toggle-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    transform: translateY(-1px);
+}
+
+.nineties-toggle-btn.active {
+    background: linear-gradient(135deg, rgba(238, 174, 202, 0.3), rgba(148, 187, 233, 0.3));
+    border-color: rgba(238, 174, 202, 0.5);
+    color: #fff;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 5px rgba(238, 174, 202, 0.5); }
+    to { box-shadow: 0 0 20px rgba(238, 174, 202, 0.8), 0 0 30px rgba(148, 187, 233, 0.6); }
+}
+
+.toggle-indicator {
+    font-size: 12px;
+    opacity: 0.7;
+    font-weight: normal;
+}
+
+.nineties-toggle-btn.active .toggle-indicator {
+    opacity: 1;
+}
+
 #map {
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
     position: relative;
     z-index: 1;
+    height: 70vh;
+    min-height: 400px;
 }
 
 /* Remove overlay class */
@@ -755,12 +852,13 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     display: flex;
     align-items: center;
     justify-content: flex-end;
-    gap: 8px;
+    gap: 12px;
     margin-top: 0.75rem;
     padding: 0.5rem;
     background: rgba(255, 255, 255, 0.9);
     border-radius: 6px;
     font-size: 0.85rem;
+    flex-wrap: wrap;
 }
 
 .kiosk-switch-container label {
@@ -814,6 +912,68 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
 
 .kiosk-switch.active .switch-slider {
     transform: translateX(23px);
+}
+
+/* Temperature Toggle */
+.temp-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.temp-toggle:hover {
+    background: #e0e0e0;
+}
+
+.temp-toggle.celsius {
+    background: var(--usu-light-blue);
+}
+
+.temp-toggle.celsius .temp-label {
+    color: white;
+}
+
+.temp-slider {
+    width: 20px;
+    height: 12px;
+    background: #ccc;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.temp-toggle.celsius .temp-slider {
+    background: white;
+}
+
+.temp-slider::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.temp-toggle.celsius .temp-slider::after {
+    transform: translateX(8px);
+    background: var(--usu-blue);
+}
+
+.temp-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--usu-blue);
+    min-width: 20px;
 }
 
 .kiosk-info {
@@ -916,7 +1076,7 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     padding: 1.5rem;
     border: 1px solid rgba(0, 38, 58, 0.1);
     transition: all 0.3s ease;
-    height: 500px; /* Fixed height for consistency */
+    min-height: 500px; /* Allow expansion for legend */
     display: flex;
     flex-direction: column;
 }
@@ -988,6 +1148,100 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     border-radius: 8px;
     box-shadow: 0 4px 15px rgba(0, 38, 58, 0.1);
     border: 2px solid rgba(0, 38, 58, 0.1);
-    min-height: 350px; /* Ensure minimum height */
+    min-height: 350px;
+    width: 100%;
+}
+
+/* ======================== */
+/* RESPONSIVE DESIGN */
+/* ======================== */
+
+/* Tablet styles */
+@media screen and (max-width: 1024px) {
+    .container {
+        margin: 0 20px;
+        max-width: 95%;
+    }
+    
+    .sidebar {
+        width: 80%;
+        max-width: 280px;
+    }
+    
+    #map, .dashboard-map {
+        height: 60vh;
+        min-height: 300px;
+    }
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    .container {
+        margin: 0 10px;
+        padding: 15px;
+    }
+    
+    .sidebar {
+        width: 90%;
+        max-width: 100%;
+    }
+    
+    #map, .dashboard-map {
+        height: 50vh;
+        min-height: 250px;
+        margin: 10px 0;
+    }
+    
+    /* Stack elements vertically on mobile */
+    .dashboard-content {
+        flex-direction: column;
+    }
+    
+    .dashboard-sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    /* Make buttons mobile-friendly */
+    button, .btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    /* Ensure text is readable */
+    body {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    /* Fix popup sizing */
+    .leaflet-popup-content-wrapper {
+        max-width: 90vw !important;
+    }
+}
+
+/* Small mobile styles */
+@media screen and (max-width: 480px) {
+    .container {
+        margin: 0 5px;
+        padding: 10px;
+    }
+    
+    #map, .dashboard-map {
+        height: 45vh;
+        min-height: 200px;
+    }
+    
+    .sidebar {
+        width: 95%;
+    }
+    
+    /* Ensure touch targets are large enough */
+    .leaflet-control-layers-toggle,
+    .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+    }
 }
 
