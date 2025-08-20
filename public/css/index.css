@@ -1,0 +1,102 @@
+/* Homepage specific styles */
+
+/* Homepage map container */
+.homepage-map {
+    height: 400px;
+    margin: 20px 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.15);
+}
+
+/* Homepage welcome section */
+.welcome-section {
+    text-align: center;
+    margin: 40px 0;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+}
+
+.welcome-section h1 {
+    color: var(--usu-blue);
+    font-size: 2.5em;
+    margin-bottom: 20px;
+}
+
+.welcome-section p {
+    font-size: 1.2em;
+    color: var(--usu-light-blue);
+    line-height: 1.6;
+}
+
+/* Quick links section */
+.quick-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.quick-link-card {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    transition: transform 0.2s ease;
+}
+
+.quick-link-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.15);
+}
+
+/* Map Legend Styles */
+.map-legend {
+    margin: 15px 0;
+    padding: 15px;
+    background: white !important;
+    border-radius: 8px;
+    border: 2px solid var(--usu-blue);
+    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.2);
+    position: relative;
+    z-index: 1000 !important;
+    display: block !important;
+    visibility: visible !important;
+}
+
+.map-legend h4 {
+    margin: 0 0 10px 0;
+    color: var(--usu-blue);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.legend-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+/* Mobile responsive */
+@media screen and (max-width: 768px) {
+    .legend-items {
+        flex-direction: column;
+        gap: 8px;
+    }
+}

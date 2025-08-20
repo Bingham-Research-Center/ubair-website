@@ -1,0 +1,9 @@
+{
+  "ignore": [
+    "public/data/outlooks/outlooks_list.json",
+    "public/api/static/*",
+    "public/images/*",
+    "*.md"
+  ],
+  "ext": "js,mjs,cjs,json"
+}
