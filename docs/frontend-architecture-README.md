@@ -1,5 +1,5 @@
 # Frontend Architecture & File Organization
-
+# JRL - CLOSER INSPECTION SHOWS CLAUDE MADE UP STUFF SO I NEED TO RE-VET
 ## Overview
 This guide explains how the frontend is organized, which files connect to which pages, and how data flows through the application.
 
