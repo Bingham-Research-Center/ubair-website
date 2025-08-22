@@ -37,7 +37,7 @@ Weather data visualization website showing live air quality observations and for
 - **Data**: JSON files, Markdown content
 
 ## Known Issues & Redundancy
-1. **Multiple CSS files** with similar styles (13 files)
+1. **Multiple CSS files** with similar styles (14 files)
 2. **Console.log statements** throughout codebase
 3. **TODO comments** for unfinished features
 4. **Unused code** in many files
