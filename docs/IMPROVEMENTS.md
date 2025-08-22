@@ -1,5 +1,5 @@
 # 20 Low-Hanging Fruit Improvements
-
+# NOTE THIS HAS BEEN HALF DONE AND I NEED TO RENEW IT! - JRL
 ## Quick Fixes (Can implement immediately)
 
 ### 1. Remove duplicate weather file
