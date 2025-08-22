@@ -1,5 +1,5 @@
 # Frontend Architecture & File Organization
-# JRL - CLOSER INSPECTION SHOWS CLAUDE MADE UP STUFF SO I NEED TO RE-VET
+
 ## Overview
 This guide explains how the frontend is organized, which files connect to which pages, and how data flows through the application.
 
@@ -9,17 +9,20 @@ This guide explains how the frontend is organized, which files connect to which 
 
 | HTML Page | CSS File | Primary JS Files | Purpose |
 |-----------|----------|------------------|---------|
-| `index.html` | `index.css` | `index_map.js`, `index_outlook.js` | Homepage with map & outlook |
-| `about.html` | `about.css` | `about.js`, `markdownLoader.js` | About page with markdown content |
-| `forecast_air_quality.html` | `forecast_air_quality.css` | `forecast_air_quality.js`, `plotManager.js` | Air quality forecasts & charts |
-| `forecast_weather.html` | `forecast_weather.css` | `forecast_weather.js` | Weather forecast with map |
-| `forecast_outlooks.html` | `forecast_outlooks.css` | `forecast_outlooks.js`, `outlook_overview.js` | Text forecast outlooks |
-| `obs_weather.html` | `obs_weather.css` | `obs_weather.js` | Current weather observations |
-| `obs_air_quality.html` | `obs_air_quality.css` | `DataViz.js` | Current air quality data |
-| `model.html` | `model.css` | `model.js` | Model outputs (future) |
-| `fire.html` | `fire.css` | `fire.js` | Fire/smoke information |
-| `roads.html` | `roads.css` | `roads.js` | Road conditions |
-| `health.html` | `health.css` | `health.js` | Health information |
+| `index.html` | `index.css` | `index_map.js`, `map.js`, `loadSidebar.js` | Homepage with map & outlook |
+| `about/clyfar.html` | `about.css` | `loadSidebar.js` | About page - CLYFAR information |
+| `about/faq.html` | `about.css` | `loadSidebar.js` | About page - FAQ |
+| `forecast_air_quality.html` | `forecast_air_quality.css` | `forecast_air_quality.js`, `loadSidebar.js` | Air quality forecasts & charts |
+| `forecast_weather.html` | `forecast_weather.css` | `forecast_weather.js`, `loadSidebar.js` | Weather forecast with map |
+| `forecast_outlooks.html` | `outlooks.css` | `forecast_outlooks.js`, `loadSidebar.js` | Text forecast outlooks |
+| `forecast_data.html` | `forecast.css` | `forecast_data.js`, `loadSidebar.js` | Forecast data display |
+| `live_aq.html` | `live_aq.css` | `loadSidebar.js` | Live air quality observations |
+| `fire.html` | `fire.css` | `fire.js`, `loadSidebar.js` | Fire/smoke information |
+| `roads.html` | `roads.css` | `roads.js`, `loadSidebar.js` | Road conditions |
+| `agriculture.html` | `agriculture.css` | `agriculture.js`, `loadSidebar.js` | Agricultural information |
+| `aviation.html` | `aviation.css` | `aviation.js`, `loadSidebar.js` | Aviation weather |
+| `water.html` | `water.css` | `water.js`, `loadSidebar.js` | Water quality information |
+| `vis.html` | `vis.css` | `loadSidebar.js` | Data visualization page |
 
 ## JavaScript Module Organization
 
@@ -363,11 +366,16 @@ function updateDisplay(data) {
 // Check current data
 JSON.parse(localStorage.getItem('observations'))
 
-// Force refresh
-window.refreshData()
+// Force refresh data (if DataViz instance exists)
+if (window.dataViz) {
+    window.dataViz.refreshData();
+}
 
 // Check API status
 fetch('/api/health').then(r => r.json()).then(console.log)
+
+// Check API file list
+fetch('/api/filelist.json').then(r => r.json()).then(console.log)
 
 // Clear all caches
 localStorage.clear()

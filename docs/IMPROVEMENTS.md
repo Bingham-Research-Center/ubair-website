@@ -1,46 +1,54 @@
-# 20 Low-Hanging Fruit Improvements
-# NOTE THIS HAS BEEN HALF DONE AND I NEED TO RENEW IT! - JRL
+# Website Improvements & Technical Debt
+
 ## Quick Fixes (Can implement immediately)
 
-### 1. Remove duplicate weather file
-**Issue:** `forecast_weather_old.js` is unused
-**Fix:** `rm public/js/forecast_weather_old.js`
+### 1. ~~Remove duplicate weather file~~ ✅ DONE
+**Status:** No duplicate `forecast_weather_old.js` found - already cleaned up
 
 ### 2. Add missing error boundaries
 **Issue:** API failures crash pages
 **Fix:** Add try/catch blocks around fetch calls
+**Status:** ⏳ PENDING
 
 ### 3. Standardize console logging
 **Issue:** Mix of console.log/console.error
 **Fix:** Use consistent logging levels
+**Status:** ⏳ PENDING
 
 ### 4. Add loading states
 **Issue:** Maps show blank while loading data
 **Fix:** Add "Loading..." indicators
+**Status:** ⏳ PENDING
 
 ### 5. Fix favicon missing error
 **Issue:** Browser shows 404 for favicon
 **Fix:** Add favicon.ico to public folder
+**Status:** ⏳ PENDING
 
 ### 6. Optimize image loading
 **Issue:** Large images load slowly
 **Fix:** Add lazy loading and WebP versions
+**Status:** ⏳ PENDING
 
 ### 7. Add metadata to HTML pages
 **Issue:** Missing SEO meta tags
 **Fix:** Add description, keywords, OpenGraph tags
+**Status:** ⏳ PENDING
 
 ### 8. Fix hardcoded localhost URLs
 **Issue:** Won't work on production
 **Fix:** Use relative URLs or environment variables
+**Status:** ⏳ PENDING
 
 ### 9. Add ARIA accessibility labels
 **Issue:** Screen readers can't navigate maps
 **Fix:** Add proper ARIA labels to interactive elements
+**Status:** ⏳ PENDING
 
 ### 10. Standardize button styling
 **Issue:** Inconsistent button appearance
 **Fix:** Create unified button classes in main.css
+**Status:** ⏳ PENDING
 
 ## Medium Priority Improvements
 
