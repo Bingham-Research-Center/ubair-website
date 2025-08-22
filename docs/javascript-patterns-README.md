@@ -297,7 +297,7 @@ arr2.push(4);        // arr1 is now [1, 2, 3, 4]
 
 // Make actual copy
 const arr2 = [...arr1];  // Shallow copy
-const arr2 = JSON.parse(JSON.stringify(arr1));  // Deep copy
+const arr2 = JSON.parse(JSON.stringify(arr1));  // Deep copy (basic objects only)
 ```
 
 ### 3. Truthy/Falsy Values
@@ -412,4 +412,4 @@ export default class DataProcessor { /* ... */ }
 import DataProcessor from './DataProcessor.js';
 ```
 
-Remember: This codebase primarily uses script tags and global scope rather than modules, but understanding modules helps with modern JavaScript.
+**Note:** This codebase uses ES6 modules extensively. Files like `api.js`, `map.js`, `config.js` use import/export patterns as shown above.
