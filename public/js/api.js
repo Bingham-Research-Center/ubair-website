@@ -160,14 +160,35 @@ function mapVariableName(variable) {
 function mapStationName(stid, metadataName = null) {
     // Priority 1: Pretty hardcoded names for key Uintah Basin stations
     const prettyNames = {
+        // Core Air Quality Monitoring
         'UBHSP': 'Horsepool',
-        'UB7ST': 'Seven Sisters', 
         'UBCSP': 'Castle Peak',
+        'UB7ST': 'Seven Sisters',
+        
+        // Population Centers
         'KVEL': 'Vernal',
+        'K74V': 'Roosevelt',
+        'COOPDSNU1': 'Duchesne',  // NEEDS DATA EXPORT
+        'KU69': 'Duchesne',       // Alternative Duchesne station
+        'UINU1': 'Fort Duchesne',
+        
+        // Basin Perimeter & Geographic Coverage
+        'UTMYT': 'Myton',
+        'COOPDINU1': 'Dinosaur NM',  // NEEDS DATA EXPORT
+        'COOPALMU1': 'Altamont',     // NEEDS DATA EXPORT
+        'UCC34': 'Bluebell',
+        'UTASH': 'Asphalt Ridge',
+        'UTSTV': 'Starvation',
+        
+        // Mountain Passes
+        'UTDAN': 'Daniels Summit',
+        'UTICS': 'Indian Canyon',
+        'UTSLD': 'Soldier Summit',
+        
+        // Legacy/Alternative names (keep for compatibility)
         'BUNUT': 'Roosevelt',
         'CHPU1': 'Ouray',
         'CEN': 'Vernal',
-        'UTMYT': 'Myton',
         'QHW': 'Whiterocks',
         'RDN': 'Red Wash'
     };

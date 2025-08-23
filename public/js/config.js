@@ -1,16 +1,27 @@
 export const stations = {
-    'Roosevelt': { lat: 40.29430, lng: -110.009 },
-    'Vernal': { lat: 40.46472, lng: -109.56083 },
-    'Horsepool': { lat: 40.1433, lng: -109.4674 },
-    'Ouray': { lat: 40.05485, lng: -109.68737 },
-    'Myton': { lat: 40.21690, lng: -110.18230 },
-    'Whiterocks': { lat: 40.48380, lng: -109.90620 },
-    'Dinosaur NM': { lat: 40.4372, lng: -109.3047},
-    'Red Wash': { lat: 40.20443, lng: -109.35321},
-    // 'Rangely': {},
-    'Seven Sisters': { lat: 39.981, lng: -109.345},
-    // 'Dry Fork': {},
-    'Castle Peak': {lat: 40.051, lng: -110.020},
+    // Core Uinta Basin Stations - Air Quality Focus
+    'Horsepool': { lat: 40.144, lng: -109.467 },       // UBHSP - Key ozone monitoring
+    'Castle Peak': { lat: 40.051, lng: -110.020 },     // UBCSP - Basin center
+    'Seven Sisters': { lat: 39.981, lng: -109.345 },   // UB7ST - Southern basin
+    
+    // Population Centers
+    'Vernal': { lat: 40.44, lng: -109.51 },           // KVEL - Vernal Airport
+    'Roosevelt': { lat: 40.28, lng: -110.05 },        // K74V - Roosevelt
+    'Duchesne': { lat: 40.17, lng: -110.40 },         // COOPDSNU1 - Duchesne
+    'Fort Duchesne': { lat: 40.28, lng: -109.86 },    // UINU1 - Fort Duchesne
+    
+    // Basin Perimeter & Geographic Coverage
+    'Myton': { lat: 40.20, lng: -110.07 },            // UTMYT - Western basin
+    'Dinosaur NM': { lat: 40.44, lng: -109.31 },      // COOPDINU1 - Northern basin
+    'Altamont': { lat: 40.37, lng: -110.30 },         // COOPALMU1 - NW basin
+    'Bluebell': { lat: 40.37, lng: -110.21 },         // UCC34 - Central-west basin
+    'Asphalt Ridge': { lat: 40.42, lng: -109.58 },    // UTASH - NE basin
+    'Starvation': { lat: 40.17, lng: -110.49 },       // UTSTV - SW basin
+    
+    // Mountain Passes - Influence on Basin Weather
+    'Daniels Summit': { lat: 40.30, lng: -111.26 },   // UTDAN - Key western pass (8000 ft)
+    'Indian Canyon': { lat: 39.89, lng: -110.75 },    // UTICS - Southern pass (9050 ft)
+    'Soldier Summit': { lat: 39.93, lng: -111.08 },   // UTSLD - SW pass (7487 ft)
 };
 
 // These are the stations that can be plotted. Eventually, need to expand this stations lookup list
