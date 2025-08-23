@@ -1,5 +1,5 @@
 import { stations } from './config.js';
-import { getMarkerColor, createPopupContent } from './mapUtils.js';
+import { getMarkerColor, getRoadWeatherColor, isRoadWeatherStation, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
 // Initialize map with proper center and zoom for dashboard view
@@ -176,11 +176,24 @@ async function updateMiniMap() {
 
             const stationTimestamp = data._timestamps?.[stationName] ?? null;
             const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp);
-            const markerColor = getMarkerColor(measurements);
+            
+            // Check if this is a road weather station
+            const isRoadStation = isRoadWeatherStation(stationName);
+            const markerColor = isRoadStation ? getRoadWeatherColor(stationName, measurements) : getMarkerColor(measurements);
+            
+            // Create different marker shapes for road weather stations
+            let markerHtml;
+            if (isRoadStation) {
+                // Square/diamond shape for road weather stations
+                markerHtml = `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5); transform: rotate(45deg);"></div>`;
+            } else {
+                // Circle for regular air quality stations
+                markerHtml = `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`;
+            }
 
             const markerIcon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`,
+                html: markerHtml,
                 iconSize: [24, 24]
             });
 

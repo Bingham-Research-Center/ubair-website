@@ -274,6 +274,15 @@
         line-height: 1.4;
         padding: 1rem;
     }
+    
+    /* Dutch John easter egg mobile positioning */
+    .dutch-john-easter-egg {
+        top: 60px !important;
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+        left: auto !important;
+    }
 }
 
 /* Portrait mobile optimization */

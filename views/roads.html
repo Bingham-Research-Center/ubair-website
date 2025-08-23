@@ -17,6 +17,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body data-page-type="roads">
     <!-- Colored Bar -->
@@ -189,7 +190,23 @@
         </div>
     </footer>
 
+    <!-- Emma Park Road Easter Egg -->
+    <div class="emma-park-easter-egg" id="emma-park-box">
+        <div class="easter-egg-toggle" id="easter-egg-toggle">
+            <i class="fas fa-chevron-down" id="toggle-icon"></i>
+            <span>What about Emma Park Road?</span>
+        </div>
+        <div class="easter-egg-content" id="easter-egg-content">
+            <p>Answers to the Basin's most burning question at: 
+                <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">
+                    www.IsEmmaParkRoadClosed.utah
+                </a>
+            </p>
+        </div>
+    </div>
+
     <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/roads.js"></script>
 </body>

@@ -1,6 +1,6 @@
-import { thresholds } from './config.js';
+import { thresholds, stations, roadWeatherStations } from './config.js';
 
-// Determine marker color based on OZONE levels and data availability
+// Determine marker color for regular air quality stations
 export function getMarkerColor(measurements) {
     // Check if station has ANY data at all
     const hasAnyData = Object.values(measurements).some(value => value !== null && value !== undefined);
@@ -31,6 +31,31 @@ export function getMarkerColor(measurements) {
     else {
         return 'green';
     }
+}
+
+// Determine marker color for road weather stations (snow likelihood)
+export function getRoadWeatherColor(stationName, measurements) {
+    // Check if station has ANY data at all
+    const hasAnyData = Object.values(measurements).some(value => value !== null && value !== undefined);
+    
+    // No data at all = gray marker (missing data)
+    if (!hasAnyData) {
+        return 'gray';
+    }
+    
+    // Get snow likelihood for this road station
+    const roadStation = roadWeatherStations[stationName];
+    if (!roadStation) {
+        return '#B8D4E3'; // Default if not found
+    }
+    
+    // Snow likely = blue, no snow = green
+    return roadStation.snowLikely ? '#4A90E2' : '#28A745';
+}
+
+// Check if station is a road weather station
+export function isRoadWeatherStation(stationName) {
+    return stations[stationName]?.type === 'road';
 }
 
 // Create popup content for a station

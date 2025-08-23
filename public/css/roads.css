@@ -461,6 +461,83 @@ body[data-page-type="roads"] h1::after {
     outline-offset: 2px;
 }
 
+/* Emma Park Road Easter Egg */
+.emma-park-easter-egg {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    border: 2px solid #d97706;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(251, 191, 36, 0.3);
+    z-index: 1000;
+    overflow: hidden;
+    max-width: 350px;
+    font-size: 0.9rem;
+}
+
+.easter-egg-toggle {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #92400e;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.easter-egg-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.easter-egg-toggle i {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+}
+
+.easter-egg-toggle.active i {
+    transform: rotate(180deg);
+}
+
+.easter-egg-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    background: rgba(255, 255, 255, 0.95);
+    border-top: 1px solid rgba(217, 119, 6, 0.3);
+}
+
+.easter-egg-content.active {
+    max-height: 100px;
+}
+
+.easter-egg-content p {
+    margin: 0;
+    padding: 16px;
+    color: #92400e;
+    line-height: 1.4;
+}
+
+.easter-egg-content a {
+    color: #1d4ed8;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+    background: rgba(29, 78, 216, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.easter-egg-content a:hover {
+    background: #1d4ed8;
+    color: white;
+    transform: scale(1.02);
+}
+
 .road-map-section {
     position: relative;
     height: 300px;

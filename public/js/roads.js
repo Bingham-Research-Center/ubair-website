@@ -52,4 +52,31 @@ document.addEventListener('DOMContentLoaded', function() {
         }).bindPopup(`<strong>${point.name}</strong><br>Condition: ${point.condition}<br>Surface temp: --°F`)
             .addTo(roadMap);
     });
+
+    // Initialize Emma Park Road Easter Egg
+    initEmmaEasterEgg();
 });
+
+function initEmmaEasterEgg() {
+    const toggle = document.getElementById('easter-egg-toggle');
+    const content = document.getElementById('easter-egg-content');
+    const icon = document.getElementById('toggle-icon');
+    
+    if (toggle && content && icon) {
+        toggle.addEventListener('click', () => {
+            const isActive = toggle.classList.contains('active');
+            
+            if (isActive) {
+                // Close
+                toggle.classList.remove('active');
+                content.classList.remove('active');
+            } else {
+                // Open
+                toggle.classList.add('active');
+                content.classList.add('active');
+            }
+        });
+        
+        // Easter egg starts closed - user must click to open
+    }
+}

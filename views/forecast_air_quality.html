@@ -235,8 +235,129 @@
         </div>
     </footer>
 
+    <!-- Welsh Mode Easter Egg -->
+    <div class="welsh-mode-easter-egg" id="welsh-mode-box">
+        <button class="welsh-mode-button" id="welsh-mode-button">
+            <span class="dragon-icon">🐉</span>
+            <span class="mode-text" id="mode-text">Welsh Mode</span>
+        </button>
+    </div>
+
     <!-- Scripts -->
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/forecast_air_quality.js"></script>
+    
+    <script>
+        // Welsh translations for navigation and page elements
+        const welshTranslations = {
+            'Live Air Quality Map': 'Map Ansawdd Aer Byw',
+            'Ozone Alert': 'Rhybudd Osôn',
+            'CLYFAR': 'CLYFAR',
+            'Weather Forecasts': 'Rhagolygon Tywydd',
+            'Agriculture': 'Amaethyddiaeth',
+            'Road Weather': 'Tywydd Ffyrdd',
+            'Aviation': 'Awyrennau',
+            'On The Water': 'Ar y Dŵr',
+            'Fire Weather': 'Tywydd Tân',
+            'About & FAQ': 'Ynghylch a CCA',
+            'About Clyfar': 'Ynghylch Clyfar',
+            'FAQ': 'CCA',
+            'Webcams': 'Camerâu Gwe',
+            'Our Website Team': 'Ein Tîm Gwefan',
+            'Contact BRC': 'Cysylltu BRC',
+            'basinwx.com': 'basinwx.com',
+            'Live air quality and weather for the Uintah Basin': 'Ansawdd aer byw a thywydd ar gyfer Basin Uintah',
+            'Air Quality and Weather Overview': 'Trosolwg Ansawdd Aer a Tywydd',
+            'Live Monitoring Stations': 'Gorsafoedd Monitro Byw',
+            'Latest Forecasts': 'Rhagolygon Diweddaraf',
+            'Air Quality': 'Ansawdd Aer',
+            'Weather': 'Tywydd',
+            'Good': 'Da',
+            'Warning': 'Rhybudd',
+            'Danger': 'Perygl',
+            'Weather Only': 'Tywydd Yn Unig',
+            'No Data': 'Dim Data',
+            'No Snow': 'Dim Eira',
+            'Snow Likely': 'Eira yn Debygol'
+        };
+        
+        let isWelshMode = false;
+        const originalTexts = new Map();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const welshButton = document.getElementById('welsh-mode-button');
+            const modeText = document.getElementById('mode-text');
+            
+            if (welshButton) {
+                welshButton.addEventListener('click', () => {
+                    // Screen flash effect
+                    document.body.style.transition = 'filter 0.5s ease';
+                    document.body.style.filter = 'brightness(0.3)';
+                    
+                    setTimeout(() => {
+                        document.body.style.filter = 'brightness(1.2)';
+                        
+                        setTimeout(() => {
+                            document.body.style.filter = 'brightness(1)';
+                            document.body.style.transition = '';
+                        }, 500);
+                    }, 500);
+                    
+                    // Toggle language
+                    if (isWelshMode) {
+                        // Switch back to English
+                        switchToEnglish();
+                        modeText.textContent = 'Welsh Mode';
+                        isWelshMode = false;
+                    } else {
+                        // Switch to Welsh
+                        switchToWelsh();
+                        modeText.textContent = 'English Mode';
+                        isWelshMode = true;
+                    }
+                });
+            }
+        });
+        
+        function switchToWelsh() {
+            // Find and translate all text elements
+            const textElements = document.querySelectorAll('*');
+            
+            textElements.forEach(element => {
+                // Skip script and style elements
+                if (element.tagName === 'SCRIPT' || element.tagName === 'STYLE') return;
+                
+                // Check direct text content
+                if (element.childNodes.length === 1 && element.childNodes[0].nodeType === Node.TEXT_NODE) {
+                    const originalText = element.textContent.trim();
+                    const welshText = welshTranslations[originalText];
+                    
+                    if (welshText) {
+                        originalTexts.set(element, originalText);
+                        element.textContent = welshText;
+                    }
+                }
+                
+                // Check for specific navigation elements
+                if (element.tagName === 'A' || element.tagName === 'SPAN' || element.tagName === 'H1' || element.tagName === 'H2' || element.tagName === 'H3') {
+                    const text = element.textContent.trim();
+                    const welshText = welshTranslations[text];
+                    
+                    if (welshText && !originalTexts.has(element)) {
+                        originalTexts.set(element, text);
+                        element.textContent = welshText;
+                    }
+                }
+            });
+        }
+        
+        function switchToEnglish() {
+            // Restore all original texts
+            originalTexts.forEach((originalText, element) => {
+                element.textContent = originalText;
+            });
+            originalTexts.clear();
+        }
+    </script>
 </body>
 </html>
