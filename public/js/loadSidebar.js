@@ -75,6 +75,13 @@ async function loadSidebar() {
         if (currentPageLink) {
             currentPageLink.classList.add('active');
         }
+        
+        // Load mobile menu script after sidebar is loaded
+        if (!document.querySelector('script[src="/public/js/mobile-menu.js"]')) {
+            const mobileMenuScript = document.createElement('script');
+            mobileMenuScript.src = '/public/js/mobile-menu.js';
+            document.body.appendChild(mobileMenuScript);
+        }
     } catch (error) {
         console.error('Error loading sidebar:', error);
     }

@@ -1174,8 +1174,69 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
     }
 }
 
+/* Mobile Hamburger Menu */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10001;
+    background: var(--usu-blue);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--usu-light-blue);
+}
+
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+.mobile-menu-overlay.active {
+    display: block;
+}
+
 /* Mobile styles */
 @media screen and (max-width: 768px) {
+    /* Show hamburger menu on mobile */
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    /* Hide sidebar by default on mobile */
+    .sidebar_container {
+        position: fixed;
+        left: -280px;
+        transition: left 0.3s ease;
+        z-index: 10000;
+    }
+    
+    /* Show sidebar when active */
+    .sidebar_container.active {
+        left: 0;
+    }
+    
+    /* Adjust main content */
+    .content {
+        margin-left: 0 !important;
+        padding: 60px 15px 20px;
+        width: 100% !important;
+    }
+    
     .container {
         margin: 0 10px;
         padding: 15px;
@@ -1192,7 +1253,16 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
         margin: 10px 0;
     }
     
-    /* Stack elements vertically on mobile */
+    /* Stack dashboard elements vertically on mobile */
+    .dashboard-grid {
+        display: block !important;
+    }
+    
+    .dashboard-panel {
+        margin-bottom: 1rem;
+        width: 100% !important;
+    }
+    
     .dashboard-content {
         flex-direction: column;
     }
@@ -1223,6 +1293,13 @@ body:not([data-page-type="locations"]) .leaflet-popup-pane {
 
 /* Small mobile styles */
 @media screen and (max-width: 480px) {
+    /* Add zoom-out effect for better overview */
+    body {
+        zoom: 0.9;
+        -moz-transform: scale(0.9);
+        -moz-transform-origin: 0 0;
+    }
+    
     .container {
         margin: 0 5px;
         padding: 10px;
