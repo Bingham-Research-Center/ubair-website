@@ -1,0 +1,93 @@
+/* 90s Iridescent Background Mode */
+body.nineties-mode {
+    background: 
+        radial-gradient(circle at 20% 80%, rgba(238, 174, 202, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(148, 187, 233, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 183, 195, 0.15) 0%, transparent 50%),
+        conic-gradient(from 45deg at 50% 50%, 
+            rgba(217, 175, 217, 0.08), 
+            rgba(151, 217, 225, 0.08), 
+            rgba(255, 204, 188, 0.08), 
+            rgba(255, 179, 186, 0.08), 
+            rgba(217, 175, 217, 0.08)
+        ),
+        linear-gradient(135deg, 
+            rgba(240, 248, 255, 0.95) 0%, 
+            rgba(250, 240, 230, 0.95) 25%,
+            rgba(245, 255, 250, 0.95) 50%, 
+            rgba(255, 240, 245, 0.95) 75%,
+            rgba(248, 248, 255, 0.95) 100%
+        );
+    background-size: 
+        400px 400px,
+        300px 300px, 
+        500px 500px,
+        200% 200%,
+        100% 100%;
+    animation: shimmer 45s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { 
+        background-position: 0% 0%, 100% 100%, 50% 50%, 0% 0%, 0% 0%; 
+    }
+    25% { 
+        background-position: 100% 0%, 0% 100%, 0% 100%, 100% 0%, 0% 0%; 
+    }
+    50% { 
+        background-position: 100% 100%, 0% 0%, 100% 0%, 50% 50%, 0% 0%; 
+    }
+    75% { 
+        background-position: 0% 100%, 100% 0%, 50% 50%, 0% 100%, 0% 0%; 
+    }
+}
+
+/* 90s Mode Toggle Button */
+.nineties-toggle-container {
+    margin: 15px 20px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nineties-toggle-btn {
+    width: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.nineties-toggle-btn:hover {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+    transform: translateY(-1px);
+}
+
+.nineties-toggle-btn.active {
+    background: linear-gradient(135deg, rgba(238, 174, 202, 0.3), rgba(148, 187, 233, 0.3));
+    border-color: rgba(238, 174, 202, 0.5);
+    color: #fff;
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 5px rgba(238, 174, 202, 0.5); }
+    to { box-shadow: 0 0 20px rgba(238, 174, 202, 0.8), 0 0 30px rgba(148, 187, 233, 0.6); }
+}
+
+.toggle-indicator {
+    font-size: 12px;
+    opacity: 0.7;
+    font-weight: normal;
+}
+
+.nineties-toggle-btn.active .toggle-indicator {
+    opacity: 1;
+}

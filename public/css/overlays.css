@@ -1,0 +1,82 @@
+/* Map Overlays and Positioning */
+
+/* Warning levels overlay */
+.warning-levels-overlay {
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 1000;
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+}
+
+#image-overlay1 {
+    height: 30vh;
+    width: auto;
+    display: block;
+    border-radius: 4px;
+}
+
+/* Study area overlay */
+.overlay-container {
+    position: fixed;
+    top: 20px;
+    left: calc(250px + 20px);
+    background-color: rgba(255, 255, 255, 0.95);
+    padding: 15px;
+    border-radius: 8px;
+    z-index: 1000;
+    max-width: 200px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+}
+
+#image-overlay {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 4px;
+}
+
+.study-area-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1001;
+    padding: 8px 16px;
+    background-color: var(--usu-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    transition: all 0.3s ease;
+}
+
+.study-area-toggle:hover {
+    background-color: var(--usu-light-blue);
+    transform: translateY(-2px);
+}
+
+/* USU Logo positioning */
+.usu-logo {
+    position: fixed;
+    bottom: 20px;
+    left: calc(250px + 20px);
+    z-index: 1000;
+}
+
+.usu-logo img {
+    height: 60px;
+    width: auto;
+    opacity: 0.8;
+}
+
+.transparent-text {
+    position: absolute;
+    opacity: 0.5;
+}

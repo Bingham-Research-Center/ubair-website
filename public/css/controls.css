@@ -1,0 +1,136 @@
+/* Controls and Interactive Elements */
+
+/* Kiosk control for homepage */
+.kiosk-switch-container {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 0.75rem;
+    padding: 0.5rem;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.kiosk-switch-container label {
+    color: var(--usu-blue);
+    font-weight: 500;
+    margin: 0;
+}
+
+.kiosk-switch {
+    width: 45px;
+    height: 22px;
+    background: #ccc;
+    border-radius: 22px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.kiosk-switch.active {
+    background: var(--usu-blue);
+}
+
+/* Add tooltip styles */
+.kiosk-switch[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--usu-blue);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.switch-slider {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.kiosk-switch.active .switch-slider {
+    transform: translateX(23px);
+}
+
+/* Temperature Toggle */
+.temp-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 8px;
+    background: #f0f0f0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: background 0.3s ease;
+}
+
+.temp-toggle:hover {
+    background: #e0e0e0;
+}
+
+.temp-toggle.celsius {
+    background: var(--usu-light-blue);
+}
+
+.temp-toggle.celsius .temp-label {
+    color: white;
+}
+
+.temp-slider {
+    width: 20px;
+    height: 12px;
+    background: #ccc;
+    border-radius: 12px;
+    position: relative;
+    transition: background 0.3s ease;
+}
+
+.temp-toggle.celsius .temp-slider {
+    background: white;
+}
+
+.temp-slider::after {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.temp-toggle.celsius .temp-slider::after {
+    transform: translateX(8px);
+    background: var(--usu-blue);
+}
+
+.temp-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--usu-blue);
+    min-width: 20px;
+}
+
+.kiosk-info {
+    color: var(--usu-accent);
+    cursor: help;
+    font-size: 0.9em;
+}

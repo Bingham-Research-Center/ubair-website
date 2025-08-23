@@ -1,0 +1,83 @@
+/* Map Styles */
+#map {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    position: relative;
+    z-index: 1;
+    height: 70vh;
+    min-height: 400px;
+}
+
+/* Homepage map specific */
+body[data-page-type="index"] #map {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 8px !important;
+    pointer-events: none;
+}
+
+/* Allow marker interactions */
+body[data-page-type="index"] #map .leaflet-marker-pane,
+body[data-page-type="index"] #map .leaflet-popup-pane {
+    pointer-events: auto;
+}
+
+/* Remove overlays from homepage */
+body[data-page-type="index"] .overlay-container,
+body[data-page-type="index"] .warning-levels-overlay,
+body[data-page-type="index"] .usu-logo {
+    display: none;
+}
+
+/* Full-page map for live air quality page */
+body[data-page-type="live_aq"] #map {
+    position: fixed !important;
+    top: 0 !important;
+    left: 250px !important;
+    width: calc(100vw - 250px) !important;
+    height: 100vh !important;
+    z-index: 1 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Non-locations page map */
+body:not([data-page-type="locations"]) #map {
+    width: 100% !important;
+    height: 300px !important;
+    margin: 20px 0 !important;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    pointer-events: none;
+}
+
+body:not([data-page-type="locations"]) .leaflet-marker-pane,
+body:not([data-page-type="locations"]) .leaflet-popup-pane {
+    pointer-events: auto;
+}
+
+/* Home map specific class */
+.home-map {
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    pointer-events: none;
+}
+
+.home-map .leaflet-marker-pane,
+.home-map .leaflet-popup-pane {
+    pointer-events: auto;
+}
+
+/* Two-column popup styling */
+.two-column-popup .leaflet-popup-content {
+    margin: 8px 12px;
+    line-height: 1.4;
+    font-size: 13px;
+}
+
+.two-column-popup .leaflet-popup-content h3 {
+    color: var(--usu-blue);
+    font-size: 14px;
+}

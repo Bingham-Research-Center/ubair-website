@@ -1,0 +1,8 @@
+/* CSS Variables and Root Configurations */
+:root {
+    --usu-blue: #00263A;
+    --usu-light-blue: #627C8B;
+    --usu-accent: #8B9299;
+    --usu-gray: #A7A9AC;
+    --usu-light-gray: #E6E7E8;
+}

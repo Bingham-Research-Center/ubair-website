@@ -1,0 +1,45 @@
+/* Base HTML and Body Styles */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', Arial, sans-serif;
+}
+
+body {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    position: relative;
+    transition: background 0.5s ease;
+}
+
+/* USU Watermark */
+body::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40vw;
+    height: 40vh;
+    background: url('/public/images/BRS_01_UStateLeft_White.png') no-repeat center;
+    background-size: contain;
+    opacity: 0.02;
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Remove overlay class */
+body.overlay::before {
+    display: none;
+}
+
+/* Main Headers */
+h1 {
+    color: var(--usu-blue);
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}

@@ -1,0 +1,234 @@
+/* Mobile and Responsive Styles */
+
+/* Mobile Hamburger Menu */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 10001;
+    background: var(--usu-blue);
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-menu-toggle:hover {
+    background: var(--usu-light-blue);
+}
+
+.mobile-menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+}
+
+.mobile-menu-overlay.active {
+    display: block;
+}
+
+/* Tablet styles */
+@media screen and (max-width: 1024px) {
+    .container {
+        margin: 0 20px;
+        max-width: 95%;
+    }
+    
+    .sidebar {
+        width: 80%;
+        max-width: 280px;
+    }
+    
+    #map, .dashboard-map {
+        height: 60vh;
+        min-height: 300px;
+    }
+    
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .dashboard-panel {
+        height: auto;
+        min-height: 400px;
+    }
+}
+
+/* Mobile styles */
+@media screen and (max-width: 768px) {
+    /* Show hamburger menu on mobile */
+    .mobile-menu-toggle {
+        display: block;
+    }
+    
+    /* Hide sidebar by default on mobile */
+    .sidebar_container {
+        position: fixed;
+        left: -280px;
+        transition: left 0.3s ease;
+        z-index: 10000;
+    }
+    
+    /* Show sidebar when active */
+    .sidebar_container.active {
+        left: 0;
+    }
+    
+    /* Adjust main content */
+    .content {
+        margin-left: 0 !important;
+        padding: 60px 15px 20px;
+        width: 100% !important;
+    }
+    
+    .container {
+        margin: 0 10px;
+        padding: 15px;
+    }
+    
+    .sidebar {
+        width: 90%;
+        max-width: 100%;
+    }
+    
+    #map, .dashboard-map {
+        height: 50vh;
+        min-height: 250px;
+        margin: 10px 0;
+    }
+    
+    /* Stack dashboard elements vertically on mobile */
+    .dashboard-grid {
+        display: block !important;
+    }
+    
+    .dashboard-panel {
+        margin-bottom: 1rem;
+        width: 100% !important;
+    }
+    
+    .dashboard-content {
+        flex-direction: column;
+    }
+    
+    .dashboard-sidebar {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    /* Make buttons mobile-friendly */
+    button, .btn {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 16px;
+    }
+    
+    /* Ensure text is readable */
+    body {
+        font-size: 16px;
+        line-height: 1.5;
+    }
+    
+    /* Fix popup sizing */
+    .leaflet-popup-content-wrapper {
+        max-width: 90vw !important;
+    }
+    
+    /* Footer adjustments */
+    .main-footer {
+        width: 100%;
+        margin-left: 0;
+        padding: 10px 15px;
+    }
+    
+    /* Map overlay adjustments */
+    body[data-page-type="live_aq"] #map {
+        left: 0 !important;
+        width: 100vw !important;
+    }
+
+    .overlay-container {
+        left: 20px;
+        max-width: 150px;
+    }
+
+    .usu-logo {
+        left: 20px;
+    }
+
+    .warning-levels-overlay {
+        bottom: 80px;
+        right: 10px;
+    }
+
+    #image-overlay1 {
+        height: 20vh;
+    }
+    
+    /* Dashboard section adjustments */
+    .dashboard-section {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+        font-size: 1.4rem;
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+
+    .panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .dashboard-map {
+        min-height: 300px;
+    }
+
+    .kiosk-switch-container {
+        justify-content: center;
+    }
+}
+
+/* Small mobile styles */
+@media screen and (max-width: 480px) {
+    /* Add zoom-out effect for better overview */
+    body {
+        zoom: 0.9;
+        -moz-transform: scale(0.9);
+        -moz-transform-origin: 0 0;
+    }
+    
+    .container {
+        margin: 0 5px;
+        padding: 10px;
+    }
+    
+    #map, .dashboard-map {
+        height: 45vh;
+        min-height: 200px;
+    }
+    
+    .sidebar {
+        width: 95%;
+    }
+    
+    /* Ensure touch targets are large enough */
+    .leaflet-control-layers-toggle,
+    .leaflet-control-zoom a {
+        width: 44px !important;
+        height: 44px !important;
+    }
+}
