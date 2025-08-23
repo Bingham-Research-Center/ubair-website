@@ -109,12 +109,26 @@
     
     /* Stack dashboard elements vertically on mobile */
     .dashboard-grid {
-        display: block !important;
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 1.5rem !important;
     }
     
     .dashboard-panel {
-        margin-bottom: 1rem;
+        margin-bottom: 0;
         width: 100% !important;
+        min-height: 400px !important;
+    }
+    
+    /* Map should be first and larger on mobile */
+    .map-panel {
+        order: 1;
+        min-height: 450px !important;
+    }
+    
+    .forecast-panel {
+        order: 2;
+        min-height: 350px !important;
     }
     
     .dashboard-content {
@@ -177,8 +191,13 @@
     
     /* Dashboard section adjustments */
     .dashboard-section {
-        padding: 1.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-header {
         margin-bottom: 1.5rem;
+        padding-bottom: 0.75rem;
     }
 
     .section-header h2 {
@@ -191,6 +210,11 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .panel-header h3 {
+        font-size: 1.1rem;
     }
 
     .dashboard-map {
@@ -199,6 +223,56 @@
 
     .kiosk-switch-container {
         justify-content: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    
+    .kiosk-switch-container label {
+        font-size: 0.9rem;
+    }
+    
+    /* Mobile-friendly forecast tabs */
+    .forecast-tabs {
+        flex-direction: column;
+        gap: 0.5rem;
+        width: 100%;
+    }
+    
+    .forecast-tab {
+        width: 100%;
+        justify-content: center;
+        padding: 0.6rem 1rem;
+        font-size: 1rem;
+        min-height: 44px;
+    }
+    
+    /* Mobile legend positioning */
+    .legend-dropdown {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 280px;
+        max-width: 90vw;
+    }
+    
+    .legend-toggle {
+        width: 100%;
+        justify-content: center;
+        padding: 0.6rem;
+        font-size: 1rem;
+        min-height: 44px;
+    }
+    
+    /* Better forecast content on mobile */
+    .forecast-container-dashboard {
+        min-height: 250px;
+    }
+    
+    .outlook-preview-content.compact {
+        font-size: 0.9rem;
+        line-height: 1.4;
+        padding: 1rem;
     }
 }
 
