@@ -1,3 +1,4 @@
+
 # Frontend Architecture & File Organization
 # JRL - CLOSER INSPECTION SHOWS CLAUDE MADE UP STUFF SO I NEED TO RE-VET
 ## Overview
