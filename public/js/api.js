@@ -177,7 +177,7 @@ function mapStationName(stid, metadataName = null) {
         'COOPDINU1': 'Dinosaur NM',  // NEEDS DATA EXPORT
         'COOPALMU1': 'Altamont',     // NEEDS DATA EXPORT
         'UCC34': 'Bluebell',
-        'UTASH': 'Asphalt Ridge',
+        'K40U': 'Manila',            // Dutch John area
         'UTSTV': 'Starvation',
         
         // Mountain Passes

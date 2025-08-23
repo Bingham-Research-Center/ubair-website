@@ -11,14 +11,14 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.3033, -109.7], 9); // Better zoom level to show all stations
+}).setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
 
 // Add window resize handler to re-fit map
 window.addEventListener('resize', function() {
     setTimeout(() => {
         map.invalidateSize();
         // Re-center on Uintah Basin after resize
-        map.setView([40.3033, -109.7], 9);
+        map.setView([40.45, -110.0], 8);
     }, 100);
 });
 
@@ -30,6 +30,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 let kioskMode = false;
 let kioskInterval;
 let currentStationIndex = 0;
+let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
 
@@ -72,13 +73,35 @@ function toggleKiosk() {
 function startKioskMode() {
     if (markers.length === 0) return;
 
+    // Generate random order for cycling (preserved until page leave)
+    if (kioskOrder.length !== markers.length) {
+        kioskOrder = [...Array(markers.length).keys()]; // [0, 1, 2, ...]
+        // Fisher-Yates shuffle with time-based seed
+        const seed = Date.now() % 1000000;
+        let rng = seed;
+        for (let i = kioskOrder.length - 1; i > 0; i--) {
+            rng = (rng * 9301 + 49297) % 233280; // Simple LCG
+            const j = Math.floor((rng / 233280) * (i + 1));
+            [kioskOrder[i], kioskOrder[j]] = [kioskOrder[j], kioskOrder[i]];
+        }
+    }
+
     currentStationIndex = 0;
+    
+    // Start immediately with first station
+    map.closePopup();
+    if (markers[kioskOrder[currentStationIndex]]) {
+        markers[kioskOrder[currentStationIndex]].openPopup();
+    }
+    currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
+    
+    // Then continue with interval
     kioskInterval = setInterval(() => {
         map.closePopup();
-        if (markers[currentStationIndex]) {
-            markers[currentStationIndex].openPopup();
+        if (markers[kioskOrder[currentStationIndex]]) {
+            markers[kioskOrder[currentStationIndex]].openPopup();
         }
-        currentStationIndex = (currentStationIndex + 1) % markers.length;
+        currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
     }, 4000); // 4 second intervals
 }
 
@@ -178,7 +201,7 @@ async function updateMiniMap() {
 
         // Set map to balanced Uintah Basin view
         if (markers.length > 0) {
-            map.setView([40.3033, -109.7], 9); // Better zoom level to show all stations
+            map.setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
         }
 
     } catch (error) {

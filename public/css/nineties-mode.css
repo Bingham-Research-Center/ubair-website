@@ -1,30 +1,30 @@
 /* 90s Iridescent Background Mode */
 body.nineties-mode {
     background: 
-        radial-gradient(circle at 20% 80%, rgba(238, 174, 202, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(148, 187, 233, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(255, 183, 195, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 20% 80%, rgba(238, 174, 202, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(148, 187, 233, 0.25) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255, 183, 195, 0.25) 0%, transparent 50%),
         conic-gradient(from 45deg at 50% 50%, 
-            rgba(217, 175, 217, 0.08), 
-            rgba(151, 217, 225, 0.08), 
-            rgba(255, 204, 188, 0.08), 
-            rgba(255, 179, 186, 0.08), 
-            rgba(217, 175, 217, 0.08)
+            rgba(217, 175, 217, 0.15), 
+            rgba(151, 217, 225, 0.15), 
+            rgba(255, 204, 188, 0.15), 
+            rgba(255, 179, 186, 0.15), 
+            rgba(217, 175, 217, 0.15)
         ),
         linear-gradient(135deg, 
-            rgba(240, 248, 255, 0.95) 0%, 
-            rgba(250, 240, 230, 0.95) 25%,
-            rgba(245, 255, 250, 0.95) 50%, 
-            rgba(255, 240, 245, 0.95) 75%,
-            rgba(248, 248, 255, 0.95) 100%
+            rgba(240, 248, 255, 0.85) 0%, 
+            rgba(250, 240, 230, 0.85) 25%,
+            rgba(245, 255, 250, 0.85) 50%, 
+            rgba(255, 240, 245, 0.85) 75%,
+            rgba(248, 248, 255, 0.85) 100%
         );
     background-size: 
-        400px 400px,
-        300px 300px, 
-        500px 500px,
-        200% 200%,
+        350px 350px,
+        250px 250px, 
+        450px 450px,
+        150% 150%,
         100% 100%;
-    animation: shimmer 45s ease-in-out infinite;
+    animation: shimmer 35s ease-in-out infinite;
 }
 
 @keyframes shimmer {

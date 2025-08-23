@@ -32,13 +32,15 @@
 
 <!-- Main Content -->
 <main class="content">
-    <h1>TEST DATA! Uintah Basin Winter Ozone Information</h1>
+    <div class="homepage-header">
+        <h1 class="site-title">basinwx.com</h1>
+        <p class="site-subtitle">Live air quality and weather for the Uintah Basin</p>
+    </div>
 
     <!-- Air Quality Overview Dashboard -->
-    <section class="dashboard-section" aria-label="Air Quality Overview">
+    <section class="dashboard-section" aria-label="Air Quality and Weather Overview">
         <div class="section-header">
-            <h2><i class="fas fa-lungs"></i> Current Air Quality Overview</h2>
-            <div class="section-subtitle">Real-time monitoring and latest forecasts</div>
+            <h2><i class="fas fa-tachometer-alt"></i> Air Quality and Weather Overview</h2>
         </div>
 
         <div class="dashboard-grid">
@@ -66,25 +68,30 @@
                     </div>
                 </div>
                 
-                <!-- Map Legend - moved outside container -->
-                <div class="map-legend">
-                    <h4>Map Marker Colors: Ozone Levels (ppb)</h4>
-                    <div class="legend-items">
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: green;"></div>
-                            <span>Good (&lt;50 ppb)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: orange;"></div>
-                            <span>Warning (50-69 ppb)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: red;"></div>
-                            <span>Dangerous (≥70 ppb)</span>
-                        </div>
-                        <div class="legend-item">
-                            <div class="legend-color" style="background-color: gray;"></div>
-                            <span>No Ozone Data</span>
+                <!-- Compact Legend -->
+                <div class="map-legend-compact">
+                    <button class="legend-toggle" id="legend-toggle" title="Click to show/hide marker color legend">
+                        <i class="fas fa-palette"></i>
+                        <span class="legend-toggle-text">Legend</span>
+                    </button>
+                    <div class="legend-dropdown" id="legend-dropdown">
+                        <div class="legend-items-compact">
+                            <div class="legend-row">
+                                <div class="legend-color" style="background-color: green;"></div>
+                                <span>Good (&lt;50)</span>
+                                <div class="legend-color" style="background-color: orange;"></div>
+                                <span>Warning (50-69)</span>
+                            </div>
+                            <div class="legend-row">
+                                <div class="legend-color" style="background-color: red;"></div>
+                                <span>Danger (≥70)</span>
+                                <div class="legend-color" style="background-color: #B8D4E3;"></div>
+                                <span>Weather Only</span>
+                            </div>
+                            <div class="legend-row">
+                                <div class="legend-color" style="background-color: gray;"></div>
+                                <span>No Data</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -93,14 +100,35 @@
             <!-- Latest Forecast Panel -->
             <div class="dashboard-panel forecast-panel">
                 <div class="panel-header">
-                    <h3><i class="fas fa-crystal-ball"></i> Latest Forecast Outlook</h3>
-                    <a href="/forecast_outlooks" class="panel-link" id="see-more">
-                        <i class="fas fa-external-link-alt"></i> All Outlooks
-                    </a>
+                    <h3><i class="fas fa-crystal-ball"></i> Latest Forecasts</h3>
+                    <div class="forecast-tabs">
+                        <button class="forecast-tab active" data-tab="air-quality" title="Air quality and ozone outlook">
+                            <i class="fas fa-lungs"></i> Air Quality
+                        </button>
+                        <button class="forecast-tab" data-tab="weather" title="General weather forecast summary">
+                            <i class="fas fa-cloud-sun"></i> Weather
+                        </button>
+                    </div>
                 </div>
                 <div class="forecast-container-dashboard">
-                    <div class="outlook-preview-date" id="outlook-date">Loading...</div>
-                    <div class="outlook-preview-content" id="outlook-summary">Loading latest outlook...</div>
+                    <div class="forecast-content active" id="air-quality-content">
+                        <div class="outlook-preview-date" id="outlook-date">Loading...</div>
+                        <div class="outlook-preview-content compact" id="outlook-summary">Loading air quality outlook...</div>
+                        <div class="forecast-link">
+                            <a href="/forecast_outlooks" id="aq-see-more">
+                                <i class="fas fa-external-link-alt"></i> All Air Quality Outlooks
+                            </a>
+                        </div>
+                    </div>
+                    <div class="forecast-content" id="weather-content">
+                        <div class="outlook-preview-date">Latest Weather Summary</div>
+                        <div class="outlook-preview-content compact" id="weather-summary">Loading weather forecast summary...</div>
+                        <div class="forecast-link">
+                            <a href="/forecast_weather">
+                                <i class="fas fa-external-link-alt"></i> Full Weather Forecasts
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -135,10 +163,59 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", async function() {
-        const outlookSummary = document.getElementById("outlook-summary");
-        const seeMoreLink = document.getElementById("see-more");
+        // Initialize forecast tabs
+        initForecastTabs();
+        
+        // Initialize legend toggle
+        initLegendToggle();
+        
+        // Load initial content
+        loadAirQualityForecast();
+        loadWeatherForecast();
+    });
 
-        if (!outlookSummary || !seeMoreLink) return;
+    function initForecastTabs() {
+        const tabs = document.querySelectorAll('.forecast-tab');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+                
+                // Update tab styles
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Update content visibility
+                document.querySelectorAll('.forecast-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                document.getElementById(`${targetTab}-content`).classList.add('active');
+            });
+        });
+    }
+
+    function initLegendToggle() {
+        const toggle = document.getElementById('legend-toggle');
+        const dropdown = document.getElementById('legend-dropdown');
+        
+        if (toggle && dropdown) {
+            toggle.addEventListener('click', () => {
+                dropdown.classList.toggle('active');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.remove('active');
+                }
+            });
+        }
+    }
+
+    async function loadAirQualityForecast() {
+        const outlookSummary = document.getElementById("outlook-summary");
+        const seeMoreLink = document.getElementById("aq-see-more");
+
+        if (!outlookSummary) return;
 
         // Initialize markdown renderer
         const md = markdownit({
@@ -155,7 +232,7 @@
             const outlooks = await response.json();
 
             if (outlooks.length === 0) {
-                outlookSummary.textContent = "No recent outlook available.";
+                outlookSummary.textContent = "No recent air quality outlook available.";
                 return;
             }
 
@@ -168,24 +245,44 @@
 
             const markdownContent = await outlookResponse.text();
 
-            // Extract and render preview (first few lines)
+            // Extract and render preview (more lines, smaller font)
             const previewLines = markdownContent.split('\n')
                 .filter(line => line.trim() !== '')
-                .slice(0, 5)
+                .slice(0, 8)
                 .join('\n');
 
             // Render markdown to HTML
             outlookSummary.innerHTML = md.render(previewLines);
 
             // Update the "See more" link
-            seeMoreLink.href = `/forecast_outlooks?file=${latestOutlook.filename}`;
+            if (seeMoreLink) {
+                seeMoreLink.href = `/forecast_outlooks?file=${latestOutlook.filename}`;
+            }
 
         } catch (error) {
-            console.error("Error loading outlook preview:", error);
-            outlookSummary.textContent = "Unable to load the latest outlook.";
-            seeMoreLink.href = "/forecast_outlooks";
+            console.error("Error loading air quality outlook:", error);
+            outlookSummary.textContent = "Unable to load the latest air quality outlook.";
         }
-    });
+    }
+
+    async function loadWeatherForecast() {
+        const weatherSummary = document.getElementById("weather-summary");
+        if (!weatherSummary) return;
+
+        // Placeholder content - in future this would fetch from weather forecast API
+        weatherSummary.innerHTML = `
+            <div style="font-style: italic; color: var(--usu-accent); margin-bottom: 0.5rem;">
+                General Weather Summary (Placeholder)
+            </div>
+            <p><strong>Today:</strong> Partly cloudy with light winds. High around 45°F, low near 28°F.</p>
+            <p><strong>Tomorrow:</strong> Mostly sunny conditions expected. Temperatures rising to 52°F during the day.</p>
+            <p><strong>Weekend:</strong> Stable weather pattern continues with clear skies and moderate temperatures.</p>
+            <p><strong>Air Quality Impact:</strong> Light winds may contribute to pollutant accumulation in valleys during morning hours.</p>
+            <div style="font-size: 0.8rem; font-style: italic; color: var(--usu-accent); margin-top: 0.5rem;">
+                Note: This is placeholder content. Future implementation will pull from LLM-generated weather summaries.
+            </div>
+        `;
+    }
 </script>
 </body>
 </html>

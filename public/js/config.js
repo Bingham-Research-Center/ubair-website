@@ -15,7 +15,8 @@ export const stations = {
     'Dinosaur NM': { lat: 40.44, lng: -109.31 },      // COOPDINU1 - Northern basin
     'Altamont': { lat: 40.37, lng: -110.30 },         // COOPALMU1 - NW basin
     'Bluebell': { lat: 40.37, lng: -110.21 },         // UCC34 - Central-west basin
-    'Asphalt Ridge': { lat: 40.42, lng: -109.58 },    // UTASH - NE basin
+    'Windy Point': { lat: 40.52, lng: -109.55 },      // PLACEHOLDER - Near Steinaker
+    'Manila': { lat: 40.98, lng: -109.68 },           // K40U - Dutch John area
     'Starvation': { lat: 40.17, lng: -110.49 },       // UTSTV - SW basin
     
     // Mountain Passes - Influence on Basin Weather

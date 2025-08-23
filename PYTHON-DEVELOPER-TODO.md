@@ -20,6 +20,16 @@ These stations need to be added to the Synoptic API pull in brc-tools:
    - County seat - important population center
    - **Alternative if unavailable:** KU69 (DUCHESNE Airport) already has data
 
+### NEW STATIONS TO ADD (if available):
+4. **Station near Windy Point/Steinaker**
+   - Display Name: "Windy Point"
+   - Target Location: ~40.52°N, -109.55°W
+   - Purpose: Coverage between Vernal and recreation areas
+   - **Search for:** Weather stations near Steinaker Reservoir or US-191 north of Vernal
+
+### CONFIRMED WORKING:
+- **K40U (MANILA)** - Already has data, good for Dutch John area coverage
+
 ### Station ID Mapping Reference
 The website expects these exact station IDs (case-sensitive):
 

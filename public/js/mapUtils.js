@@ -1,12 +1,20 @@
 import { thresholds } from './config.js';
 
-// Determine marker color based on OZONE levels only
+// Determine marker color based on OZONE levels and data availability
 export function getMarkerColor(measurements) {
+    // Check if station has ANY data at all
+    const hasAnyData = Object.values(measurements).some(value => value !== null && value !== undefined);
+    
+    // No data at all = gray marker (missing data)
+    if (!hasAnyData) {
+        return 'gray';
+    }
+    
     const ozoneValue = measurements['Ozone'];
     
-    // No ozone data = gray marker
+    // Has data but no ozone data = pale pastel blue (default)
     if (ozoneValue === null || ozoneValue === undefined) {
-        return 'gray';
+        return '#B8D4E3';  // Pale pastel blue
     }
     
     const ozoneThreshold = thresholds['Ozone'];
