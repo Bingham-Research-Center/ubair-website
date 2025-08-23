@@ -293,11 +293,14 @@
         font-size: 1rem;
     }
     
-    /* Ultra-compact dashboard sections */
+    /* Ultra-compact dashboard sections - use full width */
     .dashboard-section {
         padding: 0.75rem;
-        margin-bottom: 0.75rem;
+        margin: 0 0 0.75rem 0;
         border-radius: 12px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
     }
     
     .section-header {
@@ -352,9 +355,13 @@
         font-size: 1rem;
     }
     
-    /* Content area optimization */
+    /* Content area optimization - use full width */
     .content {
-        padding: 50px 10px 15px !important;
+        margin-left: 0 !important;
+        padding: 50px 0.75rem 15px !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
     }
     
     /* Forecast collapse toggle */
