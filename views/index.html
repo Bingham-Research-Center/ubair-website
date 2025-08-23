@@ -101,6 +101,9 @@
             <div class="dashboard-panel forecast-panel">
                 <div class="panel-header">
                     <h3><i class="fas fa-crystal-ball"></i> Latest Forecasts</h3>
+                    <button class="forecast-collapse-toggle" id="forecast-collapse" title="Show/hide forecast details">
+                        <i class="fas fa-chevron-up"></i>
+                    </button>
                     <div class="forecast-tabs">
                         <button class="forecast-tab active" data-tab="air-quality" title="Air quality and ozone outlook">
                             <i class="fas fa-lungs"></i> Air Quality
@@ -168,6 +171,9 @@
         
         // Initialize legend toggle
         initLegendToggle();
+        
+        // Initialize forecast collapse toggle
+        initForecastCollapse();
         
         // Load initial content
         loadAirQualityForecast();
@@ -282,6 +288,27 @@
                 Note: This is placeholder content. Future implementation will pull from LLM-generated weather summaries.
             </div>
         `;
+    }
+    
+    function initForecastCollapse() {
+        const collapseBtn = document.getElementById('forecast-collapse');
+        const forecastContainer = document.querySelector('.forecast-container-dashboard');
+        
+        if (collapseBtn && forecastContainer) {
+            collapseBtn.addEventListener('click', () => {
+                const isCollapsed = collapseBtn.classList.contains('collapsed');
+                
+                if (isCollapsed) {
+                    // Expand
+                    collapseBtn.classList.remove('collapsed');
+                    forecastContainer.classList.remove('collapsed');
+                } else {
+                    // Collapse
+                    collapseBtn.classList.add('collapsed');
+                    forecastContainer.classList.add('collapsed');
+                }
+            });
+        }
     }
 </script>
 </body>
