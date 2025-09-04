@@ -1,10 +1,14 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
+import { createServer } from 'http';
 
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
+import roadWeatherRoutes from './routes/roadWeather.js';
+import WebSocketServer from './websocket-server.js';
 // import { generateOutlooksList } from './generateOutlooksList.js';
 
 const app = express();
@@ -17,6 +21,7 @@ app.use(express.json());
 
 // Routes in dataUpload.js will be prefixed with ...
 app.use('/api', dataUploadRoutes);
+app.use('/api', roadWeatherRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Single static files middleware with all headers
@@ -70,6 +75,10 @@ app.get('/fire', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/fire.html'));
 });
 
+app.get('/data-viewer', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/data-viewer.html'));
+});
+
 app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });
@@ -85,16 +94,58 @@ app.get('/api/filelist.json', async (req, res) => {
 
 app.get('/api/live-observations', async (req, res) => {
     try {
-        const data = await fs.readFile('./public/data/json/latest_obs.json'); // Fixed path
-        res.json(JSON.parse(data));
+        // Get the latest observation file from the static directory
+        const staticDir = path.join(__dirname, '../public/api/static');
+        const fileListPath = path.join(staticDir, 'filelist.json');
+        
+        if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
+            return res.status(404).json({ error: 'No data files available' });
+        }
+        
+        const fileList = JSON.parse(await fs.readFile(fileListPath, 'utf8'));
+        const obsFiles = fileList.filter(f => f.includes('map_obs_') && !f.includes('meta'));
+        
+        if (obsFiles.length === 0) {
+            return res.status(404).json({ error: 'No observation files found' });
+        }
+        
+        // Get the latest file (assuming filename contains timestamp)
+        const latestFile = obsFiles.sort().reverse()[0];
+        const latestFilePath = path.join(staticDir, latestFile);
+        
+        const data = await fs.readFile(latestFilePath, 'utf8');
+        const parsedData = JSON.parse(data);
+        
+        // Add metadata about the file
+        res.json({
+            timestamp: new Date().toISOString(),
+            filename: latestFile,
+            totalObservations: parsedData.length,
+            data: parsedData
+        });
+        
     } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch data' });
+        console.error('Live observations error:', error);
+        res.status(500).json({ error: 'Failed to fetch live observations' });
     }
 });
 
-app.listen(PORT, () => {
+// Create HTTP server
+const server = createServer(app);
+
+// Initialize WebSocket server
+const wsServer = new WebSocketServer(server);
+
+// Optional: Start simulation for testing
+wsServer.startSimulation();
+
+// Make WebSocket server available globally for data updates
+global.wsServer = wsServer;
+
+server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log('Data upload API available at /api/data/upload/:dataType');
+    console.log('WebSocket server available at ws://localhost:' + PORT + '/ws');
 });
 
 // Error handling middleware
