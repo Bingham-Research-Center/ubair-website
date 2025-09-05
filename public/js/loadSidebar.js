@@ -80,7 +80,18 @@ async function loadSidebar() {
         if (!document.querySelector('script[src="/public/js/mobile-menu.js"]')) {
             const mobileMenuScript = document.createElement('script');
             mobileMenuScript.src = '/public/js/mobile-menu.js';
+            mobileMenuScript.onload = function() {
+                // Force mobile menu initialization since DOMContentLoaded has already fired
+                initializeMobileMenu();
+            };
             document.body.appendChild(mobileMenuScript);
+        } else {
+            // Script already exists but may not have initialized yet
+            setTimeout(() => {
+                if (!document.querySelector('.mobile-menu-toggle')) {
+                    initializeMobileMenu();
+                }
+            }, 100);
         }
     } catch (error) {
         console.error('Error loading sidebar:', error);
