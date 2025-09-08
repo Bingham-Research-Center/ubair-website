@@ -31,112 +31,166 @@ body[data-page-type="roads"] h1::after {
     border-radius: 2px;
 }
 
-/* Road Summary Grid */
-.road-summary {
+/* Full-Screen Map with Bottom Overlay Dashboard */
+.road-weather-dashboard {
     margin-bottom: 2rem;
-}
-
-.summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-.condition-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.1);
-    border-left: 4px solid var(--roads-primary);
-    transition: all 0.3s ease;
     position: relative;
+}
+
+.map-container-fullscreen {
+    position: relative;
+    height: 600px;
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
 }
 
-.condition-card::before {
-    content: '';
+.road-network-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Top-left instruction overlay */
+.map-instruction-overlay {
     position: absolute;
-    top: 0;
-    right: 0;
-    width: 70px;
-    height: 70px;
-    background: linear-gradient(135deg, var(--roads-accent), transparent);
-    border-radius: 0 12px 0 100%;
-    opacity: 0.08;
+    top: 1rem;
+    left: 1rem;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
 }
 
-.condition-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(30, 58, 138, 0.15);
-    border-left-color: var(--roads-accent);
+.map-instruction {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--roads-primary);
+    font-weight: 500;
 }
 
-.card-icon {
+/* Bottom conditions overlay - full width minus legend */
+.conditions-overlay {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 250px; /* Leave plenty of space for legend to prevent any overlap */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+
+/* Horizontal condition cards - minimal badges */
+.condition-cards-horizontal {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex: 1;
+}
+
+.condition-card-compact {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.1);
+    border: 2px solid var(--roads-primary);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.condition-card-compact:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+}
+
+.card-icon-small {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 50px;
-    height: 50px;
+    width: 20px;
+    height: 20px;
     background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
     border-radius: 50%;
-    margin-bottom: 1rem;
     color: white;
-    font-size: 1.2rem;
+    font-size: 0.7rem;
+    flex-shrink: 0;
 }
 
-.card-content h3 {
-    color: var(--roads-primary);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
+.card-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    text-align: center;
+    justify-content: center;
 }
 
-.current-value {
-    font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--roads-secondary);
-    margin: 0.5rem 0;
-}
-
-.trend {
-    color: #666;
+.card-data h5 {
     font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--roads-primary);
+    margin: 0 0 4px 0;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.card-data .value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--roads-primary);
     margin: 0;
+    line-height: 1.1;
+    white-space: nowrap;
 }
 
-/* Specific road condition styling */
-.road-temp {
-    border-left-color: var(--roads-surface);
+/* Compact card color variants */
+.condition-card-compact.road-temp {
+    border-color: var(--roads-surface);
 }
 
-.road-temp .card-icon {
+.condition-card-compact.road-temp .card-icon-small {
     background: linear-gradient(135deg, var(--roads-surface), #4b5563);
 }
 
-.visibility {
-    border-left-color: var(--roads-accent);
+.condition-card-compact.visibility {
+    border-color: var(--roads-accent);
 }
 
-.visibility .card-icon {
+.condition-card-compact.visibility .card-icon-small {
     background: linear-gradient(135deg, var(--roads-accent), var(--roads-secondary));
 }
 
-.precipitation {
-    border-left-color: #3b82f6;
+.condition-card-compact.precipitation {
+    border-color: var(--roads-warning);
 }
 
-.precipitation .card-icon {
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+.condition-card-compact.precipitation .card-icon-small {
+    background: linear-gradient(135deg, var(--roads-warning), #f59e0b);
 }
 
-.wind {
-    border-left-color: #6b7280;
+.condition-card-compact.wind {
+    border-color: var(--roads-good);
 }
 
-.wind .card-icon {
-    background: linear-gradient(135deg, #6b7280, #4b5563);
+.condition-card-compact.wind .card-icon-small {
+    background: linear-gradient(135deg, var(--roads-good), #059669);
 }
+
+
 
 /* Routes Container */
 .routes-container {
@@ -454,11 +508,43 @@ body[data-page-type="roads"] h1::after {
 }
 
 /* Focus states for accessibility */
-.condition-card:focus-within,
 .route-section:focus-within,
 .resource-card:focus-within {
     outline: 2px solid var(--roads-accent);
     outline-offset: 2px;
+}
+
+/* Legend Styles */
+.leaflet-control.road-legend {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.road-legend h4 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: var(--roads-primary);
+    font-weight: 600;
+}
+
+.road-legend .legend-items {
+    font-size: 12px;
+}
+
+.road-legend .legend-item {
+    display: flex;
+    align-items: center;
+    margin: 4px 0;
+}
+
+.road-legend .color-box {
+    width: 20px;
+    height: 4px;
+    margin-right: 8px;
+    border-radius: 2px;
 }
 
 /* Emma Park Road Easter Egg */
@@ -540,7 +626,7 @@ body[data-page-type="roads"] h1::after {
 
 .road-map-section {
     position: relative;
-    height: 300px;
+    height: 500px;
     margin-bottom: 2rem;
     border-radius: 12px;
     overflow: hidden;
@@ -552,13 +638,259 @@ body[data-page-type="roads"] h1::after {
     border-radius: 12px;
 }
 
+/* Weather Station Styles */
+.weather-station-marker {
+    background: none;
+    border: none;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.weather-station-marker:hover {
+    transform: scale(1.2);
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+}
+
+.leaflet-popup-content .weather-station-info {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    line-height: 1.5;
+}
+
+.weather-station-info h4 {
+    color: var(--roads-primary);
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 2px solid var(--roads-accent);
+    padding-bottom: 6px;
+}
+
+.weather-station-info .weather-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 16px;
+    margin: 12px 0;
+}
+
+.weather-station-info .weather-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+}
+
+.weather-station-info .weather-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.weather-station-info .weather-value {
+    color: var(--roads-primary);
+    font-weight: 600;
+}
+
+.weather-station-info .weather-value.temp {
+    color: #dc2626;
+}
+
+.weather-station-info .weather-value.humidity {
+    color: #0891b2;
+}
+
+.weather-station-info .weather-value.wind {
+    color: #059669;
+}
+
+.weather-station-info .weather-value.surface {
+    color: var(--roads-surface);
+}
+
+.weather-station-info .status-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 8px;
+}
+
+.weather-station-info .status-badge.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--roads-good);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.weather-station-info .status-badge.yellow {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--roads-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.weather-station-info .status-badge.red {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--roads-danger);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.weather-station-info .last-updated {
+    font-size: 11px;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 12px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Camera-Monitored Road Badges */
+.camera-monitored-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--roads-secondary);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.monitored-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--roads-good);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.estimated-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: bold;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--roads-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Camera icon with condition ring */
+.camera-icon-with-condition {
+    z-index: 1000 !important;
+}
+
+.camera-icon-with-condition > div {
+    transition: transform 0.2s ease, border-width 0.2s ease;
+}
+
+.camera-icon-with-condition:hover > div {
+    transform: scale(1.15);
+    border-width: 4px !important;
+}
+
+/* Camera popup enhancements */
+.analysis-section h5 {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 @media (max-width: 768px) {
     .road-map-section {
-        height: 250px;
+        height: 350px;
     }
+
+    /* Mobile full-screen map layout */
+    .map-container-fullscreen {
+        height: 500px;
+    }
+    
+    .conditions-overlay {
+        bottom: 15px;
+        left: 15px;
+        right: 15px; /* Full width on mobile since legend is typically hidden */
+        padding: 6px 12px;
+        gap: 10px;
+        border-radius: 12px;
+    }
+    
+    .condition-cards-horizontal {
+        gap: 6px;
+    }
+    
+    .condition-card-compact {
+        padding: 4px 8px;
+        gap: 4px;
+        min-width: 55px;
+    }
+    
+    .card-icon-small {
+        width: 18px;
+        height: 18px;
+        font-size: 0.65rem;
+    }
+    
+    .card-data .value {
+        font-size: 0.75rem;
+    }
+    
 
     .summary-grid {
         grid-template-columns: 1fr 1fr;
         gap: 1rem;
     }
+    
+    .camera-marker-with-ring {
+        font-size: 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Ultra-mobile layout */
+    .map-container-fullscreen {
+        height: 450px;
+    }
+    
+    .conditions-overlay {
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        padding: 5px 10px;
+        gap: 8px;
+        border-radius: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .condition-cards-horizontal {
+        gap: 4px;
+        flex-wrap: wrap;
+    }
+    
+    .condition-card-compact {
+        padding: 3px 6px;
+        gap: 3px;
+        min-width: 50px;
+    }
+    
+    .card-icon-small {
+        width: 16px;
+        height: 16px;
+        font-size: 0.6rem;
+    }
+    
+    .card-data .value {
+        font-size: 0.7rem;
+    }
+    
 }

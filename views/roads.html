@@ -32,55 +32,58 @@
     <main class="content">
         <h1>Road Weather Conditions</h1>
 
-        <!-- Road Network Map -->
-        <section class="road-map-section">
-            <div id="road-map" class="road-network-map"></div>
-        </section>
-
-        <!-- Current Road Conditions Summary -->
-        <section class="road-summary" aria-label="Current Road Conditions">
-            <div class="summary-grid">
-                <div class="condition-card road-temp">
-                    <div class="card-icon">
-                        <i class="fas fa-road"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Road Surface</h3>
-                        <p class="current-value">--°F</p>
-                        <p class="trend">Surface temperature</p>
-                    </div>
+        <!-- Full-Screen Map with Bottom Condition Cards -->
+        <section class="road-weather-dashboard">
+            <div class="map-container-fullscreen">
+                <div id="road-map" class="road-network-map"></div>
+                
+                <!-- Top-left instruction overlay -->
+                <div class="map-instruction-overlay">
+                    <p class="map-instruction">Click any road, camera, or weather station to view conditions</p>
                 </div>
                 
-                <div class="condition-card visibility">
-                    <div class="card-icon">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Visibility</h3>
-                        <p class="current-value">-- mi</p>
-                        <p class="trend">Current conditions</p>
-                    </div>
-                </div>
-                
-                <div class="condition-card precipitation">
-                    <div class="card-icon">
-                        <i class="fas fa-cloud-rain"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Precipitation</h3>
-                        <p class="current-value">--</p>
-                        <p class="trend">Type & intensity</p>
-                    </div>
-                </div>
-                
-                <div class="condition-card wind">
-                    <div class="card-icon">
-                        <i class="fas fa-wind"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Wind</h3>
-                        <p class="current-value">-- mph</p>
-                        <p class="trend">High-profile alert</p>
+                <!-- Bottom condition cards overlay -->
+                <div class="conditions-overlay">
+                    <div class="condition-cards-horizontal">
+                        <div class="condition-card-compact road-temp">
+                            <div class="card-icon-small">
+                                <i class="fas fa-road"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Road Surface</h5>
+                                <p class="value">--°F</p>
+                            </div>
+                        </div>
+                        
+                        <div class="condition-card-compact visibility">
+                            <div class="card-icon-small">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Visibility</h5>
+                                <p class="value">-- mi</p>
+                            </div>
+                        </div>
+                        
+                        <div class="condition-card-compact precipitation">
+                            <div class="card-icon-small">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Precipitation</h5>
+                                <p class="value">--</p>
+                            </div>
+                        </div>
+                        
+                        <div class="condition-card-compact wind">
+                            <div class="card-icon-small">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Wind</h5>
+                                <p class="value">-- mph</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -208,6 +211,6 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
-    <script type="module" src="/public/js/roads.js"></script>
+    <script src="/public/js/roads.js"></script>
 </body>
 </html>
