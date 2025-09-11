@@ -11,6 +11,138 @@
     --water-excellent: #10b981;      /* Green for good conditions */
 }
 
+/* Water Tab Navigation */
+.water-tabs-container {
+    margin-bottom: 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0, 105, 148, 0.1);
+    overflow: hidden;
+    border: 1px solid rgba(0, 105, 148, 0.1);
+}
+
+.water-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    background: linear-gradient(135deg, var(--water-foam), #f8fafc);
+    border-bottom: 1px solid rgba(0, 105, 148, 0.1);
+}
+
+.water-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 1rem 0.5rem;
+    background: transparent;
+    border: none;
+    color: var(--water-primary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    border-bottom: 3px solid transparent;
+    position: relative;
+}
+
+.water-tab:hover {
+    background: rgba(0, 105, 148, 0.05);
+    color: var(--water-secondary);
+    transform: translateY(-1px);
+}
+
+.water-tab.active {
+    background: white;
+    color: var(--water-primary);
+    border-bottom-color: var(--water-accent);
+    box-shadow: 0 -2px 8px rgba(0, 105, 148, 0.1);
+    font-weight: 600;
+}
+
+.water-tab i {
+    font-size: 1.1rem;
+    margin-bottom: 0.25rem;
+    color: var(--water-secondary);
+}
+
+.water-tab.active i {
+    color: var(--water-accent);
+}
+
+/* Tab Content */
+.water-tab-content-wrapper {
+    position: relative;
+}
+
+.water-tab-content {
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.water-tab-content.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Mobile responsive tabs */
+@media (max-width: 768px) {
+    .water-tabs {
+        flex-direction: row;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .water-tabs::-webkit-scrollbar {
+        display: none;
+    }
+    
+    .water-tab {
+        flex: 0 0 auto;
+        min-width: 100px;
+        padding: 0.75rem 0.5rem;
+        font-size: 0.8rem;
+        white-space: nowrap;
+    }
+    
+    .water-tab i {
+        font-size: 1rem;
+    }
+    
+    /* Add scroll indicator shadow */
+    .water-tabs-container::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        width: 20px;
+        background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
+        pointer-events: none;
+        z-index: 1;
+    }
+}
+
+/* Smaller mobile screens */
+@media (max-width: 480px) {
+    .water-tab {
+        min-width: 80px;
+        padding: 0.6rem 0.4rem;
+        font-size: 0.75rem;
+    }
+    
+    .water-tab i {
+        font-size: 0.9rem;
+    }
+}
+
 /* Override main header for water theme */
 body[data-page-type="water"] h1 {
     background: linear-gradient(135deg, var(--water-primary), var(--water-secondary));
