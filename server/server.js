@@ -8,8 +8,8 @@ import { createServer } from 'http';
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
+import trafficEventsRoutes from './routes/trafficEvents.js';
 import WebSocketServer from './websocket-server.js';
-// import { generateOutlooksList } from './generateOutlooksList.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +22,7 @@ app.use(express.json());
 // Routes in dataUpload.js will be prefixed with ...
 app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
+app.use('/api', trafficEventsRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Single static files middleware with all headers
@@ -77,6 +78,10 @@ app.get('/fire', (req, res) => {
 
 app.get('/data-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/data-viewer.html'));
+});
+
+app.get('/webcam-viewer', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));
 });
 
 app.get('/about/:page', (req, res) => {
@@ -136,8 +141,6 @@ const server = createServer(app);
 // Initialize WebSocket server
 const wsServer = new WebSocketServer(server);
 
-// Optional: Start simulation for testing
-wsServer.startSimulation();
 
 // Make WebSocket server available globally for data updates
 global.wsServer = wsServer;
@@ -168,7 +171,6 @@ async function checkDirectoryStructure() {
         try {
             await fs.access(path.join(__dirname, dir));
         } catch {
-            console.log(`Creating directory: ${dir}`);
             await fs.mkdir(path.join(__dirname, dir), { recursive: true });
         }
     }
@@ -208,7 +210,6 @@ async function generateOutlooksList() {
             JSON.stringify(outlooks, null, 2)
         );
 
-        console.log(`Generated outlooks list with ${outlooks.length} entries`);
         return outlooks;
     } catch (error) {
         console.error('Error generating outlooks list:', error);
