@@ -1,0 +1,393 @@
+/* Webcam Viewer Styles */
+:root {
+    --webcam-primary: #1e40af;
+    --webcam-secondary: #3b82f6;
+    --webcam-accent: #60a5fa;
+    --webcam-success: #10b981;
+    --webcam-warning: #f59e0b;
+    --webcam-danger: #dc2626;
+    --webcam-surface: #f8fafc;
+    --webcam-border: #e2e8f0;
+}
+
+body[data-page-type="webcam"] {
+    background: linear-gradient(135deg, var(--webcam-surface) 0%, #ffffff 100%);
+    min-height: 100vh;
+}
+
+/* Header Styles */
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 1rem 0;
+}
+
+.back-button .back-link {
+    color: var(--webcam-primary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--webcam-border);
+    background: white;
+    transition: all 0.2s ease;
+}
+
+.back-button .back-link:hover {
+    background: var(--webcam-primary);
+    color: white;
+}
+
+.refresh-button {
+    background: var(--webcam-primary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: background-color 0.2s ease;
+}
+
+.refresh-button:hover {
+    background: var(--webcam-secondary);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--webcam-border);
+    border-left: 4px solid var(--webcam-primary);
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--webcam-danger);
+}
+
+.retry-button {
+    background: var(--webcam-danger);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-top: 1rem;
+}
+
+/* Main Content Layout */
+.main-content {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+}
+
+/* Camera Section */
+.camera-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    overflow: hidden;
+}
+
+.camera-info {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--webcam-border);
+    background: linear-gradient(135deg, var(--webcam-primary), var(--webcam-secondary));
+    color: white;
+}
+
+.camera-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.camera-info p {
+    margin: 0;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.camera-feed-container {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.camera-views {
+    display: grid;
+    gap: 2rem;
+    justify-items: center;
+}
+
+.camera-view-full {
+    text-align: center;
+    max-width: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.camera-view-full h4 {
+    margin: 0 0 1rem 0;
+    color: var(--webcam-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.image-container {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+.camera-view-full img {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.camera-view-full img.loaded {
+    opacity: 1;
+}
+
+.error-placeholder {
+    padding: 4rem 2rem;
+    background: #f8f9fa;
+    color: #6c757d;
+    border-radius: 8px;
+    font-style: italic;
+}
+
+/* Weather Section */
+.weather-section {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    padding: 1.5rem;
+}
+
+.weather-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--webcam-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--webcam-accent);
+}
+
+.weather-station-info h4 {
+    color: var(--webcam-primary);
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.weather-metrics {
+    display: grid;
+    gap: 1rem;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--webcam-surface);
+    border-radius: 8px;
+    border: 1px solid var(--webcam-border);
+}
+
+.metric-label {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.metric-value {
+    color: var(--webcam-primary);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.metric-value.temp {
+    color: var(--webcam-danger);
+}
+
+.metric-value.humidity {
+    color: #0891b2;
+}
+
+.metric-value.wind {
+    color: var(--webcam-success);
+}
+
+.metric-value.surface {
+    color: #6b7280;
+}
+
+.condition-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+}
+
+.condition-badge.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--webcam-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.condition-badge.yellow {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--webcam-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.condition-badge.red {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--webcam-danger);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.no-weather {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Info Section */
+.info-section {
+    margin-top: 1rem;
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(30, 64, 175, 0.1);
+    padding: 1.5rem;
+}
+
+.info-card h4 {
+    margin: 0 0 1rem 0;
+    color: var(--webcam-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.info-card ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.info-card li {
+    margin-bottom: 0.5rem;
+    color: #64748b;
+}
+
+.info-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .header-content {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+    }
+    
+    .back-button {
+        order: 2;
+    }
+    
+    .refresh-controls {
+        order: 1;
+        text-align: center;
+    }
+
+    .metric-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .info-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .camera-view-full img {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .camera-info,
+    .camera-feed-container,
+    .weather-section,
+    .info-card {
+        padding: 1rem;
+    }
+    
+    .metric {
+        padding: 0.5rem;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+}

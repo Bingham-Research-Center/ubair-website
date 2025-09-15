@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webcam Viewer - Uintah Basin Weather</title>
+    <link href="/public/css/main.css" rel="stylesheet">
+    <link href="/public/css/webcam-viewer.css" rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="/public/images/favicon.ico">
+</head>
+<body data-page-type="webcam">
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="back-button">
+                    <a href="/roads" class="back-link">← Back to Roads</a>
+                </div>
+                <h1 id="webcam-title">Live Traffic Camera</h1>
+                <div class="refresh-controls">
+                    <button id="refresh-btn" class="refresh-button">🔄 Refresh</button>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            <!-- Loading State -->
+            <div id="loading-state" class="loading-state">
+                <div class="loading-spinner"></div>
+                <p>Loading camera feed and weather data...</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="error-state" style="display: none;">
+                <h3>📡 Camera feed unavailable</h3>
+                <p>The camera may be offline or experiencing technical difficulties.</p>
+                <button onclick="location.reload()" class="retry-button">Try Again</button>
+            </div>
+
+            <!-- Main Content -->
+            <div id="main-content" class="main-content" style="display: none;">
+                <!-- Camera Feed Section -->
+                <div class="camera-section">
+                    <div class="camera-info">
+                        <h2 id="camera-name">Camera Name</h2>
+                        <p id="camera-location">Location</p>
+                    </div>
+                    
+                    <div class="camera-feed-container">
+                        <div id="camera-views" class="camera-views">
+                            <!-- Camera images will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Weather Data Section -->
+                <div class="weather-section">
+                    <h3>🌡️ Local Weather Conditions</h3>
+                    <div id="weather-data" class="weather-grid">
+                        <!-- Weather data will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Additional Info -->
+                <div class="info-section">
+                    <div class="info-cards">
+                        <div class="info-card">
+                            <h4>📊 Data Sources</h4>
+                            <ul>
+                                <li>Camera: UDOT Traffic Management</li>
+                                <li>Weather: UDOT Weather Stations</li>
+                                <li>Updated: <span id="last-updated">Loading...</span></li>
+                            </ul>
+                        </div>
+                        <div class="info-card">
+                            <h4>ℹ️ About This View</h4>
+                            <p>Live traffic camera feed with real-time weather conditions from nearby monitoring stations in the Uintah Basin region.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        class WebcamViewer {
+            constructor() {
+                this.cameraId = null;
+                this.cameraData = null;
+                this.weatherData = null;
+                this.refreshInterval = null;
+            }
+
+            init() {
+                // Get camera ID from URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                this.cameraId = urlParams.get('id');
+                
+                if (!this.cameraId) {
+                    this.showError('No camera ID specified');
+                    return;
+                }
+
+                this.loadData();
+                this.startAutoRefresh();
+            }
+
+            async loadData() {
+                try {
+                    // Load camera and weather data
+                    const response = await fetch('/api/road-weather');
+                    const data = await response.json();
+                    
+                    // Find the specific camera
+                    this.cameraData = data.cameras.find(cam => cam.id.toString() === this.cameraId);
+                    if (!this.cameraData) {
+                        this.showError('Camera not found');
+                        return;
+                    }
+
+                    // Find nearest weather station
+                    this.weatherData = this.findNearestWeatherStation(data.stations);
+                    
+                    this.renderContent();
+                    this.showMainContent();
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                    this.showError('Failed to load camera data');
+                }
+            }
+
+            findNearestWeatherStation(stations) {
+                if (!stations || stations.length === 0) return null;
+                
+                // Find the closest weather station to the camera
+                let closest = stations[0];
+                let minDistance = this.calculateDistance(
+                    this.cameraData.lat, this.cameraData.lng,
+                    closest.lat, closest.lng
+                );
+
+                stations.forEach(station => {
+                    const distance = this.calculateDistance(
+                        this.cameraData.lat, this.cameraData.lng,
+                        station.lat, station.lng
+                    );
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closest = station;
+                    }
+                });
+
+                return closest;
+            }
+
+            calculateDistance(lat1, lng1, lat2, lng2) {
+                const R = 6371; // km
+                const dLat = this.toRad(lat2 - lat1);
+                const dLng = this.toRad(lng2 - lng1);
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(this.toRad(lat1)) * Math.cos(this.toRad(lat2)) *
+                        Math.sin(dLng/2) * Math.sin(dLng/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return R * c;
+            }
+
+            toRad(deg) {
+                return deg * (Math.PI/180);
+            }
+
+            renderContent() {
+                // Update title and basic info
+                document.getElementById('webcam-title').textContent = `${this.cameraData.name} - Live Feed`;
+                document.getElementById('camera-name').textContent = this.cameraData.name;
+                document.getElementById('camera-location').textContent = this.cameraData.roadway;
+
+                // Render camera views
+                const cameraViewsContainer = document.getElementById('camera-views');
+                cameraViewsContainer.innerHTML = this.cameraData.views.map(view => `
+                    <div class="camera-view-full">
+                        <h4>${view.description}</h4>
+                        <div class="image-container">
+                            <img src="${view.url}" alt="${view.description}" 
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+                                 onload="this.classList.add('loaded')">
+                            <div class="error-placeholder" style="display: none;">Camera feed unavailable</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                // Render weather data
+                if (this.weatherData) {
+                    this.renderWeatherData();
+                } else {
+                    document.getElementById('weather-data').innerHTML = `
+                        <div class="no-weather">
+                            <p>No nearby weather stations found</p>
+                        </div>
+                    `;
+                }
+
+                // Update timestamp
+                document.getElementById('last-updated').textContent = new Date().toLocaleString();
+            }
+
+            renderWeatherData() {
+                const weather = this.weatherData;
+                const weatherContainer = document.getElementById('weather-data');
+                
+                weatherContainer.innerHTML = `
+                    <div class="weather-station-info">
+                        <h4>📍 ${weather.name}</h4>
+                        <div class="weather-metrics">
+                            <div class="metric-row">
+                                <div class="metric">
+                                    <span class="metric-label">Air Temperature</span>
+                                    <span class="metric-value temp">${weather.airTemperature || 'N/A'}°F</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Surface Temperature</span>
+                                    <span class="metric-value temp">${weather.surfaceTemp || 'N/A'}°F</span>
+                                </div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="metric">
+                                    <span class="metric-label">Humidity</span>
+                                    <span class="metric-value humidity">${weather.relativeHumidity || 'N/A'}%</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Dew Point</span>
+                                    <span class="metric-value">${weather.dewpointTemp || 'N/A'}°F</span>
+                                </div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="metric">
+                                    <span class="metric-label">Wind Speed</span>
+                                    <span class="metric-value wind">${weather.windSpeedAvg || 'N/A'} mph</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Wind Direction</span>
+                                    <span class="metric-value">${weather.windDirection || 'N/A'}</span>
+                                </div>
+                            </div>
+                            <div class="metric-row">
+                                <div class="metric">
+                                    <span class="metric-label">Surface Status</span>
+                                    <span class="metric-value surface">${weather.surfaceStatus || 'N/A'}</span>
+                                </div>
+                                <div class="metric">
+                                    <span class="metric-label">Precipitation</span>
+                                    <span class="metric-value">${weather.precipitation === 'Yes' ? 'Yes' : 'None'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="condition-badge ${weather.condition.condition}">
+                            ${weather.condition.status}
+                        </div>
+                    </div>
+                `;
+            }
+
+            showMainContent() {
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('error-state').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+            }
+
+            showError(message) {
+                document.getElementById('loading-state').style.display = 'none';
+                document.getElementById('main-content').style.display = 'none';
+                const errorState = document.getElementById('error-state');
+                errorState.querySelector('p').textContent = message;
+                errorState.style.display = 'block';
+            }
+
+            startAutoRefresh() {
+                // Refresh every 2 minutes
+                this.refreshInterval = setInterval(() => {
+                    this.loadData();
+                }, 120000);
+
+                // Manual refresh button
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    this.loadData();
+                });
+            }
+
+            destroy() {
+                if (this.refreshInterval) {
+                    clearInterval(this.refreshInterval);
+                }
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            const viewer = new WebcamViewer();
+            viewer.init();
+            
+            // Cleanup when page unloads
+            window.addEventListener('beforeunload', () => {
+                viewer.destroy();
+            });
+        });
+    </script>
+</body>
+</html>
