@@ -32,56 +32,65 @@
     <main class="content">
         <h1>Road Weather Conditions</h1>
 
-        <!-- Road Network Map -->
-        <section class="road-map-section">
-            <div id="road-map" class="road-network-map"></div>
-        </section>
+        <!-- Full-Screen Map with Bottom Condition Cards -->
+        <section class="road-weather-dashboard">
+            <div class="map-container-fullscreen">
+                <div id="road-map" class="road-network-map"></div>
 
-        <!-- Current Road Conditions Summary -->
-        <section class="road-summary" aria-label="Current Road Conditions">
-            <div class="summary-grid">
-                <div class="condition-card road-temp">
-                    <div class="card-icon">
-                        <i class="fas fa-road"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Road Surface</h3>
-                        <p class="current-value">--°F</p>
-                        <p class="trend">Surface temperature</p>
+                <!-- Instructions removed to prevent blocking map interaction -->
+
+                <!-- Bottom condition cards overlay -->
+                <div class="conditions-overlay">
+                    <div class="condition-cards-horizontal">
+                        <div class="condition-card-compact road-temp">
+                            <div class="card-icon-small">
+                                <i class="fas fa-road"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Road Surface</h5>
+                                <p class="value">--°F</p>
+                            </div>
+                        </div>
+
+                        <div class="condition-card-compact visibility">
+                            <div class="card-icon-small">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Visibility</h5>
+                                <p class="value">-- mi</p>
+                            </div>
+                        </div>
+
+                        <div class="condition-card-compact precipitation">
+                            <div class="card-icon-small">
+                                <i class="fas fa-cloud-rain"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Precipitation</h5>
+                                <p class="value">--</p>
+                            </div>
+                        </div>
+
+                        <div class="condition-card-compact wind">
+                            <div class="card-icon-small">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="card-data">
+                                <h5>Wind</h5>
+                                <p class="value">-- mph</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="condition-card visibility">
-                    <div class="card-icon">
-                        <i class="fas fa-eye"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Visibility</h3>
-                        <p class="current-value">-- mi</p>
-                        <p class="trend">Current conditions</p>
-                    </div>
-                </div>
-                
-                <div class="condition-card precipitation">
-                    <div class="card-icon">
-                        <i class="fas fa-cloud-rain"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Precipitation</h3>
-                        <p class="current-value">--</p>
-                        <p class="trend">Type & intensity</p>
-                    </div>
-                </div>
-                
-                <div class="condition-card wind">
-                    <div class="card-icon">
-                        <i class="fas fa-wind"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Wind</h3>
-                        <p class="current-value">-- mph</p>
-                        <p class="trend">High-profile alert</p>
-                    </div>
+
+                <!-- Units Toggle -->
+                <div class="units-toggle-container">
+                    <button class="units-toggle" id="units-toggle" title="Toggle between Imperial and Metric units">
+                        <i class="fas fa-thermometer-half"></i>
+                        <span id="units-label">Imperial</span>
+                        <i class="fas fa-exchange-alt"></i>
+                    </button>
                 </div>
             </div>
         </section>
@@ -89,15 +98,15 @@
         <!-- Route-Specific Forecasts -->
         <div class="routes-container">
             <!-- US-40 Corridor -->
-            <section class="route-section">
+            <section class="route-section" id="us40-section">
                 <h2><i class="fas fa-route"></i> US-40 Corridor</h2>
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Roosevelt to Vernal:</strong> Primary east-west route through Basin</p>
-                        <div class="placeholder-content">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-chart-line fa-3x"></i>
-                                <p>Road Temperature & Weather Conditions</p>
+                        <div class="route-conditions" id="us40-conditions">
+                            <div class="conditions-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading current conditions...</p>
                             </div>
                         </div>
                     </div>
@@ -105,15 +114,15 @@
             </section>
 
             <!-- US-191 North-South -->
-            <section class="route-section">
+            <section class="route-section" id="us191-section">
                 <h2><i class="fas fa-route"></i> US-191 North-South</h2>
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Vernal to Duchesne:</strong> Major north-south connector with elevation changes</p>
-                        <div class="placeholder-content">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-mountain fa-3x"></i>
-                                <p>Elevation Profile & Weather Conditions</p>
+                        <div class="route-conditions" id="us191-conditions">
+                            <div class="conditions-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading current conditions...</p>
                             </div>
                         </div>
                     </div>
@@ -121,15 +130,31 @@
             </section>
 
             <!-- Local Basin Roads -->
-            <section class="route-section">
-                <h2><i class="fas fa-map-signs"></i> Local Basin Roads</h2>
+            <section class="route-section" id="basin-roads-section">
+                <h2>
+                    <i class="fas fa-map-signs"></i> Local Basin Roads
+                    <div class="road-carousel-header">
+                        <span class="current-road-name" id="current-road-name">Loading...</span>
+                        <div class="carousel-controls">
+                            <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div class="carousel-indicators" id="carousel-indicators">
+                                <!-- Indicators will be dynamically added -->
+                            </div>
+                            <button class="carousel-btn next-btn" id="next-road" title="Next road">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </h2>
                 <div class="route-content">
                     <div class="route-details">
-                        <p><strong>Secondary routes:</strong> SR-87, SR-121, and local access roads</p>
-                        <div class="placeholder-content">
-                            <div class="chart-placeholder">
-                                <i class="fas fa-map fa-3x"></i>
-                                <p>Basin-Wide Road Conditions Map</p>
+                        <p><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
+                        <div class="route-conditions carousel-container" id="basin-roads-conditions">
+                            <div class="conditions-loading">
+                                <i class="fas fa-spinner fa-spin"></i>
+                                <p>Loading current conditions...</p>
                             </div>
                         </div>
                     </div>
@@ -140,22 +165,47 @@
         <!-- Travel Advisory Section -->
         <section class="advisory-section">
             <h2><i class="fas fa-exclamation-triangle"></i> Travel Advisories</h2>
-            <div class="advisory-container">
-                <div class="advisory-placeholder">
-                    <p>Winter weather advisories, road closures, and travel recommendations will be displayed here.</p>
-                    <div class="advisory-levels">
-                        <div class="level-indicator good">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Good Conditions</span>
+            <!-- Traffic Events Dashboard -->
+            <div class="traffic-events-container">
+                <div class="events-tabs">
+                    <button class="tab-btn active" data-tab="active">Active Events</button>
+                    <button class="tab-btn" data-tab="upcoming">Upcoming</button>
+                    <button class="tab-btn" data-tab="all">All Events</button>
+                </div>
+
+                <div class="events-content">
+                    <div class="tab-content active" id="active-events">
+                        <div class="events-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading active traffic events...</p>
                         </div>
-                        <div class="level-indicator caution">
-                            <i class="fas fa-exclamation-circle"></i>
-                            <span>Use Caution</span>
+                    </div>
+
+                    <div class="tab-content" id="upcoming-events">
+                        <div class="events-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading upcoming events...</p>
                         </div>
-                        <div class="level-indicator poor">
-                            <i class="fas fa-times-circle"></i>
-                            <span>Poor Conditions</span>
+                    </div>
+
+                    <div class="tab-content" id="all-events">
+                        <div class="events-loading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Loading all traffic events...</p>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- UDOT Alerts Section -->
+        <section class="udot-alerts-section">
+            <div class="udot-alerts">
+                <h3><i class="fas fa-bell"></i> UDOT Alerts</h3>
+                <div id="alerts-container">
+                    <div class="alerts-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading UDOT alerts...</p>
                     </div>
                 </div>
             </div>
@@ -197,7 +247,7 @@
             <span>What about Emma Park Road?</span>
         </div>
         <div class="easter-egg-content" id="easter-egg-content">
-            <p>Answers to the Basin's most burning question at: 
+            <p>Answers to the Basin's most burning question at:
                 <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener">
                     www.IsEmmaParkRoadClosed.utah
                 </a>
@@ -208,6 +258,6 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
-    <script type="module" src="/public/js/roads.js"></script>
+    <script src="/public/js/roads.js"></script>
 </body>
 </html>

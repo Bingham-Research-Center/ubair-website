@@ -43,8 +43,8 @@ body[data-page-type="live_aq"] #map {
     pointer-events: auto !important;
 }
 
-/* Non-locations page map */
-body:not([data-page-type="locations"]) #map {
+/* Non-locations and non-roads page map */
+body:not([data-page-type="locations"]):not([data-page-type="roads"]) #map {
     width: 100% !important;
     height: 300px !important;
     margin: 20px 0 !important;
@@ -53,8 +53,8 @@ body:not([data-page-type="locations"]) #map {
     pointer-events: none;
 }
 
-body:not([data-page-type="locations"]) .leaflet-marker-pane,
-body:not([data-page-type="locations"]) .leaflet-popup-pane {
+body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-marker-pane,
+body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-popup-pane {
     pointer-events: auto;
 }
 

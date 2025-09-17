@@ -19,7 +19,6 @@ let markers = [];
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
     // DOM loaded, setting up live_aq map...
-    // console.log('Available stations:', Object.keys(stations));
 
     setupStudyAreaToggle();
     setupKioskControl();
