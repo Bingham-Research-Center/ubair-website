@@ -102,7 +102,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
     pointer-events: auto !important;
 }
 
-/* Removed unused map-instruction-overlay styles */
 
 /* Bottom conditions overlay - full width minus legend */
 .conditions-overlay {
@@ -1054,7 +1053,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
     transform: scale(1.02);
 }
 
-/* Removed duplicate .road-network-map and unused .road-map-section */
 
 /* Weather Station Styles */
 .weather-station-marker {
