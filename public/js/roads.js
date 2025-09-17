@@ -74,17 +74,36 @@ class UnitsSystem {
 // Global units system instance
 const unitsSystem = new UnitsSystem();
 
-// Data cache for route conditions to avoid redundant API calls
+// Optimized data cache with intelligent refresh intervals
 const routeDataCache = {
     stations: null,
     events: null,
     lastUpdated: null,
-    isValid() {
-        return this.stations && this.events && this.lastUpdated &&
-               (Date.now() - this.lastUpdated) < 300000; // 5 minutes cache
+    refreshIntervals: {
+        stations: 300000,    // 5 minutes for weather stations
+        events: 600000,      // 10 minutes for traffic events  
+        cameras: 1800000,    // 30 minutes for cameras
+        restAreas: 86400000, // 24 hours for rest areas
+        passes: 300000       // 5 minutes for mountain passes
+    },
+    lastRefreshAttempt: null,
+    backoffMultiplier: 1,
+    
+    isValid(dataType = 'stations') {
+        if (!this[dataType] || !this.lastUpdated) return false;
+        const interval = this.refreshIntervals[dataType] * this.backoffMultiplier;
+        return (Date.now() - this.lastUpdated) < interval;
     },
 
     async updateCache() {
+        // Prevent rapid retry attempts
+        if (this.lastRefreshAttempt && (Date.now() - this.lastRefreshAttempt) < 30000) {
+            console.log('Skipping cache update - too recent attempt');
+            return null;
+        }
+        
+        this.lastRefreshAttempt = Date.now();
+        
         try {
             const [stationsResponse, eventsResponse] = await Promise.all([
                 fetch('/api/road-weather/stations'),
@@ -95,10 +114,16 @@ const routeDataCache = {
                 this.stations = await stationsResponse.json();
                 this.events = await eventsResponse.json();
                 this.lastUpdated = Date.now();
+                this.backoffMultiplier = 1; // Reset backoff on success
                 return { stations: this.stations, events: this.events };
+            } else {
+                throw new Error('API response not ok');
             }
         } catch (error) {
             console.error('Failed to update route data cache:', error);
+            // Exponential backoff on failure
+            this.backoffMultiplier = Math.min(this.backoffMultiplier * 2, 8);
+            console.warn(`Cache update failed, backing off to ${this.backoffMultiplier}x interval`);
         }
         return null;
     },
@@ -108,6 +133,25 @@ const routeDataCache = {
             await this.updateCache();
         }
         return { stations: this.stations, events: this.events };
+    },
+    
+    // Check API health and adjust refresh rates accordingly
+    async checkApiHealth() {
+        try {
+            const response = await fetch('/api/cache-stats/api-health');
+            if (response.ok) {
+                const health = await response.json();
+                if (health.health.overall === 'degraded') {
+                    // Slow down refresh rates when API is under stress
+                    this.backoffMultiplier = Math.max(this.backoffMultiplier, 2);
+                    console.warn('API health degraded - reducing refresh frequency');
+                }
+                return health;
+            }
+        } catch (error) {
+            console.warn('Failed to check API health:', error);
+        }
+        return null;
     }
 };
 
@@ -823,15 +867,42 @@ class RoadWeatherMap {
 
     startAutoRefresh() {
         if (this.refreshTimer) clearInterval(this.refreshTimer);
-
-        this.refreshTimer = setInterval(() => {
-            this.loadRoadWeatherData();
-            this.loadTrafficEvents();
-            this.loadSnowPlows();
-            this.loadMountainPasses();
-            this.loadRestAreas();
-            updateConditionCards();
-        }, this.options.refreshInterval);
+        
+        // Intelligent refresh intervals based on data type and API health
+        const scheduleRefresh = () => {
+            // Check API health periodically
+            routeDataCache.checkApiHealth();
+            
+            // Different refresh intervals for different data types
+            const intervals = {
+                roadWeather: 5 * 60 * 1000,  // 5 minutes - road conditions change frequently
+                traffic: 10 * 60 * 1000,     // 10 minutes - traffic events moderate frequency
+                snowPlows: 2 * 60 * 1000,    // 2 minutes - snow plows move frequently
+                passes: 5 * 60 * 1000,       // 5 minutes - mountain passes change with weather
+                restAreas: 24 * 60 * 60 * 1000 // 24 hours - rest areas rarely change
+            };
+            
+            // Staggered refresh to avoid API overload
+            setTimeout(() => this.loadRoadWeatherData(), 0);
+            setTimeout(() => this.loadTrafficEvents(), 2000);
+            setTimeout(() => this.loadSnowPlows(), 4000);
+            setTimeout(() => this.loadMountainPasses(), 6000);
+            setTimeout(() => updateConditionCards(), 8000);
+            
+            // Only refresh rest areas once per day
+            if (!this.lastRestAreaRefresh || (Date.now() - this.lastRestAreaRefresh) > intervals.restAreas) {
+                setTimeout(() => {
+                    this.loadRestAreas();
+                    this.lastRestAreaRefresh = Date.now();
+                }, 10000);
+            }
+        };
+        
+        // Initial load
+        scheduleRefresh();
+        
+        // Set up periodic refresh with the shortest interval needed
+        this.refreshTimer = setInterval(scheduleRefresh, 2 * 60 * 1000); // 2 minutes base interval
     }
 
     destroy() {

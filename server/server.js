@@ -9,6 +9,7 @@ import { createServer } from 'http';
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
+import cacheStatsRoutes from './routes/cacheStats.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use(express.json());
 app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
+app.use('/api/cache-stats', cacheStatsRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Single static files middleware with all headers
