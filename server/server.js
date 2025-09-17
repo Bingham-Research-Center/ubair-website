@@ -76,9 +76,6 @@ app.get('/fire', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/fire.html'));
 });
 
-app.get('/data-viewer', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/data-viewer.html'));
-});
 
 app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));

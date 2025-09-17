@@ -34,8 +34,6 @@ const PAGE_DISCLAIMERS = {
     '/': `DISCLAIMER: This information is provided by Utah State University's Bingham Research Center.
         For official air quality data, please visit the Utah DEQ website. ©2025, Utah State University.`,
 
-    '/data-viewer': `DISCLAIMER: Historical weather data is provided for research and analysis purposes.
-        Past observations are preliminary and may have undergone quality control revisions. ©2025, Utah State University.`
 };
 
 // Function to load the sidebar content
