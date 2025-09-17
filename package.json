@@ -7,7 +7,11 @@
   "scripts": {
     "start": "node server/server.js",
     "dev": "nodemon server/server.js --ignore public/data/outlooks/outlooks_list.json --ignore public/api/static/",
-    "test-api": "node scripts/test-api.js"
+    "test-api": "node scripts/test-api.js",
+    "validate-ai-files": "node scripts/validate-ai-files.js",
+    "test-ai-context": "node scripts/test-ai-context.js",
+    "install-git-hooks": "node scripts/git-hook-ai-validation.js install",
+    "uninstall-git-hooks": "node scripts/git-hook-ai-validation.js uninstall"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
