@@ -9,7 +9,6 @@ import { createServer } from 'http';
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
-import WebSocketServer from './websocket-server.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -135,17 +134,10 @@ app.get('/api/live-observations', async (req, res) => {
 // Create HTTP server
 const server = createServer(app);
 
-// Initialize WebSocket server
-const wsServer = new WebSocketServer(server);
-
-
-// Make WebSocket server available globally for data updates
-global.wsServer = wsServer;
 
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log('Data upload API available at /api/data/upload/:dataType');
-    console.log('WebSocket server available at ws://localhost:' + PORT + '/ws');
 });
 
 // Error handling middleware
