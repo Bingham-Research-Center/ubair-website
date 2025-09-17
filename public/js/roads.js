@@ -564,20 +564,17 @@ class RoadWeatherMap {
                 `<div class="camera-view">
                     <div class="camera-image-container"
                          onclick="window.open('/webcam-viewer?id=${camera.id}', '_blank')"
-                         style="cursor: pointer; position: relative;">
+                         style="cursor: pointer;">
                         <img src="${view.url}" alt="${view.description}"
-                             style="max-width: 300px; width: 100%; height: auto; border-radius: 4px; transition: transform 0.2s ease;"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
-                             onmouseover="this.style.transform='scale(1.05)'"
-                             onmouseout="this.style.transform='scale(1)'">
-                        <div class="click-overlay" style="position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.7); color: white; padding: 4px 8px; border-radius: 12px; font-size: 10px; font-weight: bold;">
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="click-overlay">
                             🔍 Click to view full screen
                         </div>
                         <div style="display: none; padding: 10px; background: #f0f0f0; border-radius: 4px; text-align: center;">
                             Camera feed unavailable
                         </div>
                     </div>
-                    <p style="margin: 5px 0; font-size: 12px; color: #666;">${view.description}</p>
+                    <p>${view.description}</p>
                 </div>`
             ).join('');
 
@@ -585,15 +582,10 @@ class RoadWeatherMap {
             let analysisInfo = '';
             if (detection) {
                 analysisInfo = `
-                    <div class="analysis-section" style="border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px;">
-                        <h5 style="margin: 0 0 5px 0; color: ${ringColor};">📊 Road Analysis</h5>
-                        <p style="margin: 2px 0;"><strong>Condition:</strong> ${conditionText}</p>
-                        <p style="margin: 2px 0;"><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                        ${detection.temperatureOverride ?
-                            `<p style="margin: 2px 0; font-size: 11px; color: #666;">🌡️ Temperature override active</p>` :
-                            `<p style="margin: 2px 0;"><strong>Snow Level:</strong> ${detection.snowLevel}</p>`
-                        }
-                        <p style="margin: 2px 0; font-size: 11px; color: #999;">Last updated: ${new Date(detection.timestamp).toLocaleTimeString()}</p>
+                    <div class="analysis-section">
+                        <p><strong>Condition:</strong> ${conditionText}</p>
+                        <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
+                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
                     </div>`;
             }
 
@@ -655,18 +647,31 @@ class RoadWeatherMap {
                 updateConditionCardsWithLocation(locationData);
             });
 
+            // Minimal popup - just camera feed and analysis
             marker.bindPopup(`
                 <div class="camera-popup">
-                    <h4>📹 ${camera.name}</h4>
-                    <p><strong>Roadway:</strong> ${camera.roadway}</p>
+                    <h4>${camera.name}</h4>
                     ${cameraViews}
                     ${analysisInfo}
-                    <p style="font-size: 11px; color: #999; margin-top: 10px;">
-                        Live feed from UDOT Traffic Cameras
-                    </p>
                 </div>
             `, {
-                maxWidth: 350
+                maxWidth: 260,
+                minWidth: 220,
+                className: 'camera-popup-marker',
+                closeButton: true,
+                autoPan: false,
+                keepInView: false
+            });
+
+            // Simple solution: wait for images to load then adjust position
+            marker.on('popupopen', () => {
+                setTimeout(() => {
+                    // Pan map to ensure popup is visible after images load
+                    this.map.panTo(marker.getLatLng(), {
+                        animate: true,
+                        duration: 0.3
+                    });
+                }, 500); // Wait half second for images to load
             });
 
 
@@ -730,58 +735,72 @@ class RoadWeatherMap {
         const legend = L.control({ position: 'bottomright' });
 
         legend.onAdd = () => {
-            const div = L.DomUtil.create('div', 'road-legend');
+            const div = L.DomUtil.create('div', 'road-legend-collapsible');
             div.innerHTML = `
-                <h4>Map Legend</h4>
-                <div class="legend-items">
-                    <div class="legend-section">
-                        <h5 style="margin: 8px 0 4px 0; font-size: 12px; font-weight: bold;">Road Conditions</h5>
-                        <div class="legend-item">
-                            <span class="color-box" style="background: #28a745;"></span>
-                            <span>Clear - Normal driving</span>
+                <div class="legend-toggle" id="legend-toggle">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Legend</span>
+                    <i class="fas fa-chevron-up legend-arrow" id="legend-arrow"></i>
+                </div>
+                <div class="legend-content" id="legend-content">
+                    <div class="legend-items">
+                        <div class="legend-section">
+                            <h5>Road Conditions</h5>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #28a745;"></span>
+                                <span>Clear</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #ffc107;"></span>
+                                <span>Caution</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #dc3545;"></span>
+                                <span>Dangerous</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="color-box" style="background: #6c757d;"></span>
+                                <span>No Data</span>
+                            </div>
                         </div>
-                        <div class="legend-item">
-                            <span class="color-box" style="background: #ffc107;"></span>
-                            <span>Caution - Snow/Ice possible</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="color-box" style="background: #dc3545;"></span>
-                            <span>Dangerous/Closed</span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="color-box" style="background: #6c757d;"></span>
-                            <span>No Data</span>
-                        </div>
-                    </div>
-                    <div class="legend-section" style="margin-top: 8px;">
-                        <h5 style="margin: 8px 0 4px 0; font-size: 12px; font-weight: bold;">Map Icons</h5>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">🌡️</span>
-                            <span>Weather Station</span>
-                        </div>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">📹</span>
-                            <span>Traffic Camera</span>
-                        </div>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">🚧</span>
-                            <span>Construction</span>
-                        </div>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">🚜</span>
-                            <span>Snow Plow (Winter)</span>
-                        </div>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">⛰️</span>
-                            <span>Mountain Pass</span>
-                        </div>
-                        <div class="legend-item">
-                            <span style="display: inline-block; width: 20px; text-align: center;">🅿️</span>
-                            <span>Rest Area</span>
+                        <div class="legend-section">
+                            <h5>Map Icons</h5>
+                            <div class="legend-item">
+                                <span class="icon-box">🌡️</span>
+                                <span>Weather</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="icon-box">📹</span>
+                                <span>Camera</span>
+                            </div>
+                            <div class="legend-item">
+                                <span class="icon-box">🚧</span>
+                                <span>Construction</span>
+                            </div>
                         </div>
                     </div>
                 </div>
             `;
+
+            // Add click event for toggle
+            setTimeout(() => {
+                const toggle = document.getElementById('legend-toggle');
+                const content = document.getElementById('legend-content');
+                const arrow = document.getElementById('legend-arrow');
+
+                toggle.addEventListener('click', () => {
+                    const isExpanded = content.classList.contains('expanded');
+
+                    if (isExpanded) {
+                        content.classList.remove('expanded');
+                        arrow.classList.remove('rotated');
+                    } else {
+                        content.classList.add('expanded');
+                        arrow.classList.add('rotated');
+                    }
+                });
+            }, 100);
+
             return div;
         };
 

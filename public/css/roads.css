@@ -108,8 +108,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .conditions-overlay {
     position: absolute;
     bottom: 20px;
-    left: 20px;
-    right: 250px; /* Leave plenty of space for legend to prevent any overlap */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     border-radius: 15px;
@@ -118,7 +119,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 8px 16px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 12px;
     pointer-events: none;
 }
@@ -847,37 +848,110 @@ body[data-page-type="roads"] .leaflet-drag-target {
     outline-offset: 2px;
 }
 
-/* Legend Styles */
-.leaflet-control.road-legend {
-    background: white;
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    border: 1px solid rgba(0,0,0,0.1);
+/* Collapsible Legend Styles */
+.leaflet-control.road-legend-collapsible {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgba(30, 58, 138, 0.15);
+    border: 2px solid rgba(30, 58, 138, 0.1);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    z-index: 1000;
+    min-width: 120px;
 }
 
-.road-legend h4 {
-    margin: 0 0 8px 0;
-    font-size: 14px;
-    color: var(--roads-primary);
-    font-weight: 600;
-}
-
-.road-legend .legend-items {
+.legend-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 15px;
+    background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
+    color: white;
+    cursor: pointer;
     font-size: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    user-select: none;
 }
 
-.road-legend .legend-item {
+.legend-toggle:hover {
+    background: linear-gradient(135deg, var(--roads-secondary), var(--roads-accent));
+}
+
+.legend-toggle i.fas.fa-info-circle {
+    font-size: 14px;
+}
+
+.legend-arrow {
+    margin-left: auto;
+    transition: transform 0.3s ease;
+    font-size: 10px;
+}
+
+.legend-arrow.rotated {
+    transform: rotate(180deg);
+}
+
+.legend-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out;
+    background: rgba(255, 255, 255, 0.98);
+}
+
+.legend-content.expanded {
+    max-height: 300px;
+    transition: max-height 0.4s ease-in;
+}
+
+.legend-items {
+    padding: 15px;
+    font-size: 11px;
+}
+
+.legend-section {
+    margin-bottom: 12px;
+}
+
+.legend-section:last-child {
+    margin-bottom: 0;
+}
+
+.legend-section h5 {
+    margin: 0 0 8px 0;
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--roads-primary);
+    border-bottom: 1px solid rgba(30, 58, 138, 0.2);
+    padding-bottom: 4px;
+}
+
+.legend-item {
     display: flex;
     align-items: center;
     margin: 4px 0;
+    gap: 8px;
 }
 
-.road-legend .color-box {
-    width: 20px;
-    height: 4px;
-    margin-right: 8px;
-    border-radius: 2px;
+.color-box {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.icon-box {
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 12px;
+}
+
+.legend-item span:last-child {
+    font-size: 10px;
+    color: #333;
+    font-weight: 500;
 }
 
 /* Road Closure Overlays */
@@ -1179,8 +1253,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
     .conditions-overlay {
         bottom: 15px;
-        left: 15px;
-        right: 15px; /* Full width on mobile since legend is typically hidden */
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 30px);
+        max-width: 400px;
         padding: 6px 12px;
         gap: 10px;
         border-radius: 12px;
@@ -1225,8 +1301,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
     .conditions-overlay {
         bottom: 10px;
-        left: 10px;
-        right: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100% - 20px);
+        max-width: 350px;
         padding: 5px 10px;
         gap: 8px;
         border-radius: 10px;
@@ -1743,5 +1821,165 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
     .events-loading i {
         font-size: 1.5rem;
+    }
+}
+
+/* Camera Popup Styles - Ultra-compact */
+.camera-popup {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    max-width: 240px !important;
+    width: 100% !important;
+}
+
+.camera-loading-indicator {
+    transition: opacity 0.3s ease;
+}
+
+.camera-loading-indicator.hidden {
+    opacity: 0;
+    height: 0;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.camera-popup h4 {
+    color: var(--roads-primary);
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid var(--roads-accent);
+    padding-bottom: 6px;
+}
+
+.camera-popup p {
+    margin: 4px 0;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.camera-view {
+    margin: 8px 0;
+    text-align: center;
+}
+
+.camera-image-container {
+    position: relative;
+    display: block;
+    margin: 0 auto;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: #f5f5f5;
+    max-width: 200px;
+    width: 100%;
+}
+
+.camera-image-container img {
+    width: 100% !important;
+    max-width: 200px !important;
+    height: auto !important;
+    display: block !important;
+    border-radius: 6px !important;
+    transition: transform 0.2s ease !important;
+}
+
+.camera-image-container:hover img {
+    transform: scale(1.02) !important;
+}
+
+.camera-image-container .click-overlay {
+    position: absolute !important;
+    top: 4px !important;
+    right: 4px !important;
+    background: rgba(0, 0, 0, 0.7) !important;
+    color: white !important;
+    padding: 2px 6px !important;
+    border-radius: 10px !important;
+    font-size: 9px !important;
+    font-weight: bold !important;
+    pointer-events: none !important;
+}
+
+.camera-view p {
+    margin: 4px 0 0 0 !important;
+    font-size: 11px !important;
+    color: #666 !important;
+    text-align: center !important;
+}
+
+.analysis-section {
+    border-top: 1px solid #eee !important;
+    margin-top: 8px !important;
+    padding-top: 8px !important;
+}
+
+.analysis-section h5 {
+    margin: 0 0 4px 0 !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+}
+
+.analysis-section p {
+    margin: 2px 0 !important;
+    font-size: 11px !important;
+}
+
+/* Ensure camera popups stay within map bounds and have consistent sizing */
+.leaflet-popup.camera-popup-marker {
+    max-width: 260px !important;
+    z-index: 1000 !important;
+}
+
+.leaflet-popup.camera-popup-marker .leaflet-popup-content-wrapper {
+    max-width: 260px !important;
+    min-width: 220px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+.leaflet-popup.camera-popup-marker .leaflet-popup-content {
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
+.leaflet-popup.camera-popup-marker .leaflet-popup-tip {
+    background: white !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Smart positioning override for camera popups */
+.camera-popup-marker.leaflet-popup {
+    margin-bottom: 0 !important;
+}
+
+/* Prevent popup from being cut off by map boundaries */
+.leaflet-container .camera-popup-marker {
+    contain: none !important;
+    overflow: visible !important;
+}
+
+/* Responsive camera popup styles */
+@media (max-width: 768px) {
+    .camera-popup {
+        max-width: 220px !important;
+    }
+
+    .camera-image-container {
+        max-width: 180px;
+    }
+
+    .camera-image-container img {
+        max-width: 180px !important;
+    }
+
+    .leaflet-popup.camera-popup-marker .leaflet-popup-content-wrapper {
+        max-width: 230px !important;
+        min-width: 200px !important;
+        padding: 6px !important;
     }
 }

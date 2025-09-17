@@ -10,17 +10,7 @@
 </head>
 <body data-page-type="webcam">
     <div class="container">
-        <header>
-            <div class="header-content">
-                <div class="back-button">
-                    <a href="/roads" class="back-link">← Back to Roads</a>
-                </div>
-                <h1 id="webcam-title">Live Traffic Camera</h1>
-                <div class="refresh-controls">
-                    <button id="refresh-btn" class="refresh-button">🔄 Refresh</button>
-                </div>
-            </div>
-        </header>
+        <!-- No header needed - buttons moved to camera section -->
 
         <main>
             <!-- Loading State -->
@@ -41,8 +31,16 @@
                 <!-- Camera Feed Section -->
                 <div class="camera-section">
                     <div class="camera-info">
-                        <h2 id="camera-name">Camera Name</h2>
-                        <p id="camera-location">Location</p>
+                        <div class="camera-header">
+                            <div class="camera-title">
+                                <h2 id="camera-name">Camera Name</h2>
+                                <p id="camera-location">Location</p>
+                            </div>
+                            <div class="camera-controls">
+                                <a href="/roads" class="back-link">← Back to Roads</a>
+                                <button id="refresh-btn" class="refresh-button">🔄 Refresh</button>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="camera-feed-container">
@@ -168,8 +166,7 @@
             }
 
             renderContent() {
-                // Update title and basic info
-                document.getElementById('webcam-title').textContent = `${this.cameraData.name} - Live Feed`;
+                // Update basic info (webcam-title removed)
                 document.getElementById('camera-name').textContent = this.cameraData.name;
                 document.getElementById('camera-location').textContent = this.cameraData.roadway;
 
