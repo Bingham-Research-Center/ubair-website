@@ -47,7 +47,6 @@ export const roadWeatherStations = {
 // - Castle Peak (UBCSP)
 
 
-// TODO - make ozone the main thing to determine colour of marker?
 export const thresholds = {
     'Ozone': { warning: 50, danger: 70 },
     'PM2.5': { warning: 35, danger: 55 },

@@ -1,0 +1,480 @@
+/* Webcam Viewer Styles */
+:root {
+    --webcam-primary: #1e3a8a;         /* Match roads deep blue */
+    --webcam-secondary: #3b82f6;       /* Match roads medium blue */
+    --webcam-accent: #60a5fa;          /* Match roads light blue */
+    --webcam-success: #10b981;         /* Match roads good conditions */
+    --webcam-warning: #f59e0b;         /* Match roads warning */
+    --webcam-danger: #dc2626;          /* Match roads danger */
+    --webcam-surface: #374151;         /* Match roads surface */
+    --webcam-border: #e2e8f0;
+    --webcam-ice: #bfdbfe;             /* Match roads ice blue */
+}
+
+body[data-page-type="webcam"] {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #ffffff 100%);
+    min-height: 100vh;
+}
+
+/* Override main header for webcam theme to match roads */
+body[data-page-type="webcam"] h1 {
+    background: linear-gradient(135deg, var(--webcam-primary), var(--webcam-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+body[data-page-type="webcam"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--webcam-primary), var(--webcam-accent));
+    border-radius: 2px;
+}
+
+/* Camera Header Layout */
+.camera-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.camera-title {
+    flex: 1;
+}
+
+.camera-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.back-link {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.back-link:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.refresh-button {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.refresh-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    transform: translateY(-1px);
+}
+
+/* Loading State */
+.loading-state {
+    text-align: center;
+    padding: 4rem 2rem;
+}
+
+.loading-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--webcam-border);
+    border-left: 4px solid var(--webcam-primary);
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error State */
+.error-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--webcam-danger);
+}
+
+.retry-button {
+    background: linear-gradient(135deg, var(--webcam-danger), #ef4444);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.2);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.retry-button:hover {
+    background: linear-gradient(135deg, #ef4444, var(--webcam-danger));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.3);
+}
+
+/* Main Content Layout */
+.main-content {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    margin-top: 2rem;
+}
+
+/* Camera Section */
+.camera-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.camera-info {
+    padding: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, var(--webcam-primary), var(--webcam-secondary));
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.camera-info::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    pointer-events: none;
+}
+
+.camera-info h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.camera-info p {
+    margin: 0;
+    color: white;
+    opacity: 0.9;
+    font-size: 0.95rem;
+}
+
+.camera-feed-container {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+}
+
+.camera-views {
+    display: grid;
+    gap: 2rem;
+    justify-items: center;
+}
+
+.camera-view-full {
+    text-align: center;
+    max-width: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.camera-view-full h4 {
+    margin: 0 0 1rem 0;
+    color: var(--webcam-primary);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.image-container {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.15);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto;
+    max-width: 100%;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(5px);
+}
+
+.camera-view-full img {
+    width: 100%;
+    max-width: 800px;
+    height: auto;
+    display: block;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.camera-view-full img.loaded {
+    opacity: 1;
+}
+
+.error-placeholder {
+    padding: 4rem 2rem;
+    background: #f8f9fa;
+    color: #6c757d;
+    border-radius: 8px;
+    font-style: italic;
+}
+
+/* Weather Section */
+.weather-section {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.weather-section h3 {
+    margin: 0 0 1.5rem 0;
+    color: var(--webcam-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--webcam-accent);
+}
+
+.weather-station-info h4 {
+    color: var(--webcam-primary);
+    margin: 0 0 1rem 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.weather-metrics {
+    display: grid;
+    gap: 1rem;
+}
+
+.metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+.metric {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--webcam-surface);
+    border-radius: 8px;
+    border: 1px solid var(--webcam-border);
+}
+
+.metric-label {
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.metric-value {
+    color: #60a5fa;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.metric-value.temp {
+    color: #f87171;
+}
+
+.metric-value.humidity {
+    color: #38bdf8;
+}
+
+.metric-value.wind {
+    color: #4ade80;
+}
+
+.metric-value.surface {
+    color: #d1d5db;
+}
+
+.condition-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 1rem;
+}
+
+.condition-badge.green {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--webcam-success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.condition-badge.yellow {
+    background: rgba(245, 158, 11, 0.1);
+    color: var(--webcam-warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.condition-badge.red {
+    background: rgba(220, 38, 38, 0.1);
+    color: var(--webcam-danger);
+    border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.no-weather {
+    text-align: center;
+    padding: 2rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Info Section */
+.info-section {
+    margin-top: 1rem;
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.info-card {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
+    backdrop-filter: blur(10px);
+    padding: 2rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.info-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--webcam-primary), var(--webcam-accent));
+}
+
+.info-card h4 {
+    margin: 0 0 1rem 0;
+    color: var(--webcam-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.info-card ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.info-card li {
+    margin-bottom: 0.5rem;
+    color: #64748b;
+}
+
+.info-card p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .camera-header {
+        flex-direction: column;
+        gap: 1rem;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .camera-controls {
+        justify-content: center;
+        order: 2;
+    }
+
+    .metric-row {
+        grid-template-columns: 1fr;
+        gap: 0.5rem;
+    }
+
+    .info-cards {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .camera-view-full img {
+        max-width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0.5rem;
+    }
+    
+    .camera-info,
+    .camera-feed-container,
+    .weather-section,
+    .info-card {
+        padding: 1rem;
+    }
+    
+    .metric {
+        padding: 0.5rem;
+        flex-direction: column;
+        gap: 0.25rem;
+        text-align: center;
+    }
+}

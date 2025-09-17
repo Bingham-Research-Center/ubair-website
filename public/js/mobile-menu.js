@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+function initializeMobileMenu() {
     // Create mobile menu toggle button
     const menuToggle = document.createElement('button');
     menuToggle.className = 'mobile-menu-toggle';
@@ -66,4 +66,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }, 250);
     });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeMobileMenu();
 });

@@ -31,7 +31,32 @@
 <main class="content">
   <h1>On The Water</h1>
 
-  <!-- Current Water Conditions Summary -->
+  <!-- Mobile-friendly Tab Navigation -->
+  <div class="water-tabs-container">
+    <div class="water-tabs">
+      <button class="water-tab active" data-tab="conditions" title="Current water conditions">
+        <i class="fas fa-thermometer-half"></i> Conditions
+      </button>
+      <button class="water-tab" data-tab="safety" title="Safety forecast and alerts">
+        <i class="fas fa-life-ring"></i> Safety
+      </button>
+      <button class="water-tab" data-tab="recreation" title="Recreation planning and UV index">
+        <i class="fas fa-calendar-check"></i> Recreation
+      </button>
+      <button class="water-tab" data-tab="fishing" title="Fish activity and barometric pressure">
+        <i class="fas fa-fish"></i> Fishing
+      </button>
+      <button class="water-tab" data-tab="locations" title="Basin water locations">
+        <i class="fas fa-map-marker-alt"></i> Locations
+      </button>
+    </div>
+  </div>
+
+  <!-- Tab Content Wrapper -->
+  <div class="water-tab-content-wrapper">
+    <!-- Current Water Conditions Tab -->
+    <div class="water-tab-content active" id="conditions-tab">
+      <!-- Current Water Conditions Summary -->
   <section class="weather-summary" aria-label="Current Water Conditions">
     <div class="summary-grid">
       <div class="condition-card">
@@ -79,99 +104,110 @@
       </div>
     </div>
   </section>
+    </div>
 
-  <!-- Water Recreation Forecast Sections -->
-  <div class="forecast-container">
-    <!-- Safety Forecast -->
-    <section class="forecast-section">
-      <h2><i class="fas fa-life-ring"></i> Safety Forecast</h2>
-      <div class="forecast-content">
-        <div class="placeholder-content">
-          <p>Small craft advisories, fog warnings, storm potential, and water safety conditions for the next 48 hours.</p>
-          <div class="chart-placeholder">
-            <i class="fas fa-chart-line fa-3x"></i>
-            <p>Wind Speed & Water Conditions Timeline</p>
+    <!-- Safety Forecast Tab -->
+    <div class="water-tab-content" id="safety-tab">
+      <!-- Safety Forecast -->
+      <section class="forecast-section">
+        <h2><i class="fas fa-life-ring"></i> Safety Forecast</h2>
+        <div class="forecast-content">
+          <div class="placeholder-content">
+            <p>Small craft advisories, fog warnings, storm potential, and water safety conditions for the next 48 hours.</p>
+            <div class="chart-placeholder">
+              <i class="fas fa-chart-line fa-3x"></i>
+              <p>Wind Speed & Water Conditions Timeline</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Recreation Planning -->
-    <section class="forecast-section">
-      <h2><i class="fas fa-calendar-check"></i> Recreation Planning</h2>
-      <div class="forecast-content">
-        <div class="placeholder-content">
-          <p>UV index, comfort conditions, ideal activity windows for boating, paddleboarding, and water sports.</p>
-          <div class="chart-placeholder">
-            <i class="fas fa-sun fa-3x"></i>
-            <p>UV Index & Comfort Conditions</p>
+      <!-- Water Safety Alerts -->
+      <section class="alerts-section">
+        <h2><i class="fas fa-exclamation-triangle"></i> Water Safety Alerts</h2>
+        <div class="alerts-container">
+          <div class="alert-placeholder">
+            <p>Small craft advisories, fog warnings, and water safety recommendations will appear here.</p>
+            <div class="safety-levels">
+              <div class="level-indicator excellent">
+                <i class="fas fa-check-circle"></i>
+                <span>Excellent Conditions</span>
+              </div>
+              <div class="level-indicator caution">
+                <i class="fas fa-exclamation-circle"></i>
+                <span>Use Caution</span>
+              </div>
+              <div class="level-indicator dangerous">
+                <i class="fas fa-times-circle"></i>
+                <span>Dangerous Conditions</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
 
-    <!-- Fish Activity Forecast -->
-    <section class="forecast-section">
-      <h2><i class="fas fa-fish"></i> Fish Activity Forecast</h2>
-      <div class="forecast-content">
-        <div class="placeholder-content">
-          <p>Barometric pressure trends, feeding windows, and optimal fishing conditions for Basin waters.</p>
-          <div class="chart-placeholder">
-            <i class="fas fa-chart-area fa-3x"></i>
-            <p>Pressure Trends & Feeding Activity</p>
+    <!-- Recreation Planning Tab -->
+    <div class="water-tab-content" id="recreation-tab">
+      <!-- Recreation Planning -->
+      <section class="forecast-section">
+        <h2><i class="fas fa-calendar-check"></i> Recreation Planning</h2>
+        <div class="forecast-content">
+          <div class="placeholder-content">
+            <p>UV index, comfort conditions, ideal activity windows for boating, paddleboarding, and water sports.</p>
+            <div class="chart-placeholder">
+              <i class="fas fa-sun fa-3x"></i>
+              <p>UV Index & Comfort Conditions</p>
+            </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </div>
+
+    <!-- Fish Activity Forecast Tab -->
+    <div class="water-tab-content" id="fishing-tab">
+      <!-- Fish Activity Forecast -->
+      <section class="forecast-section">
+        <h2><i class="fas fa-fish"></i> Fish Activity Forecast</h2>
+        <div class="forecast-content">
+          <div class="placeholder-content">
+            <p>Barometric pressure trends, feeding windows, and optimal fishing conditions for Basin waters.</p>
+            <div class="chart-placeholder">
+              <i class="fas fa-chart-area fa-3x"></i>
+              <p>Pressure Trends & Feeding Activity</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Basin Waters Tab -->
+    <div class="water-tab-content" id="locations-tab">
+      <!-- Basin Waters Information -->
+      <section class="waters-section">
+        <h2><i class="fas fa-map-marker-alt"></i> Basin Waters</h2>
+        <div class="waters-grid">
+          <div class="water-card">
+            <h3>Flaming Gorge Reservoir</h3>
+            <p>91 miles NE • Elevation: 6,040 ft</p>
+            <div class="water-summary">Current conditions loading...</div>
+          </div>
+
+          <div class="water-card">
+            <h3>Starvation Reservoir</h3>
+            <p>37 miles SW • Elevation: 5,712 ft</p>
+            <div class="water-summary">Current conditions loading...</div>
+          </div>
+
+          <div class="water-card">
+            <h3>Steinaker Reservoir</h3>
+            <p>4 miles N • Elevation: 5,500 ft</p>
+            <div class="water-summary">Current conditions loading...</div>
+          </div>
+        </div>
+      </section>
+    </div>
   </div>
-
-  <!-- Water Safety Alerts -->
-  <section class="alerts-section">
-    <h2><i class="fas fa-exclamation-triangle"></i> Water Safety Alerts</h2>
-    <div class="alerts-container">
-      <div class="alert-placeholder">
-        <p>Small craft advisories, fog warnings, and water safety recommendations will appear here.</p>
-        <div class="safety-levels">
-          <div class="level-indicator excellent">
-            <i class="fas fa-check-circle"></i>
-            <span>Excellent Conditions</span>
-          </div>
-          <div class="level-indicator caution">
-            <i class="fas fa-exclamation-circle"></i>
-            <span>Use Caution</span>
-          </div>
-          <div class="level-indicator dangerous">
-            <i class="fas fa-times-circle"></i>
-            <span>Dangerous Conditions</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Basin Waters Information -->
-  <section class="waters-section">
-    <h2><i class="fas fa-map-marker-alt"></i> Basin Waters</h2>
-    <div class="waters-grid">
-      <div class="water-card">
-        <h3>Flaming Gorge Reservoir</h3>
-        <p>91 miles NE • Elevation: 6,040 ft</p>
-        <div class="water-summary">Current conditions loading...</div>
-      </div>
-
-      <div class="water-card">
-        <h3>Starvation Reservoir</h3>
-        <p>37 miles SW • Elevation: 5,712 ft</p>
-        <div class="water-summary">Current conditions loading...</div>
-      </div>
-
-      <div class="water-card">
-        <h3>Steinaker Reservoir</h3>
-        <p>4 miles N • Elevation: 5,500 ft</p>
-        <div class="water-summary">Current conditions loading...</div>
-      </div>
-    </div>
-  </section>
 </main>
 
 <!-- Footer -->
