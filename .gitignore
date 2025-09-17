@@ -35,3 +35,6 @@ pids
 
 # Optional eslint cache
 .eslintcache
+
+# API cache directory
+.cache/

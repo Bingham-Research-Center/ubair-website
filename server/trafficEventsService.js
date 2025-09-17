@@ -1,7 +1,20 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
+import fs from 'fs/promises';
+import path from 'path';
 
-const cache = new NodeCache({ stdTTL: 300 });
+// Aggressive caching: 2 hours for API data
+const cache = new NodeCache({ stdTTL: 7200 }); // 2 hours instead of 5 minutes
+
+// File-based persistent cache for backup
+const CACHE_DIR = path.join(process.cwd(), '.cache');
+const ensureCacheDir = async () => {
+    try {
+        await fs.mkdir(CACHE_DIR, { recursive: true });
+    } catch (err) {
+        // Directory might already exist
+    }
+};
 
 class TrafficEventsService {
     constructor() {
@@ -13,14 +26,38 @@ class TrafficEventsService {
             west: -110.5    // Western boundary (tighter to exclude Carbon County)
         };
         this.uintahBasinCounties = ['duchesne', 'uintah'];
+
+        // Rate limiting - track last API call times
+        this.lastApiCalls = new Map();
+        this.minCallInterval = 60000; // Minimum 1 minute between API calls of same type
     }
 
     async fetchUDOTAlerts() {
         const cacheKey = 'udot_alerts';
+
+        // Check memory cache first
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
+        // Check persistent file cache
+        const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
+        if (diskCached) {
+            cache.set(cacheKey, diskCached); // Restore to memory
+            return diskCached;
+        }
+
+        // Rate limiting check
+        const apiCallKey = 'alerts';
+        const lastCall = this.lastApiCalls.get(apiCallKey);
+        if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
+            console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
+            return this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
+        }
+
         try {
+            console.log('Making UDOT alerts API call...');
+            this.lastApiCalls.set(apiCallKey, Date.now());
+
             const url = `https://www.udottraffic.utah.gov/api/v2/get/alerts?key=${this.udotApiKey}&format=json`;
             const response = await fetch(url, {
                 headers: {
@@ -49,11 +86,13 @@ class TrafficEventsService {
             }));
 
             // Filter for active alerts relevant to Uintah Basin
-            const relevantAlerts = processedAlerts.filter(alert => 
+            const relevantAlerts = processedAlerts.filter(alert =>
                 alert.isActive && this.isAlertRelevantToBasin(alert)
             );
 
+            // Save to both memory and disk cache
             cache.set(cacheKey, relevantAlerts);
+            await this.saveToDiskCache(cacheKey, relevantAlerts);
             return relevantAlerts;
         } catch (error) {
             console.error('Error fetching UDOT alerts:', error);
@@ -114,10 +153,30 @@ class TrafficEventsService {
 
     async fetchUDOTTrafficEvents() {
         const cacheKey = 'udot_traffic_events';
+
+        // Check memory cache first
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
+        // Check persistent file cache
+        const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
+        if (diskCached) {
+            cache.set(cacheKey, diskCached); // Restore to memory
+            return diskCached;
+        }
+
+        // Rate limiting check
+        const apiCallKey = 'events';
+        const lastCall = this.lastApiCalls.get(apiCallKey);
+        if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
+            console.log('Rate limiting: Skipping UDOT events API call (too recent)');
+            return this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
+        }
+
         try {
+            console.log('Making UDOT events API call...');
+            this.lastApiCalls.set(apiCallKey, Date.now());
+
             const url = `https://www.udottraffic.utah.gov/api/v2/get/event?key=${this.udotApiKey}&format=json`;
             const response = await fetch(url, {
                 headers: {
@@ -179,7 +238,9 @@ class TrafficEventsService {
                 return new Date(b.startDate) - new Date(a.startDate);
             });
 
+            // Save to both memory and disk cache
             cache.set(cacheKey, sortedEvents);
+            await this.saveToDiskCache(cacheKey, sortedEvents);
             return sortedEvents;
         } catch (error) {
             console.error('Error fetching UDOT traffic events:', error);
@@ -391,6 +452,45 @@ class TrafficEventsService {
         });
 
         return summary;
+    }
+
+    // Disk cache helper methods
+    async saveToDiskCache(key, data) {
+        try {
+            await ensureCacheDir();
+            const filePath = path.join(CACHE_DIR, `${key}.json`);
+            const cacheData = {
+                timestamp: Date.now(),
+                data: data
+            };
+            await fs.writeFile(filePath, JSON.stringify(cacheData), 'utf8');
+        } catch (error) {
+            console.warn('Failed to save to disk cache:', error.message);
+        }
+    }
+
+    async loadFromDiskCache(key, maxAge) {
+        try {
+            const filePath = path.join(CACHE_DIR, `${key}.json`);
+            const fileContent = await fs.readFile(filePath, 'utf8');
+            const cacheData = JSON.parse(fileContent);
+
+            const now = Date.now();
+            const age = now - cacheData.timestamp;
+
+            if (age < maxAge) {
+                console.log(`Loading ${key} from disk cache (age: ${Math.round(age / 1000 / 60)} minutes)`);
+                return cacheData.data;
+            } else {
+                console.log(`Disk cache for ${key} expired (age: ${Math.round(age / 1000 / 60)} minutes)`);
+                // Clean up expired cache file
+                await fs.unlink(filePath).catch(() => {});
+                return null;
+            }
+        } catch (error) {
+            // File doesn't exist or is corrupted - not a problem
+            return null;
+        }
     }
 }
 
