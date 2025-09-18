@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uintah Basin Air Quality - Kiosk Display</title>
+
+    <link rel="icon" type="image/png" href="/public/images/BRS_01_UStateLeft_White.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/base.css">
+    <link rel="stylesheet" href="/public/css/kiosk.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body class="kiosk-mode">
+    <!-- Header Bar -->
+    <header class="kiosk-header">
+        <div class="kiosk-title">
+            <h1>Uintah Basin Air Quality & Weather</h1>
+            <div class="kiosk-subtitle">Live Monitoring Dashboard</div>
+        </div>
+        <div class="kiosk-timestamp" id="current-time"></div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="kiosk-content">
+        <!-- Live Map Section -->
+        <section class="kiosk-panel kiosk-map-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-map-marked-alt"></i> Live Monitoring Stations</h2>
+                <div class="panel-status" id="map-status">Auto-cycling stations...</div>
+            </div>
+            <div class="map-container-kiosk">
+                <div id="kiosk-map" class="kiosk-map"></div>
+                <!-- Legend always visible in kiosk mode -->
+                <div class="kiosk-legend">
+                    <div class="legend-title">Station Status</div>
+                    <div class="legend-items">
+                        <div class="legend-row">
+                            <span class="legend-color air-quality good"></span>
+                            <span>Good (&lt;50)</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-color air-quality warning"></span>
+                            <span>Warning (50-69)</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-color air-quality danger"></span>
+                            <span>Danger (≥70)</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-color weather-only"></span>
+                            <span>Weather Only</span>
+                        </div>
+                        <div class="legend-row">
+                            <span class="legend-color no-data"></span>
+                            <span>No Data</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Current Conditions Panel -->
+        <section class="kiosk-panel kiosk-conditions-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-thermometer-half"></i> Current Conditions</h2>
+                <div class="panel-refresh" id="conditions-refresh">Updated: <span id="conditions-time">--:--</span></div>
+            </div>
+            <div class="conditions-grid" id="current-conditions">
+                <div class="condition-item loading">
+                    <div class="condition-label">Loading...</div>
+                    <div class="condition-value">--</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Air Quality Forecast Panel -->
+        <section class="kiosk-panel kiosk-forecast-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-crystal-ball"></i> Air Quality Outlook</h2>
+                <div class="panel-refresh" id="forecast-refresh">Updated: <span id="forecast-time">--:--</span></div>
+            </div>
+            <div class="forecast-content-kiosk" id="air-quality-forecast">
+                <div class="forecast-loading">Loading air quality outlook...</div>
+            </div>
+        </section>
+
+        <!-- Weather Summary Panel -->
+        <section class="kiosk-panel kiosk-weather-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-cloud-sun"></i> Weather Summary</h2>
+                <div class="panel-refresh" id="weather-refresh">Updated: <span id="weather-time">--:--</span></div>
+            </div>
+            <div class="weather-content-kiosk" id="weather-summary">
+                <div class="weather-loading">Loading weather summary...</div>
+            </div>
+        </section>
+
+        <!-- Alerts Panel -->
+        <section class="kiosk-panel kiosk-alerts-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-exclamation-triangle"></i> Active Alerts</h2>
+                <div class="alert-count" id="alert-count">0 active alerts</div>
+            </div>
+            <div class="alerts-content" id="active-alerts">
+                <div class="no-alerts">
+                    <i class="fas fa-check-circle"></i>
+                    <span>No active air quality or weather alerts</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Statistics Panel -->
+        <section class="kiosk-panel kiosk-stats-panel">
+            <div class="panel-header">
+                <h2><i class="fas fa-chart-line"></i> 24-Hour Summary</h2>
+                <div class="stats-period" id="stats-period">Last 24 hours</div>
+            </div>
+            <div class="stats-grid" id="daily-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Peak Ozone</div>
+                    <div class="stat-value" id="peak-ozone">-- ppb</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Avg Temperature</div>
+                    <div class="stat-value" id="avg-temp">-- °F</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Wind Speed</div>
+                    <div class="stat-value" id="wind-speed">-- mph</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Stations Active</div>
+                    <div class="stat-value" id="active-stations">-- / --</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer with Auto-refresh Info -->
+    <footer class="kiosk-footer">
+        <div class="refresh-info">
+            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+            <span>Auto-refresh: <span id="next-refresh">--:--</span> | Stations cycle every <span id="cycle-interval">30s</span></span>
+        </div>
+        <div class="kiosk-branding">
+            <span>basinwx.com | Utah State University Bingham Research Center</span>
+        </div>
+    </footer>
+
+    <!-- Load Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Load markdown-it for forecast content -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+
+    <!-- Load JavaScript Modules -->
+    <script type="module" src="/public/js/config.js"></script>
+    <script type="module" src="/public/js/kiosk.js"></script>
+</body>
+</html>
