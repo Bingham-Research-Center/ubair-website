@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Uintah Basin Environmental Monitoring - Kiosk Display</title>
+
+    <link rel="icon" type="image/png" href="/public/images/BRS_01_UStateLeft_White.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/base.css">
+    <link rel="stylesheet" href="/public/css/roads.css">
+    <link rel="stylesheet" href="/public/css/kiosk.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+</head>
+
+<body class="kiosk-mode">
+    <!-- Header Bar -->
+    <header class="kiosk-header">
+        <div class="kiosk-title">
+            <h1>Uintah Basin Environmental Monitoring</h1>
+            <div class="kiosk-subtitle">Real-time Air Quality & Weather Dashboard</div>
+        </div>
+        <div class="kiosk-controls">
+            <div class="carousel-controls">
+                <button id="carousel-prev" class="carousel-btn" title="Previous slide" aria-label="Go to previous slide">
+                    <i class="fas fa-chevron-left" aria-hidden="true"></i>
+                </button>
+                <div class="carousel-indicators" id="carousel-indicators" role="tablist" aria-label="Slide navigation">
+                    <span class="indicator active" data-slide="0" role="tab" aria-label="Live Air Quality Map" title="Live Air Quality Map"></span>
+                    <span class="indicator" data-slide="1" role="tab" aria-label="Road Weather Conditions" title="Road Weather Conditions"></span>
+                    <span class="indicator" data-slide="2" role="tab" aria-label="Environmental KPIs" title="Environmental KPIs"></span>
+                    <span class="indicator" data-slide="3" role="tab" aria-label="Historical Analysis" title="Historical Analysis"></span>
+                </div>
+                <button id="carousel-next" class="carousel-btn" title="Next slide" aria-label="Go to next slide">
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                </button>
+                <button id="carousel-play-pause" class="carousel-btn" title="Pause auto-cycling" aria-label="Pause automatic slide cycling">
+                    <i class="fas fa-pause" aria-hidden="true"></i>
+                </button>
+                <button id="fullscreen-toggle" class="carousel-btn" title="Toggle fullscreen" aria-label="Toggle fullscreen mode">
+                    <i class="fas fa-expand" aria-hidden="true"></i>
+                    <i class="fas fa-compress" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="kiosk-timestamp" id="current-time"></div>
+        </div>
+    </header>
+
+    <!-- Main Content Carousel -->
+    <main class="kiosk-carousel" role="main" aria-label="Environmental monitoring carousel">
+        <div class="carousel-container" id="carousel-container" role="region" aria-live="polite" aria-label="Dashboard slides">
+
+            <!-- Slide 1: Live Air Quality Map -->
+            <div class="carousel-slide active" data-slide="0">
+                <div class="slide-header">
+                    <h2><i class="fas fa-lungs"></i> Live Air Quality Map</h2>
+                    <div class="slide-status" id="air-quality-status">Loading real-time data...</div>
+                </div>
+
+                <div class="slide-content map-slide">
+                    <div class="map-container-fullscreen">
+                        <div id="air-quality-map" class="kiosk-map"></div>
+                        <!-- Air Quality Legend -->
+                        <div class="kiosk-legend">
+                            <div class="legend-title">Air Quality Index (AQI)</div>
+                            <div class="legend-items">
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-good"></span>
+                                    <span>Good (0-50)</span>
+                                </div>
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-moderate"></span>
+                                    <span>Moderate (51-100)</span>
+                                </div>
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-unhealthy-sensitive"></span>
+                                    <span>Unhealthy for Sensitive (101-150)</span>
+                                </div>
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-unhealthy"></span>
+                                    <span>Unhealthy (151-200)</span>
+                                </div>
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-very-unhealthy"></span>
+                                    <span>Very Unhealthy (201-300)</span>
+                                </div>
+                                <div class="legend-row">
+                                    <span class="legend-color aqi-hazardous"></span>
+                                    <span>Hazardous (301+)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 2: Road Weather Conditions Map -->
+            <div class="carousel-slide" data-slide="1">
+                <div class="slide-header">
+                    <h2><i class="fas fa-road"></i> Road Weather Conditions</h2>
+                    <div class="slide-status" id="road-weather-status"></div>
+                </div>
+
+                <div class="slide-content map-slide">
+                    <!-- Road Weather Dashboard - matches roads.html layout -->
+                    <section class="road-weather-dashboard">
+                        <div class="map-container-fullscreen">
+                            <div id="road-weather-map" class="road-network-map"></div>
+
+                            <!-- Bottom condition cards overlay -->
+                            <div class="conditions-overlay">
+                                <div class="condition-cards-horizontal">
+                                    <div class="condition-card-compact road-temp">
+                                        <div class="card-icon-small">
+                                            <i class="fas fa-road"></i>
+                                        </div>
+                                        <div class="card-data">
+                                            <h5>Road Surface</h5>
+                                            <p class="value">--°F</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="condition-card-compact visibility">
+                                        <div class="card-icon-small">
+                                            <i class="fas fa-eye"></i>
+                                        </div>
+                                        <div class="card-data">
+                                            <h5>Visibility</h5>
+                                            <p class="value">-- mi</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="condition-card-compact precipitation">
+                                        <div class="card-icon-small">
+                                            <i class="fas fa-cloud-rain"></i>
+                                        </div>
+                                        <div class="card-data">
+                                            <h5>Precipitation</h5>
+                                            <p class="value">--</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="condition-card-compact wind">
+                                        <div class="card-icon-small">
+                                            <i class="fas fa-wind"></i>
+                                        </div>
+                                        <div class="card-data">
+                                            <h5>Wind</h5>
+                                            <p class="value">-- mph</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Units Toggle -->
+                            <div class="units-toggle-container">
+                                <button class="units-toggle" id="units-toggle-kiosk" title="Toggle between Imperial and Metric units">
+                                    <i class="fas fa-thermometer-half"></i>
+                                    <span id="units-label-kiosk">Imperial</span>
+                                    <i class="fas fa-exchange-alt"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- Slide 3: Basin-Wide Environmental KPIs Dashboard -->
+            <div class="carousel-slide" data-slide="2">
+                <div class="slide-header">
+                    <h2><i class="fas fa-chart-line"></i> Basin-Wide Environmental KPIs</h2>
+                    <div class="slide-status" id="kpi-status">Last Updated: <span id="kpi-timestamp">--:--</span></div>
+                </div>
+
+                <div class="slide-content kpis-slide">
+                    <!-- Main KPI Cards -->
+                    <div class="kpi-metrics-grid" id="kpi-metrics">
+                        <div class="metric-card temperature-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-thermometer-half"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="basin-avg-temp">--°F</div>
+                                <div class="metric-label">Basin Avg Temperature</div>
+                                <div class="metric-trend" id="temp-trend">
+                                    <i class="fas fa-minus"></i> 24h change: --°F
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card wind-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-wind"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="avg-wind-speed">-- mph</div>
+                                <div class="metric-label">Average Wind Speed</div>
+                                <div class="metric-trend" id="wind-trend">
+                                    <i class="fas fa-minus"></i> 6h change: -- mph
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card aqi-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-lungs"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="peak-basin-aqi">--</div>
+                                <div class="metric-label">Peak Basin AQI</div>
+                                <div class="metric-status" id="aqi-status">Good</div>
+                            </div>
+                        </div>
+
+                        <div class="metric-card compliance-card">
+                            <div class="metric-icon">
+                                <i class="fas fa-gavel"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="epa-compliance">100%</div>
+                                <div class="metric-label">EPA Compliance</div>
+                                <div class="metric-status" id="compliance-status">Operational</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 24-Hour Summary Table -->
+                    <div class="summary-section">
+                        <div class="summary-card">
+                            <h3><i class="fas fa-chart-bar"></i> 24-Hour Summary</h3>
+                            <div class="summary-grid" id="daily-summary">
+                                <div class="summary-item">
+                                    <div class="summary-label">Peak Ozone</div>
+                                    <div class="summary-value" id="summary-peak-ozone">-- ppb</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Avg Temperature</div>
+                                    <div class="summary-value" id="summary-avg-temp">-- °F</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Wind Speed</div>
+                                    <div class="summary-value" id="summary-wind-speed">-- mph</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div class="summary-label">Active Stations</div>
+                                    <div class="summary-value" id="summary-active-stations">-- / --</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alerts-card">
+                            <h3><i class="fas fa-exclamation-triangle"></i> Active Alerts</h3>
+                            <div class="alerts-content" id="active-alerts">
+                                <div class="no-alerts">
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>No active environmental alerts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Historical Data Analysis -->
+            <div class="carousel-slide" data-slide="3">
+                <div class="slide-header">
+                    <h2><i class="fas fa-chart-area"></i> Historical Data Analysis - Winter Season</h2>
+                    <div class="slide-status" id="historical-status">
+                        <span class="data-info">13+ Years • 4 Stations • 25+ Parameters • Winter Seasons (Nov→May) • 500K+ Data Points</span>
+                    </div>
+                </div>
+
+                <div class="slide-content historical-slide">
+                    <div class="historical-container">
+                        <!-- Controls -->
+                        <div class="historical-controls">
+                            <div class="control-group">
+                                <label for="station-select" class="control-label">Station:</label>
+                                <select id="station-select" class="control-select">
+                                    <option value="horsepool">Horsepool Station</option>
+                                    <option value="roosevelt">Roosevelt Station</option>
+                                    <option value="castlepeak">Castle Peak Station</option>
+                                    <option value="sevensis">Seven Sisters Station</option>
+                                    <option value="all">All Stations</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="parameter-select" class="control-label">Parameter:</label>
+                                <select id="parameter-select" class="control-select">
+                                    <optgroup label="Air Quality">
+                                        <option value="ozone">Ozone (O₃)</option>
+                                        <option value="no">Nitric Oxide (NO)</option>
+                                        <option value="no2">Nitrogen Dioxide (NO₂)</option>
+                                        <option value="nox">Nitrogen Oxides (NOₓ)</option>
+                                        <option value="noy">Total Reactive Nitrogen (NOy)</option>
+                                        <option value="noz">NOz</option>
+                                        <option value="ch4">Methane (CH₄)</option>
+                                        <option value="nmhc">Non-Methane Hydrocarbons</option>
+                                    </optgroup>
+                                    <optgroup label="Meteorology">
+                                        <option value="temperature">Temperature</option>
+                                        <option value="humidity">Humidity</option>
+                                        <option value="pressure">Atmospheric Pressure</option>
+                                        <option value="windspeed">Wind Speed</option>
+                                        <option value="winddir">Wind Direction</option>
+                                        <option value="snowdepth">Snow Depth</option>
+                                    </optgroup>
+                                    <optgroup label="Radiation">
+                                        <option value="total_uv">Total UV Radiation</option>
+                                        <option value="sw_incoming">Incoming Shortwave</option>
+                                        <option value="sw_outgoing">Outgoing Shortwave</option>
+                                        <option value="sw_albedo">Shortwave Albedo</option>
+                                        <option value="uva_incoming">Incoming UVA</option>
+                                        <option value="uva_outgoing">Outgoing UVA</option>
+                                        <option value="uvb_incoming">Incoming UVB</option>
+                                        <option value="uvb_outgoing">Outgoing UVB</option>
+                                        <option value="uva_albedo">UVA Albedo</option>
+                                        <option value="uvb_albedo">UVB Albedo</option>
+                                        <option value="uvaplusuvb_albedo">UVA+UVB Albedo</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="year-select" class="control-label">Time Period:</label>
+                                <select id="year-select" class="control-select">
+                                    <option value="2023">2023 - Full Year</option>
+                                    <option value="2022">2022 - Full Year</option>
+                                    <option value="2021">2021 - Full Year</option>
+                                    <option value="2020">2020 - Full Year</option>
+                                    <option value="winter-2023">Winter 2022-2023</option>
+                                    <option value="winter-2022">Winter 2021-2022</option>
+                                    <option value="all">All Years (2012-2024)</option>
+                                </select>
+                            </div>
+                            <div class="control-group">
+                                <label for="plot-type-select" class="control-label">Analysis:</label>
+                                <select id="plot-type-select" class="control-select">
+                                    <option value="timeseries">Time Series</option>
+                                    <option value="seasonal">Seasonal Patterns</option>
+                                    <option value="distribution">Distribution</option>
+                                    <option value="heatmap">Daily/Hourly Heatmap</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Statistics Panel -->
+                        <div class="historical-stats">
+                            <div class="stat-card">
+                                <div class="stat-label">Data Quality</div>
+                                <div class="stat-value" id="data-quality">--%</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Peak Value</div>
+                                <div class="stat-value" id="peak-value">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Average</div>
+                                <div class="stat-value" id="avg-value">--</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-label">Trend</div>
+                                <div class="stat-value" id="trend-value">--</div>
+                            </div>
+                        </div>
+
+                        <!-- Chart Container -->
+                        <div class="chart-container">
+                            <div id="historical-chart" class="kiosk-chart"></div>
+                        </div>
+
+                        <!-- Insights -->
+                        <div class="insights-panel">
+                            <div class="insight-item">
+                                <i class="fas fa-lightbulb"></i>
+                                <span id="primary-insight">Analyzing environmental patterns...</span>
+                            </div>
+                            <div class="insight-item">
+                                <i class="fas fa-chart-bar"></i>
+                                <span id="correlation-insight">Statistical analysis in progress...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+        </div>
+    </main>
+
+    <!-- Footer with Auto-refresh Info -->
+    <footer class="kiosk-footer">
+        <div class="refresh-info">
+            <i class="fas fa-sync-alt" id="refresh-icon"></i>
+            <span>Auto-refresh: <span id="next-refresh">--:--</span> | Data updated every 10 minutes</span>
+        </div>
+        <div class="kiosk-branding">
+            <span>Uintah Basin Environmental Monitoring | Utah State University Bingham Research Center</span>
+        </div>
+    </footer>
+
+    <!-- Load Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Load markdown-it for forecast content -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+
+    <!-- Load JavaScript Modules -->
+    <script type="module" src="/public/js/config.js"></script>
+    <script src="/public/js/roads.js"></script>
+    <script type="module" src="/public/js/kiosk.js"></script>
+</body>
+</html>
