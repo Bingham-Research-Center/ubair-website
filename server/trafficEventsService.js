@@ -1,10 +1,7 @@
 import fetch from 'node-fetch';
-import NodeCache from 'node-cache';
 import fs from 'fs/promises';
 import path from 'path';
-
-// Aggressive caching: 2 hours for API data
-const cache = new NodeCache({ stdTTL: 7200 }); // 2 hours instead of 5 minutes
+import { optimizedFetch, CacheTTL } from './utils/apiOptimizer.js';
 
 // File-based persistent cache for backup
 const CACHE_DIR = path.join(process.cwd(), '.cache');
@@ -33,71 +30,48 @@ class TrafficEventsService {
     }
 
     async fetchUDOTAlerts() {
-        const cacheKey = 'udot_alerts';
+        return await optimizedFetch(
+            'udot_alerts',
+            async () => {
+                const url = `https://www.udottraffic.utah.gov/api/v2/get/alerts?key=${this.udotApiKey}&format=json`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-        // Check memory cache first
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
-
-        // Check persistent file cache
-        const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
-        if (diskCached) {
-            cache.set(cacheKey, diskCached); // Restore to memory
-            return diskCached;
-        }
-
-        // Rate limiting check
-        const apiCallKey = 'alerts';
-        const lastCall = this.lastApiCalls.get(apiCallKey);
-        if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
-            console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
-            return this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
-        }
-
-        try {
-            console.log('Making UDOT alerts API call...');
-            this.lastApiCalls.set(apiCallKey, Date.now());
-
-            const url = `https://www.udottraffic.utah.gov/api/v2/get/alerts?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    throw new Error(`UDOT Alerts API error: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`UDOT Alerts API error: ${response.status}`);
+                const data = await response.json();
+                
+                // Process alerts
+                const processedAlerts = data.map(alert => ({
+                    id: alert.Id,
+                    message: alert.Message,
+                    notes: alert.Notes,
+                    startTime: new Date(alert.StartTime * 1000).toISOString(),
+                    endTime: alert.EndTime ? new Date(alert.EndTime * 1000).toISOString() : null,
+                    regions: alert.Regions || [],
+                    highImportance: alert.HighImportance,
+                    sendNotification: alert.SendNotification,
+                    isActive: this.isAlertActive(alert),
+                    severity: this.getAlertSeverity(alert)
+                }));
+
+                // Filter for active alerts relevant to Uintah Basin
+                const relevantAlerts = processedAlerts.filter(alert =>
+                    alert.isActive && this.isAlertRelevantToBasin(alert)
+                );
+
+                return relevantAlerts;
+            },
+            {
+                ttl: CacheTTL.ALERTS,
+                apiCallKey: 'udot_alerts'
             }
-
-            const data = await response.json();
-            
-            // Process alerts
-            const processedAlerts = data.map(alert => ({
-                id: alert.Id,
-                message: alert.Message,
-                notes: alert.Notes,
-                startTime: new Date(alert.StartTime * 1000).toISOString(),
-                endTime: alert.EndTime ? new Date(alert.EndTime * 1000).toISOString() : null,
-                regions: alert.Regions || [],
-                highImportance: alert.HighImportance,
-                sendNotification: alert.SendNotification,
-                isActive: this.isAlertActive(alert),
-                severity: this.getAlertSeverity(alert)
-            }));
-
-            // Filter for active alerts relevant to Uintah Basin
-            const relevantAlerts = processedAlerts.filter(alert =>
-                alert.isActive && this.isAlertRelevantToBasin(alert)
-            );
-
-            // Save to both memory and disk cache
-            cache.set(cacheKey, relevantAlerts);
-            await this.saveToDiskCache(cacheKey, relevantAlerts);
-            return relevantAlerts;
-        } catch (error) {
-            console.error('Error fetching UDOT alerts:', error);
-            return [];
-        }
+        );
     }
 
     isAlertRelevantToBasin(alert) {

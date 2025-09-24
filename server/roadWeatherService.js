@@ -1,8 +1,6 @@
 import fetch from 'node-fetch';
-import NodeCache from 'node-cache';
 import SnowDetectionService from './snowDetectionService.js';
-
-const cache = new NodeCache({ stdTTL: 300 });
+import { optimizedFetch, CacheTTL } from './utils/apiOptimizer.js';
 
 // Decode Google polyline encoding
 function decodePolyline(encoded) {
@@ -48,79 +46,78 @@ class RoadWeatherService {
     }
 
     async fetchUDOTRoadConditions() {
-        const cacheKey = 'udot_road_conditions';
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        return await optimizedFetch(
+            'udot_road_conditions',
+            async () => {
+                const url = `https://www.udottraffic.utah.gov/api/v2/get/roadconditions?key=${this.udotApiKey}&format=json`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-        try {
-            const url = `https://www.udottraffic.utah.gov/api/v2/get/roadconditions?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    throw new Error(`UDOT API error: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`UDOT API error: ${response.status}`);
+                const data = await response.json();
+
+                // Filter for Uintah Basin roads using geographic coordinates
+                const basinRoads = data.filter(road => {
+                    if (!road.EncodedPolyline) return false;
+
+                    try {
+                        const coordinates = decodePolyline(road.EncodedPolyline);
+
+                        // Check if any part of the road passes through Uintah Basin bounds
+                        const hasBasinSegment = coordinates.some(coord => {
+                            const lat = coord[0];
+                            const lng = coord[1];
+                            return lat >= this.uintahBasinBounds.south &&
+                                   lat <= this.uintahBasinBounds.north &&
+                                   lng >= this.uintahBasinBounds.west &&
+                                   lng <= this.uintahBasinBounds.east;
+                        });
+
+                        return hasBasinSegment;
+                    } catch (error) {
+                        console.warn(`Failed to decode polyline for ${road.RoadwayName}:`, error);
+                        // Fallback to name-based filtering for roads we can't decode
+                        const roadName = road.RoadwayName.toLowerCase();
+                        return roadName.includes('vernal') || roadName.includes('roosevelt') ||
+                               roadName.includes('duchesne') || roadName.includes('uintah');
+                    }
+                });
+
+                const processedRoads = basinRoads.map(road => {
+                    let coordinates = [];
+                    try {
+                        coordinates = decodePolyline(road.EncodedPolyline);
+                    } catch (error) {
+                        console.warn(`Failed to decode polyline for ${road.RoadwayName}:`, error);
+                    }
+
+                    return {
+                        id: road.Id,
+                        sourceId: road.SourceId,
+                        name: road.RoadwayName,
+                        roadCondition: road.RoadCondition,
+                        weatherCondition: road.WeatherCondition,
+                        restriction: road.Restriction,
+                        encodedPolyline: road.EncodedPolyline,
+                        coordinates: coordinates,
+                        lastUpdated: new Date(road.LastUpdated * 1000).toISOString(),
+                        condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction)
+                    };
+                });
+
+                return processedRoads;
+            },
+            {
+                ttl: CacheTTL.ROAD_CONDITIONS,
+                apiCallKey: 'udot_road_conditions'
             }
-
-            const data = await response.json();
-
-            // Filter for Uintah Basin roads using geographic coordinates
-            const basinRoads = data.filter(road => {
-                if (!road.EncodedPolyline) return false;
-
-                try {
-                    const coordinates = decodePolyline(road.EncodedPolyline);
-
-                    // Check if any part of the road passes through Uintah Basin bounds
-                    const hasBasinSegment = coordinates.some(coord => {
-                        const lat = coord[0];
-                        const lng = coord[1];
-                        return lat >= this.uintahBasinBounds.south &&
-                               lat <= this.uintahBasinBounds.north &&
-                               lng >= this.uintahBasinBounds.west &&
-                               lng <= this.uintahBasinBounds.east;
-                    });
-
-                    return hasBasinSegment;
-                } catch (error) {
-                    console.warn(`Failed to decode polyline for ${road.RoadwayName}:`, error);
-                    // Fallback to name-based filtering for roads we can't decode
-                    const roadName = road.RoadwayName.toLowerCase();
-                    return roadName.includes('vernal') || roadName.includes('roosevelt') ||
-                           roadName.includes('duchesne') || roadName.includes('uintah');
-                }
-            });
-
-            const processedRoads = basinRoads.map(road => {
-                let coordinates = [];
-                try {
-                    coordinates = decodePolyline(road.EncodedPolyline);
-                } catch (error) {
-                    console.warn(`Failed to decode polyline for ${road.RoadwayName}:`, error);
-                }
-
-                return {
-                    id: road.Id,
-                    sourceId: road.SourceId,
-                    name: road.RoadwayName,
-                    roadCondition: road.RoadCondition,
-                    weatherCondition: road.WeatherCondition,
-                    restriction: road.Restriction,
-                    encodedPolyline: road.EncodedPolyline,
-                    coordinates: coordinates,
-                    lastUpdated: new Date(road.LastUpdated * 1000).toISOString(),
-                    condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction)
-                };
-            });
-
-            cache.set(cacheKey, processedRoads);
-            return processedRoads;
-        } catch (error) {
-            console.error('Error fetching UDOT road conditions:', error);
-            return [];
-        }
+        );
     }
 
     mapUDOTConditionToColor(roadCondition, weatherCondition, restriction) {
@@ -157,52 +154,51 @@ class RoadWeatherService {
     }
 
     async fetchNWSData(lat, lon) {
-        const cacheKey = `nws_${lat}_${lon}`;
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        return await optimizedFetch(
+            `nws_${lat}_${lon}`,
+            async () => {
+                const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
+                const pointsResponse = await fetch(pointsUrl, {
+                    headers: {
+                        'User-Agent': this.nwsUserAgent,
+                        'Accept': 'application/json'
+                    }
+                });
 
-        try {
-            const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
-            const pointsResponse = await fetch(pointsUrl, {
-                headers: {
-                    'User-Agent': this.nwsUserAgent,
-                    'Accept': 'application/json'
+                if (!pointsResponse.ok) {
+                    throw new Error(`NWS API error: ${pointsResponse.status}`);
                 }
-            });
 
-            if (!pointsResponse.ok) {
-                throw new Error(`NWS API error: ${pointsResponse.status}`);
-            }
+                const pointsData = await pointsResponse.json();
+                const forecastUrl = pointsData.properties.forecast;
 
-            const pointsData = await pointsResponse.json();
-            const forecastUrl = pointsData.properties.forecast;
+                const forecastResponse = await fetch(forecastUrl, {
+                    headers: {
+                        'User-Agent': this.nwsUserAgent,
+                        'Accept': 'application/json'
+                    }
+                });
 
-            const forecastResponse = await fetch(forecastUrl, {
-                headers: {
-                    'User-Agent': this.nwsUserAgent,
-                    'Accept': 'application/json'
+                if (!forecastResponse.ok) {
+                    throw new Error(`NWS Forecast error: ${forecastResponse.status}`);
                 }
-            });
 
-            if (!forecastResponse.ok) {
-                throw new Error(`NWS Forecast error: ${forecastResponse.status}`);
+                const forecastData = await forecastResponse.json();
+                const periods = forecastData.properties.periods;
+
+                const processedForecast = {
+                    current: periods[0],
+                    upcoming: periods.slice(1, 5),
+                    warnings: []
+                };
+
+                return processedForecast;
+            },
+            {
+                ttl: CacheTTL.WEATHER_STATIONS,
+                apiCallKey: 'nws_data'
             }
-
-            const forecastData = await forecastResponse.json();
-            const periods = forecastData.properties.periods;
-
-            const processedForecast = {
-                current: periods[0],
-                upcoming: periods.slice(1, 5),
-                warnings: []
-            };
-
-            cache.set(cacheKey, processedForecast);
-            return processedForecast;
-        } catch (error) {
-            console.error('Error fetching NWS data:', error);
-            return null;
-        }
+        );
     }
 
     async fetchOpenMeteoData(lat, lon) {
@@ -567,171 +563,167 @@ class RoadWeatherService {
     }
 
     async fetchUDOTCameras() {
-        const cacheKey = 'udot_cameras';
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        return await optimizedFetch(
+            'udot_cameras',
+            async () => {
+                const url = `https://www.udottraffic.utah.gov/api/v2/get/cameras?key=${this.udotApiKey}&format=json`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-        try {
-            const url = `https://www.udottraffic.utah.gov/api/v2/get/cameras?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    throw new Error(`UDOT Cameras API error: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`UDOT Cameras API error: ${response.status}`);
+                const data = await response.json();
+
+                // Filter cameras for Uintah Basin area
+                const basinCameras = data.filter(camera => {
+                    const lat = parseFloat(camera.Latitude);
+                    const lng = parseFloat(camera.Longitude);
+
+                    return lat >= this.uintahBasinBounds.south &&
+                           lat <= this.uintahBasinBounds.north &&
+                           lng >= this.uintahBasinBounds.west &&
+                           lng <= this.uintahBasinBounds.east;
+                });
+
+                const processedCameras = basinCameras.map(camera => ({
+                    id: camera.Id,
+                    name: camera.Location,
+                    roadway: camera.Roadway,
+                    lat: parseFloat(camera.Latitude),
+                    lng: parseFloat(camera.Longitude),
+                    views: camera.Views.map(view => ({
+                        url: view.Url,
+                        status: view.Status,
+                        description: view.Description || 'Live Camera Feed'
+                    }))
+                }));
+
+                return processedCameras;
+            },
+            {
+                ttl: CacheTTL.CAMERAS,
+                apiCallKey: 'udot_cameras'
             }
-
-            const data = await response.json();
-
-            // Filter cameras for Uintah Basin area
-            const basinCameras = data.filter(camera => {
-                const lat = parseFloat(camera.Latitude);
-                const lng = parseFloat(camera.Longitude);
-
-                return lat >= this.uintahBasinBounds.south &&
-                       lat <= this.uintahBasinBounds.north &&
-                       lng >= this.uintahBasinBounds.west &&
-                       lng <= this.uintahBasinBounds.east;
-            });
-
-            const processedCameras = basinCameras.map(camera => ({
-                id: camera.Id,
-                name: camera.Location,
-                roadway: camera.Roadway,
-                lat: parseFloat(camera.Latitude),
-                lng: parseFloat(camera.Longitude),
-                views: camera.Views.map(view => ({
-                    url: view.Url,
-                    status: view.Status,
-                    description: view.Description || 'Live Camera Feed'
-                }))
-            }));
-
-            cache.set(cacheKey, processedCameras);
-            return processedCameras;
-        } catch (error) {
-            console.error('Error fetching UDOT cameras:', error);
-            return [];
-        }
+        );
     }
 
     async fetchUDOTWeatherStations() {
-        const cacheKey = 'udot_weather_stations';
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        return await optimizedFetch(
+            'udot_weather_stations',
+            async () => {
+                const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${this.udotApiKey}&format=json`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-        try {
-            const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    throw new Error(`UDOT Weather Stations API error: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`UDOT Weather Stations API error: ${response.status}`);
+                const data = await response.json();
+
+                // Filter weather stations for Uintah Basin area
+                const basinStations = data.filter(station => {
+                    const lat = parseFloat(station.Latitude);
+                    const lng = parseFloat(station.Longitude);
+
+                    // Only include stations with valid coordinates
+                    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
+
+                    return lat >= this.uintahBasinBounds.south &&
+                           lat <= this.uintahBasinBounds.north &&
+                           lng >= this.uintahBasinBounds.west &&
+                           lng <= this.uintahBasinBounds.east;
+                });
+
+                const processedStations = basinStations.map(station => ({
+                    id: station.Id,
+                    name: station.StationName,
+                    lat: parseFloat(station.Latitude),
+                    lng: parseFloat(station.Longitude),
+                    airTemperature: station.AirTemperature,
+                    surfaceTemp: station.SurfaceTemp,
+                    subSurfaceTemp: station.SubSurfaceTemp,
+                    surfaceStatus: station.SurfaceStatus,
+                    relativeHumidity: station.RelativeHumidity,
+                    dewpointTemp: station.DewpointTemp,
+                    precipitation: station.Precipitation,
+                    windSpeedAvg: station.WindSpeedAvg,
+                    windSpeedGust: station.WindSpeedGust,
+                    windDirection: station.WindDirection,
+                    source: station.Source,
+                    lastUpdated: new Date(station.LastUpdated * 1000).toISOString(),
+                    condition: this.determineStationCondition(station)
+                }));
+
+                return processedStations;
+            },
+            {
+                ttl: CacheTTL.WEATHER_STATIONS,
+                apiCallKey: 'udot_weather_stations'
             }
-
-            const data = await response.json();
-
-            // Filter weather stations for Uintah Basin area
-            const basinStations = data.filter(station => {
-                const lat = parseFloat(station.Latitude);
-                const lng = parseFloat(station.Longitude);
-
-                // Only include stations with valid coordinates
-                if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
-
-                return lat >= this.uintahBasinBounds.south &&
-                       lat <= this.uintahBasinBounds.north &&
-                       lng >= this.uintahBasinBounds.west &&
-                       lng <= this.uintahBasinBounds.east;
-            });
-
-            const processedStations = basinStations.map(station => ({
-                id: station.Id,
-                name: station.StationName,
-                lat: parseFloat(station.Latitude),
-                lng: parseFloat(station.Longitude),
-                airTemperature: station.AirTemperature,
-                surfaceTemp: station.SurfaceTemp,
-                subSurfaceTemp: station.SubSurfaceTemp,
-                surfaceStatus: station.SurfaceStatus,
-                relativeHumidity: station.RelativeHumidity,
-                dewpointTemp: station.DewpointTemp,
-                precipitation: station.Precipitation,
-                windSpeedAvg: station.WindSpeedAvg,
-                windSpeedGust: station.WindSpeedGust,
-                windDirection: station.WindDirection,
-                source: station.Source,
-                lastUpdated: new Date(station.LastUpdated * 1000).toISOString(),
-                condition: this.determineStationCondition(station)
-            }));
-
-            cache.set(cacheKey, processedStations);
-            return processedStations;
-        } catch (error) {
-            console.error('Error fetching UDOT weather stations:', error);
-            return [];
-        }
+        );
     }
 
     async fetchUDOTRestAreas() {
-        const cacheKey = 'udot_rest_areas';
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        return await optimizedFetch(
+            'udot_rest_areas',
+            async () => {
+                const url = `https://www.udottraffic.utah.gov/api/v2/get/restareas?key=${this.udotApiKey}&format=json`;
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                });
 
-        try {
-            const url = `https://www.udottraffic.utah.gov/api/v2/get/restareas?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json'
+                if (!response.ok) {
+                    throw new Error(`UDOT Rest Areas API error: ${response.status}`);
                 }
-            });
 
-            if (!response.ok) {
-                throw new Error(`UDOT Rest Areas API error: ${response.status}`);
+                const data = await response.json();
+
+                // Filter rest areas for Uintah Basin area
+                const basinRestAreas = data.filter(restArea => {
+                    const lat = parseFloat(restArea.Latitude);
+                    const lng = parseFloat(restArea.Longitude);
+
+                    // Only include rest areas with valid coordinates
+                    if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
+
+                    return lat >= this.uintahBasinBounds.south &&
+                           lat <= this.uintahBasinBounds.north &&
+                           lng >= this.uintahBasinBounds.west &&
+                           lng <= this.uintahBasinBounds.east;
+                });
+
+                const processedRestAreas = basinRestAreas.map(restArea => ({
+                    id: restArea.Id,
+                    name: restArea.Name,
+                    lat: parseFloat(restArea.Latitude),
+                    lng: parseFloat(restArea.Longitude),
+                    location: restArea.Location,
+                    yearBuilt: restArea.YearBuilt,
+                    carStalls: parseInt(restArea.CarStalls) || 0,
+                    truckStalls: parseInt(restArea.TruckStalls) || 0,
+                    nearestCommunities: restArea.NearestCommunities,
+                    imageUrl: restArea.ImageUrl,
+                    totalStalls: (parseInt(restArea.CarStalls) || 0) + (parseInt(restArea.TruckStalls) || 0)
+                }));
+
+                return processedRestAreas;
+            },
+            {
+                ttl: CacheTTL.REST_AREAS,
+                apiCallKey: 'udot_rest_areas'
             }
-
-            const data = await response.json();
-
-            // Filter rest areas for Uintah Basin area
-            const basinRestAreas = data.filter(restArea => {
-                const lat = parseFloat(restArea.Latitude);
-                const lng = parseFloat(restArea.Longitude);
-
-                // Only include rest areas with valid coordinates
-                if (!lat || !lng || isNaN(lat) || isNaN(lng)) return false;
-
-                return lat >= this.uintahBasinBounds.south &&
-                       lat <= this.uintahBasinBounds.north &&
-                       lng >= this.uintahBasinBounds.west &&
-                       lng <= this.uintahBasinBounds.east;
-            });
-
-            const processedRestAreas = basinRestAreas.map(restArea => ({
-                id: restArea.Id,
-                name: restArea.Name,
-                lat: parseFloat(restArea.Latitude),
-                lng: parseFloat(restArea.Longitude),
-                location: restArea.Location,
-                yearBuilt: restArea.YearBuilt,
-                carStalls: parseInt(restArea.CarStalls) || 0,
-                truckStalls: parseInt(restArea.TruckStalls) || 0,
-                nearestCommunities: restArea.NearestCommunities,
-                imageUrl: restArea.ImageUrl,
-                totalStalls: (parseInt(restArea.CarStalls) || 0) + (parseInt(restArea.TruckStalls) || 0)
-            }));
-
-            // Cache for 1 hour (rest areas don't change frequently)
-            cache.set(cacheKey, processedRestAreas, 3600);
-            return processedRestAreas;
-        } catch (error) {
-            console.error('Error fetching UDOT rest areas:', error);
-            return [];
-        }
+        );
     }
 
     determineStationCondition(station) {

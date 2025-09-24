@@ -1,8 +1,5 @@
 import fetch from 'node-fetch';
-import NodeCache from 'node-cache';
-
-// Cache for 5 minutes to avoid excessive processing
-const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+import { optimizedFetch, CacheTTL } from './utils/apiOptimizer.js';
 
 class SnowDetectionService {
     constructor() {
