@@ -7,6 +7,7 @@
     <link href="/public/css/main.css" rel="stylesheet">
     <link href="/public/css/webcam-viewer.css" rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="/public/images/favicon.ico">
+    <script src="/public/js/map-state-manager.js"></script>
 </head>
 <body data-page-type="webcam">
     <div class="container">
@@ -37,7 +38,7 @@
                                 <p id="camera-location">Location</p>
                             </div>
                             <div class="camera-controls">
-                                <a href="/roads" class="back-link">← Back to Roads</a>
+                                <button onclick="window.mapStateManager.navigateBackToMap()" class="back-link">← Back to Roads</button>
                                 <button id="refresh-btn" class="refresh-button">🔄 Refresh</button>
                             </div>
                         </div>
