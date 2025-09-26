@@ -183,6 +183,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <!-- Load JavaScript Modules -->
+<script type="module" src="/public/js/devConfig.js"></script>
 <script type="module" src="/public/js/loadSidebar.js"></script>
 <script src="/public/js/nineties-mode.js"></script>
 <script src="/public/js/mobile-menu.js"></script>
@@ -192,7 +193,9 @@
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
 
-<script>
+<script type="module">
+    import { isEasterEggEnabled } from '/public/js/devConfig.js';
+
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize forecast tabs
         initForecastTabs();
@@ -203,8 +206,16 @@
         // Initialize forecast collapse toggle
         initForecastCollapse();
         
-        // Initialize Dutch John easter egg
-        initDutchJohnEasterEgg();
+        // Initialize Dutch John easter egg only if enabled in dev config
+        if (isEasterEggEnabled('dutchJohn')) {
+            initDutchJohnEasterEgg();
+        } else {
+            // Hide the easter egg element
+            const dutchJohnBox = document.getElementById('dutch-john-box');
+            if (dutchJohnBox) {
+                dutchJohnBox.style.display = 'none';
+            }
+        }
         
         // Load initial content
         loadAirQualityForecast();

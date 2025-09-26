@@ -81,7 +81,24 @@ app.get('/webcam-viewer', (req, res) => {
 });
 
 app.get('/kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk.html'));
+    // Only serve kiosk mode in development or with dev parameter
+    const isDev = req.hostname === 'localhost' || 
+                  req.hostname === '127.0.0.1' ||
+                  req.get('host')?.includes(':3000') ||
+                  req.query.dev === 'true';
+    
+    // Explicit opt-out with dev=false
+    const devExplicit = req.query.dev;
+    if (devExplicit === 'false') {
+        res.status(404).send('Page not found');
+        return;
+    }
+    
+    if (isDev) {
+        res.sendFile(path.join(__dirname, '../views/kiosk.html'));
+    } else {
+        res.status(404).send('Page not found');
+    }
 });
 
 app.get('/about/:page', (req, res) => {

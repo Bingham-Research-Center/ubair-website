@@ -345,9 +345,14 @@ class RoadWeatherMap {
             const detection = segment.detectionData;
             popupContent += `
                 <div class="camera-detection-info">
-                    <p><strong>Snow Level:</strong> ${detection.snowLevel}</p>
-                    <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                    <p><strong>Last Analysis:</strong> ${new Date(detection.timestamp).toLocaleTimeString()}</p>
+                    <p><strong>Snow Level:</strong> ${detection.snowLevel}</p>`;
+            
+            // Only show confidence if experimental pixel snow detection is enabled
+            if (window.devConfig && window.devConfig.isExperimentalEnabled('pixelSnowDetection')) {
+                popupContent += `<p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>`;
+            }
+            
+            popupContent += `<p><strong>Last Analysis:</strong> ${new Date(detection.timestamp).toLocaleTimeString()}</p>
                 </div>`;
         }
 
@@ -583,9 +588,14 @@ class RoadWeatherMap {
             if (detection) {
                 analysisInfo = `
                     <div class="analysis-section">
-                        <p><strong>Condition:</strong> ${conditionText}</p>
-                        <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
+                        <p><strong>Condition:</strong> ${conditionText}</p>`;
+                
+                // Only show confidence if experimental pixel snow detection is enabled
+                if (window.devConfig && window.devConfig.isExperimentalEnabled('pixelSnowDetection')) {
+                    analysisInfo += `<p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>`;
+                }
+                
+                analysisInfo += `${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
                     </div>`;
             }
 

@@ -263,17 +263,28 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="/public/js/devConfig.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/forecast_weather.js"></script>
     
-    <script>
+    <script type="module">
+        import { isEasterEggEnabled } from '/public/js/devConfig.js';
+        
         document.addEventListener('DOMContentLoaded', function() {
-            const chemtrailsButton = document.getElementById('chemtrails-button');
-            if (chemtrailsButton) {
-                chemtrailsButton.addEventListener('click', () => {
-                    // Open rickroll in new tab
-                    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
-                });
+            if (isEasterEggEnabled('chemtrails')) {
+                const chemtrailsButton = document.getElementById('chemtrails-button');
+                if (chemtrailsButton) {
+                    chemtrailsButton.addEventListener('click', () => {
+                        // Open rickroll in new tab
+                        window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
+                    });
+                }
+            } else {
+                // Hide the chemtrails easter egg
+                const chemtrailsBox = document.getElementById('chemtrails-box');
+                if (chemtrailsBox) {
+                    chemtrailsBox.style.display = 'none';
+                }
             }
         });
     </script>
