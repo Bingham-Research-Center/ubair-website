@@ -258,7 +258,25 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/public/js/map-state-manager.js"></script>
+    <script type="module" src="/public/js/devConfig.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script src="/public/js/roads.js"></script>
+    
+    <script type="module">
+        import { isEasterEggEnabled, isExperimentalEnabled } from '/public/js/devConfig.js';
+        
+        // Make dev config available globally for roads.js
+        window.devConfig = { isEasterEggEnabled, isExperimentalEnabled };
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!isEasterEggEnabled('emmaPark')) {
+                // Hide the Emma Park easter egg
+                const emmaParkBox = document.getElementById('emma-park-box');
+                if (emmaParkBox) {
+                    emmaParkBox.style.display = 'none';
+                }
+            }
+        });
+    </script>
 </body>
 </html>
