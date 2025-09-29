@@ -63,6 +63,14 @@ Weather data visualization website showing live air quality observations and for
 - Added API testing script and SSL setup guide
 - Moved unused images to `/public/images/unused/`
 
+## Secret Management
+Environment variables are used for all API keys and sensitive configuration:
+- **Copy setup**: `cp .env.example .env` and fill in your values
+- **Required keys**: DATA_UPLOAD_API_KEY, UDOT_API_KEY, SYNOPTIC_API_TOKEN
+- **Never commit**: .env files are gitignored automatically
+- **Team sharing**: Use secure password manager (1Password, Bitwarden) for sharing secrets
+- **Production**: Set environment variables directly on server/cloud platform
+
 ## Team Notes
 - 4-person collaborative team
 - CSS-HTML mapping: fire.css ↔ fire.html pattern
