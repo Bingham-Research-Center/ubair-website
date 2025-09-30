@@ -76,3 +76,10 @@ Environment variables are used for all API keys and sensitive configuration:
 - CSS-HTML mapping: fire.css ↔ fire.html pattern
 - Clean codebase with minimal redundancy
 - 20-item improvement list available (IMPROVEMENTS.md)
+
+## AI Agent Management
+- **Validation**: Run `npm run validate-ai-files` before committing AI context changes
+- **Testing**: Use `npm run test-ai-context` to verify AI understanding
+- **Best practices**: See `docs/AI-AGENT-MANAGEMENT.md` for team coordination
+- **Workflow**: Follow `docs/AI-WORKFLOW-CHECKLIST.md` for daily/weekly tasks
+- **Quick start**: Reference `docs/AI-MANAGEMENT-README.md` for setup
