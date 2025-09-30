@@ -38,3 +38,9 @@ pids
 
 # API cache directory
 .cache/
+
+# Data incl. from API or test
+
+
+# Auto-gen file listing
+outlooks_list.json
