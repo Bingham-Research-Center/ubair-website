@@ -80,6 +80,10 @@ app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));
 });
 
+app.get('/kiosk', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/kiosk.html'));
+});
+
 app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });

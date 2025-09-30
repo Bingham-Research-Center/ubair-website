@@ -563,7 +563,7 @@ class RoadWeatherMap {
             const cameraViews = camera.views.map(view =>
                 `<div class="camera-view">
                     <div class="camera-image-container"
-                         onclick="window.open('/webcam-viewer?id=${camera.id}', '_blank')"
+                         onclick="window.mapStateManager.navigateToWebcam('${camera.id}', window.roadWeatherMap?.map)"
                          style="cursor: pointer;">
                         <img src="${view.url}" alt="${view.description}"
                              onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -867,7 +867,24 @@ document.addEventListener('DOMContentLoaded', function() {
         refreshInterval: 300000 // 5 minutes
     });
 
+    // Make globally accessible for state management
+    window.roadWeatherMap = roadWeatherMap;
+
     roadWeatherMap.init();
+
+    // Set up state management after map initialization with a small delay
+    setTimeout(() => {
+        if (roadWeatherMap.map) {
+            // Initialize auto-save functionality
+            window.mapStateManager.initAutoSave(roadWeatherMap.map);
+
+            // Restore state if coming back from webcam viewer
+            if (window.mapStateManager.shouldRestoreState()) {
+                console.log('Restoring map state from previous session');
+                window.mapStateManager.restoreMapState(roadWeatherMap.map);
+            }
+        }
+    }, 100);
 
     // Update the condition cards with real data
     updateConditionCards();

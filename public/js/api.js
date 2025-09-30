@@ -136,7 +136,8 @@ function mapVariableName(variable) {
     const mappings = {
         'air_temp': 'Temperature',
         'ozone_concentration': 'Ozone',
-        'pm25_concentration': 'PM2.5', 
+        'PM_25_concentration': 'PM2.5',
+        'pm25_concentration': 'PM2.5',
         'particulate_concentration': 'PM2.5',
         'relative_humidity': 'Humidity',
         'wind_speed': 'Wind Speed',
@@ -145,6 +146,7 @@ function mapVariableName(variable) {
         'snow_depth': 'Snow Depth',
         'soil_temp': 'Soil Temperature',
         'sea_level_pressure': 'Pressure',
+        'NOx_concentration': 'NOx',
         'black_carbon_concentration': 'NOx',
         'ppb': 'NO',  // From your mapping file
         'NO_concentration': 'NO2'
