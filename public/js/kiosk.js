@@ -1495,7 +1495,7 @@ class KioskMode {
 
         try {
             // Try to load the latest outlook file
-            const response = await fetch('/public/data/outlooks/outlooks_list.json');
+            const response = await fetch('/api/static/outlooks/outlooks_list.json');
             if (!response.ok) throw new Error('Failed to load outlooks list');
 
             const outlooks = await response.json();
@@ -1505,7 +1505,7 @@ class KioskMode {
             }
 
             const latestOutlook = outlooks[0];
-            const outlookResponse = await fetch(`/public/data/outlooks/${latestOutlook.filename}`);
+            const outlookResponse = await fetch(`/api/static/outlooks/${latestOutlook.filename}`);
             if (!outlookResponse.ok) throw new Error('Failed to load outlook file');
 
             const markdownContent = await outlookResponse.text();

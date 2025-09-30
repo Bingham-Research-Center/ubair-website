@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 outlookSummary.innerHTML = '<div class="loading">Loading latest outlook...</div>';
             }
 
-            const response = await fetch(`/public/data/outlooks/${filename}`);
+            const response = await fetch(`/api/static/outlooks/${filename}`);
             if (!response.ok) throw new Error(`Failed to load outlook: ${response.status}`);
 
             const markdown = await response.text();
@@ -229,7 +229,7 @@ document.addEventListener("DOMContentLoaded", function() {
         try {
             archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
 
-            const response = await fetch('/public/data/outlooks/outlooks_list.json');
+            const response = await fetch('/api/static/outlooks/outlooks_list.json');
             if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
 
             const outlooks = await response.json();
@@ -283,7 +283,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     async function loadLatestOutlook(summaryOnly = false) {
         try {
-            const response = await fetch('/public/data/outlooks/outlooks_list.json');
+            const response = await fetch('/api/static/outlooks/outlooks_list.json');
             if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
 
             const outlooks = await response.json();

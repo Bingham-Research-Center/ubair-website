@@ -1,0 +1,9 @@
+[
+  {
+    "stid": "TEST01",
+    "variable": "air_temp",
+    "value": 15.5,
+    "date_time": "2025-09-30T21:48:55.903Z",
+    "units": "Celsius"
+  }
+]

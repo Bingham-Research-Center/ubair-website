@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export async function generateOutlooksList() {
     try {
         // Path to outlooks directory
-        const outlooksDir = path.join(__dirname, '../public/data/outlooks');
+        const outlooksDir = path.join(__dirname, '../public/api/static/outlooks');
 
         // Ensure directory exists
         try {

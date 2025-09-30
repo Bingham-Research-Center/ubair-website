@@ -153,8 +153,11 @@ app.use((err, req, res, next) => {
 async function checkDirectoryStructure() {
     const dirs = [
         '../../public/css',
-        '../../public/data',
-        '../../public/data/outlooks',
+        '../../public/api/static',
+        '../../public/api/static/outlooks',
+        '../../public/api/static/observations',
+        '../../public/api/static/metadata',
+        '../../public/content',
         '../../public/images',
         '../../public/js',
         '../../public/partials',
@@ -172,7 +175,7 @@ async function checkDirectoryStructure() {
 // Start server
 async function generateOutlooksList() {
     try {
-        const directory = path.join(__dirname, '../public/data/outlooks');
+        const directory = path.join(__dirname, '../public/api/static/outlooks');
         const files = await fs.readdir(directory);
 
         const outlooks = files

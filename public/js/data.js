@@ -23,7 +23,7 @@ async function loadWindData() {
 // Function to load latest outlook
 async function loadLatestOutlook() {
     try {
-        const response = await fetch('/public/data/outlooks/latest.txt');
+        const response = await fetch('/api/static/outlooks/latest.txt');
         return await response.text();
     } catch (error) {
         console.error('Error loading outlook:', error);
@@ -34,7 +34,7 @@ async function loadLatestOutlook() {
 // Function to list available outlooks
 async function listOutlooks() {
     try {
-        const response = await fetch('/public/data/outlooks/');
+        const response = await fetch('/api/static/outlooks/');
         const files = await response.text();
         // Parse the directory listing (this will depend on your server configuration)
         return files

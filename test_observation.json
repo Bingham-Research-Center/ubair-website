@@ -1,0 +1,16 @@
+[
+  {
+    "stid": "TEST_STATION",
+    "variable": "air_temp",
+    "value": 20.5,
+    "date_time": "2025-09-30T14:00:00.000Z",
+    "units": "Celsius"
+  },
+  {
+    "stid": "TEST_STATION",
+    "variable": "ozone_concentration",
+    "value": 45.2,
+    "date_time": "2025-09-30T14:00:00.000Z",
+    "units": "ppb"
+  }
+]

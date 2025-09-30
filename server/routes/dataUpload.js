@@ -24,7 +24,19 @@ const router = express.Router();
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadDir = path.join(process.cwd(), 'public', 'api', 'static');
+        // Map data types to subdirectories
+        const dataTypeMap = {
+            'observations': 'observations',
+            'metadata': 'metadata',
+            'outlooks': 'outlooks',
+            'images': 'images',
+            'timeseries': 'timeseries'
+        };
+
+        const dataType = req.params.dataType || 'observations';
+        const subDir = dataTypeMap[dataType] || dataType;
+        const uploadDir = path.join(process.cwd(), 'public', 'api', 'static', subDir);
+
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
             fs.mkdirSync(uploadDir, { recursive: true });
@@ -161,14 +173,16 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
 
-    const uploadDir = path.join(process.cwd(), 'public', 'data','api');
-    updateFileList(uploadDir);
+    // Update file list for the base static directory
+    const staticDir = path.join(process.cwd(), 'public', 'api', 'static');
+    updateFileList(staticDir);
 
     res.status(200).json({
       success: true,
       message: `${dataType} data uploaded successfully`,
       filename,
-      size
+      size,
+      path: `/api/static/${dataType}/${filename}`
     });
   } catch (error) {
     console.error('Error handling file upload:', error);

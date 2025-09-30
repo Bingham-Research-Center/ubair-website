@@ -5,8 +5,15 @@ import fetch from 'node-fetch';
 import fs from 'fs';
 import FormData from 'form-data';
 
-const API_KEY = process.env.DATA_UPLOAD_API_KEY || 'test-key-123';
-const BASE_URL = 'http://localhost:3000';
+// Environment variables loaded via NODE_OPTIONS='-r dotenv/config'
+const API_KEY = process.env.DATA_UPLOAD_API_KEY;
+const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+
+if (!API_KEY) {
+    console.error('❌ ERROR: DATA_UPLOAD_API_KEY not set in .env file');
+    console.error('   Copy .env.example to .env and set your API key');
+    process.exit(1);
+}
 
 // Test data upload
 async function testUpload() {

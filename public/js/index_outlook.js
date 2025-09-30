@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", async function() {
 
     try {
         // Fetch the list of outlooks
-        const response = await fetch('/public/data/outlooks/outlooks_list.json');
+        const response = await fetch('/api/static/outlooks/outlooks_list.json');
         if (!response.ok) throw new Error(`HTTP error: ${response.status}`);
 
         const outlooks = await response.json();
@@ -27,7 +27,7 @@ document.addEventListener("DOMContentLoaded", async function() {
         }
 
         // Fetch its content
-        const outlookResponse = await fetch(`/public/data/outlooks/${latestOutlook.filename}`);
+        const outlookResponse = await fetch(`/api/static/outlooks/${latestOutlook.filename}`);
         if (!outlookResponse.ok) throw new Error(`Failed to load outlook: ${outlookResponse.status}`);
 
         const markdownContent = await outlookResponse.text();
