@@ -19,17 +19,10 @@ export const stations = {
     'Manila': { lat: 40.98, lng: -109.68 },           // K40U - Dutch John area
     'Starvation': { lat: 40.17, lng: -110.49 },       // UTSTV - SW basin
     
-    // Mountain Passes - Road Weather Stations
+    // Mountain Passes - Road Weather Stations (UDOT data source)
     'Daniels Summit': { lat: 40.30, lng: -111.26, type: 'road' },   // UTDAN - Key western pass (8000 ft)
     'Indian Canyon': { lat: 39.89, lng: -110.75, type: 'road' },    // UTICS - Southern pass (9050 ft)
     'Soldier Summit': { lat: 39.93, lng: -111.08, type: 'road' },   // UTSLD - SW pass (7487 ft)
-};
-
-// Road weather station types and their default snow status
-export const roadWeatherStations = {
-    'Daniels Summit': { snowLikely: false },
-    'Indian Canyon': { snowLikely: false },
-    'Soldier Summit': { snowLikely: false }
 };
 
 // These are the stations that can be plotted. Eventually, need to expand this stations lookup list

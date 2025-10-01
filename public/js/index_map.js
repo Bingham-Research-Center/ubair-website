@@ -177,8 +177,9 @@ async function updateMiniMap() {
             const stationTimestamp = data._timestamps?.[stationName] ?? null;
             const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp);
             
-            // Check if this is a road weather station
-            const isRoadStation = isRoadWeatherStation(stationName);
+            // Check if this is a road weather station by type from config
+            const stationType = coordinates.type;
+            const isRoadStation = isRoadWeatherStation(stationType);
             const markerColor = isRoadStation ? getRoadWeatherColor(stationName, measurements) : getMarkerColor(measurements);
             
             // Create different marker shapes for road weather stations

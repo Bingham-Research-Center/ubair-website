@@ -1,5 +1,5 @@
 import { stations, thresholds } from './config.js';
-import { getMarkerColor, getRoadWeatherColor, createPopupContent } from './mapUtils.js';
+import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
 // Kiosk mode configuration
