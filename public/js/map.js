@@ -184,6 +184,10 @@ async function updateMap() {
 
     // Destructure observations and metadata from the API
     const { observations, metadata } = await fetchLiveObservations();
+    console.log('DEBUG: observations keys:', Object.keys(observations || {}));
+    console.log('DEBUG: metadata keys:', Object.keys(metadata || {}));
+    console.log('DEBUG: Sample observation data:', observations);
+
     // Processing observations and metadata for map update
 
     // Clear existing markers
@@ -195,6 +199,7 @@ async function updateMap() {
     Object.entries(metadata).forEach(([stid, info]) => {
       stationCoords[stid] = { lat: info.lat, lng: info.lng };
     });
+    console.log('DEBUG: stationCoords keys:', Object.keys(stationCoords));
 
     let validStations = 0;
     for (const stationName of Object.keys(stationCoords)) {
