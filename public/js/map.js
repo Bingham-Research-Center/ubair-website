@@ -186,7 +186,7 @@ async function updateMap() {
     const { observations, metadata } = await fetchLiveObservations();
     console.log('DEBUG: observations keys:', Object.keys(observations || {}));
     console.log('DEBUG: metadata keys:', Object.keys(metadata || {}));
-    console.log('DEBUG: Sample observation data:', observations);
+    console.log('DEBUG: Temperature station names:', Object.keys(observations.Temperature || {}));
 
     // Processing observations and metadata for map update
 
