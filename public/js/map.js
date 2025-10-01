@@ -190,11 +190,11 @@ async function updateMap() {
     markers.forEach(m => map.removeLayer(m));
     markers = [];
 
-    // Build stationCoords from the metadata array
-    const stationCoords = metadata.reduce((acc, { stid, latitude: lat, longitude: lng }) => {
-      acc[stid] = { lat, lng };
-      return acc;
-    }, {});
+    // Build stationCoords from the metadata object
+    const stationCoords = {};
+    Object.entries(metadata).forEach(([stid, info]) => {
+      stationCoords[stid] = { lat: info.lat, lng: info.lng };
+    });
 
     let validStations = 0;
     for (const stationName of Object.keys(stationCoords)) {
