@@ -97,6 +97,18 @@ app.get('/api/filelist.json', async (req, res) => {
     }
 });
 
+app.get('/api/filelist/:dataType', async (req, res) => {
+    try {
+        const { dataType } = req.params;
+        const dataDir = path.join(__dirname, '../public/api/static', dataType);
+        const files = await fs.readdir(dataDir);
+        const jsonFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md'));
+        res.json(jsonFiles);
+    } catch (error) {
+        res.status(500).json({ error: `Failed to list files for ${req.params.dataType}` });
+    }
+});
+
 app.get('/api/live-observations', async (req, res) => {
     try {
         // Get the latest observation file from the static directory
