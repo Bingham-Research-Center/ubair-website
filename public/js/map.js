@@ -204,17 +204,29 @@ async function updateMap() {
     let validStations = 0;
     for (const stid of Object.keys(stationCoords)) {
       const stationInfo = stationCoords[stid];
-      // Get the pretty name for this station from metadata
-      const prettyName = metadata[stid]?.name || stid;
       const measurements = {};
 
-      // Map each variable's values by station (observations use pretty names)
-      for (const [variable, stationValues] of Object.entries(observations)) {
-        measurements[variable] = stationValues[prettyName] ?? null;
-      }
-      console.log('DEBUG: Station', stid, '(', prettyName, ') measurements:', measurements);
+      // observations are already indexed by station name (mapped in api.js)
+      // Try to find measurements for this station by checking all variable entries
+      const sampleVariable = observations['Temperature'] || observations['Ozone'] || Object.values(observations)[0];
+      const stationNamesInData = sampleVariable ? Object.keys(sampleVariable) : [];
 
-      const marker = createStationMarker(prettyName, stationInfo, measurements);
+      // Find the station name that matches this stid's metadata
+      const metadataName = metadata[stid]?.name;
+      const stationName = stationNamesInData.find(name =>
+        name === metadataName ||
+        name.toLowerCase() === metadataName?.toLowerCase() ||
+        name === stid
+      ) || metadataName || stid;
+
+      // Map each variable's values by station name
+      for (const [variable, stationValues] of Object.entries(observations)) {
+        if (variable === '_timestamps') continue;
+        measurements[variable] = stationValues[stationName] ?? null;
+      }
+      console.log('DEBUG: Station', stid, '(', stationName, ') measurements:', measurements);
+
+      const marker = createStationMarker(stationName, stationInfo, measurements);
       if (marker) {
         markers.push(marker);
         validStations++;

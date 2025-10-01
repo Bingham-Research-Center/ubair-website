@@ -1,12 +1,9 @@
 /* Ensure full viewport for live_aq page */
-body[data-page-type="live_aq"] {
-    overflow: hidden !important;
-}
-
-body[data-page-type="live_aq"] html,
-body[data-page-type="live_aq"] body {
+html, body[data-page-type="live_aq"] {
     height: 100vh !important;
     overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* Full-page map for live_aq page */
