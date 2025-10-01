@@ -1,3 +1,14 @@
+/* Ensure full viewport for live_aq page */
+body[data-page-type="live_aq"] {
+    overflow: hidden !important;
+}
+
+body[data-page-type="live_aq"] html,
+body[data-page-type="live_aq"] body {
+    height: 100vh !important;
+    overflow: hidden !important;
+}
+
 /* Full-page map for live_aq page */
 body[data-page-type="live_aq"] #map {
     position: fixed !important;
@@ -14,17 +25,21 @@ body[data-page-type="live_aq"] #map {
     pointer-events: auto !important;
 }
 
-/* Ensure map tiles load properly */
+/* Ensure map tiles load properly and fill container */
 body[data-page-type="live_aq"] #map .leaflet-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     width: 100% !important;
     height: 100% !important;
 }
 
 /* Study area overlay container - positioned below toggle button */
-.overlay-container {
-    position: fixed;
-    top: 65px; /* Just below the toggle button */
-    right: 20px; /* Align with toggle button */
+body[data-page-type="live_aq"] .overlay-container {
+    position: fixed !important;
+    top: 65px !important; /* Just below the toggle button */
+    right: 20px !important; /* Align with toggle button */
+    left: auto !important; /* Override overlays.css */
     background-color: rgba(255, 255, 255, 0.95);
     padding: 10px;
     border-radius: 8px;
