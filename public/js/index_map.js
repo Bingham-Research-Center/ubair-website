@@ -257,6 +257,7 @@ function formatMeasurement(pollutant, value) {
             return { displayValue: Math.round(numValue / 100), unit: ' hPa' };
         case 'PM2.5':
         case 'PM10':
+            return { displayValue: Math.round(numValue), unit: ' µg/m³' };
         case 'NOx':
         case 'NO':
         case 'NO2':
@@ -277,10 +278,20 @@ function getCardinalDirection(degrees) {
 }
 
 function createTwoColumnPopup(stationName, measurements, timestamp = null) {
-    const validMeasurements = Object.entries(measurements).filter(([_, value]) => value !== null && !isNaN(value));
+    // Priority variables: Air quality + essential meteorology
+    const priorityVars = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2', 'Temperature', 'Wind Speed', 'Wind Direction'];
+
+    // Filter for priority variables only
+    const validMeasurements = Object.entries(measurements)
+        .filter(([variable, value]) =>
+            value !== null &&
+            !isNaN(value) &&
+            priorityVars.includes(variable)
+        )
+        .sort((a, b) => priorityVars.indexOf(a[0]) - priorityVars.indexOf(b[0]));
 
     if (validMeasurements.length === 0) {
-        return `<div><h3>${stationName}</h3><div>Data missing.</div></div>`;
+        return `<div><h3>${stationName}</h3><div>No air quality data available</div></div>`;
     }
 
     let leftCol = '';

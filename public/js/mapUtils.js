@@ -59,14 +59,46 @@ export function isRoadWeatherStation(stationType) {
     return stationType === 'road';
 }
 
+// Define priority variables to display (air quality + essential meteorology)
+const PRIORITY_VARIABLES = {
+    // Air Quality (highest priority)
+    'Ozone': { unit: 'ppb', order: 1 },
+    'PM2.5': { unit: 'µg/m³', order: 2 },
+    'PM10': { unit: 'µg/m³', order: 3 },
+    'NOx': { unit: 'ppb', order: 4 },
+    'NO': { unit: 'ppb', order: 5 },
+    'NO2': { unit: 'ppb', order: 6 },
+
+    // Essential Meteorology
+    'Temperature': { unit: '°C', order: 7 },
+    'Wind Speed': { unit: 'm/s', order: 8 },
+    'Wind Direction': { unit: '°', order: 9 }
+};
+
 // Create popup content for a station
 export function createPopupContent(stationName, measurements) {
     let content = `<h3>${stationName}</h3>`;
 
-    for (const [pollutant, value] of Object.entries(measurements)) {
-        if (value === null) continue;
+    // Filter and sort measurements by priority
+    const priorityMeasurements = Object.entries(measurements)
+        .filter(([variable, value]) =>
+            value !== null &&
+            value !== undefined &&
+            PRIORITY_VARIABLES[variable]
+        )
+        .sort(([varA], [varB]) =>
+            PRIORITY_VARIABLES[varA].order - PRIORITY_VARIABLES[varB].order
+        );
 
-        const threshold = thresholds[pollutant];
+    // If no priority measurements, show a message
+    if (priorityMeasurements.length === 0) {
+        content += `<div class="measurement">No air quality data available</div>`;
+        return content;
+    }
+
+    // Display each priority measurement
+    for (const [variable, value] of priorityMeasurements) {
+        const threshold = thresholds[variable];
         let className = 'measurement';
 
         if (threshold) {
@@ -77,9 +109,11 @@ export function createPopupContent(stationName, measurements) {
             }
         }
 
-        const unit = pollutant === 'Temperature' ? '°C' : ' ppb';
+        const unit = PRIORITY_VARIABLES[variable].unit;
+        const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
+
         content += `<div class="${className}">
-            ${pollutant}: ${value}${unit}
+            ${variable}: ${formattedValue} ${unit}
         </div>`;
     }
 
