@@ -72,8 +72,15 @@ const PRIORITY_VARIABLES = {
     // Essential Meteorology
     'Temperature': { unit: '°C', order: 7 },
     'Wind Speed': { unit: 'm/s', order: 8 },
-    'Wind Direction': { unit: '°', order: 9 }
+    'Wind Direction': { unit: '', order: 9 }
 };
+
+function getCardinalDirection(degrees) {
+    if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
 
 // Create popup content for a station
 export function createPopupContent(stationName, measurements) {
@@ -110,10 +117,15 @@ export function createPopupContent(stationName, measurements) {
         }
 
         const unit = PRIORITY_VARIABLES[variable].unit;
-        const formattedValue = typeof value === 'number' ? value.toFixed(1) : value;
+        let displayValue = typeof value === 'number' ? value.toFixed(1) : value;
+
+        // Convert wind direction to cardinal
+        if (variable === 'Wind Direction') {
+            displayValue = getCardinalDirection(value);
+        }
 
         content += `<div class="${className}">
-            ${variable}: ${formattedValue} ${unit}
+            ${variable}: ${displayValue}${unit ? ' ' + unit : ''}
         </div>`;
     }
 
