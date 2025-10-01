@@ -202,16 +202,19 @@ async function updateMap() {
     console.log('DEBUG: stationCoords keys:', Object.keys(stationCoords));
 
     let validStations = 0;
-    for (const stationName of Object.keys(stationCoords)) {
-      const stationInfo = stationCoords[stationName];
+    for (const stid of Object.keys(stationCoords)) {
+      const stationInfo = stationCoords[stid];
+      // Get the pretty name for this station from metadata
+      const prettyName = metadata[stid]?.name || stid;
       const measurements = {};
 
-      // Map each variable's values by station
+      // Map each variable's values by station (observations use pretty names)
       for (const [variable, stationValues] of Object.entries(observations)) {
-        measurements[variable] = stationValues[stationName] ?? null;
+        measurements[variable] = stationValues[prettyName] ?? null;
       }
+      console.log('DEBUG: Station', stid, '(', prettyName, ') measurements:', measurements);
 
-      const marker = createStationMarker(stationName, stationInfo, measurements);
+      const marker = createStationMarker(prettyName, stationInfo, measurements);
       if (marker) {
         markers.push(marker);
         validStations++;
