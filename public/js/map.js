@@ -1,6 +1,34 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
+// Import mapStationName to ensure we use the same mapping as api.js
+async function mapStationName(stid, metadataName) {
+    const prettyNames = {
+        'UBHSP': 'Horsepool', 'UBCSP': 'Castle Peak', 'UB7ST': 'Seven Sisters',
+        'KVEL': 'Vernal', 'K74V': 'Roosevelt', 'COOPDSNU1': 'Duchesne',
+        'KU69': 'Duchesne', 'UINU1': 'Fort Duchesne', 'UTMYT': 'Myton',
+        'COOPDINU1': 'Dinosaur NM', 'COOPALMU1': 'Altamont', 'UCC34': 'Bluebell',
+        'K40U': 'Manila', 'UTSTV': 'Starvation', 'UTDAN': 'Daniels Summit',
+        'UTICS': 'Indian Canyon', 'UTSLD': 'Soldier Summit', 'BUNUT': 'Roosevelt',
+        'CHPU1': 'Ouray', 'CEN': 'Vernal', 'QHW': 'Whiterocks', 'RDN': 'Red Wash'
+    };
+
+    if (!prettyNames[stid] && metadataName) {
+        // Clean metadata name
+        return metadataName
+            .replace(/\s+COOPB?$/, '')
+            .replace(/\s+RADIO$/, '')
+            .replace(/^ALTA\s*-\s*/, 'Alta ')
+            .replace(/\s*NM\s*-\s*/, ' ')
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
+    return prettyNames[stid] || metadataName || stid;
+}
+
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -109.7], 9);
 
@@ -206,18 +234,9 @@ async function updateMap() {
       const stationInfo = stationCoords[stid];
       const measurements = {};
 
-      // observations are already indexed by station name (mapped in api.js)
-      // Try to find measurements for this station by checking all variable entries
-      const sampleVariable = observations['Temperature'] || observations['Ozone'] || Object.values(observations)[0];
-      const stationNamesInData = sampleVariable ? Object.keys(sampleVariable) : [];
-
-      // Find the station name that matches this stid's metadata
+      // Use the same mapping function as api.js to get the station name
       const metadataName = metadata[stid]?.name;
-      const stationName = stationNamesInData.find(name =>
-        name === metadataName ||
-        name.toLowerCase() === metadataName?.toLowerCase() ||
-        name === stid
-      ) || metadataName || stid;
+      const stationName = mapStationName(stid, metadataName);
 
       // Map each variable's values by station name
       for (const [variable, stationValues] of Object.entries(observations)) {

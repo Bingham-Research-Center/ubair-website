@@ -1,12 +1,12 @@
 /* Ensure full viewport for live_aq page */
-html, body[data-page-type="live_aq"] {
+body[data-page-type="live_aq"] {
     height: 100vh !important;
     overflow: hidden !important;
     margin: 0 !important;
     padding: 0 !important;
 }
 
-/* Full-page map for live_aq page */
+/* Full-page map for live_aq page - use fixed positioning to cover entire viewport */
 body[data-page-type="live_aq"] #map {
     position: fixed !important;
     top: 0 !important;
@@ -20,6 +20,8 @@ body[data-page-type="live_aq"] #map {
     padding: 0 !important;
     border-radius: 0 !important;
     pointer-events: auto !important;
+    min-height: 100vh !important;
+    max-height: 100vh !important;
 }
 
 /* Ensure map tiles load properly and fill container */
