@@ -12,9 +12,9 @@ export function getMarkerColor(measurements) {
 
     const ozoneValue = measurements['Ozone'];
 
-    // Has data but no ozone data = pale pastel blue (default)
+    // Has data but no ozone data = gray (since color scheme is for ozone ppb)
     if (ozoneValue === null || ozoneValue === undefined) {
-        return '#B8D4E3';  // Pale pastel blue
+        return 'gray';
     }
 
     const ozoneThreshold = thresholds['Ozone'];
