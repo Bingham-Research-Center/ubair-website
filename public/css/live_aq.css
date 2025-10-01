@@ -3,10 +3,13 @@ body[data-page-type="live_aq"] #map {
     position: fixed !important;
     top: 0 !important;
     left: 250px !important;
+    right: 0 !important;
+    bottom: 0 !important;
     width: calc(100vw - 250px) !important;
     height: 100vh !important;
     z-index: 1 !important;
     margin: 0 !important;
+    padding: 0 !important;
     border-radius: 0 !important;
     pointer-events: auto !important;
 }
@@ -20,12 +23,12 @@ body[data-page-type="live_aq"] #map .leaflet-container {
 /* Study area overlay container - positioned below toggle button */
 .overlay-container {
     position: fixed;
-    top: 70px; /* Below the toggle button */
+    top: 65px; /* Just below the toggle button */
     right: 20px; /* Align with toggle button */
     background-color: rgba(255, 255, 255, 0.95);
     padding: 10px;
     border-radius: 8px;
-    z-index: 1000;
+    z-index: 999; /* Below button but above map */
     max-width: 150px; /* Reduced width */
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     border: 2px solid var(--usu-blue);
@@ -85,7 +88,7 @@ body[data-page-type="live_aq"] #map .leaflet-container {
 /* USU Logo positioning */
 .usu-logo {
     position: fixed;
-    bottom: 80px; /* Adjusted to avoid footer overlap */
+    bottom: 120px; /* Raised up to avoid footer overlap */
     left: calc(250px + 20px);
     z-index: 1000;
 }

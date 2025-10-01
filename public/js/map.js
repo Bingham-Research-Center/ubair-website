@@ -130,7 +130,7 @@ function fixUSULogo() {
     if (usuLogoContainer) {
         // Ensure proper positioning for live AQ page
         usuLogoContainer.style.position = 'fixed';
-        usuLogoContainer.style.bottom = '20px';
+        usuLogoContainer.style.bottom = '120px';
         usuLogoContainer.style.left = 'calc(250px + 20px)';
         usuLogoContainer.style.zIndex = '1000';
 
@@ -230,12 +230,8 @@ async function updateMap() {
 // Helper function to create station markers (if not already defined)
 function createStationMarker(stationName, stationInfo, measurements) {
     try {
-        // Get primary measurement for color (prefer Ozone, then PM2.5)
-        let primaryValue = measurements['Ozone'] || measurements['PM2.5'] || null;
-        let primaryVariable = measurements['Ozone'] ? 'Ozone' : 'PM2.5';
-
-        // Create marker with appropriate color
-        const color = getMarkerColor(primaryVariable, primaryValue);
+        // Create marker with appropriate color using mapUtils function
+        const color = getMarkerColor(measurements);
 
         const marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
             color: '#fff',
