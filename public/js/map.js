@@ -218,6 +218,10 @@ async function updateMap() {
 
     // Processing observations and metadata for map update
 
+    // Extract units from observations data
+    const units = observations._units || {};
+    console.log('DEBUG: units:', units);
+
     // Clear existing markers
     markers.forEach(m => map.removeLayer(m));
     markers = [];
@@ -240,12 +244,12 @@ async function updateMap() {
 
       // Map each variable's values by station name
       for (const [variable, stationValues] of Object.entries(observations)) {
-        if (variable === '_timestamps') continue;
+        if (variable === '_timestamps' || variable === '_units') continue;
         measurements[variable] = stationValues[stationName] ?? null;
       }
       console.log('DEBUG: Station', stid, '(', stationName, ') measurements:', measurements);
 
-      const marker = createStationMarker(stationName, stationInfo, measurements);
+      const marker = createStationMarker(stationName, stationInfo, measurements, units);
       if (marker) {
         markers.push(marker);
         validStations++;
@@ -259,7 +263,7 @@ async function updateMap() {
 }
 
 // Helper function to create station markers (if not already defined)
-function createStationMarker(stationName, stationInfo, measurements) {
+function createStationMarker(stationName, stationInfo, measurements, units = {}) {
     try {
         // Create marker with appropriate color using mapUtils function
         const color = getMarkerColor(measurements);
@@ -272,8 +276,8 @@ function createStationMarker(stationName, stationInfo, measurements) {
             radius: 12
         });
 
-        // Create popup content
-        const popupContent = createPopupContent(stationName, measurements);
+        // Create popup content with dynamic units
+        const popupContent = createPopupContent(stationName, measurements, units);
         marker.bindPopup(popupContent);
 
         // Add to map

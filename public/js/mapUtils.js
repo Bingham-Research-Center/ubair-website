@@ -60,19 +60,21 @@ export function isRoadWeatherStation(stationType) {
 }
 
 // Define priority variables to display (air quality + essential meteorology)
+// Note: units are now dynamically loaded from data, these orders just define display priority
 const PRIORITY_VARIABLES = {
     // Air Quality (highest priority)
-    'Ozone': { unit: 'ppb', order: 1 },
-    'PM2.5': { unit: 'µg/m³', order: 2 },
-    'PM10': { unit: 'µg/m³', order: 3 },
-    'NOx': { unit: 'ppb', order: 4 },
-    'NO': { unit: 'ppb', order: 5 },
-    'NO2': { unit: 'ppb', order: 6 },
+    'Ozone': { order: 1 },
+    'PM2.5': { order: 2 },
+    'PM10': { order: 3 },
+    'NOx': { order: 4 },
+    'NO': { order: 5 },
+    'NO2': { order: 6 },
 
     // Essential Meteorology
-    'Temperature': { unit: '°C', order: 7 },
-    'Wind Speed': { unit: 'm/s', order: 8 },
-    'Wind Direction': { unit: '', order: 9 }
+    'Temperature': { order: 7 },
+    'Wind Speed': { order: 8 },
+    'Wind Direction': { order: 9 },
+    'Snow Depth': { order: 10 }
 };
 
 function getCardinalDirection(degrees) {
@@ -83,16 +85,21 @@ function getCardinalDirection(degrees) {
 }
 
 // Create popup content for a station
-export function createPopupContent(stationName, measurements) {
+export function createPopupContent(stationName, measurements, units = {}) {
     let content = `<h3>${stationName}</h3>`;
 
     // Filter and sort measurements by priority
     const priorityMeasurements = Object.entries(measurements)
-        .filter(([variable, value]) =>
-            value !== null &&
-            value !== undefined &&
-            PRIORITY_VARIABLES[variable]
-        )
+        .filter(([variable, value]) => {
+            // Special handling for Snow Depth: treat 0 as valid data
+            if (variable === 'Snow Depth') {
+                return value !== null && value !== undefined && !isNaN(value) && PRIORITY_VARIABLES[variable];
+            }
+            // Standard handling for other variables
+            return value !== null &&
+                   value !== undefined &&
+                   PRIORITY_VARIABLES[variable];
+        })
         .sort(([varA], [varB]) =>
             PRIORITY_VARIABLES[varA].order - PRIORITY_VARIABLES[varB].order
         );
@@ -116,7 +123,8 @@ export function createPopupContent(stationName, measurements) {
             }
         }
 
-        const unit = PRIORITY_VARIABLES[variable].unit;
+        // Get unit dynamically from data, with empty string as fallback
+        const unit = units[variable] || '';
         let displayValue = typeof value === 'number' ? value.toFixed(1) : value;
 
         // Convert wind direction to cardinal

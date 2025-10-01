@@ -70,6 +70,7 @@ function processMetadata(rawMeta) {
 /**
  * Process raw observation data from pandas export format
  * Transforms [{stid, variable, value, units}...] to {variable: {station: value}}
+ * Also preserves units information in a separate _units object
  */
 function processObservationData(rawData, metadata = {}) {
     if (!Array.isArray(rawData)) {
@@ -79,7 +80,8 @@ function processObservationData(rawData, metadata = {}) {
     // Group by station first
     const stationData = {};
     const stationTimestamps = {}; // Store timestamps for each station
-    
+    const variableUnits = {}; // Store units for each variable
+
     rawData.forEach(obs => {
         const { stid, variable, value, date_time, units } = obs;
 
@@ -88,13 +90,19 @@ function processObservationData(rawData, metadata = {}) {
         if (!stationData[stid]) {
             stationData[stid] = {};
         }
-        
+
         // Store the timestamp for this station (will be the same for all variables from same observation)
         if (date_time) {
             stationTimestamps[stid] = date_time;
         }
 
         const mappedVar = mapVariableName(variable);
+
+        // Store units for this variable (will be consistent across stations)
+        if (units && !variableUnits[mappedVar]) {
+            variableUnits[mappedVar] = units;
+        }
+
         // const convertedValue = convertUnits(value, units, mappedVar);
         // stationData[stid][mappedVar] = convertedValue;
         stationData[stid][mappedVar] = value;
@@ -126,9 +134,10 @@ function processObservationData(rawData, metadata = {}) {
         });
     });
 
-    // Add timestamps to the result
+    // Add timestamps and units to the result
     result._timestamps = timestamps;
-    
+    result._units = variableUnits;
+
     return result;
 }
 
