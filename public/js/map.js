@@ -1,8 +1,8 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 
-// Import mapStationName to ensure we use the same mapping as api.js
-async function mapStationName(stid, metadataName) {
+// Replicate mapStationName to ensure we use the same mapping as api.js
+function mapStationName(stid, metadataName) {
     const prettyNames = {
         'UBHSP': 'Horsepool', 'UBCSP': 'Castle Peak', 'UB7ST': 'Seven Sisters',
         'KVEL': 'Vernal', 'K74V': 'Roosevelt', 'COOPDSNU1': 'Duchesne',
