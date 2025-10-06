@@ -1,11 +1,20 @@
 // public/js/forecast_air_quality.js
 import { loadAndRenderMarkdown, getMarkdownRenderer } from './markdownLoader.js';
+import { isExperimentalEnabled } from './devConfig.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
     initializeTabs();
     initializeTooltips();
     await loadLLMSummaries();
     initializeClyfar();
+    
+    // Hide confidence estimates if not enabled
+    if (!isExperimentalEnabled('confidenceEstimates')) {
+        const confidenceElements = document.querySelectorAll('.confidence');
+        confidenceElements.forEach(element => {
+            element.style.display = 'none';
+        });
+    }
 });
 
 function initializeTabs() {
@@ -126,7 +135,13 @@ function initializeTooltips() {
 
 function initializeClyfar() {
     // Initialize with real data from JSON files
-    loadAirQualityForecastData();
+    // Check if the function exists before calling it
+    if (typeof loadAirQualityForecastData === 'function') {
+        loadAirQualityForecastData();
+    } else {
+        // Function not defined, use fallback or skip
+        console.log('loadAirQualityForecastData function not available');
+    }
 }
 
 function updateForecastCards() {
@@ -154,10 +169,20 @@ function updateForecastCards() {
     const weekTrend = document.querySelector('.summary-card.week .forecast-level');
 
     if (todayLevel) todayLevel.textContent = forecasts.today.level;
-    if (todayConf) todayConf.textContent = `${forecasts.today.confidence} Confidence`;
     if (tomorrowLevel) tomorrowLevel.textContent = forecasts.tomorrow.level;
-    if (tomorrowConf) tomorrowConf.textContent = `${forecasts.tomorrow.confidence} Confidence`;
     if (weekTrend) weekTrend.textContent = forecasts.week.trend;
+
+    // Only show confidence estimates if experimental features are enabled
+    if (isExperimentalEnabled('confidenceEstimates')) {
+        if (todayConf) todayConf.textContent = `${forecasts.today.confidence} Confidence`;
+        if (tomorrowConf) tomorrowConf.textContent = `${forecasts.tomorrow.confidence} Confidence`;
+    } else {
+        // Hide confidence estimates in production
+        if (todayConf) todayConf.style.display = 'none';
+        if (tomorrowConf) tomorrowConf.style.display = 'none';
+        const weekConf = document.querySelector('.summary-card.week .confidence');
+        if (weekConf) weekConf.style.display = 'none';
+    }
 }
 
 function generateHeatmapDemo() {

@@ -244,12 +244,29 @@
     </div>
 
     <!-- Scripts -->
+    <script type="module" src="/public/js/devConfig.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/forecast_air_quality.js"></script>
     
-    <script>
-        // Welsh translations for navigation and page elements
-        const welshTranslations = {
+    <script type="module">
+        import { isEasterEggEnabled } from '/public/js/devConfig.js';
+        
+        // Initialize Welsh easter egg if enabled
+        if (isEasterEggEnabled('welsh')) {
+            initWelshMode();
+        } else {
+            // Hide the Welsh mode easter egg
+            document.addEventListener('DOMContentLoaded', function() {
+                const welshBox = document.getElementById('welsh-mode-box');
+                if (welshBox) {
+                    welshBox.style.display = 'none';
+                }
+            });
+        }
+        
+        function initWelshMode() {
+            // Welsh translations for navigation and page elements
+            const welshTranslations = {
             'Live Air Quality Map': 'Map Ansawdd Aer Byw',
             'Ozone Alert': 'Rhybudd Osôn',
             'CLYFAR': 'CLYFAR',
@@ -358,6 +375,8 @@
             });
             originalTexts.clear();
         }
+        
+        } // End of initWelshMode function
     </script>
 </body>
 </html>
