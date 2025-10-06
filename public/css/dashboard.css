@@ -52,12 +52,97 @@
     font-style: italic;
 }
 
-/* Dashboard Grid */
+/* Dashboard Grid - Responsive and Intelligent Layout */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1.7fr 1.3fr;
     gap: 2rem;
     align-items: start;
+    
+    /* Default: Large screens with good aspect ratio */
+    grid-template-columns: 1.7fr 1.3fr;
+    
+    /* Container query for intelligent responsive behavior */
+    container-type: inline-size;
+}
+
+/* Ultra-wide screens (100+ inch TVs, ultra-wide monitors) */
+@media screen and (min-width: 1800px) {
+    .dashboard-grid {
+        grid-template-columns: 1.5fr 1fr 0.8fr;
+        max-width: 1600px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-panel.forecast-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    
+    .panel-header {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Large desktop - optimal 2-column */
+@media screen and (min-width: 1400px) and (max-width: 1799px) {
+    .dashboard-grid {
+        grid-template-columns: 1.6fr 1.4fr;
+    }
+}
+
+/* Standard desktop - balanced 2-column */
+@media screen and (min-width: 1200px) and (max-width: 1399px) {
+    .dashboard-grid {
+        grid-template-columns: 1.5fr 1.5fr;
+    }
+}
+
+/* Tablet landscape and smaller desktop - intelligent switch point */
+@media screen and (min-width: 1025px) and (max-width: 1199px) {
+    .dashboard-grid {
+        /* Switch to single column for better content visibility */
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .dashboard-panel {
+        min-height: 400px;
+    }
+    
+    .map-panel {
+        order: 1;
+        min-height: 450px;
+    }
+    
+    .forecast-panel {
+        order: 2;
+        min-height: 350px;
+    }
+}
+
+/* Tablet portrait - single column but larger panels */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .dashboard-panel {
+        min-height: 380px;
+    }
+    
+    .map-panel {
+        order: 1;
+        min-height: 420px;
+    }
+    
+    .forecast-panel {
+        order: 2;
+        min-height: 320px;
+    }
 }
 
 /* Dashboard Panels */
@@ -141,4 +226,18 @@
     border: 2px solid rgba(0, 38, 58, 0.1);
     min-height: 350px;
     width: 100%;
+    transition: all 0.3s ease;
+}
+
+/* Responsive map adjustments */
+@media screen and (min-width: 1025px) and (max-width: 1199px) {
+    .dashboard-map {
+        min-height: 400px;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .dashboard-map {
+        min-height: 380px;
+    }
 }
