@@ -1,5 +1,11 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
+import {
+    getConfidenceLevel,
+    calculateCompositeConfidence,
+    adjustConfidenceForQuality,
+    validateConfidence
+} from './confidenceThresholds.js';
 
 // Cache for 5 minutes to avoid excessive processing
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
@@ -201,15 +207,18 @@ class SnowDetectionService {
         
         // Determine snow level
         const snowLevel = this.determineSnowLevel(whitePixelPercentage);
-        
-        // Calculate confidence based on various factors
-        let confidence = this.calculateConfidence(whitePixelPercentage, snowLevel, cameraId);
-        
-        // Apply temperature-based confidence adjustment
-        if (temperatureCheck) {
-            confidence = Math.min(confidence, temperatureCheck.confidence);
-        }
-        
+
+        // Calculate confidence based on various factors using new taxonomy
+        const confidence = this.calculateConfidence(
+            whitePixelPercentage,
+            snowLevel,
+            cameraId,
+            temperatureCheck
+        );
+
+        // Get semantic confidence level
+        const confidenceLevel = getConfidenceLevel(confidence);
+
         return {
             cameraId,
             timestamp,
@@ -217,6 +226,13 @@ class SnowDetectionService {
             snowLevel,
             whitePixelPercentage: Math.max(0, whitePixelPercentage),
             confidence,
+            confidenceLevel: {
+                name: confidenceLevel.name,
+                displayText: confidenceLevel.displayText,
+                badge: confidenceLevel.badge,
+                color: confidenceLevel.color,
+                icon: confidenceLevel.icon
+            },
             imageSize,
             temperatureInfo: temperatureCheck,
             processingTime: Date.now() - timestamp
@@ -313,34 +329,69 @@ class SnowDetectionService {
     }
 
     /**
-     * Calculate confidence score for the detection
+     * Calculate confidence score for the detection using composite approach
      * @param {number} whitePixelPercentage - White pixel percentage
      * @param {string} snowLevel - Detected snow level
      * @param {string} cameraId - Camera identifier
+     * @param {Object} temperatureInfo - Temperature context
      * @returns {number} Confidence score (0-1)
      */
-    calculateConfidence(whitePixelPercentage, snowLevel, cameraId) {
-        let confidence = 0.5; // Base confidence
-        
-        // Higher confidence for clear classifications
+    calculateConfidence(whitePixelPercentage, snowLevel, cameraId, temperatureInfo = null) {
+        // Build confidence from multiple sources
+        const sources = [];
+
+        // Source 1: Visual analysis confidence
+        let visualConfidence = 0.5;
         if (snowLevel === 'none' && whitePixelPercentage < 3) {
-            confidence = 0.9;
+            visualConfidence = 0.9;
         } else if (snowLevel === 'heavy' && whitePixelPercentage > 40) {
-            confidence = 0.95;
+            visualConfidence = 0.95;
         } else if (snowLevel !== 'none') {
-            // Moderate confidence for snow detection
-            confidence = 0.7 + (whitePixelPercentage / 100) * 0.2;
+            visualConfidence = 0.7 + (whitePixelPercentage / 100) * 0.2;
         }
-        
-        // Adjust based on historical consistency
+        sources.push({ confidence: visualConfidence, weight: 1.2, source: 'Camera visual analysis' });
+
+        // Source 2: Temperature-based confidence
+        if (temperatureInfo && temperatureInfo.confidence !== undefined) {
+            sources.push({
+                confidence: temperatureInfo.confidence,
+                weight: 1.5, // Temperature is highly reliable
+                source: 'Temperature conditions'
+            });
+        }
+
+        // Calculate composite confidence
+        let baseConfidence = calculateCompositeConfidence(sources);
+
+        // Quality adjustments
         const history = this.detectionHistory.get(cameraId);
+        const qualityIndicators = {};
+
+        // Temporal consistency
         if (history && history.length > 3) {
             const recentResults = history.slice(-3);
             const consistency = this.calculateConsistency(recentResults);
-            confidence *= (0.7 + consistency * 0.3); // Boost confidence for consistent results
+            qualityIndicators.temporalConsistency = consistency;
         }
-        
-        return Math.max(0, Math.min(1, confidence));
+
+        // Apply quality adjustments
+        const finalConfidence = adjustConfidenceForQuality(baseConfidence, qualityIndicators);
+
+        // Validate confidence calculation
+        const validation = validateConfidence(finalConfidence, {
+            dataSource: 'Camera + Temperature',
+            sourceCount: sources.length,
+            ageMinutes: 0 // Real-time analysis
+        });
+
+        if (!validation.valid) {
+            console.warn(`Confidence validation failed for ${cameraId}:`, validation.errors);
+        }
+        if (validation.warnings.length > 0) {
+            console.debug(`Confidence warnings for ${cameraId}:`, validation.warnings);
+        }
+
+        return finalConfidence;
     }
 
     /**
