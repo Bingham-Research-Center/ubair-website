@@ -240,33 +240,53 @@ class SnowDetectionService {
     }
 
     /**
-     * Simulate white pixel analysis (placeholder for real image processing)
-     * @param {Buffer} imageBuffer - Image data
+     * Analyze actual pixel data to detect white pixels (snow)
+     * @param {Buffer} imageBuffer - Image data (RGB format)
      * @param {string} cameraId - Camera identifier
-     * @returns {number} Simulated white pixel percentage
+     * @returns {number} White pixel percentage
      */
     simulateWhitePixelAnalysis(imageBuffer, cameraId) {
-        // This is a simulation - replace with actual image processing
-        const imageEntropy = this.calculateImageEntropy(imageBuffer);
-        const timeOfDay = new Date().getHours();
-        const seasonalFactor = this.getSeasonalFactor();
-        
-        // Base calculation using image characteristics
-        let basePercentage = (imageEntropy * 100) % 50;
-        
-        // Adjust for time of day (dawn/dusk might have more false positives)
-        if (timeOfDay < 8 || timeOfDay > 18) {
-            basePercentage *= 0.8; // Reduce sensitivity in low light
+        // Assume buffer is RGB format (3 bytes per pixel)
+        const pixelCount = Math.floor(imageBuffer.length / 3);
+
+        if (pixelCount === 0) return 0;
+
+        let whitePixelCount = 0;
+
+        // Analyze each pixel
+        for (let i = 0; i < imageBuffer.length; i += 3) {
+            const r = imageBuffer[i];
+            const g = imageBuffer[i + 1];
+            const b = imageBuffer[i + 2];
+
+            // Calculate brightness (average of RGB)
+            const brightness = (r + g + b) / 3;
+
+            // Calculate saturation (how colorful vs grey/white)
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : ((max - min) / max) * 100;
+
+            // Calculate RGB balance (how close R, G, B are to each other)
+            const avgRGB = (r + g + b) / 3;
+            const rDiff = Math.abs(r - avgRGB);
+            const gDiff = Math.abs(g - avgRGB);
+            const bDiff = Math.abs(b - avgRGB);
+            const maxDiff = Math.max(rDiff, gDiff, bDiff);
+            const rgbBalance = avgRGB === 0 ? 0 : 1 - (maxDiff / avgRGB);
+
+            // Detect white pixels (snow) using thresholds
+            const isWhite = brightness >= this.colorParams.brightnessThreshold &&
+                           saturation <= this.colorParams.saturationThreshold &&
+                           rgbBalance >= this.colorParams.rgbBalanceThreshold;
+
+            if (isWhite) {
+                whitePixelCount++;
+            }
         }
-        
-        // Seasonal adjustment (winter months more likely)
-        basePercentage *= seasonalFactor;
-        
-        // Add some controlled randomness to simulate real-world variation
-        const variation = (Math.random() - 0.5) * 10; // ±5% variation
-        basePercentage += variation;
-        
-        return Math.max(0, Math.min(100, basePercentage));
+
+        const whitePixelPercentage = (whitePixelCount / pixelCount) * 100;
+        return whitePixelPercentage;
     }
 
     /**

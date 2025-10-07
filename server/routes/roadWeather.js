@@ -136,6 +136,4 @@ router.get('/road-weather/digital-signs', async (req, res) => {
     }
 });
 
-// Removed debug endpoint - not needed in production
-
 export default router;
