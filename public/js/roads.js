@@ -340,13 +340,28 @@ class RoadWeatherMap {
                     ${isCameraMonitored ? '📹 Camera Monitored' : (isEstimated ? '📊 Estimated' : '🛰️ Monitored')}
                 </div>`;
 
-        // Add camera-specific information
+        // Add camera-specific information with confidence taxonomy
         if (isCameraMonitored && segment.detectionData) {
             const detection = segment.detectionData;
+
+            // Get confidence level info (if available from API, otherwise fallback)
+            let confidenceBadge = '';
+            if (detection.confidenceLevel) {
+                const level = detection.confidenceLevel;
+                confidenceBadge = `<span class="confidence-badge confidence-${level.badge}"
+                                         style="background-color: ${level.color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;"
+                                         title="${level.name}: Based on camera analysis and temperature data">
+                                        ${level.icon} ${level.displayText}
+                                    </span>`;
+            } else {
+                // Fallback to simple percentage display
+                confidenceBadge = `${Math.round(detection.confidence * 100)}%`;
+            }
+
             popupContent += `
                 <div class="camera-detection-info">
                     <p><strong>Snow Level:</strong> ${detection.snowLevel}</p>
-                    <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
+                    <p><strong>Confidence:</strong> ${confidenceBadge}</p>
                     <p><strong>Last Analysis:</strong> ${new Date(detection.timestamp).toLocaleTimeString()}</p>
                 </div>`;
         }
