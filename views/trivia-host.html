@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Trivia Host - Basin Weather</title>
+
+    <link rel="icon" type="image/png" href="/public/images/BRS_01_UStateLeft_White.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/trivia.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Socket.IO -->
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body data-page-type="trivia-host">
+<!-- Colored Bar -->
+<div class="colored-bar"></div>
+
+<!-- Main Content -->
+<main class="content">
+    <div class="host-container">
+        <!-- Room Code Display -->
+        <div class="room-code-display" id="roomCodeDisplay" style="display: none;">
+            <h2><i class="fas fa-tv"></i> Room Code</h2>
+            <div class="room-code" id="roomCode"></div>
+            <p>Players can join at: <strong>basinwx.com/trivia/player</strong></p>
+            <p style="margin-top: 1rem; font-size: 0.9rem; opacity: 0.9;">
+                <i class="fas fa-info-circle"></i> The game will enter fullscreen when you start
+            </p>
+        </div>
+
+        <!-- Loading Screen -->
+        <div class="loading-screen" id="loadingScreen">
+            <div class="trivia-header">
+                <h1><i class="fas fa-atom"></i> STEM Trivia Host</h1>
+                <p>Creating your STEM trivia room...</p>
+            </div>
+        </div>
+
+        <!-- Waiting for Players -->
+        <div class="players-waiting" id="playersWaiting" style="display: none;">
+            <h3><i class="fas fa-users"></i> Players Joined (<span id="playerCount">0</span>/8)</h3>
+            <div class="player-list" id="playerList"></div>
+            <div class="game-controls" style="margin-top: 2rem; text-align: center;">
+                <button class="btn btn-primary" id="startGameBtn" onclick="startGame()" disabled>
+                    <i class="fas fa-play"></i> Start Game
+                </button>
+                <div style="margin-top: 1rem;">
+                    <small>Need at least 1 player to start</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Game Settings -->
+        <div class="game-settings" id="gameSettings" style="display: none;">
+            <h3><i class="fas fa-cog"></i> Game Settings</h3>
+            <p style="text-align: center; color: var(--text-secondary, #666); margin-bottom: 1.5rem;">
+                <i class="fas fa-flask"></i> Mixed STEM questions from Science, Math, Computer Science & Technology
+            </p>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                <div class="form-group">
+                    <label for="questionCount">Number of Questions:</label>
+                    <select id="questionCount">
+                        <option value="5">5 Questions</option>
+                        <option value="10" selected>10 Questions</option>
+                        <option value="15">15 Questions</option>
+                        <option value="20">20 Questions</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="difficulty">Difficulty:</label>
+                    <select id="difficulty">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+            </div>
+            <div style="text-align: center; padding: 0.75rem; background: rgba(15, 76, 129, 0.1); border-radius: 8px; font-size: 0.9rem; color: var(--text-secondary, #666);">
+                <i class="fas fa-shield-alt"></i> School-safe content • Filtered for appropriate topics
+            </div>
+        </div>
+
+        <!-- Question Display -->
+        <div class="question-display" id="questionDisplay" style="display: none;">
+            <!-- Host Controls -->
+            <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+                <button class="btn btn-danger" onclick="endGame()" style="background: #dc3545; padding: 0.5rem 1rem;">
+                    <i class="fas fa-stop"></i> End Game
+                </button>
+            </div>
+
+            <div id="bonusRoundBadge" style="display: none;" class="bonus-round-badge">
+                <i class="fas fa-star"></i> BONUS ROUND - Double Points!
+            </div>
+            <div class="question-header">
+                <div class="timer" id="timer">15</div>
+                <div class="question-progress">
+                    Question <span id="currentQuestion">1</span> of <span id="totalQuestions">10</span>
+                    <span class="answer-count" id="answerCount">
+                        <i class="fas fa-check-circle"></i>
+                        <span id="answeredCount">0</span>/<span id="totalPlayers">0</span> answered
+                    </span>
+                </div>
+            </div>
+            <div class="question-text" id="questionText"></div>
+            <div class="answer-options" id="answerOptions"></div>
+        </div>
+
+        <!-- Results Display -->
+        <div class="results-display" id="resultsDisplay" style="display: none;">
+            <!-- Host Controls -->
+            <div style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+                <button class="btn btn-danger" onclick="endGame()" style="background: #dc3545; padding: 0.5rem 1rem;">
+                    <i class="fas fa-stop"></i> End Game
+                </button>
+            </div>
+
+            <h3><i class="fas fa-chart-bar"></i> Question Results</h3>
+            <div id="questionResults"></div>
+            <div class="next-question-timer">
+                Next question in: <span id="nextQuestionTimer">5</span>
+            </div>
+        </div>
+
+        <!-- Final Scores -->
+        <div class="scores-display" id="finalScores" style="display: none;">
+            <h2><i class="fas fa-trophy"></i> Final Results</h2>
+            <div id="finalScoresList"></div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-primary" onclick="location.reload()">
+                    <i class="fas fa-redo"></i> Play Again
+                </button>
+                <a href="/trivia" class="btn btn-secondary" style="margin-left: 1rem;">
+                    <i class="fas fa-home"></i> Back to Menu
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Confetti Canvas -->
+<canvas id="confettiCanvas" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9999;"></canvas>
+
+<script src="/public/js/trivia-host.js"></script>
+</body>
+</html>

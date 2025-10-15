@@ -38,3 +38,5 @@ pids
 
 # API cache directory
 .cache/
+# Large data files
+public/data/*.csv
