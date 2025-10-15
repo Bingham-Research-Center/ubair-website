@@ -60,6 +60,86 @@ body[data-page-type="roads"] h1::after {
     cursor: grabbing;
 }
 
+/* Error overlay for data load failures */
+.road-data-error-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.road-data-error-overlay .error-content {
+    background: #1f2937;
+    border: 2px solid var(--roads-danger);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(220, 38, 38, 0.3);
+}
+
+.road-data-error-overlay .error-content i {
+    font-size: 3rem;
+    color: var(--roads-danger);
+    margin-bottom: 1rem;
+}
+
+.road-data-error-overlay .error-content h3 {
+    color: #ffffff;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.road-data-error-overlay .error-content p {
+    color: #d1d5db;
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.road-data-error-overlay .retry-button {
+    background: var(--roads-secondary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.road-data-error-overlay .retry-button:hover {
+    background: var(--roads-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.road-data-error-overlay .retry-button:active {
+    transform: translateY(0);
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
 /* Ensure all Leaflet elements can receive events */
 .leaflet-container {
     cursor: grab !important;

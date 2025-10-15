@@ -9,6 +9,7 @@ import { createServer } from 'http';
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
+import { warmAllCaches } from './utils/cacheWarming.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -150,10 +151,13 @@ app.get('/api/live-observations', async (req, res) => {
 // Create HTTP server
 const server = createServer(app);
 
-
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log('Data upload API available at /api/data/upload/:dataType');
+
+    // Warm caches after server is listening (non-blocking)
+    warmAllCaches({ verbose: true, exitOnFailure: false })
+        .catch(err => console.error('Cache warming failed:', err));
 });
 
 // Error handling middleware

@@ -201,12 +201,21 @@ class RoadWeatherMap {
         try {
             const response = await fetch('/api/road-weather');
             if (!response.ok) {
-                // Fallback to static/demo data
-                this.loadStaticRoadData();
+                this.showLoadError(`Server returned error: ${response.status} ${response.statusText}. Please check if UDOT APIs are accessible.`);
                 return;
             }
 
             const data = await response.json();
+
+            // Remove any existing error overlay on successful load
+            const mapContainer = document.getElementById('road-map');
+            if (mapContainer) {
+                const existingError = mapContainer.querySelector('.road-data-error-overlay');
+                if (existingError) {
+                    existingError.remove();
+                }
+            }
+
             this.clearLayers();
             this.renderRoadSegments(data.segments);
             this.renderWeatherStations(data.stations);
@@ -214,70 +223,14 @@ class RoadWeatherMap {
 
         } catch (error) {
             console.error('Error loading road weather data:', error);
-            this.loadStaticRoadData();
+            this.showLoadError(`Failed to fetch road weather data: ${error.message}. The UDOT API may be temporarily unavailable.`);
         }
     }
 
-    loadStaticRoadData() {
-        // Default road segments for Uintah Basin
-        const segments = [
-            {
-                id: 'us40',
-                name: 'US-40: Vernal to Roosevelt',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.4200, -109.7000],
-                    [40.3200, -109.9000],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            },
-            {
-                id: 'us191',
-                name: 'US-191: Vernal to Duchesne',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.3500, -109.8000],
-                    [40.2500, -110.2000],
-                    [40.1632, -110.4026]
-                ],
-                condition: 'yellow',
-                status: 'Use Caution'
-            },
-            {
-                id: 'sr87',
-                name: 'SR-87: Duchesne to Roosevelt',
-                coordinates: [
-                    [40.1632, -110.4026],
-                    [40.2500, -110.1500],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            }
-        ];
-
-        this.clearLayers();
-        segments.forEach(segment => {
-            this.renderRoadSegment(segment);
-        });
-
-        // Add default weather stations
-        const stations = [
-            { name: 'Vernal', lat: 40.4555, lng: -109.5287, temp: 45, condition: 'good' },
-            { name: 'Roosevelt', lat: 40.2999, lng: -109.9890, temp: 42, condition: 'good' },
-            { name: 'Duchesne', lat: 40.1632, lng: -110.4026, temp: 40, condition: 'caution' }
-        ];
-
-        stations.forEach(station => {
-            this.renderWeatherStation(station);
-        });
-    }
 
     renderRoadSegments(segments) {
         if (!segments || segments.length === 0) {
-            this.loadStaticRoadData();
+            console.warn('No road segments available to render. UDOT may not have data for this region.');
             return;
         }
 
@@ -819,6 +772,38 @@ class RoadWeatherMap {
 
         // Note: Traffic event markers and closure overlays are intentionally NOT cleared here
         // They have their own lifecycle managed by loadTrafficEvents() and loadTrafficAlerts()
+    }
+
+    showLoadError(message) {
+        // Clear any existing data
+        this.clearLayers();
+
+        // Create error overlay on the map
+        const mapContainer = document.getElementById('road-map');
+        if (!mapContainer) return;
+
+        // Remove any existing error overlay
+        const existingError = mapContainer.querySelector('.road-data-error-overlay');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        // Create new error overlay
+        const errorOverlay = document.createElement('div');
+        errorOverlay.className = 'road-data-error-overlay';
+        errorOverlay.innerHTML = `
+            <div class="error-content">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Unable to Load Road Data</h3>
+                <p>${message}</p>
+                <button onclick="roadWeatherMap.loadRoadWeatherData()" class="retry-button">
+                    <i class="fas fa-sync"></i> Retry
+                </button>
+            </div>
+        `;
+
+        mapContainer.appendChild(errorOverlay);
+        console.error('Road weather data load failed:', message);
     }
 
     startAutoRefresh() {
@@ -1839,8 +1824,6 @@ RoadWeatherMap.prototype.interpolateLatLng = function(targetMp, knownPoints, coo
         // Fallback (should not reach here)
         return sortedPoints[0][coordType];
     }
-
-// Removed duplicate clearLayers method - using instance method instead
 
 function initEmmaEasterEgg() {
     const toggle = document.getElementById('easter-egg-toggle');

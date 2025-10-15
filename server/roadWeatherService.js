@@ -1,6 +1,8 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
 import SnowDetectionService from './snowDetectionService.js';
+import { fetchWithRetry } from './utils/retryUtils.js';
+import { loadFromDiskCache, saveToDiskCache } from './utils/diskCache.js';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
@@ -49,20 +51,28 @@ class RoadWeatherService {
 
     async fetchUDOTRoadConditions() {
         const cacheKey = 'udot_road_conditions';
+
+        // Check memory cache first
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
+        // Check persistent disk cache (2 hour TTL)
+        const diskCached = await loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000);
+        if (diskCached) {
+            cache.set(cacheKey, diskCached); // Restore to memory
+            return diskCached;
+        }
+
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/roadconditions?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Road Conditions',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT API error: ${response.status}`);
-            }
 
             const data = await response.json();
 
@@ -115,11 +125,15 @@ class RoadWeatherService {
                 };
             });
 
+            // Save to both memory and disk cache
             cache.set(cacheKey, processedRoads);
+            await saveToDiskCache(cacheKey, processedRoads);
             return processedRoads;
         } catch (error) {
             console.error('Error fetching UDOT road conditions:', error);
-            return [];
+            // Try to return stale disk cache as fallback (24 hours)
+            const staleDiskCache = await loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
+            return staleDiskCache || [];
         }
     }
 
@@ -163,30 +177,28 @@ class RoadWeatherService {
 
         try {
             const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
-            const pointsResponse = await fetch(pointsUrl, {
+            const pointsResponse = await fetchWithRetry(pointsUrl, {
                 headers: {
                     'User-Agent': this.nwsUserAgent,
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'NWS Points API',
+                maxRetries: 3
             });
-
-            if (!pointsResponse.ok) {
-                throw new Error(`NWS API error: ${pointsResponse.status}`);
-            }
 
             const pointsData = await pointsResponse.json();
             const forecastUrl = pointsData.properties.forecast;
 
-            const forecastResponse = await fetch(forecastUrl, {
+            const forecastResponse = await fetchWithRetry(forecastUrl, {
                 headers: {
                     'User-Agent': this.nwsUserAgent,
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'NWS Forecast API',
+                maxRetries: 3
             });
-
-            if (!forecastResponse.ok) {
-                throw new Error(`NWS Forecast error: ${forecastResponse.status}`);
-            }
 
             const forecastData = await forecastResponse.json();
             const periods = forecastData.properties.periods;
@@ -217,11 +229,10 @@ class RoadWeatherService {
                 `&hourly=temperature_2m,precipitation,snowfall,visibility` +
                 `&timezone=America/Denver`;
 
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`Open-Meteo API error: ${response.status}`);
-            }
+            const response = await fetchWithRetry(url, {}, {
+                operationName: 'Open-Meteo API',
+                maxRetries: 3
+            });
 
             const data = await response.json();
 
@@ -568,20 +579,28 @@ class RoadWeatherService {
 
     async fetchUDOTCameras() {
         const cacheKey = 'udot_cameras';
+
+        // Check memory cache first
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
+        // Check persistent disk cache (2 hour TTL)
+        const diskCached = await loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000);
+        if (diskCached) {
+            cache.set(cacheKey, diskCached);
+            return diskCached;
+        }
+
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/cameras?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Cameras',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Cameras API error: ${response.status}`);
-            }
 
             const data = await response.json();
 
@@ -609,30 +628,42 @@ class RoadWeatherService {
                 }))
             }));
 
+            // Save to both memory and disk cache
             cache.set(cacheKey, processedCameras);
+            await saveToDiskCache(cacheKey, processedCameras);
             return processedCameras;
         } catch (error) {
             console.error('Error fetching UDOT cameras:', error);
-            return [];
+            // Try to return stale disk cache as fallback (24 hours)
+            const staleDiskCache = await loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
+            return staleDiskCache || [];
         }
     }
 
     async fetchUDOTWeatherStations() {
         const cacheKey = 'udot_weather_stations';
+
+        // Check memory cache first
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
+        // Check persistent disk cache (2 hour TTL)
+        const diskCached = await loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000);
+        if (diskCached) {
+            cache.set(cacheKey, diskCached);
+            return diskCached;
+        }
+
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Weather Stations',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Weather Stations API error: ${response.status}`);
-            }
 
             const data = await response.json();
 
@@ -670,11 +701,15 @@ class RoadWeatherService {
                 condition: this.determineStationCondition(station)
             }));
 
+            // Save to both memory and disk cache
             cache.set(cacheKey, processedStations);
+            await saveToDiskCache(cacheKey, processedStations);
             return processedStations;
         } catch (error) {
             console.error('Error fetching UDOT weather stations:', error);
-            return [];
+            // Try to return stale disk cache as fallback (24 hours)
+            const staleDiskCache = await loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
+            return staleDiskCache || [];
         }
     }
 
@@ -685,15 +720,14 @@ class RoadWeatherService {
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/restareas?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Rest Areas',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Rest Areas API error: ${response.status}`);
-            }
 
             const data = await response.json();
 
@@ -830,16 +864,15 @@ class RoadWeatherService {
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/servicevehicles?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json',
                     'User-Agent': this.nwsUserAgent
                 }
+            }, {
+                operationName: 'UDOT Snow Plows',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Snow Plows API error: ${response.status}`);
-            }
 
             const plows = await response.json();
 
@@ -917,16 +950,15 @@ class RoadWeatherService {
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/mountainpasses?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json',
                     'User-Agent': this.nwsUserAgent
                 }
+            }, {
+                operationName: 'UDOT Mountain Passes',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Mountain Passes API error: ${response.status}`);
-            }
 
             const passes = await response.json();
 
@@ -1053,11 +1085,10 @@ class RoadWeatherService {
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/signs?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                throw new Error(`UDOT Digital Signs API error: ${response.status}`);
-            }
+            const response = await fetchWithRetry(url, {}, {
+                operationName: 'UDOT Digital Signs',
+                maxRetries: 3
+            });
 
             const data = await response.json();
 

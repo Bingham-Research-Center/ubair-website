@@ -7,6 +7,8 @@ const roadWeatherService = new RoadWeatherService();
 router.get('/road-weather', async (req, res) => {
     try {
         const data = await roadWeatherService.getCompleteRoadData();
+        // Cache for 60 seconds to reduce server load (matches backend cache TTL)
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json(data);
     } catch (error) {
         console.error('Error in /road-weather endpoint:', error);
@@ -17,14 +19,11 @@ router.get('/road-weather', async (req, res) => {
     }
 });
 
-// Removed unused /road-weather/conditions endpoint
-
-// Removed unused /road-weather/nws/:lat/:lon endpoint
-
 router.get('/road-weather/openmeteo/:lat/:lon', async (req, res) => {
     try {
         const { lat, lon } = req.params;
         const weather = await roadWeatherService.fetchOpenMeteoData(lat, lon);
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json(weather);
     } catch (error) {
         console.error('Error fetching Open-Meteo data:', error);
@@ -38,6 +37,7 @@ router.get('/road-weather/openmeteo/:lat/:lon', async (req, res) => {
 router.get('/road-weather/stations', async (req, res) => {
     try {
         const stations = await roadWeatherService.fetchUDOTWeatherStations();
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json(stations);
     } catch (error) {
         console.error('Error fetching weather stations:', error);
@@ -48,11 +48,11 @@ router.get('/road-weather/stations', async (req, res) => {
     }
 });
 
-// Removed unused /road-weather/camera-detections endpoint
-
 router.get('/road-weather/snow-plows', async (req, res) => {
     try {
         const plows = await roadWeatherService.fetchSnowPlows();
+        // Cache for 30 seconds (snow plows update frequently)
+        res.setHeader('Cache-Control', 'public, max-age=30');
         res.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -73,6 +73,7 @@ router.get('/road-weather/snow-plows', async (req, res) => {
 router.get('/road-weather/mountain-passes', async (req, res) => {
     try {
         const passes = await roadWeatherService.fetchMountainPasses();
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -95,6 +96,8 @@ router.get('/road-weather/mountain-passes', async (req, res) => {
 router.get('/road-weather/rest-areas', async (req, res) => {
     try {
         const restAreas = await roadWeatherService.fetchUDOTRestAreas();
+        // Cache for 1 hour (rest areas change rarely)
+        res.setHeader('Cache-Control', 'public, max-age=3600');
         res.json({
             success: true,
             timestamp: new Date().toISOString(),
@@ -114,6 +117,7 @@ router.get('/road-weather/rest-areas', async (req, res) => {
 router.get('/road-weather/digital-signs', async (req, res) => {
     try {
         const signs = await roadWeatherService.fetchUDOTDigitalSigns();
+        res.setHeader('Cache-Control', 'public, max-age=60');
         res.json({
             success: true,
             timestamp: new Date().toISOString(),

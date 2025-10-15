@@ -1,20 +1,10 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
-import fs from 'fs/promises';
-import path from 'path';
+import { fetchWithRetry } from './utils/retryUtils.js';
+import { loadFromDiskCache, saveToDiskCache } from './utils/diskCache.js';
 
 // Aggressive caching: 2 hours for API data
 const cache = new NodeCache({ stdTTL: 7200 }); // 2 hours instead of 5 minutes
-
-// File-based persistent cache for backup
-const CACHE_DIR = path.join(process.cwd(), '.cache');
-const ensureCacheDir = async () => {
-    try {
-        await fs.mkdir(CACHE_DIR, { recursive: true });
-    } catch (err) {
-        // Directory might already exist
-    }
-};
 
 class TrafficEventsService {
     constructor() {
@@ -40,7 +30,7 @@ class TrafficEventsService {
         if (cached) return cached;
 
         // Check persistent file cache
-        const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
+        const diskCached = await loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
         if (diskCached) {
             cache.set(cacheKey, diskCached); // Restore to memory
             return diskCached;
@@ -51,7 +41,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
-            return this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
+            return loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
         }
 
         try {
@@ -59,15 +49,14 @@ class TrafficEventsService {
             this.lastApiCalls.set(apiCallKey, Date.now());
 
             const url = `https://www.udottraffic.utah.gov/api/v2/get/alerts?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Traffic Alerts',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Alerts API error: ${response.status}`);
-            }
 
             const data = await response.json();
             
@@ -92,7 +81,7 @@ class TrafficEventsService {
 
             // Save to both memory and disk cache
             cache.set(cacheKey, relevantAlerts);
-            await this.saveToDiskCache(cacheKey, relevantAlerts);
+            await saveToDiskCache(cacheKey, relevantAlerts);
             return relevantAlerts;
         } catch (error) {
             console.error('Error fetching UDOT alerts:', error);
@@ -159,7 +148,7 @@ class TrafficEventsService {
         if (cached) return cached;
 
         // Check persistent file cache
-        const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
+        const diskCached = await loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
         if (diskCached) {
             cache.set(cacheKey, diskCached); // Restore to memory
             return diskCached;
@@ -170,7 +159,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT events API call (too recent)');
-            return this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
+            return loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000) || []; // Fallback to 24h old cache
         }
 
         try {
@@ -178,15 +167,14 @@ class TrafficEventsService {
             this.lastApiCalls.set(apiCallKey, Date.now());
 
             const url = `https://www.udottraffic.utah.gov/api/v2/get/event?key=${this.udotApiKey}&format=json`;
-            const response = await fetch(url, {
+            const response = await fetchWithRetry(url, {
                 headers: {
                     'Accept': 'application/json'
                 }
+            }, {
+                operationName: 'UDOT Traffic Events',
+                maxRetries: 3
             });
-
-            if (!response.ok) {
-                throw new Error(`UDOT Events API error: ${response.status}`);
-            }
 
             const data = await response.json();
             
@@ -240,7 +228,7 @@ class TrafficEventsService {
 
             // Save to both memory and disk cache
             cache.set(cacheKey, sortedEvents);
-            await this.saveToDiskCache(cacheKey, sortedEvents);
+            await saveToDiskCache(cacheKey, sortedEvents);
             return sortedEvents;
         } catch (error) {
             console.error('Error fetching UDOT traffic events:', error);
@@ -452,45 +440,6 @@ class TrafficEventsService {
         });
 
         return summary;
-    }
-
-    // Disk cache helper methods
-    async saveToDiskCache(key, data) {
-        try {
-            await ensureCacheDir();
-            const filePath = path.join(CACHE_DIR, `${key}.json`);
-            const cacheData = {
-                timestamp: Date.now(),
-                data: data
-            };
-            await fs.writeFile(filePath, JSON.stringify(cacheData), 'utf8');
-        } catch (error) {
-            console.warn('Failed to save to disk cache:', error.message);
-        }
-    }
-
-    async loadFromDiskCache(key, maxAge) {
-        try {
-            const filePath = path.join(CACHE_DIR, `${key}.json`);
-            const fileContent = await fs.readFile(filePath, 'utf8');
-            const cacheData = JSON.parse(fileContent);
-
-            const now = Date.now();
-            const age = now - cacheData.timestamp;
-
-            if (age < maxAge) {
-                console.log(`Loading ${key} from disk cache (age: ${Math.round(age / 1000 / 60)} minutes)`);
-                return cacheData.data;
-            } else {
-                console.log(`Disk cache for ${key} expired (age: ${Math.round(age / 1000 / 60)} minutes)`);
-                // Clean up expired cache file
-                await fs.unlink(filePath).catch(() => {});
-                return null;
-            }
-        } catch (error) {
-            // File doesn't exist or is corrupted - not a problem
-            return null;
-        }
     }
 }
 
