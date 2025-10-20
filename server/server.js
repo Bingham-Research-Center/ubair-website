@@ -9,6 +9,8 @@ import { createServer } from 'http';
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
+import udotMapDataRoutes from './routes/udotMapData.js';
+import azureMapsAPIRoutes from './routes/azureMapsAPI.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +24,8 @@ app.use(express.json());
 app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
+app.use('/api', udotMapDataRoutes);
+app.use('/api', azureMapsAPIRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Single static files middleware with all headers
@@ -75,6 +79,14 @@ app.get('/fire', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/fire.html'));
 });
 
+app.get('/provo-canyon', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/provo-canyon.html'));
+});
+
+// API endpoint to serve Azure Maps key for Provo Canyon page
+app.get('/api/azure-maps-key', (req, res) => {
+    res.json({ key: process.env.AZURE_MAPS_KEY });
+});
 
 app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));

@@ -1,0 +1,814 @@
+/* US-189 Provo Canyon Construction - BasinWX Site Design System
+   Aligned with main site styles for visual consistency */
+
+:root {
+    /* Use site-wide color variables from variables.css */
+    /* Primary colors already defined globally:
+       --usu-blue: #00263A
+       --usu-light-blue: #627C8B
+       --usu-accent: #8B9299
+       --usu-gray: #A7A9AC
+       --usu-light-gray: #E6E7E8
+    */
+
+    /* Page-specific utility colors */
+    --provo-warning: #f59e0b;           /* Amber for construction warnings */
+    --provo-danger: #dc2626;            /* Red for closures */
+    --provo-success: #10b981;           /* Green for open roads */
+    --provo-info: #3b82f6;              /* Blue for informational */
+    --provo-surface: #f8f9fa;           /* Light surface color */
+    --provo-border: #e0e0e0;            /* Subtle borders */
+}
+
+/* Global Typography - Match Site Design */
+body[data-page-type="provo-canyon"] {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #333;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    line-height: 1.6;
+}
+
+/* Sidebar Styling - Match Site */
+body[data-page-type="provo-canyon"] .sidebar {
+    background: linear-gradient(180deg, var(--usu-blue), #001A28);
+}
+
+/* Fixed Critical Alert Bar (FCAB) - Site-Consistent Styling */
+.fcab {
+    position: relative;
+    background: var(--provo-warning);
+    color: white;
+    padding: 1rem 2rem;
+    z-index: 999; /* Lower than sidebar */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-bottom: 4px solid var(--usu-blue);
+    margin-left: 250px; /* Account for sidebar width */
+}
+
+/* Mobile adjustments for FCAB */
+@media (max-width: 768px) {
+    .fcab {
+        margin-left: 0; /* Full width on mobile */
+    }
+}
+
+.fcab-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.fcab-icon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.fcab-message {
+    flex: 1;
+    min-width: 300px;
+}
+
+.fcab-message h2 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.3rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.fcab-message p {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.fcab-countdown {
+    background: var(--usu-blue);
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 200px;
+}
+
+.fcab-countdown-label {
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.9;
+}
+
+.fcab-countdown-time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+/* Adjust content for fixed FCAB */
+.content {
+    padding-top: 20px; /* Minimal spacing since FCAB scrolls with page */
+}
+
+/* Header Section - Government Standard */
+.construction-header {
+    text-align: center;
+    padding: 2rem 1rem;
+    background: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    border-top: 6px solid var(--usu-blue);
+}
+
+.construction-header h1 {
+    color: #333;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+    font-weight: 700;
+    line-height: 1.3;
+}
+
+.construction-header h1 i {
+    color: var(--provo-warning);
+    margin-right: 0.75rem;
+}
+
+.page-subtitle {
+    color: #666;
+    font-size: 1.1rem;
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
+/* Government-Standard Section Headers */
+.section-header-map,
+.section-header {
+    background: var(--usu-blue);
+    color: white;
+    padding: 1rem 1.5rem;
+    margin: -2rem -2rem 1.5rem -2rem;
+    border-radius: 4px 4px 0 0;
+}
+
+.section-header-map h2,
+.section-header h2 {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.map-subtitle {
+    color: white;
+    font-size: 0.95rem;
+    margin: 0.5rem 0 0 0;
+    opacity: 0.95;
+}
+
+/* Map Section - Government Standards */
+.map-section {
+    background: white;
+    border-radius: 4px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    border-left: 6px solid var(--provo-warning);
+}
+
+.map-container-provo {
+    position: relative;
+    width: 100%;
+    height: 700px;
+    border-radius: 4px;
+    overflow: visible; /* Allow popups to overflow map */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    background: var(--usu-light-gray);
+    border: 2px solid #666;
+    z-index: 1;
+}
+
+.provo-map {
+    width: 100%;
+    height: 100%;
+    overflow: hidden; /* Map itself clips, but container allows overflow */
+}
+
+/* Ensure Azure Maps popups can overflow the map */
+.atlas-map .atlas-popup {
+    z-index: 10000 !important;
+}
+
+.atlas-map .atlas-popup-content {
+    max-height: none !important;
+    overflow: visible !important;
+}
+
+.map-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.97);
+    padding: 2rem;
+    border-radius: 4px;
+    text-align: center;
+    font-size: 1.2rem;
+    color: #333;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--provo-warning);
+}
+
+.map-loading i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--provo-warning);
+}
+
+.map-legend-info {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--provo-surface);
+    border-radius: 4px;
+    border-left: 4px solid var(--usu-blue);
+}
+
+.map-legend-info p {
+    margin: 0;
+    color: #333;
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+.map-legend-info i {
+    color: var(--usu-blue);
+    margin-right: 0.5rem;
+}
+
+/* Construction Details - High Contrast Cards */
+.construction-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.detail-card {
+    background: white;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border-left: 6px solid var(--usu-blue);
+}
+
+.detail-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 16px rgba(0, 68, 170, 0.15);
+}
+
+.card-header {
+    background: var(--usu-blue);
+    color: white;
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.card-header i {
+    font-size: 1.5rem;
+}
+
+.card-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-body p {
+    margin: 0.75rem 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.card-body strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.card-body ul {
+    margin: 0.75rem 0;
+    padding-left: 1.5rem;
+}
+
+.card-body li {
+    margin: 0.5rem 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.card-body .note {
+    font-size: 0.9rem;
+    color: #666;
+    font-style: italic;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--usu-light-gray);
+}
+
+/* Contact Section - Government Standards */
+.contact-section {
+    background: white;
+    border-radius: 4px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    border-left: 6px solid var(--usu-blue);
+}
+
+.contact-section h2 {
+    color: #333;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.5rem;
+}
+
+.contact-section h2 i {
+    color: var(--usu-blue);
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.contact-card {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--provo-surface);
+    border-radius: 4px;
+    transition: transform 0.2s ease, background 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.contact-card:hover {
+    transform: translateY(-2px);
+    background: white;
+    border-color: var(--usu-blue);
+}
+
+.contact-card i {
+    font-size: 2.5rem;
+    color: var(--usu-blue);
+    margin-bottom: 1rem;
+}
+
+.contact-card h4 {
+    margin: 0.5rem 0;
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.contact-card p {
+    margin: 0.5rem 0;
+    color: #333;
+}
+
+.contact-card a {
+    color: var(--usu-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.contact-card a:hover {
+    text-decoration: underline;
+}
+
+.contact-card a:focus {
+    outline: 3px solid var(--usu-blue);
+    outline-offset: 2px;
+}
+
+/* Notes Section */
+.notes-section {
+    background: white;
+    border-radius: 4px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid var(--usu-blue);
+}
+
+.notes-section h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 1.3rem;
+}
+
+.notes-section h3 i {
+    color: var(--usu-blue);
+}
+
+.notes-content p {
+    margin: 1rem 0;
+    color: #333;
+    line-height: 1.8;
+}
+
+.notes-content ul {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+}
+
+.notes-content li {
+    margin: 0.5rem 0;
+    color: #333;
+    line-height: 1.6;
+}
+
+.notes-content a {
+    color: var(--usu-blue);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.notes-content a:hover {
+    text-decoration: underline;
+}
+
+.notes-content a:focus {
+    outline: 3px solid var(--usu-blue);
+    outline-offset: 2px;
+}
+
+/* Azure Maps Custom Styles - Government Compliant */
+.azure-custom-marker {
+    background: transparent;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.4));
+    transition: transform 0.2s ease;
+}
+
+.azure-custom-marker:hover {
+    transform: scale(1.15);
+}
+
+.azure-custom-marker:focus {
+    outline: 3px solid var(--usu-blue);
+    outline-offset: 3px;
+}
+
+/* Azure Popup - High Contrast */
+.azure-event-popup {
+    min-width: 280px;
+    max-width: 400px;
+    padding: 1rem;
+    font-family: 'Roboto', sans-serif;
+}
+
+.azure-event-popup h3 {
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+    border-bottom: 3px solid var(--provo-warning);
+    padding-bottom: 0.5rem;
+    color: #333;
+}
+
+.azure-event-popup p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0.5rem 0;
+    color: #333;
+}
+
+.azure-event-popup strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Azure Maps Control Customization */
+.atlas-control-container button {
+    background: white !important;
+    border-radius: 2px !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    transition: all 0.2s ease !important;
+    border: 1px solid #666 !important;
+}
+
+.atlas-control-container button:hover {
+    background: var(--provo-surface) !important;
+    box-shadow: 0 3px 8px rgba(0, 68, 170, 0.25) !important;
+    border-color: var(--usu-blue) !important;
+}
+
+.atlas-control-container button:focus {
+    outline: 3px solid var(--usu-blue) !important;
+    outline-offset: 2px !important;
+}
+
+/* Azure Maps Popup Styling Override */
+.atlas-popup-content {
+    border-radius: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+    max-width: 400px;
+    border: 2px solid #666;
+}
+
+.atlas-popup-close-button {
+    color: var(--usu-blue) !important;
+    font-size: 1.3rem !important;
+    font-weight: 700 !important;
+}
+
+.atlas-popup-close-button:hover {
+    color: #333 !important;
+}
+
+.atlas-popup-close-button:focus {
+    outline: 3px solid var(--usu-blue) !important;
+}
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+    .content {
+        padding-top: 20px; /* Minimal spacing since FCAB scrolls with page */
+    }
+
+    .fcab {
+        padding: 0.75rem 1rem;
+    }
+
+    .fcab-content {
+        gap: 1rem;
+    }
+
+    .fcab-message h2 {
+        font-size: 1.1rem;
+    }
+
+    .fcab-message p {
+        font-size: 0.9rem;
+    }
+
+    .fcab-countdown {
+        min-width: 100%;
+    }
+
+    .construction-header h1 {
+        font-size: 1.8rem;
+    }
+
+    .page-subtitle {
+        font-size: 1rem;
+    }
+
+    .construction-details {
+        grid-template-columns: 1fr;
+    }
+
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .map-section {
+        padding: 1.5rem;
+    }
+
+    .section-header-map h2 {
+        font-size: 1.3rem;
+    }
+
+    .map-container-provo {
+        height: 550px;
+    }
+}
+
+@media (max-width: 480px) {
+    .construction-header {
+        padding: 1.5rem 1rem;
+    }
+
+    .construction-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .card-header h3 {
+        font-size: 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
+    }
+
+    .map-container-provo {
+        height: 500px;
+    }
+
+    .section-header-map h2 {
+        font-size: 1.2rem;
+    }
+
+    .map-subtitle {
+        font-size: 0.85rem;
+    }
+}
+
+/* Event Details Section - Full Info Below Map */
+.event-details-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    border-left: 6px solid var(--usu-blue);
+    transition: all 0.3s ease;
+}
+
+.event-details-section .section-header {
+    background: var(--usu-blue);
+    color: white;
+    padding: 1rem 1.5rem;
+    margin: -2rem -2rem 1.5rem -2rem;
+    border-radius: 16px 16px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.event-details-section .section-header h2 {
+    color: white;
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.event-details-close {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.2s ease;
+}
+
+.event-details-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.event-details-content {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.event-detail-header {
+    background: linear-gradient(135deg, var(--provo-warning), #e8913e);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.2);
+}
+
+.event-detail-header h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.8rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.event-detail-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.event-meta-item {
+    background: rgba(255, 255, 255, 0.15);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+}
+
+.event-meta-item strong {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.9;
+}
+
+.event-detail-section {
+    background: var(--provo-surface);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--usu-blue);
+}
+
+.event-detail-section h4 {
+    margin: 0 0 1rem 0;
+    color: var(--usu-blue);
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.event-detail-section p {
+    line-height: 1.8;
+    color: #333;
+    margin: 0.75rem 0;
+}
+
+.event-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.event-detail-item {
+    padding: 0.75rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--provo-border);
+}
+
+.event-detail-item strong {
+    display: block;
+    color: var(--usu-blue);
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.event-status-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.event-status-badge.closure {
+    background: var(--provo-danger);
+    color: white;
+}
+
+.event-status-badge.warning {
+    background: var(--provo-warning);
+    color: white;
+}
+
+.event-status-badge.info {
+    background: var(--provo-info);
+    color: white;
+}
+
+/* Print Styles for Government Documentation */
+@media print {
+    .fcab,
+    .map-section,
+    .sidebar_container {
+        display: none;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .construction-header,
+    .detail-card,
+    .contact-section,
+    .notes-section,
+    .event-details-section {
+        border: 1px solid black;
+        page-break-inside: avoid;
+    }
+}

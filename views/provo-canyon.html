@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="US-189 Provo Canyon Widening Project - Official UDOT Construction Information, Nightly Lane Closures, and Real-time Traffic">
+    <title>US-189 Provo Canyon Construction - UDOT Official Information</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/provo-canyon.css">
+    <link rel="stylesheet" href="/public/css/provo-canyon-modern.css">
+
+    <!-- Google Fonts - Inter for Modern Typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Azure Maps -->
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.css" type="text/css">
+</head>
+<body data-page-type="provo-canyon">
+    <!-- Fixed Critical Alert Bar (FCAB) - Highest Priority -->
+    <div class="fcab" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="fcab-content">
+            <div class="fcab-icon" aria-hidden="true">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="fcab-message">
+                <h2>Nightly Lane Closures in Effect</h2>
+                <p>US-189 near Deer Creek: One-way alternating traffic controlled by flaggers. Follow their lead.</p>
+            </div>
+            <div class="fcab-countdown" id="fcab-countdown">
+                <div class="fcab-countdown-label" id="countdown-label">Next Closure</div>
+                <div class="fcab-countdown-time" id="countdown-time">--:--:--</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <div class="construction-header">
+            <h1><i class="fas fa-hard-hat"></i> US-189 Provo Canyon Widening Project</h1>
+            <p class="page-subtitle">Wallsburg to Charleston - Official UDOT Construction Information</p>
+        </div>
+
+        <!-- Interactive Map Section -->
+        <section class="map-section">
+            <div class="section-header-map">
+                <h2><i class="fas fa-map-marked-alt"></i> Live Construction Map - Provo Canyon Corridor</h2>
+                <p class="map-subtitle">Real-time traffic flow and incidents for US-189</p>
+            </div>
+            <div class="map-container-provo">
+                <div id="provo-canyon-map" class="provo-map"></div>
+            </div>
+            <div class="map-legend-info">
+                <p><i class="fas fa-info-circle"></i> Real-time traffic flow visualization for US-189 Provo Canyon corridor powered by Azure Maps. Traffic density and incidents update automatically.</p>
+            </div>
+        </section>
+
+        <!-- Event Details Section (Hidden by default, shown when user clicks "More Info") -->
+        <section id="event-details-section" class="event-details-section" style="display: none;" aria-labelledby="event-details-heading">
+            <div class="section-header">
+                <h2 id="event-details-heading"><i class="fas fa-info-circle"></i> Construction Event Details</h2>
+                <button class="event-details-close" onclick="window.provoCanyonMap?.hideEventDetails()" aria-label="Close event details">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+            <div id="event-details-content" class="event-details-content">
+                <!-- Populated dynamically by JavaScript when user clicks "More Info" -->
+            </div>
+        </section>
+
+        <!-- Construction Details -->
+        <section class="construction-details">
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Project Timeline</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Start Date:</strong> October 13, 2025</p>
+                    <p><strong>Expected Completion:</strong> Fall 2027</p>
+                    <p><strong>Location:</strong> Wallsburg to Charleston near Deer Creek Reservoir</p>
+                    <p><strong>Project Scope:</strong> Widen last single-lane stretch of US-189 to two lanes each direction. Improvements include new traffic signal at SR-113, wildlife fencing, enhanced sight lines, and improved Island Beach Day Use Area access.</p>
+                    <p class="note">Timeline subject to weather conditions and project progress. Future phases may include controlled blasting operations with short canyon closures. This project will make the route safer and more reliable year-round.</p>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-road"></i>
+                    <h3>Road Impact</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Nightly Lane Closures:</strong></p>
+                    <ul>
+                        <li><strong>Weeknights (Mon-Fri):</strong> 10:00 PM - 6:00 AM</li>
+                        <li><strong>Saturdays:</strong> 11:00 PM - 6:00 AM</li>
+                        <li><strong>Sundays:</strong> 10:00 PM - 9:00 AM</li>
+                    </ul>
+                    <p class="note"><strong>Traffic Control:</strong> Flaggers will guide drivers through one-way alternating traffic. Please follow their lead and plan extra time for overnight canyon travel.</p>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-route"></i>
+                    <h3>Alternative Routes</h3>
+                </div>
+                <div class="card-body">
+                    <p>Consider these alternative routes to avoid construction delays:</p>
+                    <ul>
+                        <li><strong>SR-189 (Provo Canyon):</strong> Primary route with delays</li>
+                        <li><strong>US-40:</strong> Alternative route via Heber</li>
+                        <li><strong>I-80:</strong> Northern route option</li>
+                    </ul>
+                    <p class="note">Please check current traffic conditions before traveling</p>
+                </div>
+            </div>
+
+            <div class="detail-card">
+                <div class="card-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Safety Information</h3>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li>Obey all posted speed limits in work zones</li>
+                        <li>Follow flaggers and traffic control devices</li>
+                        <li>Be alert for workers and equipment</li>
+                        <li>Do not stop or park in construction areas</li>
+                        <li>Allow extra time for your journey</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Information -->
+        <section class="contact-section" aria-labelledby="contact-heading">
+            <h2 id="contact-heading"><i class="fas fa-info-circle"></i> Contact & Resources</h2>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <i class="fas fa-phone-alt"></i>
+                    <h4>Project Hotline</h4>
+                    <p><a href="tel:385-203-9566" aria-label="Call UDOT Project Hotline at 385-203-9566">385-203-9566</a></p>
+                    <p class="note" style="font-size: 0.85rem; margin-top: 0.5rem;">Direct project information</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-phone"></i>
+                    <h4>UDOT CommuterLink</h4>
+                    <p><a href="tel:511" aria-label="Call 511 for Utah traffic information">511</a> or <a href="tel:1-866-511-8824" aria-label="Call 1-866-511-UTAH">1-866-511-UTAH</a></p>
+                    <p class="note" style="font-size: 0.85rem; margin-top: 0.5rem;">Statewide traffic updates</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-globe"></i>
+                    <h4>UDOT Website</h4>
+                    <p><a href="https://udot.utah.gov" target="_blank" rel="noopener noreferrer" aria-label="Visit UDOT website">udot.utah.gov</a></p>
+                    <p class="note" style="font-size: 0.85rem; margin-top: 0.5rem;">Official UDOT information</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-map-marked-alt"></i>
+                    <h4>Live Traffic Map</h4>
+                    <p><a href="https://www.udottraffic.utah.gov" target="_blank" rel="noopener noreferrer" aria-label="View UDOT live traffic map">UDOT Traffic Map</a></p>
+                    <p class="note" style="font-size: 0.85rem; margin-top: 0.5rem;">Real-time conditions</p>
+                </div>
+                <div class="contact-card">
+                    <i class="fas fa-cloud-sun"></i>
+                    <h4>Weather Conditions</h4>
+                    <p><a href="/roads" aria-label="Check road weather conditions">Road Weather</a></p>
+                    <p class="note" style="font-size: 0.85rem; margin-top: 0.5rem;">Basin weather data</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Additional Notes -->
+        <section class="notes-section">
+            <h3><i class="fas fa-clipboard-list"></i> Additional Notes</h3>
+            <div class="notes-content">
+                <p>This is a temporary information page regarding construction activities in Provo Canyon that may affect travel to and from the Uintah Basin area.</p>
+                <p>Weather conditions can significantly impact both construction schedules and road conditions. Please check current weather forecasts and road conditions before traveling.</p>
+                <p><strong>For weather information specific to the Uintah Basin:</strong></p>
+                <ul>
+                    <li><a href="/">View Live Weather Stations</a></li>
+                    <li><a href="/forecast_weather">Weather Forecasts</a></li>
+                    <li><a href="/roads">Road Weather Conditions</a></li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://atlas.microsoft.com/sdk/javascript/mapcontrol/2/atlas.min.js"></script>
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/provo-canyon-complete.js"></script>
+</body>
+</html>

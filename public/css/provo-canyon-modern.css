@@ -1,0 +1,874 @@
+/* Provo Canyon Modern Visual Design - Complete UI Overhaul */
+
+:root {
+    /* Modern Color Palette - Aligned with BasinWX Theme */
+    --primary-blue: #00263A;
+    --primary-blue-light: #003E5C;
+    --primary-blue-dark: #001A28;
+    --accent-orange: #FF6600;
+    --accent-orange-light: #FF7F2E;
+    --success-green: #10b981;
+    --warning-yellow: #fbbf24;
+    --danger-red: #ef4444;
+
+    /* Neutrals */
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modern Layer Controls - Glassmorphism Design */
+.layer-controls {
+    position: absolute !important;
+    top: 20px !important;
+    left: 20px !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+    z-index: 1000 !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    width: 280px !important;
+    overflow: hidden !important;
+    transition: all var(--transition-base) !important;
+}
+
+.layer-controls:hover {
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25) !important;
+}
+
+.layer-controls h4 {
+    margin: 0 !important;
+    padding: 20px !important;
+    font-size: 1.1rem !important;
+    font-weight: 700 !important;
+    color: var(--gray-900) !important;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+    color: white !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    border-bottom: 1px solid var(--glass-border) !important;
+}
+
+.layer-controls h4 i {
+    font-size: 1.2rem !important;
+}
+
+.layer-controls > div {
+    padding: 20px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+}
+
+.layer-controls label {
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    padding: 12px 16px !important;
+    border-radius: 10px !important;
+    background: white !important;
+    border: 2px solid var(--gray-200) !important;
+    transition: all var(--transition-fast) !important;
+    font-size: 0.95rem !important;
+    font-weight: 500 !important;
+    color: var(--gray-700) !important;
+}
+
+.layer-controls label:hover {
+    background: var(--gray-50) !important;
+    border-color: var(--primary-blue-light) !important;
+    transform: translateX(4px) !important;
+}
+
+.layer-controls label input[type="checkbox"] {
+    margin-right: 12px !important;
+    width: 20px !important;
+    height: 20px !important;
+    cursor: pointer !important;
+    accent-color: var(--primary-blue) !important;
+}
+
+.layer-controls label input[type="checkbox"]:checked + span {
+    color: var(--primary-blue) !important;
+    font-weight: 600 !important;
+}
+
+/* Modern Weather Panel - Card Design */
+.info-panel {
+    position: absolute !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+    overflow: hidden !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    animation: slideIn var(--transition-base) ease-out !important;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#weather-panel {
+    top: 20px !important;
+    right: 20px !important;
+    width: 360px !important;
+    max-height: 600px !important;
+}
+
+#weather-panel > div:first-child {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%) !important;
+    border: none !important;
+}
+
+#weather-panel h3 {
+    color: white !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#close-weather-panel {
+    border: none !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    font-size: 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all var(--transition-fast) !important;
+}
+
+#close-weather-panel:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    transform: rotate(90deg) !important;
+}
+
+#weather-content {
+    padding: 20px !important;
+    max-height: 500px !important;
+    overflow-y: auto !important;
+}
+
+/* Custom Scrollbar */
+#weather-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+#weather-content::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 10px;
+}
+
+#weather-content::-webkit-scrollbar-thumb {
+    background: var(--primary-blue-light);
+    border-radius: 10px;
+}
+
+#weather-content::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-blue);
+}
+
+/* Weather Alert Styling */
+#weather-content > div[style*="background: #FFF3CD"] {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    border: none !important;
+    border-left: 4px solid var(--warning-yellow) !important;
+    border-radius: 12px !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* Hourly Forecast Cards */
+#weather-content > div > div > div {
+    background: white !important;
+    border: 2px solid var(--gray-200) !important;
+    border-radius: 12px !important;
+    padding: 12px !important;
+    transition: all var(--transition-fast) !important;
+}
+
+#weather-content > div > div > div:hover {
+    transform: translateY(-4px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    border-color: var(--primary-blue-light) !important;
+}
+
+/* Modern Toolbar - Floating Design */
+.map-toolbar {
+    position: absolute !important;
+    bottom: 30px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    padding: 12px 20px !important;
+    border-radius: 50px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+    z-index: 1000 !important;
+    display: flex !important;
+    gap: 12px !important;
+    animation: slideUp var(--transition-base) ease-out !important;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+.toolbar-btn {
+    padding: 12px 24px !important;
+    border: none !important;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+    color: white !important;
+    border-radius: 30px !important;
+    cursor: pointer !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;
+    transition: all var(--transition-fast) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+.toolbar-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+    background: linear-gradient(135deg, var(--primary-blue-light) 0%, var(--primary-blue) 100%) !important;
+}
+
+.toolbar-btn:active {
+    transform: translateY(0) !important;
+}
+
+.toolbar-btn i {
+    font-size: 1.1rem !important;
+}
+
+/* Route Planner Panel - Modern Card */
+#route-planner-panel {
+    top: 20px !important;
+    left: 320px !important;
+    width: 340px !important;
+    padding: 0 !important;
+}
+
+#route-planner-panel h3 {
+    margin: 0 !important;
+    padding: 20px !important;
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%) !important;
+    color: white !important;
+    font-size: 1.2rem !important;
+    font-weight: 700 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+#route-planner-panel > div {
+    padding: 20px !important;
+}
+
+#route-planner-panel input {
+    width: 100% !important;
+    padding: 14px 18px !important;
+    margin-bottom: 12px !important;
+    border: 2px solid var(--gray-200) !important;
+    border-radius: 12px !important;
+    font-size: 0.95rem !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    transition: all var(--transition-fast) !important;
+}
+
+#route-planner-panel input:focus {
+    outline: none !important;
+    border-color: var(--accent-orange) !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1) !important;
+}
+
+#calculate-route-btn {
+    width: 100% !important;
+    padding: 14px !important;
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 12px !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    transition: all var(--transition-fast) !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+#calculate-route-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: var(--shadow-lg) !important;
+}
+
+/* Azure Maps Popup Overhaul */
+.azure-event-popup {
+    min-width: 280px !important;
+    max-width: 400px !important;
+    padding: 0 !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+.azure-event-popup h3 {
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+    padding: 16px 20px !important;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+    color: white !important;
+    border-radius: 12px 12px 0 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+}
+
+.azure-event-popup > div:not(h3) {
+    padding: 20px !important;
+}
+
+.azure-event-popup p {
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+    margin: 8px 0 !important;
+    color: var(--gray-700) !important;
+}
+
+.azure-event-popup strong {
+    color: var(--gray-900) !important;
+    font-weight: 600 !important;
+}
+
+.azure-event-popup img {
+    border-radius: 12px !important;
+    margin: 12px 0 !important;
+    box-shadow: var(--shadow-md) !important;
+}
+
+/* Azure Maps Control Buttons - Modern Style */
+.atlas-control-container button {
+    background: white !important;
+    border-radius: 12px !important;
+    box-shadow: var(--shadow-lg) !important;
+    transition: all var(--transition-fast) !important;
+    border: 1px solid var(--glass-border) !important;
+    backdrop-filter: blur(10px) !important;
+}
+
+.atlas-control-container button:hover {
+    background: var(--gray-50) !important;
+    box-shadow: var(--shadow-xl) !important;
+    transform: scale(1.05) !important;
+}
+
+/* Map Loading Indicator - Modern */
+.map-loading {
+    background: var(--glass-bg) !important;
+    backdrop-filter: blur(20px) !important;
+    padding: 32px 40px !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+.map-loading i {
+    font-size: 3rem !important;
+    color: var(--primary-blue) !important;
+    animation: spin 1s linear infinite !important;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Weather Alert Notification - Modern Toast */
+body > div[style*="position: absolute"][style*="top: 20px"] {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+    border: none !important;
+    border-left: 4px solid var(--warning-yellow) !important;
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-xl) !important;
+    padding: 20px 24px !important;
+    animation: slideDown var(--transition-base) ease-out !important;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -20px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+/* Road Condition Legend Badge */
+.road-condition-badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin: 4px;
+}
+
+.condition-1 { background: #10b981; color: white; }
+.condition-2 { background: #fbbf24; color: #1f2937; }
+.condition-3 { background: #f97316; color: white; }
+.condition-4 { background: #ef4444; color: white; }
+.condition-5 { background: #1f2937; color: white; }
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .layer-controls {
+        width: 240px !important;
+    }
+
+    #weather-panel {
+        width: 320px !important;
+    }
+
+    #route-planner-panel {
+        left: 270px !important;
+        width: 300px !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .layer-controls {
+        width: calc(100% - 40px) !important;
+        left: 20px !important;
+        right: 20px !important;
+    }
+
+    #weather-panel {
+        width: calc(100% - 40px) !important;
+        top: 200px !important;
+        left: 20px !important;
+        right: 20px !important;
+    }
+
+    #route-planner-panel {
+        width: calc(100% - 40px) !important;
+        left: 20px !important;
+        top: auto !important;
+        bottom: 100px !important;
+    }
+
+    .map-toolbar {
+        bottom: 20px !important;
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+
+    .toolbar-btn {
+        padding: 10px 16px !important;
+        font-size: 0.85rem !important;
+    }
+}
+
+/* Accessibility - Focus States */
+button:focus-visible,
+input:focus-visible,
+label:focus-visible {
+    outline: 3px solid var(--primary-blue) !important;
+    outline-offset: 2px !important;
+}
+
+/* Smooth Transitions for Everything */
+* {
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Beautiful Shadows for Depth */
+.layer-controls,
+.info-panel,
+.map-toolbar,
+.toolbar-btn,
+.atlas-control-container button {
+    will-change: transform, box-shadow;
+}
+
+/* Microinteractions - Pulse Animation for Important Elements */
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+}
+
+.map-loading i {
+    animation: spin 1s linear infinite, pulse 2s ease-in-out infinite !important;
+}
+
+/* Gradient Text for Headers */
+.gradient-text {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Elevated Cards on Hover */
+.elevated-card {
+    transition: all var(--transition-base);
+}
+
+.elevated-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Loading Skeleton Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+/* ============= FCAB MODERN REDESIGN ============= */
+
+/* Modern FCAB with Gradient and Glass Effect */
+.fcab {
+    position: relative !important;
+    background: linear-gradient(135deg, var(--accent-orange) 0%, var(--accent-orange-light) 100%) !important;
+    color: white !important;
+    padding: 0 !important;
+    z-index: 999 !important; /* Lower than sidebar */
+    box-shadow: 0 10px 40px rgba(255, 102, 0, 0.3) !important;
+    border: none !important;
+    border-bottom: 3px solid rgba(255, 255, 255, 0.3) !important;
+    animation: fcabSlide 0.5s ease-out !important;
+    margin-left: 250px !important; /* Account for sidebar */
+}
+
+@keyframes fcabSlide {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.fcab-content {
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    align-items: center !important;
+    gap: 24px !important;
+    padding: 20px 32px !important;
+}
+
+.fcab-icon {
+    font-size: 2.5rem !important;
+    flex-shrink: 0 !important;
+    animation: pulse 2s ease-in-out infinite !important;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2)) !important;
+}
+
+.fcab-message {
+    flex: 1 !important;
+    min-width: 300px !important;
+}
+
+.fcab-message h2 {
+    margin: 0 0 8px 0 !important;
+    font-size: 1.5rem !important;
+    font-weight: 800 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+.fcab-message p {
+    margin: 0 !important;
+    font-size: 1.05rem !important;
+    font-weight: 500 !important;
+    opacity: 0.95 !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    line-height: 1.5 !important;
+}
+
+.fcab-countdown {
+    background: rgba(255, 255, 255, 0.2) !important;
+    backdrop-filter: blur(10px) !important;
+    padding: 16px 28px !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+    min-width: 220px !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+}
+
+.fcab-countdown-label {
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
+    opacity: 0.95 !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px !important;
+    text-transform: uppercase !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+.fcab-countdown-time {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    font-family: 'Inter', 'Courier New', monospace !important;
+    letter-spacing: 2px !important;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* FCAB Responsive */
+@media (max-width: 768px) {
+    .fcab {
+        margin-left: 0 !important; /* Full width on mobile */
+    }
+
+    .fcab-content {
+        grid-template-columns: auto 1fr !important;
+        gap: 16px !important;
+        padding: 16px 20px !important;
+    }
+
+    .fcab-countdown {
+        grid-column: 1 / -1 !important;
+        margin-top: 8px !important;
+    }
+
+    .fcab-icon {
+        font-size: 2rem !important;
+    }
+
+    .fcab-message h2 {
+        font-size: 1.2rem !important;
+    }
+
+    .fcab-message p {
+        font-size: 0.95rem !important;
+    }
+
+    .fcab-countdown-time {
+        font-size: 1.6rem !important;
+    }
+}
+
+/* Content Adjustment for Modern FCAB */
+body[data-page-type="provo-canyon"] .content {
+    padding-top: 20px !important; /* Minimal spacing since FCAB scrolls with page */
+}
+
+@media (max-width: 768px) {
+    body[data-page-type="provo-canyon"] .content {
+        padding-top: 20px !important; /* Minimal spacing since FCAB scrolls with page */
+    }
+}
+
+/* Construction Header - Modern Card Design */
+.construction-header {
+    background: white !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-top: 6px solid var(--primary-blue) !important;
+    animation: fadeInUp 0.6s ease-out !important;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.construction-header h1 i {
+    color: var(--accent-orange) !important;
+    filter: drop-shadow(0 2px 4px rgba(249, 115, 22, 0.3)) !important;
+}
+
+/* Map Section - Modern Container */
+.map-section {
+    background: white !important;
+    border-radius: 20px !important;
+    box-shadow: var(--shadow-xl) !important;
+    border: 1px solid var(--glass-border) !important;
+    border-left: 6px solid var(--accent-orange) !important;
+    overflow: hidden !important;
+    animation: fadeInUp 0.7s ease-out !important;
+}
+
+.section-header-map {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+    padding: 24px 32px !important;
+    border: none !important;
+}
+
+.section-header-map h2 {
+    font-size: 1.6rem !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-weight: 700 !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.map-subtitle {
+    font-size: 1.05rem !important;
+    opacity: 0.95 !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+.map-container-provo {
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+}
+
+.map-legend-info {
+    background: var(--gray-50) !important;
+    border: none !important;
+    border-top: 1px solid var(--gray-200) !important;
+    border-radius: 0 !important;
+    padding: 20px 32px !important;
+}
+
+.map-legend-info p {
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    color: var(--gray-700) !important;
+}
+
+/* Detail Cards - Modern Elevated Design */
+.detail-card {
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-lg) !important;
+    border: 1px solid var(--glass-border) !important;
+    transition: all var(--transition-base) !important;
+    animation: fadeInUp 0.8s ease-out !important;
+}
+
+.detail-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.card-header {
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--primary-blue-light) 100%) !important;
+    padding: 20px 24px !important;
+}
+
+.card-header i {
+    font-size: 1.8rem !important;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2)) !important;
+}
+
+.card-header h3 {
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+    font-weight: 700 !important;
+}
+
+.card-body {
+    padding: 24px !important;
+    font-family: 'Inter', 'Roboto', sans-serif !important;
+}
+
+/* Contact Cards - Modern Hover Effect */
+.contact-card {
+    border-radius: 16px !important;
+    border: 2px solid var(--gray-200) !important;
+    transition: all var(--transition-base) !important;
+    animation: fadeInUp 0.9s ease-out !important;
+}
+
+.contact-card:hover {
+    transform: translateY(-6px) scale(1.02) !important;
+    border-color: var(--primary-blue) !important;
+    box-shadow: var(--shadow-xl) !important;
+}
+
+.contact-card i {
+    filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3)) !important;
+}
+
+/* Notes Section - Modern Design */
+.notes-section {
+    border-radius: 16px !important;
+    box-shadow: var(--shadow-lg) !important;
+    border: 1px solid var(--glass-border) !important;
+    animation: fadeInUp 1s ease-out !important;
+}
