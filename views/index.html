@@ -161,22 +161,6 @@
         </div>
     </section>
     -->
-
-    <!-- Dutch John Easter Egg -->
-    <div class="dutch-john-easter-egg" id="dutch-john-box">
-        <div class="easter-egg-toggle" id="dutch-john-toggle">
-            <i class="fas fa-chevron-down" id="dutch-john-icon"></i>
-            <span>Experimental: hide all mention of Dutch John</span>
-        </div>
-        <div class="easter-egg-content" id="dutch-john-content">
-            <div class="easter-egg-actions">
-                <button class="toggle-button" id="dutch-john-button">
-                    <i class="fas fa-eye-slash"></i>
-                    Enable Filter
-                </button>
-            </div>
-        </div>
-    </div>
 </main>
 
 <!-- Load Leaflet JS -->
@@ -202,10 +186,7 @@
         
         // Initialize forecast collapse toggle
         initForecastCollapse();
-        
-        // Initialize Dutch John easter egg
-        initDutchJohnEasterEgg();
-        
+
         // Load initial content
         loadAirQualityForecast();
         loadWeatherForecast();
@@ -341,40 +322,11 @@
             });
         }
     }
-
-    function initDutchJohnEasterEgg() {
-        const toggle = document.getElementById('dutch-john-toggle');
-        const content = document.getElementById('dutch-john-content');
-        const button = document.getElementById('dutch-john-button');
-        const icon = document.getElementById('dutch-john-icon');
-        
-        if (toggle && content && button && icon) {
-            // Toggle dropdown functionality
-            toggle.addEventListener('click', () => {
-                const isActive = toggle.classList.contains('active');
-                
-                if (isActive) {
-                    // Close
-                    toggle.classList.remove('active');
-                    content.classList.remove('active');
-                } else {
-                    // Open
-                    toggle.classList.add('active');
-                    content.classList.add('active');
-                }
-            });
-            
-            // Button click -> rickroll
-            button.addEventListener('click', () => {
-                // Open rickroll in new tab
-                window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
-                
-                // Close the easter egg after click
-                toggle.classList.remove('active');
-                content.classList.remove('active');
-            });
-        }
-    }
 </script>
+
+<!-- Easter Eggs - Activated via Konami Code -->
+<link rel="stylesheet" href="/public/css/easter-eggs.css">
+<script src="/public/js/easter-eggs.js"></script>
+
 </body>
 </html>

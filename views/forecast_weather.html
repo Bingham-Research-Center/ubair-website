@@ -253,29 +253,13 @@
         </div>
     </footer>
 
-    <!-- Chemtrails Easter Egg -->
-    <div class="chemtrails-easter-egg" id="chemtrails-box">
-        <button class="chemtrails-button" id="chemtrails-button">
-            <i class="fas fa-exclamation-triangle"></i>
-            Chemtrails ON
-        </button>
-    </div>
-
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/forecast_weather.js"></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const chemtrailsButton = document.getElementById('chemtrails-button');
-            if (chemtrailsButton) {
-                chemtrailsButton.addEventListener('click', () => {
-                    // Open rickroll in new tab
-                    window.open('https://www.youtube.com/watch?v=dQw4w9WgXcQ', '_blank', 'noopener,noreferrer');
-                });
-            }
-        });
-    </script>
+
+    <!-- Easter Eggs - Activated via Konami Code -->
+    <link rel="stylesheet" href="/public/css/easter-eggs.css">
+    <script src="/public/js/easter-eggs.js"></script>
 </body>
 </html>

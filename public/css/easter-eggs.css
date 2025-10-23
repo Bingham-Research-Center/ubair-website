@@ -1,0 +1,327 @@
+/**
+ * Easter Eggs Styles
+ *
+ * All styling for easter eggs activated via Konami code.
+ * These styles are loaded but elements only appear when activated.
+ */
+
+/* ========================================
+   Activation Message
+   ======================================== */
+
+.easter-egg-activation-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px 40px;
+    border-radius: 12px;
+    font-size: 24px;
+    font-weight: bold;
+    z-index: 10000;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: easterEggPop 0.5s ease-out;
+}
+
+.easter-egg-activation-message.fade-out {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+@keyframes easterEggPop {
+    0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.1);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    to {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+    }
+}
+
+/* ========================================
+   Common Easter Egg Box Styles
+   ======================================== */
+
+.easter-egg-box {
+    position: fixed;
+    z-index: 1000;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    max-width: 300px;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.easter-egg-toggle {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: inherit;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    transition: opacity 0.2s;
+}
+
+.easter-egg-toggle:hover {
+    opacity: 0.9;
+}
+
+.toggle-icon {
+    font-size: 12px;
+}
+
+.toggle-text {
+    flex: 1;
+    text-align: left;
+}
+
+.easter-egg-content {
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #333;
+    max-height: 500px;
+    transition: max-height 0.3s ease-out, padding 0.3s ease-out;
+}
+
+.easter-egg-content.hidden {
+    max-height: 0;
+    padding: 0 16px;
+    overflow: hidden;
+}
+
+.easter-egg-text {
+    margin-bottom: 12px;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.easter-egg-action-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.easter-egg-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ========================================
+   Dutch John Easter Egg (Homepage)
+   ======================================== */
+
+.dutch-john-egg {
+    top: 80px;
+    left: 280px;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+}
+
+.dutch-john-filter-btn {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: white;
+    width: 100%;
+}
+
+.dutch-john-filter-btn:hover {
+    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+}
+
+/* ========================================
+   Emma Park Easter Egg (Roads Page)
+   ======================================== */
+
+.emma-park-egg {
+    bottom: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+}
+
+.emma-link {
+    color: #92400e;
+    text-decoration: underline;
+    font-weight: 600;
+}
+
+.emma-link:hover {
+    color: #78350f;
+}
+
+/* ========================================
+   Welsh Mode Button (Forecast Air Quality)
+   ======================================== */
+
+.welsh-mode-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #dc143c 0%, #b91c3c 50%, #8b1538 100%);
+    background-size: 200% 200%;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+    animation: welsh-gradient 3s ease-in-out infinite;
+}
+
+.welsh-mode-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(220, 20, 60, 0.3);
+    animation: welsh-gradient 1.5s ease-in-out infinite;
+}
+
+.welsh-mode-btn:hover span:first-child {
+    animation: dragon-bounce 0.5s ease-in-out infinite;
+}
+
+@keyframes welsh-gradient {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+@keyframes dragon-bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-4px);
+    }
+}
+
+/* ========================================
+   Chemtrails Button (Weather Forecast)
+   ======================================== */
+
+.chemtrails-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s;
+}
+
+.chemtrails-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 6px 12px rgba(220, 38, 38, 0.3);
+}
+
+.warning-icon {
+    animation: pulse-warning 2s ease-in-out infinite;
+}
+
+@keyframes pulse-warning {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* ========================================
+   Common Button Styles
+   ======================================== */
+
+.easter-egg-btn {
+    animation: slideIn 0.3s ease-out;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 768px) {
+    .easter-egg-box {
+        max-width: 250px;
+    }
+
+    .dutch-john-egg {
+        top: 60px;
+        left: 10px;
+    }
+
+    .emma-park-egg,
+    .welsh-mode-btn,
+    .chemtrails-btn {
+        bottom: 10px;
+        right: 10px;
+    }
+
+    .easter-egg-btn {
+        padding: 10px 16px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 480px) {
+    .easter-egg-activation-message {
+        font-size: 18px;
+        padding: 15px 30px;
+    }
+
+    .easter-egg-box {
+        max-width: calc(100% - 20px);
+        left: 10px !important;
+        right: 10px !important;
+    }
+
+    .dutch-john-egg {
+        top: 60px;
+    }
+}
