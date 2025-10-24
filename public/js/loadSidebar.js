@@ -94,9 +94,89 @@ async function loadSidebar() {
                 }
             }, 100);
         }
+
+        // Initialize dev mode features
+        initializeDevMode();
     } catch (error) {
         console.error('Error loading sidebar:', error);
     }
+}
+
+// Secret code to open kiosk mode via typing "lawsondavies"
+function initializeDevMode() {
+    const secretCode = 'lawsondavies';
+    let userInput = '';
+    let inputTimer = null;
+
+    // Listen for keyboard input
+    document.addEventListener('keydown', (e) => {
+        // Add the key to the input string
+        userInput += e.key.toLowerCase();
+
+        // Keep only the last characters matching the secret code length
+        if (userInput.length > secretCode.length) {
+            userInput = userInput.slice(-secretCode.length);
+        }
+
+        // Reset input after 3 seconds of no typing
+        clearTimeout(inputTimer);
+        inputTimer = setTimeout(() => {
+            userInput = '';
+        }, 3000);
+
+        // Check if the secret code was typed
+        if (userInput === secretCode) {
+            userInput = ''; // Reset
+            openKioskMode();
+        }
+    });
+}
+
+function openKioskMode() {
+    // Open kiosk page in new tab
+    window.open('/kiosk', '_blank', 'noopener,noreferrer');
+
+    // Show feedback message
+    showDevModeMessage('Opening Kiosk Mode');
+}
+
+function showDevModeMessage(message) {
+    const messageEl = document.createElement('div');
+    messageEl.className = 'dev-mode-message';
+    messageEl.textContent = `🔧 ${message}`;
+    messageEl.style.cssText = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px 40px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        z-index: 10000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        animation: devModePop 0.5s ease-out;
+    `;
+
+    // Add animation
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes devModePop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+
+    document.body.appendChild(messageEl);
+
+    setTimeout(() => {
+        messageEl.style.animation = 'fadeOut 0.5s ease-out forwards';
+        setTimeout(() => messageEl.remove(), 500);
+    }, 2000);
 }
 
 // Load the sidebar when the document is ready

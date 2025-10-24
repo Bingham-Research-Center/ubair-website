@@ -1,18 +1,19 @@
-# Easter Eggs Documentation
+# Easter Eggs & Dev Mode Documentation
 
 ## Overview
 
-This document explains the easter egg system for the Uintah Basin Air Quality website. Easter eggs are hidden features that provide fun, educational, or commemorative content when activated via the Konami code.
+This document explains the hidden features system for the Uintah Basin Air Quality website, including both easter eggs (fun/educational content) and dev mode (internal testing features).
 
 ## Table of Contents
 
 1. [Initial Purpose](#initial-purpose)
 2. [How to Activate](#how-to-activate)
-3. [Current Easter Eggs](#current-easter-eggs)
-4. [Technical Implementation](#technical-implementation)
-5. [How to Add New Easter Eggs](#how-to-add-new-easter-eggs)
-6. [Future Ideas](#future-ideas)
-7. [Special Occasion Triggers](#special-occasion-triggers)
+3. [Dev Mode Features](#dev-mode-features)
+4. [Current Easter Eggs](#current-easter-eggs)
+5. [Technical Implementation](#technical-implementation)
+6. [How to Add New Easter Eggs](#how-to-add-new-easter-eggs)
+7. [Future Ideas](#future-ideas)
+8. [Special Occasion Triggers](#special-occasion-triggers)
 
 ---
 
@@ -30,7 +31,7 @@ These original easter eggs have been moved into a consolidated "storage" system 
 
 ## How to Activate
 
-### Konami Code Sequence
+### Easter Eggs - Konami Code Sequence
 Easter eggs are activated by entering the classic Konami code:
 
 ```
@@ -46,6 +47,51 @@ Easter eggs are activated by entering the classic Konami code:
 When the correct sequence is entered, you'll see a "🎉 Easter Eggs Activated! 🎉" message, and easter eggs will appear on their respective pages.
 
 To deactivate, simply enter the Konami code again.
+
+---
+
+### Kiosk Mode - Secret Keyword
+Kiosk mode (full-screen display mode) is accessed by typing a secret keyword:
+
+**How to Activate:**
+1. Type `lawsondavies` anywhere on the site (case-insensitive)
+2. You'll see a "🔧 Opening Kiosk Mode" message
+3. Kiosk mode opens in a new tab
+
+**Result:**
+- Opens `/kiosk` page in a new browser tab
+- Full-screen air quality display mode
+- Automatically cycles through monitoring stations
+- Perfect for public displays, presentations, or demonstrations
+
+---
+
+## Kiosk Mode Features
+
+Kiosk mode is a full-screen display designed for public kiosks, office displays, and presentations.
+
+### Features:
+**Location:** `/kiosk` (dedicated kiosk page)
+**Purpose:** Automatically cycles through station data for display purposes
+
+**Display Features:**
+- Full-screen map view
+- Automatically rotates through monitoring stations
+- Configurable timing intervals
+- Clean, professional display mode
+- No navigation or controls (immersive display)
+
+**Use Cases:**
+- Public information kiosks
+- Office displays showing air quality
+- Presentation mode during meetings
+- Event displays and demonstrations
+
+**Technical Details:**
+- Accessed via secret keyword: `lawsondavies`
+- Opens in new tab via `window.open('/kiosk', '_blank')`
+- JavaScript in `kiosk.js` handles the auto-cycling logic
+- Designed for hands-off operation
 
 ---
 
