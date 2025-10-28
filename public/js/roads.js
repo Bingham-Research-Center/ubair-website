@@ -889,9 +889,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update the condition cards with real data
     updateConditionCards();
 
-    // Initialize Emma Park Road Easter Egg
-    initEmmaEasterEgg();
-
     // Initialize the traffic events manager
     try {
         trafficEventsManager = new TrafficEventsManager();
@@ -1841,26 +1838,6 @@ RoadWeatherMap.prototype.interpolateLatLng = function(targetMp, knownPoints, coo
     }
 
 // Removed duplicate clearLayers method - using instance method instead
-
-function initEmmaEasterEgg() {
-    const toggle = document.getElementById('easter-egg-toggle');
-    const content = document.getElementById('easter-egg-content');
-    const icon = document.getElementById('toggle-icon');
-
-    if (toggle && content && icon) {
-        toggle.addEventListener('click', () => {
-            const isActive = toggle.classList.contains('active');
-
-            if (isActive) {
-                toggle.classList.remove('active');
-                content.classList.remove('active');
-            } else {
-                toggle.classList.add('active');
-                content.classList.add('active');
-            }
-        });
-    }
-}
 
 // Traffic Events Tab System
 class TrafficEventsManager {
