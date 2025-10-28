@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Historical Time Series Data Viewer for Uintah Basin">
+    <title>Time Series Data Viewer - Uintah Basin</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/test-viz.css">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- Plotly.js -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <!-- D3.js for time series visualization -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+    <!-- Leaflet.js -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+</head>
+<body>
+    <!-- Colored Bar -->
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Main Content -->
+    <main class="content">
+        <div class="page-header">
+            <div>
+                <h1><i class="fas fa-chart-line"></i> Historical Time Series Data Viewer</h1>
+                <p style="color: #666; margin-top: -10px; margin-bottom: 0;">
+                    Analyze weather and air quality data from Synoptic API - Select any 7-day period
+                </p>
+            </div>
+            <button id="dark-mode-toggle" class="dark-mode-toggle" onclick="window.timeSeriesViewer.toggleDarkMode()" aria-label="Toggle dark mode">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+
+        <!-- Data Controls Section -->
+        <section class="plot-section">
+            <h2 class="plot-title">
+                <i class="fas fa-sliders-h"></i> Data Selection Controls
+            </h2>
+
+            <!-- Date Range Section -->
+            <div class="control-section">
+                <h3 class="section-heading"><i class="fas fa-calendar-alt"></i> Date Range</h3>
+                <div class="controls-grid">
+                <div class="control-group">
+                    <label for="start-date"><i class="fas fa-calendar-alt"></i> Start Date/Time</label>
+                    <input type="datetime-local" id="start-date" aria-label="Start date and time for data range" aria-required="true" />
+                </div>
+
+                <div class="control-group">
+                    <label for="end-date"><i class="fas fa-calendar-alt"></i> End Date/Time</label>
+                    <input type="datetime-local" id="end-date" aria-label="End date and time for data range" aria-required="true" />
+                </div>
+
+                <div class="control-group">
+                    <label><i class="fas fa-clock"></i> Quick Presets</label>
+                    <div class="button-group" role="group" aria-label="Quick date range presets">
+                        <button onclick="window.timeSeriesViewer.setPreset('24h')" class="preset-btn" aria-label="Set date range to last 24 hours">
+                            Last 24 Hours
+                        </button>
+                        <button onclick="window.timeSeriesViewer.setPreset('7d')" class="preset-btn" aria-label="Set date range to last 7 days">
+                            Last 7 Days
+                        </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Station Selection Section -->
+            <div class="control-section">
+                <h3 class="section-heading"><i class="fas fa-map-marked-alt"></i> Station Selection</h3>
+                <div class="control-group">
+                <label><i class="fas fa-map-marked-alt"></i> Select Stations on Map (click markers, max 4)</label>
+
+                <!-- Station Search Box -->
+                <div class="station-search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input
+                        type="text"
+                        id="station-search"
+                        class="station-search-input"
+                        placeholder="Search stations by name or ID..."
+                        aria-label="Search stations"
+                    />
+                </div>
+
+                <!-- Map with Legend -->
+                <div class="map-wrapper">
+                    <div id="station-map" class="station-map" role="application" aria-label="Interactive map for selecting weather stations"></div>
+                    <div class="map-legend" role="note" aria-label="Map legend">
+                        <div class="legend-item">
+                            <span class="legend-marker legend-marker-selected" aria-hidden="true"></span>
+                            <span>Selected</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-marker legend-marker-unselected" aria-hidden="true"></span>
+                            <span>Unselected</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="station-counter">
+                    <span id="selection-count" aria-live="polite" aria-atomic="true">0/4 stations selected</span>
+                    <button onclick="window.timeSeriesViewer.clearStationSelection()" class="clear-selection-btn" aria-label="Clear all station selections">
+                        <i class="fas fa-times" aria-hidden="true"></i> Clear Selection
+                    </button>
+                </div>
+            </div>
+            </div>
+
+            <!-- Variable Selection Section -->
+            <div class="control-section">
+                <h3 class="section-heading"><i class="fas fa-chart-bar"></i> Variable Selection</h3>
+                <div class="control-group">
+                    <label id="variable-label">Select variables to plot</label>
+
+                    <!-- Multi-Select Dropdown Button -->
+                    <button class="multi-select-btn" id="variable-select-btn" onclick="window.timeSeriesViewer.toggleVariableDropdown()" aria-label="Select variables" aria-haspopup="true" aria-expanded="false">
+                        <span id="variable-select-display">Select variables...</span>
+                        <i class="fas fa-chevron-down dropdown-icon"></i>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div class="multi-select-dropdown" id="variable-dropdown" style="display: none;">
+                        <div class="dropdown-header">
+                            <span>Select Variables</span>
+                            <button class="dropdown-close" onclick="window.timeSeriesViewer.toggleVariableDropdown()" aria-label="Close dropdown">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown-options" id="variable-checkboxes" role="group" aria-labelledby="variable-label">
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="air_temp" checked> Temperature
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Air temperature in degrees Celsius or Fahrenheit</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="ozone_concentration"> Ozone
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Ground-level ozone concentration in parts per million (ppm)</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="PM_25_concentration"> PM2.5
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Fine particulate matter concentration in μg/m³</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="relative_humidity"> Humidity
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Relative humidity as percentage of moisture in air</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="wind_speed"> Wind Speed
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Wind speed in meters per second (m/s)</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="wind_direction"> Wind Direction
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Wind direction in degrees (0-360°)</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="dew_point_temperature"> Dew Point
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Dew point temperature - when air reaches 100% humidity</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="snow_depth"> Snow Depth
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Snow depth in centimeters or inches</span>
+                    </label>
+                    <label class="variable-tooltip">
+                        <input type="checkbox" value="sea_level_pressure"> Pressure
+                        <i class="fas fa-info-circle variable-tooltip-icon"></i>
+                        <span class="variable-tooltip-text">Atmospheric pressure at sea level in millibars (mb)</span>
+                    </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="control-group" style="text-align: center;">
+                <div class="action-buttons" role="group" aria-label="Action buttons">
+                    <button onclick="window.timeSeriesViewer.resetAll()" class="reset-all-btn" aria-label="Reset all selections to defaults">
+                        <i class="fas fa-redo" aria-hidden="true"></i> Reset All
+                    </button>
+                    <button onclick="window.timeSeriesViewer.copyShareLink()" class="share-btn" aria-label="Share current configuration">
+                        <i class="fas fa-share-alt" aria-hidden="true"></i> Share Config
+                    </button>
+                    <button onclick="window.timeSeriesViewer.fetchAndPlot()" class="fetch-btn" aria-label="Fetch and plot weather data">
+                        <i class="fas fa-download" aria-hidden="true"></i> Fetch & Plot Data
+                    </button>
+                </div>
+                <div id="date-range-warning" class="warning-message" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span id="warning-text"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Selection Summary Bar -->
+        <div class="selection-summary" id="selection-summary" style="display: none;">
+            <div class="summary-item">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Date Range: <strong id="summary-date-range">—</strong></span>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-broadcast-tower"></i>
+                <span>Stations: <strong id="summary-stations">0</strong></span>
+            </div>
+            <div class="summary-item">
+                <i class="fas fa-chart-line"></i>
+                <span>Variables: <strong id="summary-variables">—</strong></span>
+            </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="data-info" id="data-info">
+            <i class="fas fa-info-circle"></i> Select date range, stations, and variables above, then click "Fetch & Plot Data"
+        </div>
+
+        <!-- Statistics Summary Cards -->
+        <section class="plot-section" id="stats-section" style="display: none;">
+            <div class="section-title-row">
+                <h2 class="plot-title">
+                    <i class="fas fa-chart-pie"></i> Statistical Summary
+                </h2>
+                <div class="export-buttons" role="group" aria-label="Export data buttons">
+                    <button onclick="window.timeSeriesViewer.exportData('csv')" class="export-btn" aria-label="Export data as CSV">
+                        <i class="fas fa-file-csv" aria-hidden="true"></i> Export CSV
+                    </button>
+                    <button onclick="window.timeSeriesViewer.exportData('json')" class="export-btn" aria-label="Export data as JSON">
+                        <i class="fas fa-file-code" aria-hidden="true"></i> Export JSON
+                    </button>
+                </div>
+            </div>
+            <div id="stats-cards" class="stats-container"></div>
+        </section>
+
+        <!-- Time Series Line Chart -->
+        <section class="plot-section" id="timeseries-section" style="display: none;">
+            <h2 class="plot-title">
+                <i class="fas fa-chart-line"></i> Time Series - Variables Over Time
+            </h2>
+            <div id="timeseries-plot" class="plot-container"></div>
+        </section>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner-container">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Fetching Data...</div>
+            <div class="loading-subtext">Retrieving weather data from Synoptic API</div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2024 Bingham Research Center. Historical data analysis tool. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/test-viz.js"></script>
+    <script src="/public/js/nineties-mode.js"></script>
+</body>
+</html>

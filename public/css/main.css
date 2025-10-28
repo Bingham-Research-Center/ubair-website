@@ -185,7 +185,7 @@
 .content {
     margin-left: 270px;
     padding: 2rem;
-    max-width: calc(100vw - 290px);
+    width: calc(100vw - 270px);
     box-sizing: border-box;
     position: relative;
     z-index: 1;
@@ -194,6 +194,7 @@
 main.content {
     margin-left: 270px;
     padding: 2rem;
+    width: calc(100vw - 270px);
     min-height: calc(100vh - 120px);
     box-sizing: border-box;
 }
@@ -550,129 +551,68 @@ main.content {
     transform: translateY(0);
 }
 
-/* Dutch John Easter Egg (Homepage) */
-.dutch-john-easter-egg {
-    position: fixed;
-    top: 80px;
-    left: 280px;
-    background: linear-gradient(135deg, #059669, #10b981);
-    border: 2px solid #047857;
-    border-radius: 12px;
-    box-shadow: 0 8px 25px rgba(5, 150, 105, 0.3);
-    z-index: 1000;
-    overflow: hidden;
-    max-width: 350px;
-    font-size: 0.9rem;
-}
+/* Responsive Design - Mobile, Tablet, Laptop, Desktop */
 
-.dutch-john-easter-egg .easter-egg-toggle {
-    color: #064e3b;
-}
-
-.dutch-john-easter-egg .easter-egg-content {
-    border-top: 1px solid rgba(4, 120, 87, 0.3);
-}
-
-/* Chemtrails Easter Egg (Weather Forecast Page) */
-.chemtrails-easter-egg {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.chemtrails-button {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    border: 2px solid #991b1b;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.chemtrails-button:hover {
-    background: linear-gradient(135deg, #b91c1c, #991b1b);
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
-}
-
-.chemtrails-button i {
-    font-size: 1rem;
-    animation: pulse-warning 2s infinite;
-}
-
-@keyframes pulse-warning {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-/* Welsh Mode Easter Egg (Clyfar Page) */
-.welsh-mode-easter-egg {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.welsh-mode-button {
-    background: linear-gradient(135deg, #dc143c, #8b1538, #ff6b47, #ff1744);
-    background-size: 200% 200%;
-    border: 2px solid #8b1538;
-    color: white;
-    padding: 12px 18px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    transition: all 0.4s ease;
-    box-shadow: 0 4px 15px rgba(220, 20, 60, 0.4);
-    animation: welsh-gradient 3s ease-in-out infinite;
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-}
-
-.welsh-mode-button:hover {
-    transform: translateY(-3px) scale(1.05);
-    box-shadow: 0 6px 25px rgba(220, 20, 60, 0.6);
-    animation-duration: 1.5s;
-}
-
-.dragon-icon {
-    font-size: 1.2rem;
-    animation: dragon-bounce 2s ease-in-out infinite;
-    filter: drop-shadow(0 0 3px rgba(255, 215, 0, 0.5));
-}
-
-.mode-text {
-    font-family: 'Trebuchet MS', serif;
-    letter-spacing: 0.5px;
-}
-
-@keyframes welsh-gradient {
-    0%, 100% { 
-        background-position: 0% 50%; 
+/* Tablet (768px - 1023px) - Sidebar collapses */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 1.5rem;
     }
-    50% { 
-        background-position: 100% 50%; 
+
+    main.content {
+        margin-left: 0;
+    }
+
+    .sidebar_container {
+        position: fixed;
+        left: -270px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+
+    .sidebar_container.active {
+        left: 0;
     }
 }
 
-@keyframes dragon-bounce {
-    0%, 100% { 
-        transform: translateY(0px) rotate(-2deg); 
+/* Mobile (< 768px) - Full width, stacked layout */
+@media (max-width: 767px) {
+    .content {
+        margin-left: 0;
+        width: 100%;
+        padding: 1rem;
     }
-    50% { 
-        transform: translateY(-3px) rotate(2deg); 
+
+    main.content {
+        margin-left: 0;
+        padding: 1rem;
+    }
+
+    .sidebar_container {
+        position: fixed;
+        left: -270px;
+        transition: left 0.3s ease;
+        z-index: 1000;
+    }
+
+    .sidebar_container.active {
+        left: 0;
+    }
+
+    /* Stack controls vertically on mobile */
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Make action buttons stack */
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .action-buttons button {
+        width: 100%;
     }
 }

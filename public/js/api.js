@@ -1,4 +1,80 @@
-// Real API implementation for fetching live obs
+// Real API implementation for fetching live obs and time series data
+
+/**
+ * Fetch time series data from Synoptic API via server proxy
+ * @param {string[]} stations - Array of station IDs (e.g., ['UBHSP', 'KVEL'])
+ * @param {string[]} variables - Array of variable names (e.g., ['air_temp', 'ozone_concentration'])
+ * @param {Date|string} startDate - Start date/time
+ * @param {Date|string} endDate - End date/time
+ * @returns {Promise<object>} Time series data
+ */
+export async function fetchTimeSeriesData(stations, variables, startDate, endDate) {
+  try {
+    // Ensure dates are Date objects
+    const start = startDate instanceof Date ? startDate : new Date(startDate);
+    const end = endDate instanceof Date ? endDate : new Date(endDate);
+
+    // Validate date range
+    const daysDiff = (end - start) / (1000 * 60 * 60 * 24);
+    if (daysDiff > 7) {
+      throw new Error('Date range cannot exceed 7 days');
+    }
+    if (daysDiff < 0) {
+      throw new Error('Start date must be before end date');
+    }
+
+    // Build query parameters
+    const params = new URLSearchParams({
+      stations: stations.join(','),
+      variables: variables.join(','),
+      start: start.toISOString(),
+      end: end.toISOString()
+    });
+
+    const response = await fetch(`/api/synoptic/timeseries?${params}`);
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Unknown error fetching time series data');
+    }
+
+    return result;
+  } catch (err) {
+    console.error('Error fetching time series data:', err);
+    throw err;
+  }
+}
+
+/**
+ * Fetch list of available stations from Synoptic API
+ * @returns {Promise<object[]>} Array of station metadata
+ */
+export async function fetchAvailableStations() {
+  try {
+    const response = await fetch('/api/synoptic/stations');
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.error || 'Failed to fetch stations');
+    }
+
+    return result.stations;
+  } catch (err) {
+    console.error('Error fetching available stations:', err);
+    throw err;
+  }
+}
 
 async function getLatestFilename(prefix, dataType) {
   const res = await fetch(`/api/filelist/${dataType}`);
