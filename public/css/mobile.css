@@ -89,6 +89,7 @@
         margin-left: 0 !important;
         padding: 60px 15px 20px;
         width: 100% !important;
+        max-width: 100% !important;
     }
     
     .container {
@@ -111,13 +112,16 @@
     .dashboard-grid {
         display: grid !important;
         grid-template-columns: 1fr !important;
-        gap: 1.5rem !important;
+        gap: 1rem !important;
+        width: 100% !important;
     }
-    
+
     .dashboard-panel {
         margin-bottom: 0;
         width: 100% !important;
+        max-width: 100% !important;
         min-height: 400px !important;
+        box-sizing: border-box !important;
     }
     
     /* Map should be first and larger on mobile */
@@ -193,6 +197,10 @@
     .dashboard-section {
         padding: 1rem;
         margin-bottom: 1rem;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
     }
 
     .section-header {

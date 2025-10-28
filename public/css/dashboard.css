@@ -52,12 +52,40 @@
     font-style: italic;
 }
 
-/* Dashboard Grid */
+/* Dashboard Grid - Responsive auto-fit layout */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1.7fr 1.3fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr));
     gap: 2rem;
     align-items: start;
+}
+
+/* Tablet adjustment - reduce minmax for earlier single-column switch */
+@media (max-width: 1024px) {
+    .dashboard-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+        gap: 1.5rem;
+    }
+}
+
+/* Small tablets and large phones - force single column */
+@media (max-width: 768px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .dashboard-panel {
+        min-height: 400px; /* Reduce min-height on mobile */
+    }
+}
+
+/* Ensure panels don't get too wide on very large displays */
+@media (min-width: 1800px) {
+    .dashboard-grid {
+        max-width: 1600px;
+        margin: 0 auto;
+    }
 }
 
 /* Dashboard Panels */
