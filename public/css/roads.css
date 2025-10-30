@@ -1883,6 +1883,114 @@ body[data-page-type="roads"] .leaflet-drag-target {
     overflow: visible !important;
 }
 
+/* Confidence Badge Styles */
+.confidence-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 0.85em;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    white-space: nowrap;
+    cursor: help;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.confidence-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Confidence level specific colors */
+.confidence-possible {
+    background-color: #6c757d !important; /* Grey */
+    border: 1px solid #5a6268;
+}
+
+.confidence-likely {
+    background-color: #ffc107 !important; /* Yellow/Amber */
+    border: 1px solid #e0a800;
+    color: #333 !important; /* Dark text for better readability on yellow */
+}
+
+.confidence-confirmed {
+    background-color: #28a745 !important; /* Green */
+    border: 1px solid #218838;
+}
+
+/* Camera detection info section */
+.camera-detection-info {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 10px;
+    margin-top: 10px;
+}
+
+.camera-detection-info p {
+    margin: 6px 0;
+    font-size: 0.9em;
+}
+
+.camera-detection-info p strong {
+    color: #495057;
+    font-weight: 600;
+}
+
+/* Road popup styling enhancements */
+.road-popup {
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.road-popup h4 {
+    margin: 0 0 10px 0;
+    color: #1e3a8a;
+    font-size: 1.1em;
+    font-weight: 600;
+}
+
+.road-status {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin: 8px 0;
+}
+
+.road-status.green {
+    background-color: #d1fae5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.road-status.yellow {
+    background-color: #fef3c7;
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.road-status.red {
+    background-color: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #dc2626;
+}
+
+.road-status.gray {
+    background-color: #f3f4f6;
+    color: #374151;
+    border: 1px solid #9ca3af;
+}
+
+.data-source {
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 0.85em;
+    color: #6b7280;
+    font-style: italic;
+}
+
 /* Responsive camera popup styles */
 @media (max-width: 768px) {
     .camera-popup {
@@ -1901,5 +2009,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
         max-width: 230px !important;
         min-width: 200px !important;
         padding: 6px !important;
+    }
+
+    .confidence-badge {
+        font-size: 0.8em;
+        padding: 2px 8px;
     }
 }

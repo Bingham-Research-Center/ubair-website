@@ -1,5 +1,11 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
+import {
+    getConfidenceLevel,
+    calculateCompositeConfidence,
+    adjustConfidenceForQuality,
+    validateConfidence
+} from './confidenceThresholds.js';
 
 // Cache for 5 minutes to avoid excessive processing
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
@@ -201,15 +207,18 @@ class SnowDetectionService {
         
         // Determine snow level
         const snowLevel = this.determineSnowLevel(whitePixelPercentage);
-        
-        // Calculate confidence based on various factors
-        let confidence = this.calculateConfidence(whitePixelPercentage, snowLevel, cameraId);
-        
-        // Apply temperature-based confidence adjustment
-        if (temperatureCheck) {
-            confidence = Math.min(confidence, temperatureCheck.confidence);
-        }
-        
+
+        // Calculate confidence based on various factors using new taxonomy
+        const confidence = this.calculateConfidence(
+            whitePixelPercentage,
+            snowLevel,
+            cameraId,
+            temperatureCheck
+        );
+
+        // Get semantic confidence level
+        const confidenceLevel = getConfidenceLevel(confidence);
+
         return {
             cameraId,
             timestamp,
@@ -217,6 +226,13 @@ class SnowDetectionService {
             snowLevel,
             whitePixelPercentage: Math.max(0, whitePixelPercentage),
             confidence,
+            confidenceLevel: {
+                name: confidenceLevel.name,
+                displayText: confidenceLevel.displayText,
+                badge: confidenceLevel.badge,
+                color: confidenceLevel.color,
+                icon: confidenceLevel.icon
+            },
             imageSize,
             temperatureInfo: temperatureCheck,
             processingTime: Date.now() - timestamp
@@ -224,33 +240,53 @@ class SnowDetectionService {
     }
 
     /**
-     * Simulate white pixel analysis (placeholder for real image processing)
-     * @param {Buffer} imageBuffer - Image data
+     * Analyze actual pixel data to detect white pixels (snow)
+     * @param {Buffer} imageBuffer - Image data (RGB format)
      * @param {string} cameraId - Camera identifier
-     * @returns {number} Simulated white pixel percentage
+     * @returns {number} White pixel percentage
      */
     simulateWhitePixelAnalysis(imageBuffer, cameraId) {
-        // This is a simulation - replace with actual image processing
-        const imageEntropy = this.calculateImageEntropy(imageBuffer);
-        const timeOfDay = new Date().getHours();
-        const seasonalFactor = this.getSeasonalFactor();
-        
-        // Base calculation using image characteristics
-        let basePercentage = (imageEntropy * 100) % 50;
-        
-        // Adjust for time of day (dawn/dusk might have more false positives)
-        if (timeOfDay < 8 || timeOfDay > 18) {
-            basePercentage *= 0.8; // Reduce sensitivity in low light
+        // Assume buffer is RGB format (3 bytes per pixel)
+        const pixelCount = Math.floor(imageBuffer.length / 3);
+
+        if (pixelCount === 0) return 0;
+
+        let whitePixelCount = 0;
+
+        // Analyze each pixel
+        for (let i = 0; i < imageBuffer.length; i += 3) {
+            const r = imageBuffer[i];
+            const g = imageBuffer[i + 1];
+            const b = imageBuffer[i + 2];
+
+            // Calculate brightness (average of RGB)
+            const brightness = (r + g + b) / 3;
+
+            // Calculate saturation (how colorful vs grey/white)
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : ((max - min) / max) * 100;
+
+            // Calculate RGB balance (how close R, G, B are to each other)
+            const avgRGB = (r + g + b) / 3;
+            const rDiff = Math.abs(r - avgRGB);
+            const gDiff = Math.abs(g - avgRGB);
+            const bDiff = Math.abs(b - avgRGB);
+            const maxDiff = Math.max(rDiff, gDiff, bDiff);
+            const rgbBalance = avgRGB === 0 ? 0 : 1 - (maxDiff / avgRGB);
+
+            // Detect white pixels (snow) using thresholds
+            const isWhite = brightness >= this.colorParams.brightnessThreshold &&
+                           saturation <= this.colorParams.saturationThreshold &&
+                           rgbBalance >= this.colorParams.rgbBalanceThreshold;
+
+            if (isWhite) {
+                whitePixelCount++;
+            }
         }
-        
-        // Seasonal adjustment (winter months more likely)
-        basePercentage *= seasonalFactor;
-        
-        // Add some controlled randomness to simulate real-world variation
-        const variation = (Math.random() - 0.5) * 10; // ±5% variation
-        basePercentage += variation;
-        
-        return Math.max(0, Math.min(100, basePercentage));
+
+        const whitePixelPercentage = (whitePixelCount / pixelCount) * 100;
+        return whitePixelPercentage;
     }
 
     /**
@@ -313,34 +349,69 @@ class SnowDetectionService {
     }
 
     /**
-     * Calculate confidence score for the detection
+     * Calculate confidence score for the detection using composite approach
      * @param {number} whitePixelPercentage - White pixel percentage
      * @param {string} snowLevel - Detected snow level
      * @param {string} cameraId - Camera identifier
+     * @param {Object} temperatureInfo - Temperature context
      * @returns {number} Confidence score (0-1)
      */
-    calculateConfidence(whitePixelPercentage, snowLevel, cameraId) {
-        let confidence = 0.5; // Base confidence
-        
-        // Higher confidence for clear classifications
+    calculateConfidence(whitePixelPercentage, snowLevel, cameraId, temperatureInfo = null) {
+        // Build confidence from multiple sources
+        const sources = [];
+
+        // Source 1: Visual analysis confidence
+        let visualConfidence = 0.5;
         if (snowLevel === 'none' && whitePixelPercentage < 3) {
-            confidence = 0.9;
+            visualConfidence = 0.9;
         } else if (snowLevel === 'heavy' && whitePixelPercentage > 40) {
-            confidence = 0.95;
+            visualConfidence = 0.95;
         } else if (snowLevel !== 'none') {
-            // Moderate confidence for snow detection
-            confidence = 0.7 + (whitePixelPercentage / 100) * 0.2;
+            visualConfidence = 0.7 + (whitePixelPercentage / 100) * 0.2;
         }
-        
-        // Adjust based on historical consistency
+        sources.push({ confidence: visualConfidence, weight: 1.2, source: 'Camera visual analysis' });
+
+        // Source 2: Temperature-based confidence
+        if (temperatureInfo && temperatureInfo.confidence !== undefined) {
+            sources.push({
+                confidence: temperatureInfo.confidence,
+                weight: 1.5, // Temperature is highly reliable
+                source: 'Temperature conditions'
+            });
+        }
+
+        // Calculate composite confidence
+        let baseConfidence = calculateCompositeConfidence(sources);
+
+        // Quality adjustments
         const history = this.detectionHistory.get(cameraId);
+        const qualityIndicators = {};
+
+        // Temporal consistency
         if (history && history.length > 3) {
             const recentResults = history.slice(-3);
             const consistency = this.calculateConsistency(recentResults);
-            confidence *= (0.7 + consistency * 0.3); // Boost confidence for consistent results
+            qualityIndicators.temporalConsistency = consistency;
         }
-        
-        return Math.max(0, Math.min(1, confidence));
+
+        // Apply quality adjustments
+        const finalConfidence = adjustConfidenceForQuality(baseConfidence, qualityIndicators);
+
+        // Validate confidence calculation
+        const validation = validateConfidence(finalConfidence, {
+            dataSource: 'Camera + Temperature',
+            sourceCount: sources.length,
+            ageMinutes: 0 // Real-time analysis
+        });
+
+        if (!validation.valid) {
+            console.warn(`Confidence validation failed for ${cameraId}:`, validation.errors);
+        }
+        if (validation.warnings.length > 0) {
+            console.debug(`Confidence warnings for ${cameraId}:`, validation.warnings);
+        }
+
+        return finalConfidence;
     }
 
     /**
