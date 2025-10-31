@@ -10,6 +10,7 @@ import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
+import BackgroundRefreshService from './backgroundRefresh.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -157,9 +158,16 @@ app.get('/api/live-observations', async (req, res) => {
 const server = createServer(app);
 
 
+// Initialize background refresh service
+const backgroundRefresh = new BackgroundRefreshService();
+
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
     console.log('Data upload API available at /api/data/upload/:dataType');
+    console.log('');
+
+    // Start background UDOT API refresh
+    backgroundRefresh.start();
 });
 
 // Error handling middleware

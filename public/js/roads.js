@@ -118,7 +118,7 @@ class RoadWeatherMap {
         this.options = {
             center: options.center || [40.15, -110.1],
             zoom: options.zoom || 8,
-            refreshInterval: options.refreshInterval || 300000,
+            // refreshInterval: options.refreshInterval || 300000, // No longer needed - server handles refresh
             ...options
         };
 
@@ -195,6 +195,11 @@ class RoadWeatherMap {
         this.map.createPane('closurePane');
         this.map.getPane('closurePane').style.zIndex = 10000;
         this.map.getPane('closurePane').style.pointerEvents = 'auto';
+
+        // Add zoom event listener for camera clustering
+        this.map.on('zoomend', () => {
+            this.updateCameraVisibility();
+        });
     }
 
     async loadRoadWeatherData() {
@@ -693,8 +698,130 @@ class RoadWeatherMap {
             // Add marker to map (no separate ring needed)
             marker.addTo(this.map);
 
+            // Store camera reference with marker for density calculation
+            marker.camera = camera;
+
             this.cameraMarkers.set(camera.id, marker);
         });
+
+        // Initial visibility update based on current zoom
+        this.updateCameraVisibility();
+    }
+
+    /**
+     * Update camera visibility based on current zoom level
+     * Called on zoomend event and after rendering cameras
+     */
+    updateCameraVisibility() {
+        if (!this.map || this.cameraMarkers.size === 0) return;
+
+        const zoom = this.map.getZoom();
+        const cameras = Array.from(this.cameraMarkers.values());
+
+        cameras.forEach(marker => {
+            const shouldShow = this.shouldShowCamera(marker.camera, zoom);
+
+            if (shouldShow && !this.map.hasLayer(marker)) {
+                marker.addTo(this.map);
+            } else if (!shouldShow && this.map.hasLayer(marker)) {
+                this.map.removeLayer(marker);
+            }
+        });
+    }
+
+    /**
+     * Determine if a camera should be visible at the current zoom level
+     * @param {Object} camera - Camera object with lat/lng
+     * @param {number} zoom - Current map zoom level
+     * @returns {boolean} - True if camera should be visible
+     */
+    shouldShowCamera(camera, zoom) {
+        // Always show all cameras when fully zoomed in
+        if (zoom >= 12) return true;
+
+        // Calculate density if not already cached
+        if (camera._density === undefined) {
+            const allCameras = Array.from(this.cameraMarkers.values())
+                .map(m => m.camera);
+            camera._density = this.calculateCameraDensity(camera, allCameras);
+        }
+
+        // High zoom (11): Show most cameras
+        if (zoom >= 11) {
+            if (camera._density < 3) return true;
+            if (camera._density < 6) return Math.random() < 0.7;
+            return Math.random() < 0.5;
+        }
+
+        // Medium zoom (10): Show ~40% - more aggressive filtering
+        if (zoom >= 10) {
+            // Show isolated cameras only
+            if (camera._density < 2) return true;
+            // Show 30% of low-density clusters
+            if (camera._density < 4) return Math.random() < 0.3;
+            // Show 15% of high-density clusters
+            return Math.random() < 0.15;
+        }
+
+        // Default zoom (9): Show ~25% - very aggressive
+        if (zoom >= 9) {
+            // Only show isolated cameras
+            if (camera._density < 2) return true;
+            // Show 20% of any clusters
+            return Math.random() < 0.2;
+        }
+
+        // Low zoom (<9): Show cluster representatives only (~15%)
+        // Show only very isolated cameras
+        if (camera._density < 1) return true;
+        // Show 10% of anything else
+        return Math.random() < 0.1;
+    }
+
+    /**
+     * Calculate camera density (number of nearby cameras within radius)
+     * @param {Object} camera - Camera object with lat/lng
+     * @param {Array} allCameras - Array of all camera objects
+     * @param {number} radiusKm - Search radius in kilometers (default: 5km)
+     * @returns {number} - Count of nearby cameras
+     */
+    calculateCameraDensity(camera, allCameras, radiusKm = 5) {
+        let nearbyCount = 0;
+
+        for (const other of allCameras) {
+            if (camera.id === other.id) continue;
+
+            const distance = this.haversineDistance(
+                { lat: camera.lat, lng: camera.lng },
+                { lat: other.lat, lng: other.lng }
+            );
+
+            if (distance < radiusKm) {
+                nearbyCount++;
+            }
+        }
+
+        return nearbyCount;
+    }
+
+    /**
+     * Calculate distance between two coordinates using Haversine formula
+     * @param {Object} coord1 - First coordinate {lat, lng}
+     * @param {Object} coord2 - Second coordinate {lat, lng}
+     * @returns {number} - Distance in kilometers
+     */
+    haversineDistance(coord1, coord2) {
+        const R = 6371; // Earth radius in kilometers
+        const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
+        const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
+
+        const a = Math.sin(dLat / 2) ** 2 +
+                  Math.cos(coord1.lat * Math.PI / 180) *
+                  Math.cos(coord2.lat * Math.PI / 180) *
+                  Math.sin(dLng / 2) ** 2;
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * c;
     }
 
     determineStationCondition(station) {
@@ -837,16 +964,19 @@ class RoadWeatherMap {
     }
 
     startAutoRefresh() {
-        if (this.refreshTimer) clearInterval(this.refreshTimer);
+        // Auto-refresh disabled - server now refreshes UDOT data in background
+        // Users always get cached data, preventing API spam and rate limit violations
+        // Manual refresh still works via refresh button
 
-        this.refreshTimer = setInterval(() => {
-            this.loadRoadWeatherData();
-            this.loadTrafficEvents();
-            this.loadSnowPlows();
-            this.loadMountainPasses();
-            this.loadRestAreas();
-            updateConditionCards();
-        }, this.options.refreshInterval);
+        // if (this.refreshTimer) clearInterval(this.refreshTimer);
+        // this.refreshTimer = setInterval(() => {
+        //     this.loadRoadWeatherData();
+        //     this.loadTrafficEvents();
+        //     this.loadSnowPlows();
+        //     this.loadMountainPasses();
+        //     this.loadRestAreas();
+        //     updateConditionCards();
+        // }, this.options.refreshInterval);
     }
 
     destroy() {
@@ -878,8 +1008,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize the road weather map
     roadWeatherMap = new RoadWeatherMap('road-map', {
         center: [40.3033, -109.7],
-        zoom: 10,
-        refreshInterval: 300000 // 5 minutes
+        zoom: 10
+        // No refreshInterval needed - server handles background refresh
     });
 
     // Make globally accessible for state management
