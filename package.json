@@ -10,7 +10,14 @@
     "test-api": "NODE_OPTIONS='-r dotenv/config' node scripts/test-api.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:snow": "NODE_OPTIONS='--experimental-vm-modules' jest snowDetection.test.js",
-    "test:confidence": "NODE_OPTIONS='--experimental-vm-modules' jest confidenceThresholds.test.js"
+    "test:confidence": "NODE_OPTIONS='--experimental-vm-modules' jest confidenceThresholds.test.js",
+    "ml:setup": "cd ml && chmod +x setup.sh && ./setup.sh",
+    "ml:collect": "node ml/collectCameraImages.js",
+    "ml:collect:continuous": "node ml/collectCameraImages.js --count=1000 --continuous=true --interval=600",
+    "ml:annotate": "echo 'Open http://localhost:3000/ml/annotateImages.html in your browser' && npm run dev",
+    "ml:preprocess": "cd ml && source venv/bin/activate && python preprocess.py",
+    "ml:train": "cd ml && source venv/bin/activate && python train.py",
+    "ml:help": "cat ml/GETTING_STARTED.md"
   },
   "dependencies": {
     "dotenv": "^16.6.1",
@@ -21,6 +28,7 @@
     "marked": "^14.1.3",
     "multer": "^2.0.0",
     "node-cache": "^5.1.2",
+    "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
     "plotly.js": "^2.35.3",
     "plotly.js-dist": "^2.35.2",
