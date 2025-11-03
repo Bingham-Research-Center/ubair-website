@@ -55,10 +55,10 @@ class BackgroundRefreshService {
 
         console.log('🔄 Starting background refresh service...');
         console.log('   UDOT API Rate Limit: 10 calls/60 seconds');
-        console.log('   Our Schedule:');
-        console.log('   - Essential data: Every 60 seconds (roads, cameras, stations)');
-        console.log('   - Frequent data: Every 5 minutes (plows, alerts, events)');
-        console.log('   - Infrequent data: Every 15 minutes (rest areas, passes)');
+        console.log('   Our Schedule (Staggered for Safety):');
+        console.log('   - Essential data: Every 60 seconds at :00 (roads, cameras, stations)');
+        console.log('   - Frequent data: Every 5 minutes at :02 (plows, alerts, events)');
+        console.log('   - Infrequent data: Every 15 minutes at :05/:20/:35/:50 +jitter (rest areas, passes)');
         console.log('');
 
         // High-frequency: Every 60 seconds
@@ -67,17 +67,15 @@ class BackgroundRefreshService {
             await this.refreshEssentialData();
         });
 
-        // Medium-frequency: Every 5 minutes
+        // Medium-frequency: Every 5 minutes at :02 (staggered to avoid collision)
         // Fetches: snow plows, alerts, events (3 API calls)
-        const frequentJob = cron.schedule('*/5 * * * *', async () => {
+        const frequentJob = cron.schedule('2,7,12,17,22,27,32,37,42,47,52,57 * * * *', async () => {
             await this.refreshFrequentData();
         });
 
-        // Low-frequency: Every 15 minutes
+        // Low-frequency: Every 15 minutes with random jitter
         // Fetches: rest areas, mountain passes (2 API calls)
-        const infrequentJob = cron.schedule('*/15 * * * *', async () => {
-            await this.refreshInfrequentData();
-        });
+        const infrequentJob = this.scheduleInfrequentWithJitter();
 
         this.jobs = [essentialJob, frequentJob, infrequentJob];
         this.isRunning = true;
@@ -87,6 +85,24 @@ class BackgroundRefreshService {
 
         console.log('✓ Background refresh service started');
         console.log('✓ Initial data fetch in progress...\n');
+    }
+
+    /**
+     * Schedule infrequent data refresh with random jitter
+     * Runs at :05, :20, :35, :50 with 0-59 second random delay
+     * This catches edge cases (e.g., snowfall starting at odd times)
+     */
+    scheduleInfrequentWithJitter() {
+        return cron.schedule('5,20,35,50 * * * *', async () => {
+            // Random jitter: 0-59 seconds
+            const jitterSeconds = Math.floor(Math.random() * 60);
+            
+            console.log(`[${new Date().toISOString()}] Infrequent refresh scheduled in ${jitterSeconds}s`);
+            
+            setTimeout(async () => {
+                await this.refreshInfrequentData();
+            }, jitterSeconds * 1000);
+        });
     }
 
     /**
