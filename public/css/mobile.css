@@ -293,19 +293,168 @@
     }
 }
 
+/* Large Tablet / Small Desktop (900px - 1024px) */
+@media screen and (max-width: 1024px) and (min-width: 901px) {
+    .homepage-header {
+        padding: 1.25rem;
+        gap: 1.5rem;
+    }
+
+    .headlines-dashboard {
+        padding: 1.25rem;
+    }
+
+    .headline-icon {
+        font-size: 1.5rem;
+    }
+
+    .dashboard-tabs .tab-button {
+        padding: 0.55rem 1.1rem;
+        font-size: 0.9rem;
+    }
+
+    .town-dropdown {
+        font-size: 0.9rem;
+    }
+}
+
+/* Tablet Landscape (769px - 900px) - Keep horizontal but more compact */
+@media screen and (max-width: 900px) and (min-width: 769px) {
+    .homepage-header {
+        padding: 1rem;
+        gap: 1.25rem;
+    }
+
+    .headlines-dashboard {
+        padding: 1rem;
+    }
+
+    .headline-icon {
+        font-size: 1.4rem;
+    }
+
+    .headline-items {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .headline-item {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+
+    .dashboard-tabs .tab-button {
+        padding: 0.55rem 1rem;
+        font-size: 0.9rem;
+    }
+
+    .dashboard-tabs .tab-button i {
+        font-size: 0.85rem;
+    }
+
+    .town-dropdown {
+        font-size: 0.85rem;
+        min-width: 110px;
+    }
+
+    .ai-summary-box {
+        padding: 1.25rem;
+    }
+
+    .ai-summary-text {
+        font-size: 0.95rem;
+    }
+}
+
 /* Portrait mobile optimization */
 @media screen and (max-width: 768px) and (orientation: portrait) {
-    /* Compact header for portrait */
+    /* Compact header for portrait - stack vertically */
     .homepage-header {
-        padding: 0.5rem 0;
+        flex-direction: column;
+        padding: 1rem;
         margin-bottom: 0.75rem;
+        gap: 1rem;
+        text-align: center;
     }
-    
+
     .site-title {
         font-size: 2.2rem;
         margin-bottom: 0.25rem;
     }
-    
+
+    .site-logo {
+        margin: 0 auto;
+        /* Width handled by clamp() in main.css - naturally ~200-220px at this breakpoint */
+    }
+
+    .headlines-dashboard {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    .dashboard-tabs {
+        flex-wrap: wrap;
+        justify-content: center;
+        border-bottom: none;
+        padding-bottom: 0;
+    }
+
+    .dashboard-tabs .tab-button {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    .town-selector {
+        justify-content: center;
+        padding: 0.5rem;
+    }
+
+    .town-dropdown {
+        flex: 1;
+        max-width: 200px;
+        font-size: 0.9rem;
+    }
+
+    .headline-items {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .headline-item {
+        padding: 0.75rem;
+    }
+
+    .headline-icon {
+        font-size: 1.3rem;
+    }
+
+    .headline-value {
+        font-size: 1rem;
+    }
+
+    .ai-summary-box {
+        padding: 1rem;
+    }
+
+    .ai-summary-text {
+        font-size: 0.9rem;
+    }
+
+    .site-info {
+        width: 100%;
+        text-align: center;
+    }
+
+    .site-title-alt {
+        font-size: 1.8rem;
+    }
+
     .site-subtitle {
         font-size: 1rem;
     }
@@ -410,13 +559,67 @@
 
 /* Small mobile styles */
 @media screen and (max-width: 480px) {
-    /* Add zoom-out effect for better overview */
-    body {
-        zoom: 0.9;
-        -moz-transform: scale(0.9);
-        -moz-transform-origin: 0 0;
+    .homepage-header {
+        padding: 0.75rem;
     }
-    
+
+    .site-logo {
+        /* Width handled by clamp() in main.css - naturally ~180-200px at this breakpoint */
+        margin: 0 auto;
+    }
+
+    .headlines-dashboard {
+        padding: 0.75rem;
+    }
+
+    .dashboard-header {
+        gap: 0.5rem;
+    }
+
+    .dashboard-tabs .tab-button {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+        gap: 0.3rem;
+    }
+
+    .dashboard-tabs .tab-button i {
+        font-size: 0.8rem;
+    }
+
+    .town-selector {
+        padding: 0.4rem;
+    }
+
+    .town-selector label {
+        font-size: 0.9rem;
+    }
+
+    .town-dropdown {
+        font-size: 0.85rem;
+        padding: 0.4rem 0.6rem;
+        min-width: 100px;
+    }
+
+    .headline-label {
+        font-size: 0.75rem;
+    }
+
+    .headline-icon {
+        font-size: 1.2rem;
+    }
+
+    .headline-value {
+        font-size: 0.95rem;
+    }
+
+    .site-title-alt {
+        font-size: 1.5rem;
+    }
+
+    .site-subtitle {
+        font-size: 0.9rem;
+    }
+
     .container {
         margin: 0 5px;
         padding: 10px;
@@ -436,5 +639,91 @@
     .leaflet-control-zoom a {
         width: 44px !important;
         height: 44px !important;
+    }
+}
+
+/* Landscape Mobile Optimization (phones in landscape) */
+@media screen and (max-width: 900px) and (orientation: landscape) {
+    .homepage-header {
+        padding: 0.75rem 1rem;
+        gap: 1rem;
+        /* Keep horizontal layout for landscape */
+        flex-direction: row !important;
+    }
+
+    .site-logo {
+        width: clamp(150px, 18vw, 200px);
+        /* Smaller logo for landscape to save vertical space */
+    }
+
+    .headlines-dashboard {
+        padding: 0.875rem;
+        max-width: none;
+        /* Remove max-width constraint in landscape */
+    }
+
+    .dashboard-header {
+        gap: 0.75rem;
+        /* Keep tabs and selector side-by-side in landscape */
+        flex-direction: row !important;
+    }
+
+    .dashboard-tabs {
+        flex: 1;
+        justify-content: flex-start;
+        flex-wrap: nowrap;
+        border-bottom: 2px solid #e5e7eb;
+    }
+
+    .dashboard-tabs .tab-button {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.8rem;
+    }
+
+    .headline-items {
+        grid-template-columns: 1fr;
+        /* Single column for better scrolling in landscape */
+        gap: 0.625rem;
+    }
+
+    .headline-item {
+        padding: 0.625rem;
+        gap: 0.625rem;
+    }
+
+    .headline-icon {
+        font-size: 1.3rem;
+    }
+
+    .headline-label {
+        font-size: 0.75rem;
+    }
+
+    .headline-value {
+        font-size: 0.9rem;
+    }
+
+    .town-selector {
+        padding: 0.4rem 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .town-dropdown {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.5rem;
+        min-width: 100px;
+    }
+
+    .ai-summary-box {
+        padding: 0.875rem;
+    }
+
+    .ai-summary-text {
+        font-size: 0.85rem;
+    }
+
+    /* Reduce vertical padding throughout to maximize content area */
+    .dashboard-section {
+        padding: 0.75rem;
     }
 }
