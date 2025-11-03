@@ -1,17 +1,31 @@
 // 90s Mode Toggle Functionality
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Store original favicon on page load
+    let originalFavicon = null;
+    const faviconLink = document.querySelector('link[rel="icon"]');
+    if (faviconLink) {
+        originalFavicon = faviconLink.href;
+    }
+
+    // Store original logo on page load
+    let originalLogo = null;
+    const logoImg = document.querySelector('.site-logo');
+    if (logoImg) {
+        originalLogo = logoImg.src;
+    }
+
     // Wait for sidebar to load, then initialize
     const initNinetiesMode = () => {
         const toggleBtn = document.getElementById('nineties-toggle');
         const toggleIndicator = toggleBtn?.querySelector('.toggle-indicator');
-        
+
         if (!toggleBtn) {
             // Try again after a short delay if button not found
             setTimeout(initNinetiesMode, 100);
             return;
         }
-    
+
     // Check for saved preference
     const savedMode = localStorage.getItem('nineties-mode');
     if (savedMode === 'true') {
@@ -34,7 +48,13 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.classList.add('active');
         toggleIndicator.textContent = 'ON';
         localStorage.setItem('nineties-mode', 'true');
-        
+
+        // Switch to animated favicon
+        changeFavicon('/public/images/favicons/animated-favicon.gif', 'image/gif');
+
+        // Switch to 90s logo
+        changeLogoImage('/public/images/gemini-90s-logo.png');
+
         // Optional: Add sparkle effect
         createSparkleEffect();
     }
@@ -44,7 +64,17 @@ document.addEventListener('DOMContentLoaded', function() {
         toggleBtn.classList.remove('active');
         toggleIndicator.textContent = 'OFF';
         localStorage.setItem('nineties-mode', 'false');
-        
+
+        // Restore original favicon
+        if (originalFavicon) {
+            changeFavicon(originalFavicon, 'image/x-icon');
+        }
+
+        // Restore original logo
+        if (originalLogo) {
+            changeLogoImage(originalLogo);
+        }
+
         // Remove sparkles
         removeSparkleEffect();
     }
@@ -135,8 +165,35 @@ document.addEventListener('DOMContentLoaded', function() {
                 sparkleContainer.remove();
             }
         }
+
+        function changeFavicon(href, type) {
+            const faviconLink = document.querySelector('link[rel="icon"]');
+            if (faviconLink) {
+                faviconLink.href = href;
+                faviconLink.type = type;
+            } else {
+                // If no favicon link exists, create one
+                const newFavicon = document.createElement('link');
+                newFavicon.rel = 'icon';
+                newFavicon.type = type;
+                newFavicon.href = href;
+                document.head.appendChild(newFavicon);
+            }
+        }
+
+        function changeLogoImage(src) {
+            const logoImg = document.querySelector('.site-logo');
+            if (logoImg) {
+                // Add fade effect for smooth transition
+                logoImg.style.opacity = '0';
+                setTimeout(() => {
+                    logoImg.src = src;
+                    logoImg.style.opacity = '1';
+                }, 150);
+            }
+        }
     };
-    
+
     // Start trying to initialize
     initNinetiesMode();
 });
