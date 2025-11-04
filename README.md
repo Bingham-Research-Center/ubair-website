@@ -40,19 +40,19 @@ CHPC (Data Processing) → API Upload → Akamai Server → Web Interface
 - [Data Schema](docs/DATA-SCHEMA.md)
 - [Frontend Architecture](docs/FRONTEND-ARCHITECTURE.md)
 - [Python Developer Guide](docs/PYTHON-DEVELOPER-GUIDE.md)
-- [SSL Setup Guide](docs/SSL-SETUP.md)
 - [Winter Ozone Science](docs/WINTER-OZONE-SCIENCE.md)
 
 ## Research & Publications
 
 ### Scientific Papers
-- *Coming Soon*: Winter ozone formation mechanisms in the Uintah Basin
-- *In Preparation*: Machine learning approaches to air quality forecasting
+- *Techical report*: Clyfar (air-quality forecasting) design for 2025/2026
+- *In Preparation*: _Preprint articles for extreme nerds, and plain-language pieces for easier reading!_
+- *Publication goals in 2026**: Clyfar evaluation and comprehensive description
 
-### Blog Posts & Long-form Articles
-- [Understanding Winter Ozone](https://www.jrl.ac/winter-ozone-primer) *(placeholder)*
-- [The Uintah Basin's Unique Meteorology](https://www.jrl.ac/basin-meteorology) *(placeholder)*
-- [Data Science Meets Atmospheric Chemistry](https://www.jrl.ac/data-science-atmosphere) *(placeholder)*
+### Blog Posts & long-form articles
+- TBC: straightforward summaries of our research
+- TBC: team activities, especially those of our students
+- TBC: showcase of posts re: complex elements of Ozone Alert outlooks not discussed in emails
 
 ## Roadmap & To-Dos
 
