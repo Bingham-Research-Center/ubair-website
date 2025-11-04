@@ -1,0 +1,96 @@
+# BasinWx Data Pipeline - Commented Crontab
+# ==========================================
+# This file explains each cron job in detail
+# Use this to understand and customize your setup
+
+# --- EMAIL CONFIGURATION ---
+# MAILTO="" disables email notifications
+# MAILTO="you@utah.edu" sends errors to your email
+MAILTO=""
+
+# --- SHELL ---
+# Specify bash for proper command execution
+SHELL=/bin/bash
+
+# --- OBSERVATIONS (Every 10 minutes) ---
+# Schedule: */10 * * * * = minute 0, 10, 20, 30, 40, 50 of every hour
+# Process:
+#   1. Source ~/.bashrc to load BASINWX_API_KEY
+#   2. Change to brc-tools directory
+#   3. Run get_map_obs.py to fetch latest data from Synoptic API
+#   4. Run push_data.py to upload observations to website
+#   5. Log output to observations.log
+# Priority: HIGH - This is the main real-time data feed
+*/10 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_map_obs.py && python3 brc_tools/download/push_data.py observations >> ~/logs/basinwx/observations.log 2>&1
+
+# --- METADATA (Every 6 hours) ---
+# Schedule: 0 */6 * * * = 00:00, 06:00, 12:00, 18:00
+# Process:
+#   1. Upload station metadata (names, locations, elevations)
+#   2. Station info changes rarely, so 6-hour update is sufficient
+# Priority: MEDIUM - Important but not time-critical
+0 */6 * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_data.py metadata >> ~/logs/basinwx/metadata.log 2>&1
+
+# --- TIMESERIES (Hourly) ---
+# Schedule: 0 * * * * = top of every hour
+# Process:
+#   1. Fetch timeseries data (historical trends)
+#   2. Upload to website for plotting
+# Priority: MEDIUM - Used for charts and trend analysis
+# Note: get_timeseries.py must exist and be functional
+0 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_timeseries.py && python3 brc_tools/download/push_data.py timeseries >> ~/logs/basinwx/timeseries.log 2>&1
+
+# --- OUTLOOKS (Twice daily) ---
+# Schedule: 0 6,18 * * * = 6:00 AM and 6:00 PM
+# Process:
+#   1. Upload forecast outlook markdown files
+#   2. These are typically written by forecasters manually
+# Priority: LOW - Manual process, not automated data
+# Note: May not run automatically until you create outlook files
+0 6,18 * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_data.py outlooks >> ~/logs/basinwx/outlooks.log 2>&1
+
+# --- IMAGES (Every 30 minutes) ---
+# Schedule: */30 * * * * = minute 0 and 30 of every hour
+# Process:
+#   1. Fetch visualization images (maps, charts, webcam images)
+#   2. Upload to website for display
+# Priority: LOW - Nice to have, not critical
+# Note: Images can be large (~500KB each)
+*/30 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_images.py && python3 brc_tools/download/push_data.py images >> ~/logs/basinwx/images.log 2>&1
+
+# --- ADDITIONAL NOTES ---
+#
+# Cron Syntax Reminder:
+#   * * * * *
+#   │ │ │ │ │
+#   │ │ │ │ └─── Day of week (0-7, 0 and 7 = Sunday)
+#   │ │ │ └───── Month (1-12)
+#   │ │ └─────── Day of month (1-31)
+#   │ └───────── Hour (0-23)
+#   └─────────── Minute (0-59)
+#
+# Special Characters:
+#   *     = every value (every minute, every hour, etc.)
+#   */10  = every 10 units (every 10 minutes, every 10 hours, etc.)
+#   1,5,9 = specific values (1st, 5th, 9th)
+#   1-5   = range (1 through 5)
+#
+# Logging:
+#   >> file  = append stdout to file
+#   2>&1     = redirect stderr to stdout
+#
+# Chaining Commands:
+#   &&  = run next command only if previous succeeds
+#   ;   = run next command regardless of previous result
+#
+# Testing:
+#   1. Run commands manually first
+#   2. Check logs after cron runs
+#   3. Verify data appears on website
+#   4. Monitor for 24-48 hours
+#
+# Troubleshooting:
+#   - Check logs: tail -f ~/logs/basinwx/*.log
+#   - Test manually: bash -c "source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_data.py observations"
+#   - Verify cron: crontab -l
+#   - Check cron service: systemctl status cron

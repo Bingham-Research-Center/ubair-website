@@ -1,0 +1,26 @@
+# BasinWx CHPC Data Pipeline - Python Dependencies
+#
+# Install with: pip install -r requirements.txt
+#
+# Core dependencies for chpc_uploader.py script
+
+# HTTP requests library for API communication
+requests>=2.31.0
+
+# JSON Schema validation
+jsonschema>=4.17.0
+
+# Optional: For enhanced logging and monitoring
+# Uncomment if you want more sophisticated logging
+# structlog>=23.1.0
+
+# Optional: For retry logic with exponential backoff
+# Uncomment if you want to use tenacity instead of manual retry
+# tenacity>=8.2.0
+
+# Development dependencies (optional)
+# Uncomment for local testing and development
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# black>=23.7.0
+# flake8>=6.0.0

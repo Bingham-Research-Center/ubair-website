@@ -1,0 +1,310 @@
+{
+  "version": "1.0.1",
+  "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
+  "lastUpdated": "2025-11-04",
+  "dataTypes": {
+    "observations": {
+      "description": "Live weather observations from stations",
+      "format": "json",
+      "endpoint": "/api/upload/observations",
+      "schedule": {
+        "frequency": "*/10 * * * *",
+        "description": "Every 10 minutes",
+        "timezone": "UTC"
+      },
+      "filename": {
+        "pattern": "map_obs_YYYYMMDD_HHMMZ.json",
+        "example": "map_obs_20250731_0230Z.json"
+      },
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["stid", "variable", "value", "date_time", "units"],
+          "properties": {
+            "stid": {
+              "type": "string",
+              "description": "Station ID (must match metadata)",
+              "pattern": "^[A-Z0-9]{3,10}$"
+            },
+            "variable": {
+              "type": "string",
+              "description": "Variable name from approved list",
+              "enum": [
+                "air_temp",
+                "wind_speed",
+                "wind_direction",
+                "dew_point_temperature",
+                "soil_temp",
+                "snow_depth",
+                "ozone_concentration",
+                "PM_25_concentration",
+                "NOx_concentration",
+                "solar_radiation",
+                "outgoing_radiation_sw",
+                "pressure",
+                "sea_level_pressure",
+                "altimeter",
+                "ceiling",
+                "relative_humidity",
+                "precip_accum"
+              ]
+            },
+            "value": {
+              "type": "number",
+              "description": "Measurement value"
+            },
+            "date_time": {
+              "type": "string",
+              "description": "ISO 8601 timestamp with Z suffix",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d{3})?Z$"
+            },
+            "units": {
+              "type": "string",
+              "description": "Measurement units"
+            }
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "10MB",
+        "maxRecords": 50000,
+        "requiredVariables": ["air_temp", "wind_speed", "wind_direction"],
+        "unitMapping": {
+          "air_temp": "Celsius",
+          "wind_speed": "m/s",
+          "wind_direction": "Degrees",
+          "dew_point_temperature": "Celsius",
+          "soil_temp": "Celsius",
+          "relative_humidity": "%",
+          "snow_depth": "Millimeters",
+          "ozone_concentration": "ppb",
+          "PM_25_concentration": "ug/m3",
+          "NOx_concentration": "ppb",
+          "solar_radiation": "W/m**2",
+          "outgoing_radiation_sw": "W/m**2",
+          "pressure": "Pascals",
+          "sea_level_pressure": "Pascals",
+          "altimeter": "Pascals",
+          "ceiling": "Meters",
+          "precip_accum": "Millimeters"
+        }
+      }
+    },
+    "metadata": {
+      "description": "Weather station metadata (locations, names, elevations)",
+      "format": "json",
+      "endpoint": "/api/upload/metadata",
+      "schedule": {
+        "frequency": "0 */6 * * *",
+        "description": "Every 6 hours",
+        "timezone": "UTC"
+      },
+      "filename": {
+        "pattern": "map_obs_meta_YYYYMMDD_HHMMZ.json",
+        "example": "map_obs_meta_20250731_0600Z.json"
+      },
+      "schema": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["stid", "name", "elevation", "latitude", "longitude"],
+          "properties": {
+            "stid": {
+              "type": "string",
+              "description": "Station ID (must match observations)",
+              "pattern": "^[A-Z0-9]{3,10}$"
+            },
+            "name": {
+              "type": "string",
+              "description": "Display name for station"
+            },
+            "elevation": {
+              "type": "number",
+              "description": "Elevation in feet above sea level",
+              "minimum": -1000,
+              "maximum": 20000
+            },
+            "latitude": {
+              "type": "number",
+              "description": "Latitude in decimal degrees",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "longitude": {
+              "type": "number",
+              "description": "Longitude in decimal degrees",
+              "minimum": -180,
+              "maximum": 180
+            }
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "1MB",
+        "maxStations": 1000
+      }
+    },
+    "timeseries": {
+      "description": "Time series data for charts (hourly/forecast data)",
+      "format": "json",
+      "endpoint": "/api/upload/timeseries",
+      "schedule": {
+        "frequency": "0 * * * *",
+        "description": "Every hour",
+        "timezone": "UTC"
+      },
+      "filename": {
+        "pattern": "{variable}_{stid}_YYYYMMDD_HHMMZ.json",
+        "example": "ozone_BUNUT_20250731_1200Z.json"
+      },
+      "schema": {
+        "type": "object",
+        "required": ["station_id", "variable", "units", "data"],
+        "properties": {
+          "station_id": {
+            "type": "string",
+            "description": "Station ID"
+          },
+          "variable": {
+            "type": "string",
+            "description": "Variable name"
+          },
+          "units": {
+            "type": "string",
+            "description": "Measurement units"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["time", "value"],
+              "properties": {
+                "time": {
+                  "type": "string",
+                  "description": "ISO 8601 timestamp"
+                },
+                "value": {
+                  "type": "number",
+                  "description": "Measurement value"
+                }
+              }
+            }
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "5MB",
+        "maxDataPoints": 10000
+      }
+    },
+    "outlooks": {
+      "description": "Weather forecast text in markdown format",
+      "format": "markdown",
+      "endpoint": "/api/upload/outlooks",
+      "schedule": {
+        "frequency": "0 6,18 * * *",
+        "description": "Twice daily at 06:00 and 18:00 UTC",
+        "timezone": "UTC"
+      },
+      "filename": {
+        "pattern": "outlook_YYYYMMDD_HHMM.md",
+        "example": "outlook_20250731_0600.md"
+      },
+      "validation": {
+        "maxFileSize": "500KB",
+        "allowedExtensions": [".md", ".txt"],
+        "encoding": "UTF-8"
+      },
+      "template": "# Uintah Basin Air Quality Outlook\n## Valid: {date}\n\n{content}"
+    },
+    "images": {
+      "description": "Visualization images (maps, charts, satellite)",
+      "format": "png",
+      "endpoint": "/api/upload/images",
+      "schedule": {
+        "frequency": "*/30 * * * *",
+        "description": "Every 30 minutes",
+        "timezone": "UTC"
+      },
+      "filename": {
+        "pattern": "{type}_YYYYMMDD_HHMMZ.png",
+        "example": "satellite_20250731_1230Z.png"
+      },
+      "validation": {
+        "maxFileSize": "5MB",
+        "allowedExtensions": [".png", ".jpg", ".jpeg"],
+        "imageTypes": [
+          "satellite",
+          "radar",
+          "forecast_map",
+          "model_output",
+          "analysis"
+        ]
+      }
+    }
+  },
+  "globalValidation": {
+    "authentication": {
+      "method": "API_KEY",
+      "header": "x-api-key",
+      "required": true
+    },
+    "originValidation": {
+      "requiredHostname": "chpc.utah.edu",
+      "method": "reverse_dns_or_header"
+    },
+    "rateLimits": {
+      "requestsPerMinute": 60,
+      "requestsPerHour": 500
+    },
+    "retryPolicy": {
+      "maxRetries": 3,
+      "backoffMultiplier": 2,
+      "initialDelaySeconds": 5
+    }
+  },
+  "monitoring": {
+    "expectedDataFlow": {
+      "observations": "Every 10 minutes",
+      "metadata": "Every 6 hours",
+      "timeseries": "Every hour",
+      "outlooks": "Twice daily",
+      "images": "Every 30 minutes"
+    },
+    "alertThresholds": {
+      "missingDataMinutes": 30,
+      "staleDataHours": 2,
+      "failedUploadCount": 3
+    },
+    "healthChecks": {
+      "endpoint": "/api/health",
+      "frequency": "*/5 * * * *"
+    }
+  },
+  "changeManagement": {
+    "versionControl": "Semantic versioning (major.minor.patch)",
+    "breakingChanges": "Requires coordination between CHPC and web team",
+    "addingVariables": [
+      "1. Update this manifest file",
+      "2. Notify web team via GitHub issue",
+      "3. Test with one station first",
+      "4. Roll out to all stations"
+    ],
+    "deprecatingVariables": [
+      "1. Notify web team 2 weeks in advance",
+      "2. Update manifest with deprecation notice",
+      "3. Stop sending data",
+      "4. Remove from manifest after 1 month"
+    ]
+  },
+  "documentation": {
+    "guides": [
+      "docs/PYTHON-DEVELOPER-GUIDE.md",
+      "docs/CHPC-DEPLOYMENT.md",
+      "docs/API-KEY-SETUP.md"
+    ],
+    "testingScript": "scripts/test-api.js",
+    "exampleData": "public/api/static/"
+  }
+}
