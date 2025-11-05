@@ -44,3 +44,7 @@ pids
 
 # Auto-gen file listing
 outlooks_list.json
+filelist.json
+
+# Test artifacts
+test_observation.json
