@@ -19,7 +19,7 @@ echo ""
 DATA_UPLOAD_API_KEY="48cd2f722c19af756e7443230efe9fcc"
 BASINWX_API_URL="https://basinwx.com"
 CONFIG_DIR="$HOME/.config/ubair-website"
-BRC_TOOLS_DIR="$HOME/brc-tools"  # Adjust if different
+BRC_TOOLS_DIR="$HOME/gits/brc-tools"  # Adjust if different
 
 # Colors for output
 GREEN='\033[0;32m'
