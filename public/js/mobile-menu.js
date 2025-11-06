@@ -4,14 +4,9 @@ function initializeMobileMenu() {
     menuToggle.className = 'mobile-menu-toggle';
     menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
     menuToggle.setAttribute('aria-label', 'Toggle navigation menu');
-    
-    // Create overlay
-    const overlay = document.createElement('div');
-    overlay.className = 'mobile-menu-overlay';
-    
+
     // Add to body
     document.body.appendChild(menuToggle);
-    document.body.appendChild(overlay);
     
     // Get sidebar container
     const sidebarContainer = document.querySelector('.sidebar_container');
@@ -23,13 +18,11 @@ function initializeMobileMenu() {
         if (isActive) {
             // Close menu
             sidebarContainer.classList.remove('active');
-            overlay.classList.remove('active');
             menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
             document.body.style.overflow = '';
         } else {
             // Open menu
             sidebarContainer.classList.add('active');
-            overlay.classList.add('active');
             menuToggle.innerHTML = '<i class="fas fa-times"></i>';
             document.body.style.overflow = 'hidden'; // Prevent scrolling when menu is open
         }
@@ -37,7 +30,6 @@ function initializeMobileMenu() {
     
     // Event listeners
     menuToggle.addEventListener('click', toggleMenu);
-    overlay.addEventListener('click', toggleMenu);
     
     // Close menu when clicking on a link (for better UX)
     const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
@@ -45,7 +37,6 @@ function initializeMobileMenu() {
         link.addEventListener('click', function() {
             if (window.innerWidth <= 768) {
                 sidebarContainer.classList.remove('active');
-                overlay.classList.remove('active');
                 menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
                 document.body.style.overflow = '';
             }
@@ -60,7 +51,6 @@ function initializeMobileMenu() {
             if (window.innerWidth > 768) {
                 // Reset menu state on larger screens
                 sidebarContainer.classList.remove('active');
-                overlay.classList.remove('active');
                 menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
                 document.body.style.overflow = '';
             }
