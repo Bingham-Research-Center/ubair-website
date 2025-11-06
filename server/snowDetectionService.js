@@ -557,56 +557,58 @@ class SnowDetectionService {
      * @returns {Promise<Array>} Array of detection results
      */
     async analyzeCamerasBatch(cameras, weatherStations = []) {
-        const results = [];
-        
         // Process cameras in parallel with concurrency limit
         const concurrencyLimit = 5;
         const chunks = [];
-        
+
         for (let i = 0; i < cameras.length; i += concurrencyLimit) {
             chunks.push(cameras.slice(i, i + concurrencyLimit));
         }
-        
-        for (const chunk of chunks) {
-            const chunkPromises = chunk.map(async (camera) => {
-                try {
-                    // Use first view for analysis (could be enhanced to analyze multiple views)
-                    const imageUrl = camera.views && camera.views.length > 0 ? camera.views[0].url : null;
-                    
-                    if (!imageUrl) {
-                        return this.getDefaultResult(camera.id, 'no_image_url');
-                    }
-                    
-                    // Find nearest weather station for temperature data
-                    const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
-                    
-                    const result = await this.analyzeImageForSnow(
-                        imageUrl, 
-                        camera.id.toString(),
-                        nearestStation
-                    );
-                    
-                    return {
-                        ...result,
-                        cameraName: camera.name,
-                        cameraLocation: { lat: camera.lat, lng: camera.lng },
-                        nearestStationDistance: nearestStation ? 
-                            Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null
-                    };
-                } catch (error) {
-                    console.error(`Error analyzing camera ${camera.id}:`, error.message);
-                    return this.getDefaultResult(camera.id.toString(), 'analysis_error');
-                }
-            });
-            
-            const chunkResults = await Promise.allSettled(chunkPromises);
-            const successfulResults = chunkResults
-                .filter(result => result.status === 'fulfilled')
-                .map(result => result.value);
-                
-            results.push(...successfulResults);
-        }
-        
+
+        // Process all chunks in parallel
+        const allChunkResults = await Promise.all(
+            chunks.map(chunk =>
+                Promise.allSettled(
+                    chunk.map(async (camera) => {
+                        try {
+                            // Use first view for analysis (could be enhanced to analyze multiple views)
+                            const imageUrl = camera.views && camera.views.length > 0 ? camera.views[0].url : null;
+
+                            if (!imageUrl) {
+                                return this.getDefaultResult(camera.id, 'no_image_url');
+                            }
+
+                            // Find nearest weather station for temperature data
+                            const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+
+                            const result = await this.analyzeImageForSnow(
+                                imageUrl,
+                                camera.id.toString(),
+                                nearestStation
+                            );
+
+                            return {
+                                ...result,
+                                cameraName: camera.name,
+                                cameraLocation: { lat: camera.lat, lng: camera.lng },
+                                nearestStationDistance: nearestStation ?
+                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null
+                            };
+                        } catch (error) {
+                            console.error(`Error analyzing camera ${camera.id}:`, error.message);
+                            return this.getDefaultResult(camera.id.toString(), 'analysis_error');
+                        }
+                    })
+                )
+            )
+        );
+
+        // Flatten and filter results
+        const results = allChunkResults
+            .flat()
+            .filter(result => result.status === 'fulfilled')
+            .map(result => result.value);
+
         return results;
     }
 
