@@ -21,21 +21,6 @@
     background: var(--usu-light-blue);
 }
 
-.mobile-menu-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9999;
-}
-
-.mobile-menu-overlay.active {
-    display: block;
-}
-
 /* Tablet styles */
 @media screen and (max-width: 1024px) {
     .container {
@@ -286,7 +271,6 @@
     /* Dutch John easter egg mobile positioning */
     .dutch-john-easter-egg {
         top: 60px !important;
-        left: 10px !important;
         right: 10px !important;
         max-width: calc(100vw - 20px) !important;
         left: auto !important;
