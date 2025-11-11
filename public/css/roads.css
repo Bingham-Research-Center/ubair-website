@@ -486,8 +486,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex: 1;
-    margin-left: 1rem;
+    margin-bottom: 1rem;
 }
 
 .current-road-name {
@@ -793,7 +792,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
         flex-direction: column;
         gap: 0.5rem;
         align-items: flex-start;
-        margin-left: 0.5rem;
     }
 
     .current-road-name {
@@ -1171,8 +1169,16 @@ body[data-page-type="roads"] .leaflet-drag-target {
         font-size: 10px;
     }
 
+    /* Position legend just above condition cards on mobile */
+    body[data-page-type="roads"] .map-container-fullscreen .leaflet-control.road-legend-collapsible {
+        bottom: 45px;
+        right: 10px;
+        top: auto;
+        left: auto;
+    }
+
     .conditions-overlay {
-        bottom: 15px;
+        bottom: 10px;
         left: 50%;
         transform: translateX(-50%);
         width: calc(100% - 30px);
@@ -1187,7 +1193,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     }
 
     .condition-card-compact {
-        padding: 4px 8px;
+        padding: 6px 10px;
         gap: 4px;
         min-width: 55px;
     }
@@ -1202,6 +1208,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
         font-size: 0.75rem;
     }
 
+    .card-data h5 {
+        font-size: 0.8rem;
+    }
 
     .summary-grid {
         grid-template-columns: 1fr 1fr;
@@ -1220,7 +1229,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     }
 
     .conditions-overlay {
-        bottom: 10px;
+        bottom: 8px;
         left: 50%;
         transform: translateX(-50%);
         width: calc(100% - 20px);
@@ -1237,7 +1246,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     }
 
     .condition-card-compact {
-        padding: 3px 6px;
+        padding: 5px 8px;
         gap: 3px;
         min-width: 50px;
     }
@@ -1250,6 +1259,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
     .card-data .value {
         font-size: 0.7rem;
+    }
+
+    .card-data h5 {
+        font-size: 0.75rem;
     }
 }
 
@@ -1458,7 +1471,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 1rem;
     margin-bottom: 0.75rem;
     background: white;
-    transition: all 0.2s ease;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .digital-sign-card:hover {
