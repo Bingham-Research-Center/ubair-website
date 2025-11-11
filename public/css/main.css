@@ -351,26 +351,30 @@
 .main-footer {
     position: fixed;
     bottom: 0;
-    right: 0;
+    left: 250px;
     width: calc(100% - 250px);
     background-color: var(--usu-blue);
     color: white;
     text-align: center;
     padding: 15px 20px;
+    min-height: 50px;
     z-index: 1000;
-    margin-left: 250px;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .footer-content p {
     margin: 0;
     font-size: 0.875rem;
     opacity: 0.9;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Header */
@@ -407,6 +411,7 @@
 .content {
     margin-left: 270px;
     padding: 2rem;
+    padding-bottom: 100px;
     width: calc(100vw - 270px);
     box-sizing: border-box;
     position: relative;
@@ -416,6 +421,7 @@
 main.content {
     margin-left: 270px;
     padding: 2rem;
+    padding-bottom: 100px;
     width: calc(100vw - 270px);
     min-height: calc(100vh - 120px);
     box-sizing: border-box;
@@ -773,68 +779,4 @@ main.content {
     transform: translateY(0);
 }
 
-/* Responsive Design - Mobile, Tablet, Laptop, Desktop */
-
-/* Tablet (768px - 1023px) - Sidebar collapses */
-@media (min-width: 768px) and (max-width: 1023px) {
-    .content {
-        margin-left: 0;
-        width: 100%;
-        padding: 1.5rem;
-    }
-
-    main.content {
-        margin-left: 0;
-    }
-
-    .sidebar_container {
-        position: fixed;
-        left: -270px;
-        transition: left 0.3s ease;
-        z-index: 1000;
-    }
-
-    .sidebar_container.active {
-        left: 0;
-    }
-}
-
-/* Mobile (< 768px) - Full width, stacked layout */
-@media (max-width: 767px) {
-    .content {
-        margin-left: 0;
-        width: 100%;
-        padding: 1rem;
-    }
-
-    main.content {
-        margin-left: 0;
-        padding: 1rem;
-    }
-
-    .sidebar_container {
-        position: fixed;
-        left: -270px;
-        transition: left 0.3s ease;
-        z-index: 1000;
-    }
-
-    .sidebar_container.active {
-        left: 0;
-    }
-
-    /* Stack controls vertically on mobile */
-    .controls-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Make action buttons stack */
-    .action-buttons {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .action-buttons button {
-        width: 100%;
-    }
-}
+/* Responsive Design - See mobile.css for comprehensive responsive styles */
