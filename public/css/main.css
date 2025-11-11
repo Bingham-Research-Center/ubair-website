@@ -51,13 +51,10 @@
 .site-logo {
     width: clamp(180px, 20vw, 300px);
     height: auto;
-    margin-left: clamp(1%, 5vw, 5%);
     flex-shrink: 0;
     border-radius: 8px;
-    /* Enhanced fade on edges - more aggressive transparency */
     -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
     mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
-    /* Add subtle shadow for depth */
     filter: drop-shadow(0 4px 12px rgba(0, 38, 58, 0.15));
     transition: all 0.3s ease;
 }
@@ -320,30 +317,22 @@
 }
 
 /* Disclaimer Styles */
-.overlay-container .disclaimer {
-    padding: 15px;
-    font-size: 0.75rem;
-    color: var(--usu-light-gray);
-    background-color: var(--usu-blue);
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-.outlook-content .disclaimer {
-    padding: 15px;
-    font-size: 0.75rem;
-    color: var(--usu-light-gray);
-    background-color: var(--usu-blue);
-    border-radius: 5px;
-    margin-top: 20px;
-}
-
+.overlay-container .disclaimer,
+.outlook-content .disclaimer,
 .post .disclaimer {
     padding: 15px;
     font-size: 0.75rem;
     color: var(--usu-light-gray);
     background-color: var(--usu-blue);
     border-radius: 5px;
+}
+
+.overlay-container .disclaimer {
+    margin-top: 10px;
+}
+
+.outlook-content .disclaimer,
+.post .disclaimer {
     margin-top: 20px;
 }
 
@@ -390,21 +379,9 @@
     z-index: 2;
 }
 
-/* Add subtle gradient overlays */
-.visualization-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 0%, rgba(0, 38, 58, 0.02) 50%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
 /* Content Layout */
-.content {
+.content,
+main.content {
     margin-left: 270px;
     padding: 2rem;
     width: calc(100vw - 270px);
@@ -414,11 +391,7 @@
 }
 
 main.content {
-    margin-left: 270px;
-    padding: 2rem;
-    width: calc(100vw - 270px);
     min-height: calc(100vh - 120px);
-    box-sizing: border-box;
 }
 
 /* Outlook Preview Styling */

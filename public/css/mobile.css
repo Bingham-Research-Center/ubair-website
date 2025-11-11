@@ -383,8 +383,9 @@
     }
 
     .site-logo {
+        display: block;
         margin: 0 auto;
-        /* Width handled by clamp() in main.css - naturally ~200-220px at this breakpoint */
+        align-self: center;
     }
 
     .headlines-dashboard {
@@ -564,8 +565,9 @@
     }
 
     .site-logo {
-        /* Width handled by clamp() in main.css - naturally ~180-200px at this breakpoint */
+        display: block;
         margin: 0 auto;
+        align-self: center;
     }
 
     .headlines-dashboard {
