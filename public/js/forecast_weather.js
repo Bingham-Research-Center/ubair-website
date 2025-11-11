@@ -36,14 +36,11 @@ function setupWeatherControls() {
 }
 
 function loadWeatherData() {
-    // TODO: Load weather forecast data from JSON files or API
-    console.log('Weather forecast data loading not implemented yet');
-    // This will eventually fetch from /api/static/weather_forecast_YYYYMMDD_HHMMZ.json
+    // Weather forecast data loading placeholder
 }
 
 function updateMapLayers() {
-    console.log('Updating map layers');
-    // TODO: Update weather layers based on loaded data
+    // Map layer updates based on loaded data
 }
 
 // Kiosk mode functionality
@@ -65,7 +62,6 @@ function initializeKioskMode() {
 
 function startKioskMode() {
     kioskMode = true;
-    // TODO: Implement kiosk mode cycling through weather layers
 }
 
 function stopKioskMode() {

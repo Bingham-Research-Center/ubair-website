@@ -298,6 +298,14 @@ body[data-page-type="forecast_air_quality"] h1::after {
     font-style: italic;
 }
 
+/* Section wrappers for full-width containers */
+.heatmap-section,
+.timeseries-section,
+.performance-section {
+    margin-bottom: 2rem;
+    width: 100%;
+}
+
 /* Heatmap Container */
 .heatmap-container {
     background: white;
@@ -655,6 +663,23 @@ body[data-page-type="forecast_air_quality"] h1::after {
     .performance-grid {
         grid-template-columns: 1fr;
     }
+
+    .llm-summaries-section {
+        max-width: 100%;
+        padding: 1.5rem;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .summary-tabs {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .tab-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
 }
 
 /* Animations */
@@ -702,7 +727,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
     margin-bottom: 2rem;
     box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
     border-left: 4px solid var(--air-primary);
-    max-width: 50%; /* Half page width */
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .summary-tabs {
@@ -735,6 +761,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .tab-content {
     position: relative;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
 }
 
 .summary-content {
@@ -743,6 +772,10 @@ body[data-page-type="forecast_air_quality"] h1::after {
     padding: 1.5rem;
     border-radius: 8px;
     line-height: 1.6;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
 }
 
 .summary-content.active {

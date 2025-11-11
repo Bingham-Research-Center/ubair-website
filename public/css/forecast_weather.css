@@ -619,6 +619,23 @@ body[data-page-type="forecast_weather"] h1::after {
         flex-wrap: wrap;
         gap: 1rem;
     }
+
+    .weather-summaries-section {
+        max-width: 100%;
+        padding: 1.5rem;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .weather-summaries-section .summary-tabs {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+    }
+
+    .weather-summaries-section .tab-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
 }
 
 @media (max-width: 480px) {
@@ -859,7 +876,8 @@ body[data-page-type="forecast_weather"] h1::after {
     margin-bottom: 2rem;
     box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
     border-left: 4px solid var(--weather-primary);
-    max-width: 50%;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .weather-summaries-section .summary-tabs {
@@ -887,4 +905,17 @@ body[data-page-type="forecast_weather"] h1::after {
 .weather-summaries-section .tab-button.active {
     background: var(--weather-primary);
     color: white;
+}
+
+.weather-summaries-section .tab-content {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+
+.weather-summaries-section .summary-content {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    max-width: 100%;
 }
