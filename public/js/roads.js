@@ -350,7 +350,7 @@ class RoadWeatherMap {
             const detection = segment.detectionData;
 
             // Get confidence level info (if available from API, otherwise fallback)
-            let confidenceBadge = '';
+            let confidenceBadge;
             if (detection.confidenceLevel) {
                 const level = detection.confidenceLevel;
                 confidenceBadge = `<span class="confidence-badge confidence-${level.badge}"
@@ -407,12 +407,12 @@ class RoadWeatherMap {
             updateConditionCardsWithLocation(locationData);
         });
 
-        roadLayer.on('mouseover', function(e) {
+        roadLayer.on('mouseover', function() {
             const hoverWeight = isCameraMonitored ? 10 : 8;
             this.setStyle({ weight: hoverWeight, opacity: 1 });
         });
 
-        roadLayer.on('mouseout', function(e) {
+        roadLayer.on('mouseout', function() {
             const normalWeight = isCameraMonitored ? 8 : 6;
             const normalOpacity = isCameraMonitored ? 0.9 : 0.8;
             this.setStyle({ weight: normalWeight, opacity: normalOpacity });
@@ -431,7 +431,6 @@ class RoadWeatherMap {
     }
 
     renderWeatherStation(station) {
-        const color = this.getConditionColor(station.condition.condition);
         const marker = L.marker([station.lat, station.lng], {
             icon: L.divIcon({
                 html: '🌡️',
@@ -488,7 +487,7 @@ class RoadWeatherMap {
         });
 
         // Add click handler for weather station marker
-        marker.on('click', (e) => {
+        marker.on('click', () => {
             const locationData = {
                 name: station.name,
                 roadTemp: station.surfaceTemp,
@@ -524,7 +523,6 @@ class RoadWeatherMap {
 
             // Determine ring color based on analysis
             let ringColor = '#808080'; // Default gray for no analysis
-            let ringOpacity = 0.3;
             let conditionText = 'No Analysis';
 
             if (detection) {
@@ -554,7 +552,6 @@ class RoadWeatherMap {
                             conditionText = 'Unknown';
                     }
                 }
-                ringOpacity = 0.7;
             }
 
             // Create camera marker with colored ring as part of the icon
@@ -1025,7 +1022,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Restore state if coming back from webcam viewer
             if (window.mapStateManager.shouldRestoreState()) {
-                console.log('Restoring map state from previous session');
                 window.mapStateManager.restoreMapState(roadWeatherMap.map);
             }
         }
@@ -1359,7 +1355,10 @@ RoadWeatherMap.prototype.decodePolyline = function(encoded) {
 RoadWeatherMap.prototype.loadTrafficAlerts = async function() {
         try {
             const response = await fetch('/api/alerts');
-            if (!response.ok) throw new Error('Failed to fetch alerts');
+            if (!response.ok) {
+                console.error('Failed to fetch alerts:', response.status);
+                return;
+            }
 
             const data = await response.json();
             if (data.success && data.alerts) {
@@ -1450,10 +1449,9 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
         // Create custom icon based on plow status
         let iconColor = '#10b981'; // Green for active
         let iconSize = 32;
-        let pulseAnimation = '';
+        let pulseAnimation;
 
         if (plow.status === 'active') {
-            iconColor = '#10b981'; // Green
             pulseAnimation = 'animation: pulse 2s infinite;';
         } else if (plow.status === 'recent') {
             iconColor = '#f59e0b'; // Yellow
@@ -2196,7 +2194,9 @@ class TrafficEventsManager {
             ]);
 
             if (!alertsResponse.ok) {
-                throw new Error(`Alerts HTTP ${alertsResponse.status}`);
+                console.error('Alerts HTTP error:', alertsResponse.status);
+                this.showAlertsError('Failed to load alerts');
+                return;
             }
 
             const alertsData = await alertsResponse.json();
@@ -2213,7 +2213,8 @@ class TrafficEventsManager {
             if (alertsData.success && alertsData.alerts) {
                 this.displayAlertsAndSigns(alertsData.alerts, digitalSigns);
             } else {
-                throw new Error('Invalid response format');
+                console.error('Invalid alerts response format');
+                this.showAlertsError('Invalid response format');
             }
         } catch (error) {
             console.error('Error loading alerts:', error);
@@ -2681,7 +2682,6 @@ function createRoadSlideContent(road, stations, events) {
 
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
-    const travelStatus = determineTravelStatus(stations, events);
 
     return `
         <div class="route-summary">
@@ -2771,7 +2771,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 }
 
 function displayRouteConditions(container, data) {
-    const { routeName, stations, events, cities } = data;
+    const { routeName, stations, events } = data;
 
     // Calculate metrics
     const avgTemp = stations.length > 0 ?
@@ -2902,7 +2902,7 @@ function initializeUnitsToggle() {
     // Add click handler
     unitsToggle.addEventListener('click', function() {
         // Toggle the units system
-        const isMetric = unitsSystem.toggle();
+        unitsSystem.toggle();
 
         // Update button label
         unitsLabel.textContent = unitsSystem.getSystemName();
@@ -3098,7 +3098,7 @@ async function smartRefreshAlerts() {
 function refreshStationPopups() {
     // Refresh any open weather station popups with new units
     if (window.roadMap && window.roadMap.stationMarkers) {
-        window.roadMap.stationMarkers.forEach((marker, stationId) => {
+        window.roadMap.stationMarkers.forEach((marker) => {
             if (marker.isPopupOpen()) {
                 marker.closePopup();
             }

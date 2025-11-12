@@ -48,7 +48,7 @@
                                 <i class="fas fa-road"></i>
                             </div>
                             <div class="card-data">
-                                <h5>Road Surface</h5>
+                                <h5>Roads</h5>
                                 <p class="value">--°F</p>
                             </div>
                         </div>
@@ -68,7 +68,7 @@
                                 <i class="fas fa-cloud-rain"></i>
                             </div>
                             <div class="card-data">
-                                <h5>Precipitation</h5>
+                                <h5>Precip</h5>
                                 <p class="value">--</p>
                             </div>
                         </div>
@@ -132,23 +132,21 @@
 
             <!-- Local Basin Roads -->
             <section class="route-section" id="basin-roads-section">
-                <h2>
-                    <i class="fas fa-map-signs"></i> Local Basin Roads
-                    <div class="road-carousel-header">
-                        <span class="current-road-name" id="current-road-name">Loading...</span>
-                        <div class="carousel-controls">
-                            <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <div class="carousel-indicators" id="carousel-indicators">
-                                <!-- Indicators will be dynamically added -->
-                            </div>
-                            <button class="carousel-btn next-btn" id="next-road" title="Next road">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
+                <h2><i class="fas fa-map-signs"></i> Local Basin Roads</h2>
+                <div class="road-carousel-header">
+                    <span class="current-road-name" id="current-road-name">Loading...</span>
+                    <div class="carousel-controls">
+                        <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="carousel-indicators" id="carousel-indicators">
+                            <!-- Indicators will be dynamically added -->
                         </div>
+                        <button class="carousel-btn next-btn" id="next-road" title="Next road">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
-                </h2>
+                </div>
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
