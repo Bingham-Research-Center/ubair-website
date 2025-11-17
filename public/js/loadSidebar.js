@@ -62,19 +62,10 @@ async function loadSidebar() {
         // Get current page disclaimer
         const pageDisclaimer = PAGE_DISCLAIMERS[currentPath];
 
-        // If there's a disclaimer for this page, show it
-        if (pageDisclaimer) {
-            const disclaimer = document.querySelector('.sidebar-disclaimer');
-            if (disclaimer) {
-                disclaimer.style.display = 'block';
-                disclaimer.querySelector('p').textContent = pageDisclaimer;
-            }
-        }
-
-        // Highlight current page in navigation
-        // const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
-        if (currentPageLink) {
-            currentPageLink.classList.add('active');
+        // Update disclaimer text if there's a page-specific one
+        const disclaimer = document.querySelector('.sidebar-disclaimer');
+        if (disclaimer && pageDisclaimer) {
+            disclaimer.querySelector('p').textContent = pageDisclaimer;
         }
 
         // Load mobile menu script after sidebar is loaded
