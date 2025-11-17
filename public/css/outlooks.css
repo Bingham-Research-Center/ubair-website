@@ -3,7 +3,11 @@
     line-height: 1.7;
     color: var(--usu-blue);
     font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
-    max-width: none;
+    max-width: 100%;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    box-sizing: border-box;
 }
 
 .markdown-content h1 {
@@ -322,6 +326,25 @@
     .markdown-content blockquote {
         margin: 1rem 0;
         padding: 1rem;
+    }
+
+    .outlooks-container {
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    #current-outlook {
+        margin-right: 0;
+        width: 100%;
+    }
+
+    #outlook-archive {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .archive-list {
+        max-height: 400px;
     }
 }
 

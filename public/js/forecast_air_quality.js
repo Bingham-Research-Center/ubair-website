@@ -1,5 +1,5 @@
 // public/js/forecast_air_quality.js
-import { loadAndRenderMarkdown, getMarkdownRenderer } from './markdownLoader.js';
+import { loadAndRenderMarkdown } from './markdownLoader.js';
 
 document.addEventListener('DOMContentLoaded', async function() {
     initializeTabs();
@@ -58,7 +58,6 @@ async function loadLLMSummaries() {
                 `;
             }
         } catch (error) {
-            console.error(`Error loading ${level} summary:`, error);
             contentElement.innerHTML = `
                 <div class="error-content">
                     <p>Unable to load ${level} summary. Please try refreshing the page.</p>
@@ -91,8 +90,7 @@ function initializeTooltips() {
 
     tooltipTriggers.forEach(trigger => {
         trigger.addEventListener('mouseenter', (e) => {
-            const text = e.target.getAttribute('data-tooltip');
-            tooltip.textContent = text;
+            tooltip.textContent = e.target.getAttribute('data-tooltip');
             tooltip.classList.add('show');
 
             // Position tooltip
@@ -125,78 +123,5 @@ function initializeTooltips() {
 }
 
 function initializeClyfar() {
-    // Initialize with real data from JSON files
-    loadAirQualityForecastData();
-}
-
-function updateForecastCards() {
-    // Generate realistic forecast values
-    const forecasts = {
-        today: {
-            level: ['Low', 'Moderate', 'Elevated'][Math.floor(Math.random() * 3)],
-            confidence: ['High', 'Medium', 'Low'][Math.floor(Math.random() * 3)]
-        },
-        tomorrow: {
-            level: ['Low', 'Moderate', 'Elevated'][Math.floor(Math.random() * 3)],
-            confidence: ['High', 'Medium', 'Low'][Math.floor(Math.random() * 3)]
-        },
-        week: {
-            trend: ['Stable', 'Increasing', 'Decreasing', 'Variable'][Math.floor(Math.random() * 4)],
-            confidence: 'Variable'
-        }
-    };
-
-    // Update UI
-    const todayLevel = document.querySelector('.summary-card.current .forecast-level');
-    const todayConf = document.querySelector('.summary-card.current .confidence');
-    const tomorrowLevel = document.querySelector('.summary-card.tomorrow .forecast-level');
-    const tomorrowConf = document.querySelector('.summary-card.tomorrow .confidence');
-    const weekTrend = document.querySelector('.summary-card.week .forecast-level');
-
-    if (todayLevel) todayLevel.textContent = forecasts.today.level;
-    if (todayConf) todayConf.textContent = `${forecasts.today.confidence} Confidence`;
-    if (tomorrowLevel) tomorrowLevel.textContent = forecasts.tomorrow.level;
-    if (tomorrowConf) tomorrowConf.textContent = `${forecasts.tomorrow.confidence} Confidence`;
-    if (weekTrend) weekTrend.textContent = forecasts.week.trend;
-}
-
-function generateHeatmapDemo() {
-    const heatmapPlaceholder = document.querySelector('.heatmap-overlay');
-    if (heatmapPlaceholder) {
-        // Remove overlay to show "heatmap"
-        heatmapPlaceholder.style.display = 'none';
-
-        // You could generate an actual heatmap visualization here
-        // For now, we'll use the placeholder image
-    }
-}
-
-function generateTimeSeriesDemo() {
-    const chartArea = document.querySelector('.chart-area');
-    if (chartArea) {
-        chartArea.innerHTML = `
-            <div class="forecast-chart">
-                <canvas id="forecast-chart" width="400" height="200"></canvas>
-                <p class="chart-caption">15-day ozone forecast scenarios</p>
-            </div>
-        `;
-        // You could use Chart.js or another library to draw actual charts
-    }
-}
-
-function updatePerformanceMetrics() {
-    // Generate realistic performance metrics
-    const metrics = {
-        accuracy: 82 + Math.floor(Math.random() * 10), // 82-91%
-        leadTime: 3 + Math.floor(Math.random() * 4), // 3-6 days
-        skillScore: (0.65 + Math.random() * 0.2).toFixed(2) // 0.65-0.85
-    };
-
-    const accuracyEl = document.querySelector('.metric-card:nth-child(1) .metric-value');
-    const leadTimeEl = document.querySelector('.metric-card:nth-child(2) .metric-value');
-    const skillScoreEl = document.querySelector('.metric-card:nth-child(3) .metric-value');
-
-    if (accuracyEl) accuracyEl.textContent = `${metrics.accuracy}%`;
-    if (leadTimeEl) leadTimeEl.textContent = `${metrics.leadTime} days`;
-    if (skillScoreEl) skillScoreEl.textContent = metrics.skillScore;
+    // Clyfar initialization
 }
