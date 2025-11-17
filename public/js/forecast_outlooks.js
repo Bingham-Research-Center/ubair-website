@@ -1,7 +1,6 @@
 // Enhanced forecast_outlooks.js with proper risk word highlighting
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof markdownit === 'undefined') {
-        console.error('markdown-it library not loaded');
         return;
     }
 
@@ -58,7 +57,17 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             const response = await fetch(`/api/static/outlooks/${filename}`);
-            if (!response.ok) throw new Error(`Failed to load outlook: ${response.status}`);
+            if (!response.ok) {
+                const target = summaryOnly ? outlookSummary : outlookContent;
+                if (target) {
+                    target.innerHTML = `
+                        <div class="error">
+                            <p>Failed to load outlook: ${response.status}</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
 
             const markdown = await response.text();
 
@@ -101,7 +110,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 makeCollapsible();
             }
         } catch (error) {
-            console.error("Error loading outlook:", error);
             const target = summaryOnly ? outlookSummary : outlookContent;
             if (target) {
                 target.innerHTML = `
@@ -230,13 +238,15 @@ document.addEventListener("DOMContentLoaded", function() {
             archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
 
             const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
+            if (!response.ok) {
+                archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${response.status}</p></div>`;
+                return;
+            }
 
             const outlooks = await response.json();
             populateArchiveList(outlooks);
 
         } catch (error) {
-            console.error("Error loading outlooks list:", error);
             archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${error.message}</p></div>`;
         }
     }
@@ -284,7 +294,11 @@ document.addEventListener("DOMContentLoaded", function() {
     async function loadLatestOutlook(summaryOnly = false) {
         try {
             const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
+            if (!response.ok) {
+                const target = summaryOnly ? outlookSummary : outlookContent;
+                if (target) target.innerHTML = 'Error loading latest outlook.';
+                return;
+            }
 
             const outlooks = await response.json();
             if (!outlooks || outlooks.length === 0) {
@@ -295,7 +309,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             loadOutlook(outlooks[0].filename, summaryOnly);
         } catch (error) {
-            console.error("Error loading latest outlook:", error);
             const target = summaryOnly ? outlookSummary : outlookContent;
             if (target) target.innerHTML = 'Error loading latest outlook.';
         }
