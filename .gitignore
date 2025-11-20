@@ -40,11 +40,15 @@ pids
 .cache/
 
 # Data incl. from API or test
-
+# Uploaded observation/metadata files (keep test fixtures)
+public/api/static/observations/map_obs_*.json
+public/api/static/metadata/map_obs_meta_*.json
+public/api/static/outlooks/outlook_*.md
+!public/api/static/observations/test_*.json
 
 # Auto-gen file listing
-outlooks_list.json
-filelist.json
+public/api/static/outlooks/outlooks_list.json
+public/api/static/filelist.json
 
 # Test artifacts
 test_observation.json

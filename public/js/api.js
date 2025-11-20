@@ -260,19 +260,26 @@ function mapStationName(stid, metadataName = null) {
         'KU69': 'Duchesne',       // Alternative Duchesne station
         'UINU1': 'Fort Duchesne',
         
-        // Basin Perimeter & Geographic Coverage
+        // Basin Coverage
         'UTMYT': 'Myton',
-        'COOPDINU1': 'Dinosaur NM',  // NEEDS DATA EXPORT
-        'COOPALMU1': 'Altamont',     // NEEDS DATA EXPORT
-        'UCC34': 'Bluebell',
-        'K40U': 'Manila',            // Dutch John area
-        'UTSTV': 'Starvation',
-        
+        'UBMYT': 'Myton',
+        'COOPDINU1': 'Dinosaur NM',
+        'COOPALMU1': 'Altamont',
+        // 'UCC34': 'Bluebell',      // Removed from homepage config
+        // 'K40U': 'Manila',         // Removed from homepage config
+        // 'UTSTV': 'Starvation',    // Removed from homepage config
+
+        // Additional Required Stations (primary IDs)
+        'UBRDW': 'Red Wash',
+        'UBORY': 'Ouray',
+        'UBDRF': 'Dry Fork',
+        'UBWHR': 'Whiterocks',
+
         // Mountain Passes
         'UTDAN': 'Daniels Summit',
         'UTICS': 'Indian Canyon',
         'UTSLD': 'Soldier Summit',
-        
+
         // Legacy/Alternative names (keep for compatibility)
         'BUNUT': 'Roosevelt',
         'CHPU1': 'Ouray',
