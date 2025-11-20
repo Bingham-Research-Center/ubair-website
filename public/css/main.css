@@ -608,7 +608,7 @@ main.content {
 .legend-dropdown {
     display: none;
     position: absolute;
-    top: 100%;
+    bottom: 100%;
     left: 50%;
     transform: translateX(-50%);
     background: white;
@@ -618,7 +618,7 @@ main.content {
     box-shadow: 0 4px 12px rgba(0, 38, 58, 0.15);
     z-index: 100;
     min-width: 200px;
-    margin-top: 0.3rem;
+    margin-bottom: 0.5rem;
 }
 
 .legend-dropdown.active {
