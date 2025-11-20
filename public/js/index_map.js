@@ -74,27 +74,36 @@ function startKioskMode() {
     if (markers.length === 0) return;
 
     // Generate random order for cycling (preserved until page leave)
+    // Always start with Castle Peak
     if (kioskOrder.length !== markers.length) {
-        kioskOrder = [...Array(markers.length).keys()]; // [0, 1, 2, ...]
-        // Fisher-Yates shuffle with time-based seed
+        // Find Castle Peak index
+        const castlePeakIndex = markers.findIndex(m => m.options.stationName === 'Castle Peak');
+
+        // Create array of all indices except Castle Peak
+        let otherIndices = [...Array(markers.length).keys()].filter(i => i !== castlePeakIndex);
+
+        // Shuffle the other indices
         const seed = Date.now() % 1000000;
         let rng = seed;
-        for (let i = kioskOrder.length - 1; i > 0; i--) {
+        for (let i = otherIndices.length - 1; i > 0; i--) {
             rng = (rng * 9301 + 49297) % 233280; // Simple LCG
             const j = Math.floor((rng / 233280) * (i + 1));
-            [kioskOrder[i], kioskOrder[j]] = [kioskOrder[j], kioskOrder[i]];
+            [otherIndices[i], otherIndices[j]] = [otherIndices[j], otherIndices[i]];
         }
+
+        // Put Castle Peak first, then shuffled others
+        kioskOrder = castlePeakIndex >= 0 ? [castlePeakIndex, ...otherIndices] : otherIndices;
     }
 
     currentStationIndex = 0;
-    
-    // Start immediately with first station
+
+    // Start immediately with Castle Peak
     map.closePopup();
     if (markers[kioskOrder[currentStationIndex]]) {
         markers[kioskOrder[currentStationIndex]].openPopup();
     }
     currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
-    
+
     // Then continue with interval
     kioskInterval = setInterval(() => {
         map.closePopup();
@@ -113,19 +122,16 @@ function stopKioskMode() {
 function toggleTemperature() {
     useCelsius = !useCelsius;
     const toggleEl = document.getElementById('temp-toggle');
-    const labelEl = document.getElementById('temp-label');
-    
+
     if (useCelsius) {
-        toggleEl.classList.add('celsius');
-        labelEl.textContent = '°C';
+        toggleEl.classList.remove('active');  // Off = Celsius
     } else {
-        toggleEl.classList.remove('celsius');
-        labelEl.textContent = '°F';
+        toggleEl.classList.add('active');     // On = Fahrenheit
     }
-    
+
     // Close any open popups
     map.closePopup();
-    
+
     // Update all marker popups
     markers.forEach(marker => {
         const stationName = marker.options.stationName;

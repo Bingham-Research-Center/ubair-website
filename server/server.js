@@ -118,24 +118,25 @@ app.get('/api/filelist/:dataType', async (req, res) => {
 
 app.get('/api/live-observations', async (req, res) => {
     try {
-        // Get the latest observation file from the static directory
+        // Get the latest observation file from the observations subdirectory
         const staticDir = path.join(__dirname, '../public/api/static');
+        const observationsDir = path.join(staticDir, 'observations');
         const fileListPath = path.join(staticDir, 'filelist.json');
-        
+
         if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
             return res.status(404).json({ error: 'No data files available' });
         }
-        
+
         const fileList = JSON.parse(await fs.readFile(fileListPath, 'utf8'));
         const obsFiles = fileList.filter(f => f.includes('map_obs_') && !f.includes('meta'));
-        
+
         if (obsFiles.length === 0) {
             return res.status(404).json({ error: 'No observation files found' });
         }
-        
+
         // Get the latest file (assuming filename contains timestamp)
         const latestFile = obsFiles.sort().reverse()[0];
-        const latestFilePath = path.join(staticDir, latestFile);
+        const latestFilePath = path.join(observationsDir, latestFile);
         
         const data = await fs.readFile(latestFilePath, 'utf8');
         const parsedData = JSON.parse(data);

@@ -163,11 +163,15 @@
                 <div class="map-container-dashboard">
                     <div id="map" class="dashboard-map" aria-label="Air Quality Monitoring Map"></div>
                     <div class="kiosk-switch-container">
-                        <label for="temp-toggle">Temperature:</label>
-                        <div class="temp-toggle" id="temp-toggle" title="Toggle between Celsius and Fahrenheit">
-                            <div class="temp-slider"></div>
-                            <span class="temp-label" id="temp-label">°F</span>
+                        <div class="kiosk-switch" id="kiosk-switch" title="Auto-cycle through station popups">
+                            <div class="switch-slider"></div>
                         </div>
+                        <label for="kiosk-switch" class="auto-cycle-label">Auto-cycle</label>
+                        <label for="temp-toggle">°C</label>
+                        <div class="kiosk-switch active" id="temp-toggle" title="Toggle between Celsius and Fahrenheit">
+                            <div class="switch-slider"></div>
+                        </div>
+                        <label for="temp-toggle">°F</label>
                     </div>
                 </div>
                 
