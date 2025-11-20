@@ -201,10 +201,15 @@ function processObservationData(rawData, metadata = {}) {
             const metadataName = metadata[stid]?.name;
             const stationName = mapStationName(stid, metadataName);
             if (stationName && data[variable] !== undefined) {
-                result[variable][stationName] = data[variable];
-                // Store timestamp for this station
+                // Only set if not already set (merge alt station IDs, don't overwrite)
+                if (!result[variable][stationName]) {
+                    result[variable][stationName] = data[variable];
+                }
+                // Store timestamp for this station (use most recent if multiple)
                 if (stationTimestamps[stid]) {
-                    timestamps[stationName] = stationTimestamps[stid];
+                    if (!timestamps[stationName] || stationTimestamps[stid] > timestamps[stationName]) {
+                        timestamps[stationName] = stationTimestamps[stid];
+                    }
                 }
             }
         });
