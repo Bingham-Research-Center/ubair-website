@@ -285,6 +285,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
 
 <script>
+    // Store outside click handler reference to enable proper cleanup
+    let legendOutsideClickHandler = null;
+
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize forecast tabs
         initForecastTabs();
@@ -330,17 +333,20 @@
                 toggle.setAttribute('aria-expanded', dropdown.classList.contains('active'));
             });
             
-            // Close dropdown when clicking outside (add once)
-            const handleOutsideClick = (e) => {
+            // Remove any existing listener before adding new one to prevent memory leaks
+            if (legendOutsideClickHandler) {
+                document.removeEventListener('click', legendOutsideClickHandler);
+            }
+            
+            // Create and store the handler for proper cleanup
+            legendOutsideClickHandler = (e) => {
                 if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
                     dropdown.classList.remove('active');
                     toggle.setAttribute('aria-expanded', 'false');
                 }
             };
             
-            // Remove any existing listener before adding new one to prevent memory leaks
-            document.removeEventListener('click', handleOutsideClick);
-            document.addEventListener('click', handleOutsideClick);
+            document.addEventListener('click', legendOutsideClickHandler);
         }
     }
 
