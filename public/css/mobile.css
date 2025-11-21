@@ -274,21 +274,10 @@
         min-height: 44px;
     }
 
-    .legend-dropdown {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        min-width: 280px;
-        max-width: 90vw;
-    }
-    
-    .legend-toggle {
-        width: 100%;
-        justify-content: center;
-        padding: 0.6rem;
-        font-size: 1rem;
-        min-height: 44px;
+    /* Legend is always visible on mobile, no special positioning needed */
+    .map-legend-compact {
+        margin-top: 0.75rem;
+        padding: 0.75rem;
     }
 
     .forecast-container-dashboard {
