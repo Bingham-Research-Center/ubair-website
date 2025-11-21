@@ -577,8 +577,37 @@ main.content {
     transform: translateY(-1px);
 }
 
-/* Compact Map Legend - Always Visible */
+/* Compact Map Legend - Starts Visible, Collapsible */
 .map-legend-compact {
+    margin-top: 0.75rem;
+    text-align: center;
+}
+
+.legend-toggle {
+    background: rgba(0, 38, 58, 0.1);
+    border: 1px solid rgba(0, 38, 58, 0.2);
+    color: var(--usu-blue);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 0 auto;
+    width: fit-content;
+}
+
+.legend-toggle:hover {
+    background: rgba(0, 38, 58, 0.15);
+    transform: translateY(-1px);
+}
+
+.legend-dropdown {
+    display: none;
     margin-top: 0.75rem;
     padding: 0.75rem;
     background: white;
@@ -587,7 +616,7 @@ main.content {
     box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
 }
 
-.legend-content {
+.legend-dropdown.active {
     display: block;
 }
 
