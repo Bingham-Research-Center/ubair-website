@@ -12,9 +12,9 @@ function initializeMobileMenu() {
     menuToggle.className = 'mobile-menu-toggle';
     menuToggle.innerHTML = '<i class="fas fa-arrow-right"></i>';
     
-    // Check if we're on the roads page
+    // Check if we're on the roads page - handle trailing slashes and query params
     const currentPath = window.location.pathname;
-    const isRoadsPage = currentPath === '/roads';
+    const isRoadsPage = currentPath === '/roads' || currentPath === '/roads/';
     
     // Set appropriate aria-label based on page
     const openLabel = isRoadsPage ? 'Tap to open menu' : 'Swipe right to open menu';
@@ -46,7 +46,6 @@ function initializeMobileMenu() {
     menuToggle.addEventListener('click', toggleMenu);
 
     // Swipe gesture support - disabled on /roads page to avoid conflicts with map interaction
-    // Only enable swipe gestures on pages without interactive maps
     if (!isRoadsPage) {
         let touchStartX = 0;
         let touchEndX = 0;
