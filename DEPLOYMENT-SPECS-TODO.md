@@ -3,6 +3,13 @@
 **IMPORTANT**: Verify these specs before deploying to production
 
 ## CHPC (notchpeak-shared-short)
+
+**System Info** (verified 2025-11-23):
+- OS: Rocky Linux 8.10 (RHEL 8 clone)
+- Support until: 2029-05-31
+- Python: Use conda (system Python is 3.6)
+- Package manager: dnf (not apt)
+
 **Need to verify:**
 - [ ] CPU/memory limits per job
 - [ ] Max walltime for shared-short partition
@@ -12,6 +19,7 @@
 - [ ] Herbie download performance (parallel vs sequential)
 - [ ] Optimal ncpus for Clyfar (currently set to 16 - is this efficient?)
 - [ ] Whether login node usage is actually a problem for our workload
+- [ ] GLIBC version compatibility (Rocky 8 uses 2.28)
 
 **Commands to check:**
 ```bash
