@@ -5,6 +5,9 @@
 #
 # All scripts source ~/.bashrc for environment variables
 # Logs: ~/logs/basinwx/
+#
+# NOTE: Only observations and Clyfar are currently implemented.
+# Other data types are planned for future releases.
 
 # Email notifications (set your email or use MAILTO="" to disable)
 MAILTO=""
@@ -12,17 +15,27 @@ MAILTO=""
 # Shell
 SHELL=/bin/bash
 
-# Observations - Every 10 minutes (HIGH PRIORITY)
-*/10 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_map_obs.py && python3 brc_tools/download/push_data.py observations >> ~/logs/basinwx/observations.log 2>&1
+# Observations - Every 10 minutes (PRODUCTION TESTED)
+# NOTE: get_map_obs.py uploads automatically - no separate push_data.py call needed
+*/10 * * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/get_map_obs.py >> ~/logs/basinwx/observations.log 2>&1
 
-# Metadata - Every 6 hours
-0 */6 * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_data.py metadata >> ~/logs/basinwx/metadata.log 2>&1
+# Clyfar Forecasts - Twice daily at 6am and 6pm Mountain Time (IN DEVELOPMENT)
+# Uncomment when upload integration is complete
+# 0 6,18 * * * source ~/.bashrc && cd ~/clyfar && ~/clyfar/venv/bin/python3 ~/clyfar/run_gefs_clyfar.py >> ~/logs/basinwx/clyfar.log 2>&1
 
-# Timeseries - Hourly
-0 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_timeseries.py && python3 brc_tools/download/push_data.py timeseries >> ~/logs/basinwx/timeseries.log 2>&1
+# =====================================================
+# FUTURE DATA TYPES - Not Yet Implemented
+# =====================================================
+# Remove these comments when scripts are created
 
-# Outlooks - Twice daily (6am and 6pm)
-0 6,18 * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_data.py outlooks >> ~/logs/basinwx/outlooks.log 2>&1
+# # Metadata - Every 6 hours
+# 0 */6 * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/push_data.py metadata >> ~/logs/basinwx/metadata.log 2>&1
 
-# Images - Every 30 minutes
-*/30 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_images.py && python3 brc_tools/download/push_data.py images >> ~/logs/basinwx/images.log 2>&1
+# # Timeseries - Hourly (script not yet created)
+# 0 * * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/get_timeseries.py >> ~/logs/basinwx/timeseries.log 2>&1
+
+# # Outlooks - Twice daily (manual workflow pending)
+# 0 6,18 * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/push_data.py outlooks >> ~/logs/basinwx/outlooks.log 2>&1
+
+# # Images - Every 30 minutes (script not yet created)
+# */30 * * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/get_images.py >> ~/logs/basinwx/images.log 2>&1

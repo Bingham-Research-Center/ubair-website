@@ -91,7 +91,7 @@ Website displays on map
 ### CHPC Team
 
 1. Install dependencies: `pip install -r requirements.txt`
-2. Set API key: `export BASINWX_API_KEY="your-key"`
+2. Set API key: `export DATA_UPLOAD_API_KEY="your-key"`
 3. Test connection: `python chpc_uploader.py --health-check`
 4. Set up cron job to run every 10 minutes
 5. Monitor logs: `tail -f /tmp/basinwx_upload.log`

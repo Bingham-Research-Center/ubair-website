@@ -1,13 +1,14 @@
-# BasinWx Data Pipeline - Observations Only (Testing)
-# ====================================================
-# Minimal configuration for initial testing
+# BasinWx Data Pipeline - Observations Only (Production)
+# ========================================================
+# Minimal configuration for initial deployment
 # Install: crontab -e, then paste these lines
 #
 # Start with this, verify it works for 24 hours,
-# then switch to crontab_full.txt
+# then add Clyfar when ready (see crontab_full.txt)
 
 MAILTO=""
 SHELL=/bin/bash
 
 # Observations - Every 10 minutes
-*/10 * * * * source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/get_map_obs.py && python3 brc_tools/download/push_data.py observations >> ~/logs/basinwx/observations.log 2>&1
+# NOTE: get_map_obs.py uploads automatically - no separate push_data.py call needed
+*/10 * * * * source ~/.bashrc && cd ~/brc-tools && ~/brc-tools/venv/bin/python3 ~/brc-tools/brc_tools/download/get_map_obs.py >> ~/logs/basinwx/observations.log 2>&1
