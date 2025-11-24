@@ -1,41 +1,5 @@
 // UnitsSystem class moved to /public/js/roads/UnitsSystem.js
-
-// Data cache for route conditions to avoid redundant API calls
-const routeDataCache = {
-    stations: null,
-    events: null,
-    lastUpdated: null,
-    isValid() {
-        return this.stations && this.events && this.lastUpdated &&
-               (Date.now() - this.lastUpdated) < 300000; // 5 minutes cache
-    },
-
-    async updateCache() {
-        try {
-            const [stationsResponse, eventsResponse] = await Promise.all([
-                fetch('/api/road-weather/stations'),
-                fetch('/api/traffic-events')
-            ]);
-
-            if (stationsResponse.ok && eventsResponse.ok) {
-                this.stations = await stationsResponse.json();
-                this.events = await eventsResponse.json();
-                this.lastUpdated = Date.now();
-                return { stations: this.stations, events: this.events };
-            }
-        } catch (error) {
-            console.error('Failed to update route data cache:', error);
-        }
-        return null;
-    },
-
-    async getData() {
-        if (!this.isValid()) {
-            await this.updateCache();
-        }
-        return { stations: this.stations, events: this.events };
-    }
-};
+// Data cache moved to /public/js/roads/DataCache.js
 
 // Road Weather Map with UDOT, NWS, and Open-Meteo integration
 class RoadWeatherMap {
