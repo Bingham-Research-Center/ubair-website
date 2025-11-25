@@ -793,3 +793,97 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .summary-content .markdown-content p {
     margin-bottom: 1rem;
 }
+/* Plotly Chart Containers */
+.plotly-chart {
+    min-height: 350px;
+    width: 100%;
+    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.plotly-chart .js-plotly-plot {
+    width: 100% !important;
+}
+
+/* Chart Loading State */
+.chart-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--welsh-slate);
+    padding: 2rem;
+}
+
+.chart-loading i {
+    color: var(--welsh-sea);
+}
+
+.chart-loading p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Chart Error State */
+.chart-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--welsh-red);
+    padding: 2rem;
+    text-align: center;
+}
+
+.chart-error i {
+    font-size: 2rem;
+}
+
+.chart-error p {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Chart No Data State */
+.chart-no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    color: var(--welsh-slate);
+    padding: 2rem;
+    text-align: center;
+}
+
+.chart-no-data i {
+    color: var(--welsh-gold);
+}
+
+.chart-no-data p {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.chart-no-data small {
+    font-size: 0.85rem;
+    opacity: 0.7;
+}
+
+/* Responsive chart adjustments */
+@media (max-width: 768px) {
+    .plotly-chart {
+        min-height: 280px;
+    }
+    
+    .heatmap-display {
+        grid-template-columns: 1fr;
+    }
+    
+    .heatmap-legend {
+        order: -1;
+        min-width: 100%;
+    }
+}
