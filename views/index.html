@@ -64,35 +64,35 @@
             </div>
 
             <div class="tab-content">
-                <!-- Warnings Tab -->
+                <!-- Warnings Tab - Launch Announcement -->
                 <div id="warnings-content" class="tab-panel active">
                     <div class="headline-items">
-                        <div class="headline-item good">
-                            <i class="fas fa-check-circle headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-rocket headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Air Quality</span>
-                                <span class="headline-value">Good</span>
+                                <span class="headline-label">Official Launch</span>
+                                <span class="headline-value">December 1, 2025</span>
                             </div>
                         </div>
-                        <div class="headline-item caution">
-                            <i class="fas fa-snowflake headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-flask headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Snow Risk</span>
-                                <span class="headline-value">Moderate (48h)</span>
+                                <span class="headline-label">Status</span>
+                                <span class="headline-value">Final Testing</span>
                             </div>
                         </div>
-                        <div class="headline-item good">
-                            <i class="fas fa-wind headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-map-marked-alt headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Wind</span>
-                                <span class="headline-value">Light</span>
+                                <span class="headline-label">Live Map</span>
+                                <span class="headline-value">Active Now</span>
                             </div>
                         </div>
-                        <div class="headline-item warning">
-                            <i class="fas fa-smog headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-envelope headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Ozone Forecast</span>
-                                <span class="headline-value">Elevated (Tomorrow)</span>
+                                <span class="headline-label">Questions?</span>
+                                <span class="headline-value">john.lawson@usu.edu</span>
                             </div>
                         </div>
                     </div>
@@ -408,17 +408,21 @@
         const weatherSummary = document.getElementById("weather-summary");
         if (!weatherSummary) return;
 
-        // Placeholder content - in future this would fetch from weather forecast API
+        // Launch announcement - AI weather summaries coming Dec 1
         weatherSummary.innerHTML = `
-            <div style="font-style: italic; color: var(--usu-accent); margin-bottom: 0.5rem;">
-                General Weather Summary (Placeholder)
-            </div>
-            <p><strong>Today:</strong> Partly cloudy with light winds. High around 45°F, low near 28°F.</p>
-            <p><strong>Tomorrow:</strong> Mostly sunny conditions expected. Temperatures rising to 52°F during the day.</p>
-            <p><strong>Weekend:</strong> Stable weather pattern continues with clear skies and moderate temperatures.</p>
-            <p><strong>Air Quality Impact:</strong> Light winds may contribute to pollutant accumulation in valleys during morning hours.</p>
-            <div style="font-size: 0.8rem; font-style: italic; color: var(--usu-accent); margin-top: 0.5rem;">
-                Note: This is placeholder content. Future implementation will pull from LLM-generated weather summaries.
+            <div style="text-align: center; padding: 0.5rem;">
+                <p style="font-size: 1.1rem; margin-bottom: 0.75rem;">
+                    <strong><i class="fas fa-robot"></i> AI Weather Summaries</strong>
+                </p>
+                <p style="margin-bottom: 0.5rem;">Coming December 1, 2025</p>
+                <p style="font-size: 0.9rem; color: var(--usu-accent);">
+                    Our AI-powered weather summaries are in final testing.
+                </p>
+                <p style="margin-top: 0.75rem; font-size: 0.85rem;">
+                    <a href="mailto:john.lawson@usu.edu" style="color: var(--usu-blue);">
+                        <i class="fas fa-envelope"></i> Questions? john.lawson@usu.edu
+                    </a>
+                </p>
             </div>
         `;
     }

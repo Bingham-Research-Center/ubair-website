@@ -217,6 +217,14 @@
     color: #ef4444;
 }
 
+.headline-item.info {
+    border-left-color: #3b82f6;
+}
+
+.headline-item.info .headline-icon {
+    color: #3b82f6;
+}
+
 .headline-icon {
     font-size: 1.6rem;
     color: #64748b;
