@@ -18,6 +18,9 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/forecast_air_quality.css">
+
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
 </head>
 <body data-page-type="forecast_air_quality">
     <!-- Colored Bar -->
@@ -119,11 +122,10 @@
                         </div>
                     </div>
                     <div class="heatmap-display">
-                        <div class="heatmap-placeholder">
-                            <img src="/public/images/clyfar_heatmap_placeholder.png" alt="Clyfar Ozone Probability Heatmap" class="heatmap-image">
-                            <div class="heatmap-overlay">
-                                <p>Interactive heatmap will be displayed here</p>
-                                <i class="fas fa-chart-bar fa-3x"></i>
+                        <div id="exceedance-heatmap" class="plotly-chart">
+                            <div class="chart-loading">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Loading forecast data...</p>
                             </div>
                         </div>
                         <div class="heatmap-legend">
@@ -160,25 +162,11 @@
                             <i class="fas fa-info-circle"></i>
                         </div>
                     </div>
-                    <div class="timeseries-display" id="scenario-chart">
-                        <div class="chart-placeholder">
-                            <div class="scenario-legend">
-                                <div class="scenario-item best-case">
-                                    <span class="scenario-line"></span>
-                                    <span>Best Case</span>
-                                </div>
-                                <div class="scenario-item average">
-                                    <span class="scenario-line"></span>
-                                    <span>Average</span>
-                                </div>
-                                <div class="scenario-item worst-case">
-                                    <span class="scenario-line"></span>
-                                    <span>Worst Case</span>
-                                </div>
-                            </div>
-                            <div class="chart-area">
-                                <i class="fas fa-chart-line fa-4x"></i>
-                                <p>Interactive time series chart will be displayed here</p>
+                    <div class="timeseries-display">
+                        <div id="scenario-chart" class="plotly-chart">
+                            <div class="chart-loading">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Loading scenario data...</p>
                             </div>
                         </div>
                     </div>

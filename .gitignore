@@ -1,4 +1,5 @@
 *.log
+logs/
 
 # Dependencies
 node_modules/
