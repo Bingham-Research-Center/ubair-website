@@ -274,13 +274,13 @@
         min-height: 44px;
     }
 
+    /* Legend dropdown stays inline on mobile, not as centered overlay */
     .legend-dropdown {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        min-width: 280px;
-        max-width: 90vw;
+        margin-top: 0.75rem;
+        padding: 0.75rem;
+        /* Ensure it doesn't overlay content when active */
+        position: relative;
+        max-width: 100%;
     }
     
     .legend-toggle {

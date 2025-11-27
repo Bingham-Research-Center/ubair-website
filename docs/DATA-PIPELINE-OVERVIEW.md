@@ -187,7 +187,7 @@ python chpc_uploader.py --health-check
 ## Security
 
 ### Authentication
-- **API Key:** Set in `BASINWX_API_KEY` environment variable
+- **API Key:** Set in `DATA_UPLOAD_API_KEY` environment variable
 - **Header:** Must be sent as `x-api-key: your-key-here`
 - **Generation:** Use `scripts/generate-api-key.js`
 
@@ -212,7 +212,7 @@ python chpc_uploader.py --health-check
 
 2. **Set environment variables:**
    ```bash
-   export BASINWX_API_KEY="your-key-here"
+   export DATA_UPLOAD_API_KEY="your-key-here"
    export BASINWX_API_URL="https://basinwx.com"
    ```
 
@@ -412,7 +412,7 @@ python chpc_uploader.py --health-check
 
 ### CHPC
 ```bash
-BASINWX_API_KEY         # API key for authentication
+DATA_UPLOAD_API_KEY     # API key for authentication
 BASINWX_API_URL         # Base URL (default: https://basinwx.com)
 SYNOPTIC_API_TOKEN      # Synoptic Weather API token
 ```

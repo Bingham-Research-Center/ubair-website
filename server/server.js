@@ -11,6 +11,7 @@ import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
+import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,12 +21,18 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 
+// Analytics middleware (tracks page visits anonymously)
+app.use(analyticsMiddleware);
+
 // Routes in dataUpload.js will be prefixed with ...
 app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
+
+// Analytics stats endpoint (protected by environment check)
+app.get('/api/analytics/stats', getAnalyticsStats);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
