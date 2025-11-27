@@ -173,9 +173,9 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
 
-    // Update file list for the base static directory
-    const staticDir = path.join(process.cwd(), 'public', 'api', 'static');
-    updateFileList(staticDir);
+    // Update file list for the observations directory (where obs files actually live)
+    const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
+    updateFileList(observationsDir);
 
     res.status(200).json({
       success: true,

@@ -128,7 +128,7 @@ app.get('/api/live-observations', async (req, res) => {
         // Get the latest observation file from the observations subdirectory
         const staticDir = path.join(__dirname, '../public/api/static');
         const observationsDir = path.join(staticDir, 'observations');
-        const fileListPath = path.join(staticDir, 'filelist.json');
+        const fileListPath = path.join(observationsDir, 'filelist.json');
 
         if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
             return res.status(404).json({ error: 'No data files available' });
