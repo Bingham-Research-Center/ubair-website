@@ -116,8 +116,8 @@ app.get('/api/filelist/:dataType', async (req, res) => {
         const { dataType } = req.params;
         const dataDir = path.join(__dirname, '../public/api/static', dataType);
         const files = await fs.readdir(dataDir);
-        const jsonFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md'));
-        res.json(jsonFiles);
+        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'));
+        res.json(allowedFiles);
     } catch (error) {
         res.status(500).json({ error: `Failed to list files for ${req.params.dataType}` });
     }
