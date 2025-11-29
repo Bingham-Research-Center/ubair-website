@@ -145,6 +145,89 @@ export CLYFAR_FIG_ROOT=$SCRATCH/clyfar_output/figures
 
 ---
 
+## Data Archival Strategy
+
+### Tier 1: Archive (Small, Valuable, Keep)
+
+| Data | Location | Why Keep |
+|------|----------|----------|
+| UB-cropped GEFS (parquet) | `~/basinwx-data/clyfar/*.parquet` | Hours of processing, small after crop |
+| Clyfar dailymax | `~/basinwx-data/clyfar/dailymax/` | Model output, basis for evaluation |
+| JSON exports | `~/basinwx-data/clyfar/basinwx_export/` | Tiny, website has backup |
+| Geography files | `~/gits/clyfar/data/geog/` | Masks, elevations - annoying to regenerate |
+| Run logs (recent) | `~/logs/basinwx/` | Debugging, provenance |
+
+### Tier 2: Regenerable (Delete, Re-download as Needed)
+
+| Data | Why Not Archive |
+|------|-----------------|
+| Raw GEFS grib2 files | Huge, available from NOAA/AWS forever |
+| Herbie cache | Re-downloads automatically |
+| Pre-crop NWP grids | Intermediate, regenerates from raw |
+| PNG figures | Regenerate from parquet in seconds |
+
+### Archive Destinations
+
+```bash
+# Option 1: CHPC group storage (if BRC has allocation)
+/uufs/chpc.utah.edu/common/home/bingham-group/clyfar-archive/
+
+# Option 2: CHPC Research Data Archive (long-term, request access)
+# https://www.chpc.utah.edu/resources/data_services.php
+
+# Option 3: Cloud via rclone (Box, Google Drive)
+rclone copy ~/basinwx-data/clyfar/dailymax remote:clyfar-archive/dailymax/
+```
+
+### Suggested Archive Structure
+
+```
+clyfar-archive/
+├── 2025-11/
+│   ├── dailymax/           # All parquet files
+│   ├── ub_gefs_subset/     # Cropped GEFS if saved separately
+│   └── run_logs/           # SLURM logs for provenance
+├── 2025-12/
+│   └── ...
+└── geography/
+    ├── masks/              # UB basin masks
+    └── elevations/         # Terrain data
+```
+
+### Archive Commands
+
+```bash
+# Create archive structure
+ARCHIVE=/uufs/chpc.utah.edu/common/home/bingham-group/clyfar-archive
+mkdir -p $ARCHIVE/$(date +%Y-%m)/{dailymax,run_logs}
+mkdir -p $ARCHIVE/geography
+
+# Archive dailymax parquet (keep these!)
+cp -r ~/basinwx-data/clyfar/dailymax/* $ARCHIVE/$(date +%Y-%m)/dailymax/
+
+# Archive geography (one-time)
+cp -r ~/gits/clyfar/data/geog/* $ARCHIVE/geography/
+
+# Archive recent logs
+cp ~/logs/basinwx/clyfar_*.out $ARCHIVE/$(date +%Y-%m)/run_logs/
+```
+
+### What Users Must Re-download Themselves
+
+If someone needs raw GEFS data for reprocessing:
+
+```python
+from herbie import Herbie
+H = Herbie("2025-01-15 00:00", model="gefs", product="atmos.5")
+H.download()  # Downloads from NOAA/AWS
+```
+
+Raw GEFS is always available from:
+- AWS: `s3://noaa-gefs-pds/`
+- NOAA: `https://nomads.ncep.noaa.gov/`
+
+---
+
 ## TODO Before Operations Begin
 
 - [ ] Run quota check, identify largest directories
