@@ -205,3 +205,28 @@
     font-size: 0.9em;
     padding-left: 1.5em;
 }
+
+/* Coming Soon folder styling */
+.nav-dropdown.coming-soon .dropdown-toggle {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.nav-dropdown.coming-soon .dropdown-toggle i:first-child {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-dropdown.coming-soon .dropdown-menu {
+    background: rgba(0, 38, 58, 0.95);
+}
+
+.nav-dropdown.coming-soon .dropdown-menu li a {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.nav-dropdown.coming-soon .dropdown-menu li a i {
+    opacity: 0.5;
+}
+
+.nav-dropdown.coming-soon .dropdown-menu li:hover a {
+    color: rgba(255, 255, 255, 0.9);
+}
