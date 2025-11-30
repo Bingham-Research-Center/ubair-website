@@ -121,6 +121,16 @@ df -h ~
 
 See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
 
+### Data Troubleshooting
+```bash
+# After crash: find/delete corrupted Herbie downloads (zero or tiny files)
+find ~/.cache/herbie -size 0 -name "*.grib2" -delete
+find ~/.cache/herbie -size -1k -name "*.grib2" -delete
+
+# Check files modified around crash time
+find ~/.cache/herbie -mmin -60 -name "*.grib2" -ls
+```
+
 ---
 
 ## Data Sources
