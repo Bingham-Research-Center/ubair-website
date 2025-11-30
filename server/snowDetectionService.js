@@ -552,6 +552,7 @@ class SnowDetectionService {
 
     /**
      * Analyze multiple cameras in batch with weather data
+     * Analyzes ALL views per camera and uses max(snowLevel) for worst-case detection
      * @param {Array} cameras - Array of camera objects with id and views
      * @param {Array} weatherStations - Array of weather station data
      * @returns {Promise<Array>} Array of detection results
@@ -571,28 +572,55 @@ class SnowDetectionService {
                 Promise.allSettled(
                     chunk.map(async (camera) => {
                         try {
-                            // Use first view for analysis (could be enhanced to analyze multiple views)
-                            const imageUrl = camera.views && camera.views.length > 0 ? camera.views[0].url : null;
-
-                            if (!imageUrl) {
+                            // Analyze ALL views for multi-view cameras
+                            const views = camera.views || [];
+                            if (views.length === 0) {
                                 return this.getDefaultResult(camera.id, 'no_image_url');
                             }
 
                             // Find nearest weather station for temperature data
                             const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
 
-                            const result = await this.analyzeImageForSnow(
-                                imageUrl,
-                                camera.id.toString(),
-                                nearestStation
+                            // Analyze each view
+                            const viewResults = await Promise.allSettled(
+                                views.map(async (view, index) => {
+                                    if (!view.url) return null;
+                                    const result = await this.analyzeImageForSnow(
+                                        view.url,
+                                        `${camera.id}_view${index}`,
+                                        nearestStation
+                                    );
+                                    return {
+                                        ...result,
+                                        viewIndex: index,
+                                        viewDescription: view.description || `View ${index + 1}`
+                                    };
+                                })
+                            );
+
+                            // Filter successful results
+                            const successfulResults = viewResults
+                                .filter(r => r.status === 'fulfilled' && r.value !== null)
+                                .map(r => r.value);
+
+                            if (successfulResults.length === 0) {
+                                return this.getDefaultResult(camera.id, 'analysis_error');
+                            }
+
+                            // Aggregate multi-view results using max(snowLevel) for worst-case
+                            const aggregatedResult = this.aggregateMultiViewResults(
+                                successfulResults, 
+                                camera.id.toString()
                             );
 
                             return {
-                                ...result,
+                                ...aggregatedResult,
                                 cameraName: camera.name,
                                 cameraLocation: { lat: camera.lat, lng: camera.lng },
                                 nearestStationDistance: nearestStation ?
-                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null
+                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null,
+                                viewsAnalyzed: successfulResults.length,
+                                totalViews: views.length
                             };
                         } catch (error) {
                             console.error(`Error analyzing camera ${camera.id}:`, error.message);
@@ -610,6 +638,104 @@ class SnowDetectionService {
             .map(result => result.value);
 
         return results;
+    }
+
+    /**
+     * Aggregate detection results from multiple camera views
+     * Uses max(snowLevel) for worst-case safety; detects mixed conditions
+     * @param {Array} viewResults - Array of per-view detection results
+     * @param {string} cameraId - Camera identifier
+     * @returns {Object} Aggregated detection result
+     */
+    aggregateMultiViewResults(viewResults, cameraId) {
+        if (viewResults.length === 0) {
+            return this.getDefaultResult(cameraId, 'no_views');
+        }
+
+        // Single view: return as-is
+        if (viewResults.length === 1) {
+            const result = viewResults[0];
+            return {
+                ...result,
+                cameraId,
+                multiViewAnalysis: false
+            };
+        }
+
+        // Snow level ranking for max() calculation
+        const snowLevelRank = { 'none': 0, 'light': 1, 'moderate': 2, 'heavy': 3, 'unknown': -1 };
+        const rankToLevel = ['none', 'light', 'moderate', 'heavy'];
+
+        // Find max snow level (worst case)
+        let maxRank = -1;
+        let maxResult = viewResults[0];
+        const snowLevels = [];
+
+        for (const result of viewResults) {
+            const rank = snowLevelRank[result.snowLevel] ?? -1;
+            snowLevels.push(result.snowLevel);
+            if (rank > maxRank) {
+                maxRank = rank;
+                maxResult = result;
+            }
+        }
+
+        // Calculate variance in detection to identify "mixed" conditions
+        const uniqueLevels = [...new Set(snowLevels.filter(l => l !== 'unknown'))];
+        const ranks = snowLevels.map(l => snowLevelRank[l] ?? 0).filter(r => r >= 0);
+        const avgRank = ranks.reduce((a, b) => a + b, 0) / ranks.length;
+        const variance = ranks.reduce((sum, r) => sum + Math.pow(r - avgRank, 2), 0) / ranks.length;
+
+        // Determine if conditions are "mixed" (high variance between views)
+        // Variance > 0.5 means significant disagreement between views
+        const isMixed = variance > 0.5 && uniqueLevels.length > 1;
+
+        // Aggregate confidence: weighted average with boost for agreement
+        const avgConfidence = viewResults.reduce((sum, r) => sum + r.confidence, 0) / viewResults.length;
+        const agreementBoost = uniqueLevels.length === 1 ? 0.1 : 0; // 10% boost if all views agree
+        const mixedPenalty = isMixed ? -0.1 : 0; // 10% penalty for high disagreement
+        const aggregatedConfidence = Math.max(0, Math.min(1, avgConfidence + agreementBoost + mixedPenalty));
+
+        // Get confidence level for display
+        const confidenceLevel = getConfidenceLevel(aggregatedConfidence);
+
+        // Determine final snow level
+        let finalSnowLevel = maxRank >= 0 ? rankToLevel[maxRank] : 'unknown';
+        let conditionNote = null;
+
+        if (isMixed) {
+            conditionNote = `Mixed conditions across ${viewResults.length} views`;
+        }
+
+        return {
+            cameraId,
+            timestamp: Date.now(),
+            snowDetected: maxRank > 0,
+            snowLevel: finalSnowLevel,
+            whitePixelPercentage: maxResult.whitePixelPercentage,
+            confidence: aggregatedConfidence,
+            confidenceLevel: {
+                name: confidenceLevel.name,
+                displayText: confidenceLevel.displayText,
+                badge: confidenceLevel.badge,
+                color: confidenceLevel.color,
+                icon: confidenceLevel.icon
+            },
+            multiViewAnalysis: true,
+            viewCount: viewResults.length,
+            isMixedConditions: isMixed,
+            conditionNote,
+            viewDetails: viewResults.map(r => ({
+                viewIndex: r.viewIndex,
+                viewDescription: r.viewDescription,
+                snowLevel: r.snowLevel,
+                confidence: r.confidence
+            })),
+            temperatureInfo: maxResult.temperatureInfo,
+            temperatureOverride: maxResult.temperatureOverride,
+            temperature: maxResult.temperature,
+            processingTime: viewResults.reduce((sum, r) => sum + (r.processingTime || 0), 0)
+        };
     }
 
     /**

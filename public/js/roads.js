@@ -526,8 +526,12 @@ class RoadWeatherMap {
             let ringColor = '#808080'; // Default gray for no analysis
             let ringOpacity = 0.3;
             let conditionText = 'No Analysis';
+            let isMixed = false;
 
             if (detection) {
+                // Check for mixed conditions across views
+                isMixed = detection.isMixedConditions === true;
+
                 if (detection.temperatureOverride) {
                     ringColor = '#28a745'; // Green for temperature override
                     conditionText = `Clear (${unitsSystem.formatTemperature(detection.temperature)})`;
@@ -535,19 +539,19 @@ class RoadWeatherMap {
                     switch (detection.snowLevel) {
                         case 'none':
                             ringColor = '#28a745'; // Green
-                            conditionText = 'Clear';
+                            conditionText = isMixed ? 'Mixed (Clear)' : 'Clear';
                             break;
                         case 'light':
                             ringColor = '#ffc107'; // Yellow
-                            conditionText = 'Light Snow';
+                            conditionText = isMixed ? 'Mixed (Light Snow)' : 'Light Snow';
                             break;
                         case 'moderate':
                             ringColor = '#fd7e14'; // Orange
-                            conditionText = 'Moderate Snow';
+                            conditionText = isMixed ? 'Mixed (Moderate)' : 'Moderate Snow';
                             break;
                         case 'heavy':
                             ringColor = '#dc3545'; // Red
-                            conditionText = 'Heavy Snow';
+                            conditionText = isMixed ? 'Mixed (Heavy)' : 'Heavy Snow';
                             break;
                         default:
                             ringColor = '#6c757d'; // Gray
@@ -558,12 +562,14 @@ class RoadWeatherMap {
             }
 
             // Create camera marker with colored ring as part of the icon
+            // Use dashed border for mixed conditions
+            const borderStyle = isMixed ? 'dashed' : 'solid';
             const marker = L.marker([camera.lat, camera.lng], {
                 icon: L.divIcon({
                     html: `<div style="
                         width: 30px;
                         height: 30px;
-                        border: 3px solid ${ringColor};
+                        border: 3px ${borderStyle} ${ringColor};
                         border-radius: 50%;
                         background: rgba(255,255,255,0.95);
                         display: flex;
@@ -601,11 +607,38 @@ class RoadWeatherMap {
             // Add analysis info to popup if available
             let analysisInfo = '';
             if (detection) {
+                // Build view details if multi-view analysis was performed
+                let viewDetailsHtml = '';
+                if (detection.multiViewAnalysis && detection.viewDetails && detection.viewDetails.length > 1) {
+                    viewDetailsHtml = `
+                        <details class="view-breakdown" style="margin-top: 8px; font-size: 0.9em;">
+                            <summary style="cursor: pointer; color: #666;">View breakdown (${detection.viewsAnalyzed}/${detection.totalViews || detection.viewCount} views)</summary>
+                            <ul style="margin: 4px 0 0 16px; padding: 0;">
+                                ${detection.viewDetails.map(v => `
+                                    <li style="color: ${this.getSnowLevelColor(v.snowLevel)};">
+                                        ${v.viewDescription}: ${v.snowLevel} (${Math.round(v.confidence * 100)}%)
+                                    </li>
+                                `).join('')}
+                            </ul>
+                        </details>`;
+                }
+
+                // Mixed conditions warning
+                let mixedWarning = '';
+                if (detection.isMixedConditions) {
+                    mixedWarning = `
+                        <div class="mixed-warning" style="background: #fff3cd; border: 1px solid #ffc107; padding: 6px; border-radius: 4px; margin-top: 8px; font-size: 0.85em;">
+                            ⚠️ ${detection.conditionNote || 'Mixed conditions detected across camera views'}
+                        </div>`;
+                }
+
                 analysisInfo = `
                     <div class="analysis-section">
                         <p><strong>Condition:</strong> ${conditionText}</p>
                         <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
                         ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
+                        ${mixedWarning}
+                        ${viewDetailsHtml}
                     </div>`;
             }
 
@@ -822,6 +855,21 @@ class RoadWeatherMap {
 
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
+    }
+
+    /**
+     * Get color for a snow level indicator
+     * @param {string} snowLevel - Snow level ('none', 'light', 'moderate', 'heavy')
+     * @returns {string} - CSS color code
+     */
+    getSnowLevelColor(snowLevel) {
+        switch (snowLevel) {
+            case 'none': return '#28a745'; // Green
+            case 'light': return '#ffc107'; // Yellow
+            case 'moderate': return '#fd7e14'; // Orange
+            case 'heavy': return '#dc3545'; // Red
+            default: return '#6c757d'; // Gray
+        }
     }
 
     determineStationCondition(station) {

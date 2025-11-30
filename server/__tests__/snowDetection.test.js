@@ -298,6 +298,113 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
             expect(history.length).toBe(10); // Should be capped at 10
         });
     });
+
+    describe('Multi-View Aggregation Tests', () => {
+        it('should return single view result when only one view analyzed', () => {
+            const singleViewResult = [{
+                viewIndex: 0,
+                viewDescription: 'View 1',
+                snowLevel: 'light',
+                confidence: 0.7,
+                whitePixelPercentage: 15,
+                temperatureInfo: null,
+                temperatureOverride: false,
+                processingTime: 100
+            }];
+
+            const result = service.aggregateMultiViewResults(singleViewResult, 'test-camera');
+
+            expect(result.multiViewAnalysis).toBe(false);
+            expect(result.snowLevel).toBe('light');
+            expect(result.confidence).toBe(0.7);
+        });
+
+        it('should use max(snowLevel) for worst-case detection', () => {
+            const multiViewResults = [
+                { viewIndex: 0, viewDescription: 'View 1', snowLevel: 'none', confidence: 0.9, whitePixelPercentage: 2, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'View 2', snowLevel: 'light', confidence: 0.7, whitePixelPercentage: 12, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 2, viewDescription: 'View 3', snowLevel: 'heavy', confidence: 0.8, whitePixelPercentage: 40, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(multiViewResults, 'test-camera');
+
+            expect(result.snowLevel).toBe('heavy'); // Worst-case
+            expect(result.multiViewAnalysis).toBe(true);
+            expect(result.viewCount).toBe(3);
+        });
+
+        it('should detect mixed conditions when views disagree significantly', () => {
+            const mixedViewResults = [
+                { viewIndex: 0, viewDescription: 'Clear road', snowLevel: 'none', confidence: 0.9, whitePixelPercentage: 2, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'Snowy shoulder', snowLevel: 'heavy', confidence: 0.8, whitePixelPercentage: 45, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(mixedViewResults, 'test-camera');
+
+            expect(result.isMixedConditions).toBe(true);
+            expect(result.conditionNote).toContain('Mixed');
+            expect(result.snowLevel).toBe('heavy'); // Still uses worst-case
+        });
+
+        it('should NOT detect mixed conditions when views agree', () => {
+            const agreeingViewResults = [
+                { viewIndex: 0, viewDescription: 'View 1', snowLevel: 'moderate', confidence: 0.75, whitePixelPercentage: 25, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'View 2', snowLevel: 'moderate', confidence: 0.8, whitePixelPercentage: 28, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(agreeingViewResults, 'test-camera');
+
+            expect(result.isMixedConditions).toBe(false);
+            expect(result.conditionNote).toBeNull();
+            expect(result.snowLevel).toBe('moderate');
+        });
+
+        it('should boost confidence when all views agree', () => {
+            const agreeingResults = [
+                { viewIndex: 0, viewDescription: 'View 1', snowLevel: 'light', confidence: 0.7, whitePixelPercentage: 12, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'View 2', snowLevel: 'light', confidence: 0.7, whitePixelPercentage: 14, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(agreeingResults, 'test-camera');
+
+            // Average is 0.7, should get +10% boost for agreement
+            expect(result.confidence).toBeGreaterThan(0.7);
+            expect(result.confidence).toBeLessThanOrEqual(0.8);
+        });
+
+        it('should penalize confidence when conditions are mixed', () => {
+            const mixedResults = [
+                { viewIndex: 0, viewDescription: 'View 1', snowLevel: 'none', confidence: 0.9, whitePixelPercentage: 2, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'View 2', snowLevel: 'heavy', confidence: 0.8, whitePixelPercentage: 45, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(mixedResults, 'test-camera');
+
+            // Average is 0.85, should get -10% penalty for mixed conditions
+            expect(result.confidence).toBeLessThan(0.85);
+            expect(result.isMixedConditions).toBe(true);
+        });
+
+        it('should include view details in result', () => {
+            const multiViewResults = [
+                { viewIndex: 0, viewDescription: 'East View', snowLevel: 'none', confidence: 0.9, whitePixelPercentage: 2, temperatureInfo: null, processingTime: 100 },
+                { viewIndex: 1, viewDescription: 'West View', snowLevel: 'light', confidence: 0.7, whitePixelPercentage: 12, temperatureInfo: null, processingTime: 100 }
+            ];
+
+            const result = service.aggregateMultiViewResults(multiViewResults, 'test-camera');
+
+            expect(result.viewDetails).toHaveLength(2);
+            expect(result.viewDetails[0].viewDescription).toBe('East View');
+            expect(result.viewDetails[1].viewDescription).toBe('West View');
+        });
+
+        it('should handle empty view results gracefully', () => {
+            const result = service.aggregateMultiViewResults([], 'test-camera');
+
+            expect(result.error).toBe('no_views');
+            expect(result.snowLevel).toBe('unknown');
+        });
+    });
 });
 
 /**
