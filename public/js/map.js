@@ -1,5 +1,6 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
+import { stations as configStations } from './config.js';
 
 // Replicate mapStationName to ensure we use the same mapping as api.js
 function mapStationName(stid, metadataName) {
@@ -30,7 +31,7 @@ function mapStationName(stid, metadataName) {
 }
 
 // Initialize the map centered on Uintah Basin
-const map = L.map('map').setView([40.3033, -109.7], 9);
+const map = L.map('map').setView([40.3033, -109.7], 9.5);
 
 // Add OpenStreetMap tile layer
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -247,7 +248,16 @@ async function updateMap() {
         if (variable === '_timestamps' || variable === '_units') continue;
         measurements[variable] = stationValues[stationName] ?? null;
       }
-      console.log('DEBUG: Station', stid, '(', stationName, ') measurements:', measurements);
+
+      // Check if this is a road station (from config.js)
+      const configStation = configStations[stationName];
+      const isRoadStation = configStation?.type === 'road';
+      const hasAQData = measurements['Ozone'] != null || measurements['PM2.5'] != null;
+
+      // Skip road stations without AQ data
+      if (isRoadStation && !hasAQData) {
+        continue;
+      }
 
       const marker = createStationMarker(stationName, stationInfo, measurements, units);
       if (marker) {
@@ -265,16 +275,30 @@ async function updateMap() {
 // Helper function to create station markers (if not already defined)
 function createStationMarker(stationName, stationInfo, measurements, units = {}) {
     try {
-        // Create marker with appropriate color using mapUtils function
+        const hasOzone = measurements && measurements['Ozone'] != null;
         const color = getMarkerColor(measurements);
+        let marker;
 
-        const marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
-            color: '#fff',
-            weight: 2,
-            fillColor: color,
-            fillOpacity: 0.8,
-            radius: 12
-        });
+        if (hasOzone) {
+            // Circle marker for AQ stations with ozone data
+            marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
+                color: '#fff',
+                weight: 2,
+                fillColor: color,
+                fillOpacity: 0.8,
+                radius: 12
+            });
+        } else {
+            // Diamond marker for weather-only stations
+            marker = L.marker([stationInfo.lat, stationInfo.lng], {
+                icon: L.divIcon({
+                    className: 'weather-only-marker',
+                    html: '<div class="weather-diamond"></div>',
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                })
+            });
+        }
 
         // Create popup content with dynamic units
         const popupContent = createPopupContent(stationName, measurements, units);
