@@ -123,12 +123,15 @@ See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
 
 ### Data Troubleshooting
 ```bash
-# After crash: find/delete corrupted Herbie downloads (zero or tiny files)
-find ~/.cache/herbie -size 0 -name "*.grib2" -delete
-find ~/.cache/herbie -size -1k -name "*.grib2" -delete
+# Clyfar's Herbie cache (not default ~/.cache/herbie)
+CACHE=~/gits/clyfar/data/herbie_cache
 
-# Check files modified around crash time
-find ~/.cache/herbie -mmin -60 -name "*.grib2" -ls
+# After crash: find/delete corrupted downloads (zero or tiny files)
+find $CACHE -size 0 -name "*.grib2" -delete
+find $CACHE -size -1k -name "*.grib2" -delete
+
+# Nuclear option: clear today's cache and re-run
+rm -rf $CACHE/gefs/$(date +%Y%m%d)/
 ```
 
 ---
