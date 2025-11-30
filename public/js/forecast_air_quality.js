@@ -127,27 +127,83 @@ function initializeTooltips() {
     });
 }
 
+// Store heatmaps globally for dropdown switching
+let dailymaxHeatmaps = [];
+
 async function initializeClyfar() {
     // Static PNG mode for Dec 2025 launch
-    // Fetch image file list and display static PNGs
     try {
         const imageFiles = await fetchImageList();
 
-        // Find latest heatmap and meteogram PNGs
-        const heatmapFile = findLatestImage(imageFiles, 'heatmap');
-        const meteogramFile = findLatestImage(imageFiles, 'meteogram');
+        // Find dailymax heatmaps (filter out poss_ozone)
+        dailymaxHeatmaps = findDailymaxHeatmaps(imageFiles);
 
-        // Render static images
-        renderStaticImage('exceedance-heatmap', heatmapFile, 'Ozone Exceedance Heatmap');
+        if (dailymaxHeatmaps.length > 0) {
+            // Create member dropdown
+            createMemberDropdown(dailymaxHeatmaps);
+            // Show first member by default
+            renderStaticImage('exceedance-heatmap', dailymaxHeatmaps[0], 'Daily Max Ozone Heatmap');
+        } else {
+            showNoDataMessage();
+        }
+
+        // Find meteogram
+        const meteogramFile = findLatestImage(imageFiles, 'meteogram');
         renderStaticImage('scenario-chart', meteogramFile, 'Ozone Forecast Scenarios');
 
-        // Update summary cards with placeholder values
         updateSummaryCardsStatic();
 
     } catch (error) {
         console.error('Error initializing Clyfar:', error);
         showNoDataMessage();
     }
+}
+
+function createMemberDropdown(heatmaps) {
+    const container = document.getElementById('exceedance-heatmap');
+    if (!container) return;
+
+    // Extract member numbers from filenames (clyfar000 -> 1, clyfar030 -> 31)
+    const members = heatmaps.map(f => {
+        const match = f.match(/clyfar(\d{3})/);
+        return match ? parseInt(match[1], 10) + 1 : null;
+    }).filter(n => n !== null);
+
+    if (members.length <= 1) return;
+
+    // Create dropdown
+    const dropdown = document.createElement('select');
+    dropdown.id = 'member-selector';
+    dropdown.className = 'member-dropdown';
+
+    members.forEach((num, idx) => {
+        const option = document.createElement('option');
+        option.value = idx;
+        option.textContent = `Member ${num}`;
+        dropdown.appendChild(option);
+    });
+
+    dropdown.addEventListener('change', (e) => {
+        const idx = parseInt(e.target.value, 10);
+        renderStaticImage('heatmap-image-container', dailymaxHeatmaps[idx], 'Daily Max Ozone Heatmap');
+    });
+
+    // Insert dropdown before the heatmap
+    const wrapper = document.createElement('div');
+    wrapper.className = 'heatmap-with-dropdown';
+    wrapper.innerHTML = `
+        <div class="dropdown-row">
+            <label for="member-selector">Ensemble Member:</label>
+        </div>
+        <div id="heatmap-image-container"></div>
+    `;
+    wrapper.querySelector('.dropdown-row').appendChild(dropdown);
+
+    container.innerHTML = '';
+    container.appendChild(wrapper);
+
+    // Render first image
+    renderStaticImage('heatmap-image-container', heatmaps[0], 'Daily Max Ozone Heatmap');
 }
 
 async function fetchImageList() {
@@ -160,6 +216,17 @@ async function fetchImageList() {
     } catch {
         return [];
     }
+}
+
+function findDailymaxHeatmaps(files) {
+    // Filter for dailymax heatmaps only (not poss_ozone)
+    const matches = files.filter(f =>
+        f.includes('dailymax') && f.includes('heatmap') && f.endsWith('.png')
+    );
+    if (matches.length === 0) return [];
+    // Sort by filename
+    matches.sort();
+    return matches;
 }
 
 function findLatestImage(files, pattern) {
