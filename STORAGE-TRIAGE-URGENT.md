@@ -240,6 +240,64 @@ Raw GEFS is always available from:
 
 ---
 
+## Storage Monitoring & Alerts
+
+### Known GEFS Cache Locations (Check All)
+
+Stray GEFS data can accumulate in multiple places from testing/old scripts:
+
+```bash
+# Scan for all potential GEFS caches
+du -sh ~/data/gefs* 2>/dev/null
+du -sh ~/gits/clyfar/data/herbie_cache 2>/dev/null
+du -sh ~/.cache/herbie 2>/dev/null
+du -sh ~/basinwx-data/*/gefs* 2>/dev/null
+du -sh /scratch/general/vast/$USER/*gefs* 2>/dev/null
+
+# Find any .grib2 files (raw GEFS)
+find ~ -name "*.grib2" -type f 2>/dev/null | head -20
+find ~ -name "*.grb2" -type f 2>/dev/null | head -20
+```
+
+**Issue found 29 Nov 2025:** `~/data/gefs...` contained ~2TB of old training data - deleted.
+
+### Quota Monitoring Script
+
+Add to crontab for daily alerts:
+
+```bash
+# Check quota daily at 6am, email if >80% full
+0 6 * * * /uufs/chpc.utah.edu/common/home/u0737349/scripts/check_quota.sh
+```
+
+Create `~/scripts/check_quota.sh`:
+```bash
+#!/bin/bash
+USAGE=$(df -h ~ | awk 'NR==2 {gsub(/%/,""); print $5}')
+if [ "$USAGE" -gt 80 ]; then
+    echo "WARNING: Home directory at ${USAGE}% capacity" | mail -s "CHPC Quota Alert" your@email.edu
+fi
+```
+
+### What Gets Saved Where (Clyfar Pipeline)
+
+| Data | Location | Size | Keep? |
+|------|----------|------|-------|
+| Raw GEFS grib2 | `herbie_cache/` or `~/data/gefs*/` | **HUGE** | NO - delete |
+| UB-cropped processed | `~/basinwx-data/clyfar/dailymax/` | ~20MB/run | YES |
+| PNG figures | `~/basinwx-data/clyfar/figures/` | ~50MB/run | Regenerable |
+| JSON exports | `~/basinwx-data/clyfar/basinwx_export/` | ~5MB/run | On website |
+| Geography masks | `~/gits/clyfar/data/geog/` | ~10MB | YES (one-time) |
+
+### Edge Cases to Watch
+
+1. **Old test scripts** may hardcode paths like `~/data/` - grep for these
+2. **Herbie default cache** at `~/.cache/herbie` if env var not set
+3. **Conda pkgs cache** at `~/software/pkg/miniforge3/pkgs/` - run `conda clean --all` monthly
+4. **Jupyter checkpoints** - `.ipynb_checkpoints/` scattered around
+
+---
+
 ## Automated Cleanup Cron (Future)
 
 Add to crontab after migration:
