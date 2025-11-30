@@ -82,6 +82,47 @@ We welcome contributions; guidelines will come soon for:
 - Bug reporting and/or troubleshooting
 - Working with GitHub CoPilot effectively
 
+## Cool Commands (CHPC / Ops)
+
+A collection of useful commands for monitoring and debugging. **PRs welcome** to add your own!
+
+### Job Monitoring
+```bash
+# Watch all recent SLURM jobs (live updating)
+watch -n 5 "sacct --starttime=now-24hours --format=JobID,JobName,State,Start,Elapsed | sort -k4 -r"
+
+# Tail the newest Clyfar log automatically
+tail -f $(ls -t ~/logs/basinwx/clyfar_*.out | head -1)
+
+# Check resource usage after job completes
+sacct -j JOBID --format=JobID,JobName,MaxRSS,MaxVMSize,CPUTime,Elapsed,State,ExitCode
+```
+
+### Quick Health Checks
+```bash
+# Are observations flowing?
+curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
+
+# How many forecast files?
+curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
+
+# Akamai server logs
+ssh akamai "pm2 logs --lines 50"
+```
+
+### Storage Triage
+```bash
+# Find GEFS cache hogs
+find ~ -name "*.grib2" -type f 2>/dev/null | head -20
+
+# Quick quota check
+df -h ~
+```
+
+See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
+
+---
+
 ## Data Sources
 
 - **Synoptic Data**: Real-time meteorological observations compiling multiple sources (e.g., EPA, DAQ, Union Pacific, etc)
