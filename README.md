@@ -121,6 +121,21 @@ df -h ~
 
 See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
 
+### Git Hooks
+
+Git hooks are scripts that run automatically on certain git events. Useful for reminders and automation.
+
+**Post-merge hook** (reminds to npm install after pull):
+```bash
+cat > .git/hooks/post-merge << 'EOF'
+#!/bin/bash
+if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -q "package.json"; then
+    echo "⚠️  package.json changed - run: npm install"
+fi
+EOF
+chmod +x .git/hooks/post-merge
+```
+
 ### Data Troubleshooting
 ```bash
 # Clyfar's Herbie cache (not default ~/.cache/herbie)
