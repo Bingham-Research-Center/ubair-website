@@ -1,8 +1,9 @@
 # AI Agent Quick Reference - ubair-website
 
-**Current Task:** Clyfar v0.9.5 integration - production ready
-**Status:** Phase 1 pending (post-compact resume)
-**Session Date:** 2025-11-23
+**Current Task:** Dec 1 launch prep - CHPC/Akamai sync verification
+**Status:** Code deployed to ops, awaiting CHPC cron verification
+**Last Session:** 2025-11-27
+**Branch:** `integration-clyfar-v0.9.5`
 
 ---
 
@@ -10,17 +11,17 @@
 
 **Resume after compact:**
 ```
-Read: COMPACT-RESUME-POINT.md (full context)
-Read: SESSION-SUMMARY-2025-11-23.md (what's done)
-Execute: Phase 1 of approved plan
+Read: SESSION-27NOV2025.md (latest session - MOST IMPORTANT)
+Read: CRON-SETUP-27NOV2025.md (CHPC crontab setup)
+Verify: CHPC cron running, data flowing to basinwx.com
 ```
 
 **Key Documentation:**
-1. `COMPACT-RESUME-POINT.md` - Resume point and context
-2. `SESSION-SUMMARY-2025-11-23.md` - Session accomplishments
+1. `SESSION-27NOV2025.md` - Latest session summary (27 Nov)
+2. `CRON-SETUP-27NOV2025.md` - CHPC crontab and paths
 3. `CHPC-IMPLEMENTATION.md` - Deployment master guide
-4. `PYTHON-PACKAGING-DEPLOYMENT.md` - Packaging education
-5. `POST-COMPACT-PERFORMANCE-TIPS.md` - Token efficiency
+4. `SESSION-SUMMARY-2025-11-23.md` - Earlier session
+5. `COMPACT-RESUME-POINT.md` - Original context
 
 ---
 
@@ -38,15 +39,20 @@ Execute: Phase 1 of approved plan
 3. **clyfar** - Ozone prediction model
 4. **preprint-clyfar-v0p9** - LaTeX tech report (4th repo!)
 
-### What's Complete
-- ✅ brc-tools packaging (editable install in clyfar)
-- ✅ Environment setup (.env files, conda)
-- ✅ Export module skeleton (needs rewrite)
-- ✅ Comprehensive plan approved
+### What's Complete (27 Nov Session)
+- ✅ Homepage launch message (Dec 1 announcement)
+- ✅ Coming Soon overlays on all unfinished pages
+- ✅ Server filelist.json path bug fixed
+- ✅ UBAIR ozone stations added to brc-tools
+- ✅ Clyfar script paths corrected
+- ✅ Code merged to dev and ops branches
+- ✅ CHPC crontab documented
 
 ### What's Next
-- ⏳ Phase 1: Tech report review (contradictions)
-- ⏳ Phase 2-7: See COMPACT-RESUME-POINT.md
+- ⏳ Verify CHPC cron is running (check ~/logs/obs.log)
+- ⏳ Verify data appearing on basinwx.com
+- ⏳ Test Clyfar manual run on CHPC
+- ⏳ Upload outlook markdown via API
 
 ---
 

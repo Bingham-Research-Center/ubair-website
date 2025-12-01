@@ -900,3 +900,71 @@ body[data-page-type="forecast_air_quality"] h1::after {
         min-width: 100%;
     }
 }
+
+/* Member dropdown for heatmaps */
+.heatmap-with-dropdown {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.dropdown-row {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.dropdown-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.dropdown-row label {
+    font-weight: 500;
+    color: var(--air-primary);
+}
+
+.member-dropdown {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--air-secondary);
+    border-radius: 4px;
+    background: white;
+    font-size: 1rem;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.member-dropdown:hover {
+    border-color: var(--air-primary);
+}
+
+.member-dropdown:focus {
+    outline: 2px solid var(--air-secondary);
+    outline-offset: 2px;
+}
+
+#heatmap-image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Forecast level color classes for summary cards */
+.forecast-level.level-background {
+    color: #22c55e; /* Green */
+}
+
+.forecast-level.level-moderate {
+    color: #eab308; /* Yellow */
+}
+
+.forecast-level.level-elevated {
+    color: #f97316; /* Orange */
+}
+
+.forecast-level.level-extreme {
+    color: #ef4444; /* Red */
+}

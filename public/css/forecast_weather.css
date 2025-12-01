@@ -919,3 +919,139 @@ body[data-page-type="forecast_weather"] h1::after {
     word-break: break-word;
     max-width: 100%;
 }
+
+/* ============================================
+   GEFS METEOGRAM SECTION
+   ============================================ */
+
+.meteogram-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    border: 1px solid rgba(47, 79, 79, 0.1);
+}
+
+.meteogram-section .section-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.meteogram-section .section-header h2 {
+    color: var(--weather-primary);
+    margin: 0;
+}
+
+.meteogram-controls {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.meteogram-controls .control-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.meteogram-controls label {
+    font-weight: 500;
+    color: var(--weather-primary);
+}
+
+.meteogram-controls .control-select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--weather-secondary);
+    border-radius: 4px;
+    background: white;
+    font-size: 1rem;
+    cursor: pointer;
+    min-width: 150px;
+}
+
+.meteogram-controls .control-select:hover {
+    border-color: var(--weather-primary);
+}
+
+.meteogram-controls .control-select:focus {
+    outline: 2px solid var(--weather-secondary);
+    outline-offset: 2px;
+}
+
+.meteogram-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.meteogram-card {
+    background: var(--weather-background);
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid rgba(47, 79, 79, 0.1);
+}
+
+.meteogram-card h4 {
+    color: var(--weather-primary);
+    margin: 0 0 1rem 0;
+    font-size: 1rem;
+    text-align: center;
+}
+
+.meteogram-image {
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meteogram-image .meteogram-img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.meteogram-image .chart-loading,
+.meteogram-image .chart-no-data,
+.meteogram-image .chart-error {
+    text-align: center;
+    color: var(--cloud-gray);
+    padding: 2rem;
+}
+
+.meteogram-image .chart-loading i,
+.meteogram-image .chart-no-data i,
+.meteogram-image .chart-error i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.meteogram-image .chart-error {
+    color: #dc2626;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .meteogram-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .meteogram-controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .meteogram-controls .control-group {
+        width: 100%;
+    }
+
+    .meteogram-controls .control-select {
+        flex: 1;
+    }
+}
