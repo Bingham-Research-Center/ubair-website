@@ -120,3 +120,43 @@
     border-radius: 8px;
     margin: 1rem 0;
 }
+
+/* Coming Soon Wrapper - for sections within a page */
+.coming-soon-wrapper {
+    position: relative;
+    min-height: 400px;
+}
+
+.coming-soon-wrapper > .coming-soon-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 3rem;
+    z-index: 50;
+    backdrop-filter: blur(4px);
+    border-radius: 16px;
+}
+
+.coming-soon-wrapper > .coming-soon-overlay h2 {
+    font-size: 2rem;
+    color: var(--usu-blue, #00263a);
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+}
+
+.coming-soon-wrapper > .coming-soon-overlay p {
+    font-size: 1rem;
+    color: #666;
+    margin: 0;
+    text-align: center;
+    max-width: 400px;
+}

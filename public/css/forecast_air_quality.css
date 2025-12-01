@@ -968,3 +968,35 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .forecast-level.level-extreme {
     color: #ef4444; /* Red */
 }
+
+/* Data Unavailable State - greyed out cards */
+.summary-card.data-unavailable {
+    opacity: 0.5;
+    filter: grayscale(100%);
+    border-left-color: #9ca3af !important;
+    cursor: not-allowed;
+}
+
+.summary-card.data-unavailable:hover {
+    transform: none;
+    box-shadow: 0 4px 20px rgba(47, 79, 79, 0.1);
+}
+
+.summary-card.data-unavailable .card-icon {
+    background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+}
+
+.summary-card.data-unavailable .forecast-level {
+    color: #9ca3af !important;
+}
+
+.summary-card.data-unavailable .forecast-level::after {
+    content: ' (No Data)';
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+}
+
+.summary-card.data-unavailable .confidence {
+    color: #9ca3af !important;
+}
