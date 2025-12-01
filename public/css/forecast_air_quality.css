@@ -911,7 +911,14 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .dropdown-row {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.dropdown-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .dropdown-row label {
@@ -943,4 +950,21 @@ body[data-page-type="forecast_air_quality"] h1::after {
     height: auto;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Forecast level color classes for summary cards */
+.forecast-level.level-background {
+    color: #22c55e; /* Green */
+}
+
+.forecast-level.level-moderate {
+    color: #eab308; /* Yellow */
+}
+
+.forecast-level.level-elevated {
+    color: #f97316; /* Orange */
+}
+
+.forecast-level.level-extreme {
+    color: #ef4444; /* Red */
 }
