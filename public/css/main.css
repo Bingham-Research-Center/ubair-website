@@ -754,4 +754,9 @@ main.content {
     transform: translateY(0);
 }
 
+.sidebar-disclaimer {
+    color: var(--usu-light-blue);
+}
+
+
 /* Responsive Design - See mobile.css for comprehensive responsive styles */
