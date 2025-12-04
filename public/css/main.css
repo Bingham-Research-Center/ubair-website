@@ -660,6 +660,7 @@ main.content {
 .legend-section-header {
     font-size: 0.85rem;
     font-weight: 600;
+    font-style: italic;
     color: var(--usu-blue);
     text-align: center;
     margin: 0.5rem 0 0.3rem 0;
