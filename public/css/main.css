@@ -581,7 +581,7 @@ main.content {
 
 .forecast-link a:hover {
     background: var(--usu-light-blue);
-    color: white;
+    color: var(--usu-blue);
     transform: translateY(-1px);
 }
 
