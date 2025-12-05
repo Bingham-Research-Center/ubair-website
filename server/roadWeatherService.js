@@ -854,20 +854,24 @@ class RoadWeatherService {
             });
 
             // Process plow data
-            const processedPlows = basinPlows.map(plow => ({
-                id: plow.Id,
-                name: plow.Name || `Plow ${plow.Owner}`,
-                fleetId: plow.Owner,
-                bearing: plow.Bearing,
-                bearingAngle: this.bearingToAngle(plow.Bearing),
-                latitude: plow.Latitude,
-                longitude: plow.Longitude,
-                lastUpdated: new Date(plow.LastUpdated * 1000).toISOString(),
-                lastUpdateMinutesAgo: Math.floor((Date.now() - plow.LastUpdated * 1000) / 60000),
-                isActive: this.isPlowActive(plow.LastUpdated),
-                route: plow.EncodedPolyline ? decodePolyline(plow.EncodedPolyline) : [],
-                status: this.getPlowStatus(plow.LastUpdated)
-            }));
+            const processedPlows = basinPlows.map(plow => {
+                const route = plow.EncodedPolyline ? decodePolyline(plow.EncodedPolyline) : [];
+
+                return {
+                    id: plow.Id,
+                    name: plow.Name || `Plow ${plow.Owner}`,
+                    fleetId: plow.Owner,
+                    bearing: plow.Bearing,
+                    bearingAngle: this.bearingToAngle(plow.Bearing),
+                    latitude: plow.Latitude,
+                    longitude: plow.Longitude,
+                    lastUpdated: new Date(plow.LastUpdated * 1000).toISOString(),
+                    lastUpdateMinutesAgo: Math.floor((Date.now() - plow.LastUpdated * 1000) / 60000),
+                    isActive: this.isPlowActive(plow.LastUpdated),
+                    route: route,
+                    status: this.getPlowStatus(plow.LastUpdated)
+                };
+            });
 
             // Cache for 1 minute (snow plows update frequently)
             cache.set(cacheKey, processedPlows, 60);
