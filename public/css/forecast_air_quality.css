@@ -745,21 +745,42 @@ body[data-page-type="forecast_air_quality"] h1::after {
     box-sizing: border-box;
 }
 
-/* Compact styles */
+/* Compact styles - symmetrical panels */
 .llm-summaries-section.compact,
 .clyfar-section.compact {
     margin-bottom: 0;
     padding: 1.25rem;
-    aspect-ratio: 1 / 1;
     min-height: 280px;
-    max-height: 350px;
+    max-height: 320px;
     display: flex;
     flex-direction: column;
+    border-radius: 16px;
+    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+}
+
+.clyfar-section.compact {
+    background: white;
+    border: 1px solid rgba(47, 79, 79, 0.1);
+    border-left: 4px solid var(--welsh-red);
+}
+
+.clyfar-section.compact::before {
+    display: none;
+}
+
+.clyfar-section.compact::after {
+    display: none;
 }
 
 .llm-summaries-section.compact .section-header h2,
 .clyfar-section.compact .section-header h2 {
     font-size: 1.1rem;
+    margin-bottom: 0.75rem;
+}
+
+.llm-summaries-section.compact .section-header,
+.clyfar-section.compact .section-header {
+    margin-bottom: 0.75rem;
 }
 
 .llm-summaries-section.compact .tab-content {
@@ -768,20 +789,20 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .llm-summaries-section.compact .summary-content {
-    padding: 1rem;
-    font-size: 0.9rem;
-    max-height: 180px;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+    max-height: 160px;
     overflow-y: auto;
 }
 
 .compact-tabs {
     gap: 0.25rem !important;
-    margin-bottom: 1rem !important;
+    margin-bottom: 0.75rem !important;
 }
 
 .compact-tabs .tab-button {
-    padding: 0.5rem 0.75rem;
-    font-size: 0.85rem;
+    padding: 0.4rem 0.6rem;
+    font-size: 0.8rem;
 }
 
 .clyfar-section.compact .clyfar-content {
@@ -793,45 +814,41 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .compact-grid {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.5rem;
     width: 100%;
 }
 
 .compact-grid .summary-card {
-    padding: 0.75rem 1rem;
+    padding: 0.6rem 0.75rem;
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
 }
 
 .compact-grid .card-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     margin-bottom: 0;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     flex-shrink: 0;
 }
 
 .compact-grid .card-content {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
     flex: 1;
 }
 
 .compact-grid .card-content h3 {
     margin: 0;
-    font-size: 0.9rem;
-    min-width: 70px;
+    font-size: 0.85rem;
+    min-width: 65px;
 }
 
 .compact-grid .forecast-level {
     margin: 0;
-    font-size: 1.1rem;
-}
-
-.clyfar-section.compact::after {
-    display: none;
+    font-size: 1rem;
 }
 
 .summary-tabs {
