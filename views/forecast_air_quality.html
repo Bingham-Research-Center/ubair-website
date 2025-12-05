@@ -36,89 +36,77 @@
     <main class="content">
         <h1><span style="font-variant: small-caps;">Clyfar</span>: AI Ozone Forecasts</h1>
 
-        <!-- LLM Summaries Section -->
-        <section class="llm-summaries-section" aria-label="Experimental LLM Summaries">
-            <div class="section-header">
-                <h2><i class="fas fa-comments"></i> Experimental LLM Summaries</h2>
-                <div class="info-icon" data-tooltip="AI-generated summaries at different complexity levels">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-            </div>
-
-            <div class="summary-tabs">
-                <button class="tab-button active" data-tab="plain" data-tooltip="For general public">Plain</button>
-                <button class="tab-button" data-tab="extended" data-tooltip="For oil, gas, and public stakeholders">Extended</button>
-                <button class="tab-button" data-tab="detailed" data-tooltip="For researchers with meteorology, chemistry, statistics background">Detailed</button>
-            </div>
-
-            <div class="tab-content">
-                <div id="plain-content" class="summary-content active">Loading plain summary...</div>
-                <div id="extended-content" class="summary-content">Loading extended summary...</div>
-                <div id="detailed-content" class="summary-content">Loading detailed summary...</div>
-            </div>
-        </section>
-
-        <!-- Clyfar AI Forecasting -->
-        <section class="clyfar-section" aria-label="Clyfar AI Forecasting System">
-            <div class="section-header clyfar-header">
-                <h2><i class="fas fa-dragon"></i> Clyfar AI Forecasting</h2>
-                <div class="clyfar-info">
-                    <div class="info-icon clyfar-info-icon" data-tooltip="Clyfar (Welsh for 'clever') is our proprietary AI model for ozone forecasting">
-                        <i class="fas fa-question-circle"></i>
+        <!-- Two-column grid for LLM Summaries and Clyfar -->
+        <div class="compact-sections-grid">
+            <!-- LLM Summaries Section -->
+            <section class="llm-summaries-section compact" aria-label="Experimental LLM Summaries">
+                <div class="section-header">
+                    <h2><i class="fas fa-comments"></i> LLM Summaries</h2>
+                    <div class="info-icon" data-tooltip="AI-generated summaries at different complexity levels">
+                        <i class="fas fa-info-circle"></i>
                     </div>
-                    <div class="clyfar-links">
+                </div>
+
+                <div class="summary-tabs compact-tabs">
+                    <button class="tab-button active" data-tab="plain">Plain</button>
+                    <button class="tab-button" data-tab="extended">Extended</button>
+                    <button class="tab-button" data-tab="detailed">Detailed</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="plain-content" class="summary-content active">Loading...</div>
+                    <div id="extended-content" class="summary-content">Loading...</div>
+                    <div id="detailed-content" class="summary-content">Loading...</div>
+                </div>
+            </section>
+
+            <!-- Clyfar AI Forecasting -->
+            <section class="clyfar-section compact" aria-label="Clyfar AI Forecasting System">
+                <div class="section-header clyfar-header">
+                    <h2><i class="fas fa-dragon"></i> Clyfar AI</h2>
+                    <div class="clyfar-info">
                         <a href="/about/clyfar" target="_blank" rel="noopener" class="info-link">
-                            <i class="fas fa-info"></i> About Clyfar
+                            <i class="fas fa-info"></i> About
                         </a>
                     </div>
                 </div>
-            </div>
 
-            <div class="clyfar-content">
-                <!-- Forecast Summary Cards -->
-                <div class="forecast-summary-grid">
-                    <div class="summary-card current">
-                        <div class="card-icon">
-                            <i class="fas fa-calendar-day"></i>
+                <div class="clyfar-content">
+                    <div class="forecast-summary-grid compact-grid">
+                        <div class="summary-card current data-unavailable" id="card-today">
+                            <div class="card-icon"><i class="fas fa-calendar-day"></i></div>
+                            <div class="card-content">
+                                <h3>Today</h3>
+                                <p class="forecast-level">--</p>
+                            </div>
                         </div>
-                        <div class="card-content">
-                            <h3>Today's Forecast</h3>
-                            <p class="forecast-level">Moderate</p>
-                            <p class="confidence">High Confidence</p>
+
+                        <div class="summary-card tomorrow data-unavailable" id="card-tomorrow">
+                            <div class="card-icon"><i class="fas fa-calendar-plus"></i></div>
+                            <div class="card-content">
+                                <h3>Tomorrow</h3>
+                                <p class="forecast-level">--</p>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="summary-card tomorrow">
-                        <div class="card-icon">
-                            <i class="fas fa-calendar-plus"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3>Tomorrow</h3>
-                            <p class="forecast-level">Elevated</p>
-                            <p class="confidence">Medium Confidence</p>
-                        </div>
-                    </div>
-                    
-                    <div class="summary-card week">
-                        <div class="card-icon">
-                            <i class="fas fa-calendar-week"></i>
-                        </div>
-                        <div class="card-content">
-                            <h3>7-Day Trend</h3>
-                            <p class="forecast-level">Increasing</p>
-                            <p class="confidence">Variable Confidence</p>
+
+                        <div class="summary-card week data-unavailable" id="card-week">
+                            <div class="card-icon"><i class="fas fa-calendar-week"></i></div>
+                            <div class="card-content">
+                                <h3>7-Day</h3>
+                                <p class="forecast-level">--</p>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
 
-        <!-- Probability Heatmap -->
-        <section class="heatmap-section" aria-label="15-Day Ozone Probability Forecast">
+        <!-- Possibility Heatmap -->
+        <section class="heatmap-section" aria-label="15-Day Ozone Possibility Forecast">
             <div class="heatmap-container">
                     <div class="visualization-header">
-                        <h3><i class="fas fa-fire"></i> 15-Day Ozone Probability Forecast</h3>
-                        <div class="info-icon" data-tooltip="Heatmap showing probability of different ozone levels over the next 15 days">
+                        <h3><i class="fas fa-fire"></i> 15-Day Ozone Possibility Forecast</h3>
+                        <div class="info-icon" data-tooltip="Heatmap showing possibility of different ozone levels over the next 15 days">
                             <i class="fas fa-info-circle"></i>
                         </div>
                     </div>
@@ -154,25 +142,33 @@
                 </div>
         </section>
 
-        <!-- Scenario Time Series -->
-        <section class="timeseries-section" aria-label="Forecast Scenarios">
-            <div class="timeseries-container">
-                    <div class="visualization-header">
-                        <h3><i class="fas fa-chart-line"></i> Forecast Scenarios</h3>
-                        <div class="info-icon" data-tooltip="Best case, average, and worst case ozone forecasts for the next 15 days">
-                            <i class="fas fa-info-circle"></i>
+        <!-- Coming Soon Wrapper -->
+        <div class="coming-soon-wrapper">
+            <div class="coming-soon-glass">
+                <i class="fas fa-hard-hat"></i>
+                <h3>Coming Soon</h3>
+                <p>Additional forecast visualizations in development</p>
+            </div>
+
+            <!-- Scenario Time Series -->
+            <section class="timeseries-section" aria-label="Forecast Scenarios">
+                <div class="timeseries-container">
+                        <div class="visualization-header">
+                            <h3><i class="fas fa-chart-line"></i> Forecast Scenarios</h3>
+                            <div class="info-icon" data-tooltip="Best case, average, and worst case ozone forecasts for the next 15 days">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeseries-display">
-                        <div id="scenario-chart" class="plotly-chart">
-                            <div class="chart-loading">
-                                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                                <p>Loading scenario data...</p>
+                        <div class="timeseries-display">
+                            <div id="scenario-chart" class="plotly-chart">
+                                <div class="chart-loading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Loading scenario data...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-        </section>
+            </section>
 
         <!-- Model Performance -->
         <section class="performance-section" aria-label="Model Performance">
@@ -219,6 +215,7 @@
                     </div>
                 </div>
         </section>
+        </div><!-- End coming-soon-wrapper -->
 
         <!-- Tooltip Container -->
         <div id="tooltip" class="tooltip" role="tooltip"></div>
