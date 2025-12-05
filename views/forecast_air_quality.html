@@ -142,25 +142,33 @@
                 </div>
         </section>
 
-        <!-- Scenario Time Series -->
-        <section class="timeseries-section" aria-label="Forecast Scenarios">
-            <div class="timeseries-container">
-                    <div class="visualization-header">
-                        <h3><i class="fas fa-chart-line"></i> Forecast Scenarios</h3>
-                        <div class="info-icon" data-tooltip="Best case, average, and worst case ozone forecasts for the next 15 days">
-                            <i class="fas fa-info-circle"></i>
+        <!-- Coming Soon Wrapper -->
+        <div class="coming-soon-wrapper">
+            <div class="coming-soon-glass">
+                <i class="fas fa-hard-hat"></i>
+                <h3>Coming Soon</h3>
+                <p>Additional forecast visualizations in development</p>
+            </div>
+
+            <!-- Scenario Time Series -->
+            <section class="timeseries-section" aria-label="Forecast Scenarios">
+                <div class="timeseries-container">
+                        <div class="visualization-header">
+                            <h3><i class="fas fa-chart-line"></i> Forecast Scenarios</h3>
+                            <div class="info-icon" data-tooltip="Best case, average, and worst case ozone forecasts for the next 15 days">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
                         </div>
-                    </div>
-                    <div class="timeseries-display">
-                        <div id="scenario-chart" class="plotly-chart">
-                            <div class="chart-loading">
-                                <i class="fas fa-spinner fa-spin fa-2x"></i>
-                                <p>Loading scenario data...</p>
+                        <div class="timeseries-display">
+                            <div id="scenario-chart" class="plotly-chart">
+                                <div class="chart-loading">
+                                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                    <p>Loading scenario data...</p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-        </section>
+            </section>
 
         <!-- Model Performance -->
         <section class="performance-section" aria-label="Model Performance">
@@ -207,6 +215,7 @@
                     </div>
                 </div>
         </section>
+        </div><!-- End coming-soon-wrapper -->
 
         <!-- Tooltip Container -->
         <div id="tooltip" class="tooltip" role="tooltip"></div>

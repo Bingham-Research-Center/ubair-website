@@ -851,6 +851,46 @@ body[data-page-type="forecast_air_quality"] h1::after {
     font-size: 1rem;
 }
 
+/* Coming Soon Glass Overlay */
+.coming-soon-wrapper {
+    position: relative;
+}
+
+.coming-soon-glass {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    border-radius: 16px;
+    text-align: center;
+}
+
+.coming-soon-glass i {
+    font-size: 2.5rem;
+    color: var(--welsh-gold);
+}
+
+.coming-soon-glass h3 {
+    font-size: 1.5rem;
+    color: var(--air-primary);
+    margin: 0;
+    font-weight: 600;
+}
+
+.coming-soon-glass p {
+    font-size: 1rem;
+    color: var(--air-secondary);
+    margin: 0;
+    max-width: 300px;
+}
+
 .summary-tabs {
     display: flex;
     gap: 0.5rem;
