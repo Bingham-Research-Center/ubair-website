@@ -438,7 +438,8 @@ class RoadWeatherMap {
                 className: 'weather-station-marker',
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
-            })
+            }),
+            zIndexOffset: 800 // Below cameras but above roads
         });
 
         // Format temperature and wind values using units system
@@ -549,12 +550,17 @@ class RoadWeatherMap {
                             ringColor = '#dc3545'; // Red
                             conditionText = 'Heavy Snow';
                             break;
+                        case 'offline':
+                            ringColor = '#6c757d'; // Gray
+                            conditionText = 'Camera Offline';
+                            break;
                         default:
                             ringColor = '#6c757d'; // Gray
                             conditionText = 'Unknown';
                     }
                 }
-                ringOpacity = 0.7;
+                // Set opacity based on detection status (offline cameras get lower opacity)
+                ringOpacity = detection.cameraOffline ? 0.5 : 0.7;
             }
 
             // Create camera marker with colored ring as part of the icon
@@ -576,7 +582,7 @@ class RoadWeatherMap {
                     iconSize: [36, 36],
                     iconAnchor: [18, 18]
                 }),
-                zIndexOffset: 1000 // Ensure camera appears above everything
+                zIndexOffset: 3000 // Ensure camera appears above everything (highest priority)
             });
 
             // Create popup with camera feed and analysis info
@@ -601,12 +607,20 @@ class RoadWeatherMap {
             // Add analysis info to popup if available
             let analysisInfo = '';
             if (detection) {
-                analysisInfo = `
-                    <div class="analysis-section">
-                        <p><strong>Condition:</strong> ${conditionText}</p>
-                        <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
-                    </div>`;
+                if (detection.cameraOffline) {
+                    analysisInfo = `
+                        <div class="analysis-section" style="background: #f8f9fa; border-left: 3px solid #6c757d;">
+                            <p><strong>Status:</strong> Camera Offline</p>
+                            <p style="color: #6c757d; font-size: 0.9em;">No road condition data available</p>
+                        </div>`;
+                } else {
+                    analysisInfo = `
+                        <div class="analysis-section">
+                            <p><strong>Condition:</strong> ${conditionText}</p>
+                            <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
+                            ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
+                        </div>`;
+                }
             }
 
             // Add click event to update condition cards
@@ -1025,7 +1039,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Restore state if coming back from webcam viewer
             if (window.mapStateManager.shouldRestoreState()) {
-                console.log('Restoring map state from previous session');
                 window.mapStateManager.restoreMapState(roadWeatherMap.map);
             }
         }
@@ -1215,7 +1228,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
                     iconSize: [30, 30],
                     iconAnchor: [15, 15]
                 }),
-                zIndexOffset: 500
+                zIndexOffset: 1100 // Above most things but below cameras
             });
 
             // Create popup content
@@ -1672,7 +1685,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 iconSize: [36, 46],
                 iconAnchor: [18, 23]
             }),
-            zIndexOffset: 1500 // Above roads but below plows
+            zIndexOffset: 900 // Above roads but below cameras
         });
 
         // Build detailed popup content
@@ -1811,7 +1824,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                 iconSize: [36, 36],
                 iconAnchor: [18, 18]
             }),
-            zIndexOffset: 1200 // Above roads but below most other markers
+            zIndexOffset: 1000 // Above roads but below cameras
         });
 
         // Build detailed popup content

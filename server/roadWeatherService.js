@@ -256,7 +256,7 @@ class RoadWeatherService {
         }
 
         const surfaceStatus = (station.surfaceStatus || '').toLowerCase();
-        const surfaceTemp = parseFloat(station.roadTemp) || parseFloat(station.airTemp);
+        const surfaceTemp = parseFloat(station.surfaceTemp) || parseFloat(station.airTemperature);
         const visibility = parseFloat(station.visibility);
         const precipitation = station.precipitation || '';
         const windSpeed = parseFloat(station.windSpeed);
