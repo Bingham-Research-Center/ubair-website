@@ -61,52 +61,44 @@
                 </div>
             </div>
 
-            <div class="meteogram-grid" id="meteogram-grid">
-                <div class="meteogram-card" data-variable="temp">
-                    <h4>Temperature</h4>
-                    <div class="meteogram-image" id="meteogram-temp">
-                        <div class="chart-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading...</p>
-                        </div>
+            <!-- Variable Tabs -->
+            <div class="meteogram-tabs" id="meteogram-tabs">
+                <button class="meteogram-tab active" data-variable="temp">
+                    <i class="fas fa-thermometer-half"></i> Temperature
+                </button>
+                <button class="meteogram-tab" data-variable="wind">
+                    <i class="fas fa-wind"></i> Wind
+                </button>
+                <button class="meteogram-tab" data-variable="mslp">
+                    <i class="fas fa-tachometer-alt"></i> Pressure
+                </button>
+                <button class="meteogram-tab" data-variable="snow">
+                    <i class="fas fa-snowflake"></i> Snow
+                </button>
+                <button class="meteogram-tab" data-variable="solar">
+                    <i class="fas fa-sun"></i> Solar
+                </button>
+            </div>
+
+            <!-- Large Meteogram Display -->
+            <div class="meteogram-display" id="meteogram-display">
+                <button class="fullscreen-btn" id="fullscreen-btn" title="View fullscreen">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <div class="meteogram-image-large" id="meteogram-current">
+                    <div class="chart-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading...</p>
                     </div>
                 </div>
-                <div class="meteogram-card" data-variable="wind">
-                    <h4>Wind</h4>
-                    <div class="meteogram-image" id="meteogram-wind">
-                        <div class="chart-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="meteogram-card" data-variable="mslp">
-                    <h4>Pressure</h4>
-                    <div class="meteogram-image" id="meteogram-mslp">
-                        <div class="chart-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="meteogram-card" data-variable="snow">
-                    <h4>Snow</h4>
-                    <div class="meteogram-image" id="meteogram-snow">
-                        <div class="chart-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading...</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="meteogram-card" data-variable="solar">
-                    <h4>Solar Radiation</h4>
-                    <div class="meteogram-image" id="meteogram-solar">
-                        <div class="chart-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading...</p>
-                        </div>
-                    </div>
-                </div>
+            </div>
+
+            <!-- Fullscreen Modal -->
+            <div class="meteogram-fullscreen-modal" id="meteogram-modal">
+                <button class="modal-close" id="modal-close">
+                    <i class="fas fa-times"></i>
+                </button>
+                <div class="modal-content" id="modal-content"></div>
             </div>
         </section>
 

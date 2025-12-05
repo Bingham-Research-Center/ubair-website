@@ -8,11 +8,14 @@ let weatherMap;
 let allMeteograms = [];
 let currentModel = 'GEFS';
 let currentInitTime = null;
+let currentVariable = 'temp';
 
 document.addEventListener('DOMContentLoaded', function() {
     setupWeatherMap();
     initializeKioskMode();
     initializeMeteograms();
+    setupMeteogramTabs();
+    setupFullscreen();
 });
 
 // ============================================
@@ -150,55 +153,128 @@ function setupMeteogramControls() {
 }
 
 function renderMeteograms() {
+    renderCurrentMeteogram();
+}
+
+function renderCurrentMeteogram() {
+    const container = document.getElementById('meteogram-current');
+    if (!container) return;
+
     // Filter meteograms for current init time and model
     const filtered = allMeteograms.filter(f =>
         f.includes(currentInitTime) && f.includes(currentModel)
     );
 
-    // Render each variable
-    GEFS_VARIABLES.forEach(varName => {
-        const container = document.getElementById(`meteogram-${varName}`);
-        if (!container) return;
+    // Find image for current variable
+    const img = filtered.find(f => f.includes(`_${currentVariable}_`));
 
-        // Find image for this variable
-        const img = filtered.find(f => f.includes(`_${varName}_`));
+    if (img) {
+        container.innerHTML = `
+            <img
+                src="${API_IMAGES}/${img}"
+                alt="${currentVariable} meteogram"
+                class="meteogram-img"
+                loading="lazy"
+                onclick="openFullscreen(this.src)"
+                onerror="this.parentElement.innerHTML='<div class=\\'chart-error\\'><i class=\\'fas fa-exclamation-triangle\\'></i><p>Image failed to load</p></div>'"
+            />
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="chart-no-data">
+                <i class="fas fa-cloud-sun"></i>
+                <p>No data available for ${currentVariable}</p>
+            </div>
+        `;
+    }
+}
 
-        if (img) {
-            container.innerHTML = `
-                <img
-                    src="${API_IMAGES}/${img}"
-                    alt="${varName} meteogram"
-                    class="meteogram-img"
-                    loading="lazy"
-                    onerror="this.parentElement.innerHTML='<div class=\\'chart-error\\'><i class=\\'fas fa-exclamation-triangle\\'></i><p>Image failed to load</p></div>'"
-                />
-            `;
-        } else {
-            container.innerHTML = `
-                <div class="chart-no-data">
-                    <i class="fas fa-cloud-sun"></i>
-                    <p>No data available</p>
-                </div>
-            `;
+function showMeteogramError(message) {
+    const container = document.getElementById('meteogram-current');
+    if (container) {
+        container.innerHTML = `
+            <div class="chart-no-data">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>${message}</p>
+            </div>
+        `;
+    }
+}
+
+// ============================================
+// TAB SWITCHING
+// ============================================
+
+function setupMeteogramTabs() {
+    const tabs = document.querySelectorAll('.meteogram-tab');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            // Update active state
+            tabs.forEach(t => t.classList.remove('active'));
+            tab.classList.add('active');
+
+            // Update current variable and render
+            currentVariable = tab.dataset.variable;
+            renderCurrentMeteogram();
+        });
+    });
+}
+
+// ============================================
+// FULLSCREEN
+// ============================================
+
+function setupFullscreen() {
+    const fullscreenBtn = document.getElementById('fullscreen-btn');
+    const modal = document.getElementById('meteogram-modal');
+    const modalClose = document.getElementById('modal-close');
+
+    if (fullscreenBtn) {
+        fullscreenBtn.addEventListener('click', () => {
+            const img = document.querySelector('#meteogram-current .meteogram-img');
+            if (img) {
+                openFullscreen(img.src);
+            }
+        });
+    }
+
+    if (modalClose) {
+        modalClose.addEventListener('click', closeFullscreen);
+    }
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                closeFullscreen();
+            }
+        });
+    }
+
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeFullscreen();
         }
     });
 }
 
-function showMeteogramError(message) {
-    const grid = document.getElementById('meteogram-grid');
-    if (!grid) return;
+function openFullscreen(src) {
+    const modal = document.getElementById('meteogram-modal');
+    const content = document.getElementById('modal-content');
 
-    GEFS_VARIABLES.forEach(varName => {
-        const container = document.getElementById(`meteogram-${varName}`);
-        if (container) {
-            container.innerHTML = `
-                <div class="chart-no-data">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <p>${message}</p>
-                </div>
-            `;
-        }
-    });
+    if (modal && content) {
+        content.innerHTML = `<img src="${src}" alt="Meteogram fullscreen" />`;
+        modal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeFullscreen() {
+    const modal = document.getElementById('meteogram-modal');
+    if (modal) {
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
 }
 
 // ============================================
