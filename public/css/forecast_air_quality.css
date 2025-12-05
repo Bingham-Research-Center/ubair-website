@@ -720,6 +720,20 @@ body[data-page-type="forecast_air_quality"] h1::after {
     color: var(--welsh-gold);
 }
 
+/* Compact Two-Column Grid for LLM Summaries and Clyfar */
+.compact-sections-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 900px) {
+    .compact-sections-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .llm-summaries-section {
     background: white;
     border-radius: 16px;
@@ -729,6 +743,95 @@ body[data-page-type="forecast_air_quality"] h1::after {
     border-left: 4px solid var(--air-primary);
     max-width: 100%;
     box-sizing: border-box;
+}
+
+/* Compact styles */
+.llm-summaries-section.compact,
+.clyfar-section.compact {
+    margin-bottom: 0;
+    padding: 1.25rem;
+    aspect-ratio: 1 / 1;
+    min-height: 280px;
+    max-height: 350px;
+    display: flex;
+    flex-direction: column;
+}
+
+.llm-summaries-section.compact .section-header h2,
+.clyfar-section.compact .section-header h2 {
+    font-size: 1.1rem;
+}
+
+.llm-summaries-section.compact .tab-content {
+    flex: 1;
+    overflow: auto;
+}
+
+.llm-summaries-section.compact .summary-content {
+    padding: 1rem;
+    font-size: 0.9rem;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.compact-tabs {
+    gap: 0.25rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.compact-tabs .tab-button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+}
+
+.clyfar-section.compact .clyfar-content {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.compact-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+}
+
+.compact-grid .summary-card {
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.compact-grid .card-icon {
+    width: 36px;
+    height: 36px;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.compact-grid .card-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex: 1;
+}
+
+.compact-grid .card-content h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    min-width: 70px;
+}
+
+.compact-grid .forecast-level {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.clyfar-section.compact::after {
+    display: none;
 }
 
 .summary-tabs {

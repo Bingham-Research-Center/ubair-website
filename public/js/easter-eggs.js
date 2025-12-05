@@ -237,7 +237,7 @@ class EasterEggManager {
             'High Confidence': 'Hyder Uchel',
             'Medium Confidence': 'Hyder Canolig',
             'Variable Confidence': 'Hyder Amrywiol',
-            '15-Day Ozone Probability Forecast': 'Rhagolwg Tebygolrwydd Osôn 15 Diwrnod',
+            '15-Day Ozone Possibility Forecast': 'Rhagolwg Posibilrwydd Osôn 15 Diwrnod',
             'Interactive heatmap will be displayed here': 'Bydd map gwres rhyngweithiol yn cael ei arddangos yma',
             'Ozone Levels': 'Lefelau Osôn',
             'Background (&lt;50 ppb)': 'Cefndir (&lt;50 ppb)',
