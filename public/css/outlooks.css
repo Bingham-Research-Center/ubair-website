@@ -102,6 +102,20 @@
     border: 1px solid #dc2626;
 }
 
+/* Ensure risk indicators after category headers have proper spacing */
+.markdown-content h4 + p .risk-indicator,
+.markdown-content strong + .risk-indicator {
+    display: block;
+    margin-top: 0.5rem;
+    width: fit-content;
+}
+
+/* Risk indicator on its own line */
+.markdown-content p > .risk-indicator:only-child {
+    display: block;
+    margin: 0.5rem 0;
+}
+
 /* Confidence indicators */
 .confidence-indicator {
     font-style: italic;
