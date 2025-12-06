@@ -15,6 +15,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/index.css">
+    <link rel="stylesheet" href="/public/css/outlooks.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <!-- Font Awesome -->
@@ -384,14 +385,33 @@
 
             const markdownContent = await outlookResponse.text();
 
-            // Extract and render preview (more lines, smaller font)
-            const previewLines = markdownContent.split('\n')
-                .filter(line => line.trim() !== '')
-                .slice(0, 8)
-                .join('\n');
+            // Extract content up to "Day 6" (keep only Day 1-5)
+            const lines = markdownContent.split('\n');
+            const previewLines = [];
+            for (const line of lines) {
+                if (line.match(/###.*Day\s*6/i)) break;  // Stop at Day 6
+                previewLines.push(line);
+            }
+            // Remove trailing empty lines
+            while (previewLines.length && previewLines[previewLines.length - 1].trim() === '') {
+                previewLines.pop();
+            }
 
             // Render markdown to HTML
-            outlookSummary.innerHTML = md.render(previewLines);
+            let renderedHtml = md.render(previewLines.join('\n'));
+
+            // Apply risk word highlighting (same as forecast_outlooks.js)
+            renderedHtml = renderedHtml
+                .replace(/\bNO RISK\b/gi, '<span class="risk-indicator risk-no">NO RISK</span>')
+                .replace(/\bLOW RISK\b/gi, '<span class="risk-indicator risk-low">LOW RISK</span>')
+                .replace(/\b(MODERATE|MEDIUM) RISK\b/gi, '<span class="risk-indicator risk-moderate">MODERATE RISK</span>')
+                .replace(/\bHIGH RISK\b/gi, '<span class="risk-indicator risk-high">HIGH RISK</span>')
+                .replace(/<strong>(NO|NONE)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-no">$1</span>')
+                .replace(/<strong>LOW<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-low">LOW</span>')
+                .replace(/<strong>(MODERATE|MEDIUM)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-moderate">$1</span>')
+                .replace(/<strong>HIGH<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-high">HIGH</span>');
+
+            outlookSummary.innerHTML = `<div class="markdown-content">${renderedHtml}</div>`;
 
             // Update the "See more" link
             if (seeMoreLink) {
