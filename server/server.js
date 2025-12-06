@@ -214,24 +214,21 @@ async function generateOutlooksList() {
         const files = await fs.readdir(directory);
 
         const outlooks = files
-            .filter(file => file.endsWith('.md') && file !== 'template.md')
+            .filter(file => /^outlook_\d{8}_\d{4}\.md$/.test(file))  // Only outlook_YYYYMMDD_HHMM.md
             .map(filename => {
                 // Extract date from filename (format: outlook_YYYYMMDD_HHMM.md)
                 const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-                if (match) {
-                    const [_, year, month, day, hour, minute] = match;
-                    const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                    const formattedDate = new Date(date).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                    return { filename, date, formattedDate };
-                }
-                return { filename, date: new Date().toISOString(), formattedDate: 'Unknown date' };
+                const [_, year, month, day, hour, minute] = match;
+                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
+                const formattedDate = new Date(date).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                return { filename, date, formattedDate };
             })
             .sort((a, b) => new Date(b.date) - new Date(a.date));
 
