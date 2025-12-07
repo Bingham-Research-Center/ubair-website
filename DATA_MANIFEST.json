@@ -1,7 +1,7 @@
 {
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2025-11-04",
+  "lastUpdated": "2025-11-23",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -199,13 +199,14 @@
       }
     },
     "outlooks": {
-      "description": "Weather forecast text in markdown format",
+      "description": "Weather forecast text in markdown format (human-written)",
       "format": "markdown",
       "endpoint": "/api/upload/outlooks",
       "schedule": {
-        "frequency": "0 6,18 * * *",
-        "description": "Twice daily at 06:00 and 18:00 UTC",
-        "timezone": "UTC"
+        "frequency": "ad-hoc",
+        "description": "Manual or triggered workflow - once daily maximum, may be less frequent (maximum 10 days between)",
+        "timezone": "UTC",
+        "automation": "manual"
       },
       "filename": {
         "pattern": "outlook_YYYYMMDD_HHMM.md",
@@ -242,6 +243,287 @@
           "analysis"
         ]
       }
+    },
+    "forecasts": {
+      "description": "Clyfar ozone forecasts - 3 data products (63 JSON files per run) [PLANNED/NOT YET OPERATIONAL]",
+      "format": "json",
+      "endpoint": "/api/upload/forecasts",
+      "schedule": {
+        "frequency": "30 3,9,15,21 * * *",
+        "description": "Automatic - Four times daily at 03:30, 09:30, 15:30, 21:30 UTC (3.5hr after GEFS runs at 00Z, 06Z, 12Z, 18Z)",
+        "timezone": "UTC",
+        "automation": "automatic",
+        "gefsRuns": "00Z, 06Z, 12Z, 18Z",
+        "gefsLatency": "~3 hours for full GEFS ensemble availability"
+      },
+      "products": {
+        "possibility_heatmap": {
+          "description": "Per-member possibility values for ozone categories (31 files)",
+          "filename": {
+            "pattern": "forecast_possibility_heatmap_{member}_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_possibility_heatmap_clyfar001_20250115_1230Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["metadata", "forecast_dates", "heatmap"],
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "required": ["init_datetime", "member", "product_type", "categories", "num_days"],
+                "properties": {
+                  "init_datetime": {
+                    "type": "string",
+                    "description": "GEFS initialization time (ISO 8601 with Z)",
+                    "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                  },
+                  "member": {
+                    "type": "string",
+                    "description": "Ensemble member name",
+                    "pattern": "^(clyfarcontrol|clyfar\\d{3})$"
+                  },
+                  "product_type": {
+                    "type": "string",
+                    "enum": ["possibility_heatmap"]
+                  },
+                  "categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": ["background", "moderate", "elevated", "extreme"]
+                    },
+                    "minItems": 4,
+                    "maxItems": 4
+                  },
+                  "num_days": {
+                    "type": "integer",
+                    "description": "Number of forecast days",
+                    "minimum": 1,
+                    "maximum": 20
+                  },
+                  "data_source": {
+                    "type": "string",
+                    "description": "Model version"
+                  },
+                  "units": {
+                    "type": "string",
+                    "enum": ["possibility (0-1)"]
+                  }
+                }
+              },
+              "forecast_dates": {
+                "type": "array",
+                "description": "Array of date strings (YYYY-MM-DD)",
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                }
+              },
+              "heatmap": {
+                "type": "object",
+                "description": "Possibility values for each category",
+                "required": ["background", "moderate", "elevated", "extreme"],
+                "properties": {
+                  "background": {
+                    "type": "array",
+                    "items": {"type": "number", "minimum": 0, "maximum": 1}
+                  },
+                  "moderate": {
+                    "type": "array",
+                    "items": {"type": "number", "minimum": 0, "maximum": 1}
+                  },
+                  "elevated": {
+                    "type": "array",
+                    "items": {"type": "number", "minimum": 0, "maximum": 1}
+                  },
+                  "extreme": {
+                    "type": "array",
+                    "items": {"type": "number", "minimum": 0, "maximum": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "exceedance_probabilities": {
+          "description": "Ensemble consensus for threshold exceedance (1 file)",
+          "filename": {
+            "pattern": "forecast_exceedance_probabilities_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_exceedance_probabilities_20250115_1230Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["metadata", "forecast_dates", "exceedance_probabilities"],
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "required": ["init_datetime", "product_type", "num_members", "thresholds_ppb"],
+                "properties": {
+                  "init_datetime": {
+                    "type": "string",
+                    "description": "GEFS initialization time (ISO 8601 with Z)"
+                  },
+                  "product_type": {
+                    "type": "string",
+                    "enum": ["exceedance_probabilities"]
+                  },
+                  "num_members": {
+                    "type": "integer",
+                    "description": "Number of ensemble members used",
+                    "minimum": 1,
+                    "maximum": 31
+                  },
+                  "num_days": {
+                    "type": "integer",
+                    "description": "Number of forecast days"
+                  },
+                  "thresholds_ppb": {
+                    "type": "array",
+                    "description": "Ozone thresholds in ppb",
+                    "items": {"type": "number"}
+                  },
+                  "percentile_used": {
+                    "type": "string",
+                    "description": "Which percentile column used for exceedance"
+                  },
+                  "data_source": {
+                    "type": "string"
+                  },
+                  "units": {
+                    "type": "string",
+                    "enum": ["probability (0-1)"]
+                  }
+                }
+              },
+              "forecast_dates": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "exceedance_probabilities": {
+                "type": "object",
+                "description": "Probability of exceeding each threshold",
+                "patternProperties": {
+                  "^\\d+ppb$": {
+                    "type": "array",
+                    "items": {"type": "number", "minimum": 0, "maximum": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "percentile_scenarios": {
+          "description": "Per-member defuzzified ozone values in ppb (31 files)",
+          "filename": {
+            "pattern": "forecast_percentile_scenarios_{member}_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_percentile_scenarios_clyfar001_20250115_1230Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["metadata", "forecast_dates", "scenarios"],
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "required": ["init_datetime", "member", "product_type", "percentiles"],
+                "properties": {
+                  "init_datetime": {
+                    "type": "string",
+                    "description": "GEFS initialization time (ISO 8601 with Z)"
+                  },
+                  "member": {
+                    "type": "string",
+                    "description": "Ensemble member name",
+                    "pattern": "^(clyfarcontrol|clyfar\\d{3})$"
+                  },
+                  "product_type": {
+                    "type": "string",
+                    "enum": ["percentile_scenarios"]
+                  },
+                  "percentiles": {
+                    "type": "array",
+                    "description": "Percentile values included",
+                    "items": {"type": "integer", "enum": [10, 50, 90]}
+                  },
+                  "num_days": {
+                    "type": "integer"
+                  },
+                  "data_source": {
+                    "type": "string"
+                  },
+                  "units": {
+                    "type": "string",
+                    "enum": ["ppb (ozone concentration)"]
+                  }
+                }
+              },
+              "forecast_dates": {
+                "type": "array",
+                "items": {"type": "string"}
+              },
+              "scenarios": {
+                "type": "object",
+                "description": "Defuzzified ozone values for each percentile",
+                "required": ["p10", "p50", "p90"],
+                "properties": {
+                  "p10": {
+                    "type": "array",
+                    "description": "10th percentile (ppb)",
+                    "items": {"type": "number", "minimum": 0, "maximum": 200}
+                  },
+                  "p50": {
+                    "type": "array",
+                    "description": "50th percentile (ppb)",
+                    "items": {"type": "number", "minimum": 0, "maximum": 200}
+                  },
+                  "p90": {
+                    "type": "array",
+                    "description": "90th percentile (ppb)",
+                    "items": {"type": "number", "minimum": 0, "maximum": 200}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "2MB",
+        "totalFilesPerRun": 63,
+        "filesPerProduct": {
+          "possibility_heatmap": 31,
+          "exceedance_probabilities": 1,
+          "percentile_scenarios": 31
+        }
+      },
+      "ozoneCategories": {
+        "background": {
+          "range_ppb": [20, 30, 40, 50],
+          "description": "Trapezoidal membership function",
+          "color": "#6CA0DC"
+        },
+        "moderate": {
+          "range_ppb": [40, 50, 60, 70],
+          "description": "Trapezoidal membership function",
+          "color": "#FFD700"
+        },
+        "elevated": {
+          "range_ppb": [50, 60, 75, 90],
+          "description": "Trapezoidal membership function",
+          "color": "#FF8C00"
+        },
+        "extreme": {
+          "range_ppb": [60, 75, 90, 125],
+          "description": "Trapezoidal membership function",
+          "color": "#FF6F61"
+        }
+      },
+      "notes": [
+        "Forecast products are generated 4× daily after GEFS runs (00Z, 06Z, 12Z, 18Z)",
+        "GEFS data has ~3 hour latency, so Clyfar runs at +3.5hr to ensure data availability",
+        "Each run produces 63 JSON files (31 possibility + 1 exceedance + 31 percentiles)",
+        "Ozone categories use fuzzy inference (Mamdani) with Dubois-Prade possibility theory",
+        "Daily maximum values are used (local timezone: America/Denver)",
+        "Forecast horizon: ~15-17 days depending on GEFS availability"
+      ]
     }
   },
   "globalValidation": {
@@ -266,11 +548,12 @@
   },
   "monitoring": {
     "expectedDataFlow": {
-      "observations": "Every 10 minutes",
-      "metadata": "Every 6 hours",
-      "timeseries": "Every hour",
-      "outlooks": "Twice daily",
-      "images": "Every 30 minutes"
+      "observations": "Every 10 minutes (automatic)",
+      "metadata": "Every 6 hours (automatic)",
+      "timeseries": "Every hour (automatic)",
+      "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
+      "images": "Every 30 minutes (automatic)",
+      "forecasts": "[PLANNED] Automatic - Four times daily at 03:30, 09:30, 15:30, 21:30 UTC"
     },
     "alertThresholds": {
       "missingDataMinutes": 30,

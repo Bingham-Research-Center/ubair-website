@@ -11,6 +11,7 @@ import roadWeatherRoutes from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
+import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,7 +19,11 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-app.use(express.json());
+// Only parse JSON for application/json content-type (skip multipart/form-data uploads)
+app.use(express.json({ type: 'application/json' }));
+
+// Analytics middleware (tracks page visits anonymously)
+app.use(analyticsMiddleware);
 
 // Routes in dataUpload.js will be prefixed with ...
 app.use('/api', dataUploadRoutes);
@@ -26,6 +31,9 @@ app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
+
+// Analytics stats endpoint (protected by environment check)
+app.get('/api/analytics/stats', getAnalyticsStats);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -109,8 +117,8 @@ app.get('/api/filelist/:dataType', async (req, res) => {
         const { dataType } = req.params;
         const dataDir = path.join(__dirname, '../public/api/static', dataType);
         const files = await fs.readdir(dataDir);
-        const jsonFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md'));
-        res.json(jsonFiles);
+        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'));
+        res.json(allowedFiles);
     } catch (error) {
         res.status(500).json({ error: `Failed to list files for ${req.params.dataType}` });
     }
@@ -118,24 +126,25 @@ app.get('/api/filelist/:dataType', async (req, res) => {
 
 app.get('/api/live-observations', async (req, res) => {
     try {
-        // Get the latest observation file from the static directory
+        // Get the latest observation file from the observations subdirectory
         const staticDir = path.join(__dirname, '../public/api/static');
-        const fileListPath = path.join(staticDir, 'filelist.json');
-        
+        const observationsDir = path.join(staticDir, 'observations');
+        const fileListPath = path.join(observationsDir, 'filelist.json');
+
         if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
             return res.status(404).json({ error: 'No data files available' });
         }
-        
+
         const fileList = JSON.parse(await fs.readFile(fileListPath, 'utf8'));
         const obsFiles = fileList.filter(f => f.includes('map_obs_') && !f.includes('meta'));
-        
+
         if (obsFiles.length === 0) {
             return res.status(404).json({ error: 'No observation files found' });
         }
-        
+
         // Get the latest file (assuming filename contains timestamp)
         const latestFile = obsFiles.sort().reverse()[0];
-        const latestFilePath = path.join(staticDir, latestFile);
+        const latestFilePath = path.join(observationsDir, latestFile);
         
         const data = await fs.readFile(latestFilePath, 'utf8');
         const parsedData = JSON.parse(data);
@@ -205,24 +214,21 @@ async function generateOutlooksList() {
         const files = await fs.readdir(directory);
 
         const outlooks = files
-            .filter(file => file.endsWith('.md') && file !== 'template.md')
+            .filter(file => /^outlook_\d{8}_\d{4}\.md$/.test(file))  // Only outlook_YYYYMMDD_HHMM.md
             .map(filename => {
                 // Extract date from filename (format: outlook_YYYYMMDD_HHMM.md)
                 const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-                if (match) {
-                    const [_, year, month, day, hour, minute] = match;
-                    const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                    const formattedDate = new Date(date).toLocaleString('en-US', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                    return { filename, date, formattedDate };
-                }
-                return { filename, date: new Date().toISOString(), formattedDate: 'Unknown date' };
+                const [_, year, month, day, hour, minute] = match;
+                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
+                const formattedDate = new Date(date).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                return { filename, date, formattedDate };
             })
             .sort((a, b) => new Date(b.date) - new Date(a.date));
 

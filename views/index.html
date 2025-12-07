@@ -15,6 +15,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/index.css">
+    <link rel="stylesheet" href="/public/css/outlooks.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <!-- Font Awesome -->
@@ -64,35 +65,35 @@
             </div>
 
             <div class="tab-content">
-                <!-- Warnings Tab -->
+                <!-- Warnings Tab - Launch Announcement -->
                 <div id="warnings-content" class="tab-panel active">
                     <div class="headline-items">
-                        <div class="headline-item good">
-                            <i class="fas fa-check-circle headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-rocket headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Air Quality</span>
-                                <span class="headline-value">Good</span>
+                                <span class="headline-label">Official Launch</span>
+                                <span class="headline-value">December 1, 2025</span>
                             </div>
                         </div>
-                        <div class="headline-item caution">
-                            <i class="fas fa-snowflake headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-flask headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Snow Risk</span>
-                                <span class="headline-value">Moderate (48h)</span>
+                                <span class="headline-label">Status</span>
+                                <span class="headline-value">Final Testing</span>
                             </div>
                         </div>
-                        <div class="headline-item good">
-                            <i class="fas fa-wind headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-map-marked-alt headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Wind</span>
-                                <span class="headline-value">Light</span>
+                                <span class="headline-label">Live Map</span>
+                                <span class="headline-value">Active Now</span>
                             </div>
                         </div>
-                        <div class="headline-item warning">
-                            <i class="fas fa-smog headline-icon"></i>
+                        <div class="headline-item info">
+                            <i class="fas fa-envelope headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Ozone Forecast</span>
-                                <span class="headline-value">Elevated (Tomorrow)</span>
+                                <span class="headline-label">Questions?</span>
+                                <span class="headline-value">john.lawson@usu.edu</span>
                             </div>
                         </div>
                     </div>
@@ -163,21 +164,25 @@
                 <div class="map-container-dashboard">
                     <div id="map" class="dashboard-map" aria-label="Air Quality Monitoring Map"></div>
                     <div class="kiosk-switch-container">
-                        <label for="temp-toggle">Temperature:</label>
-                        <div class="temp-toggle" id="temp-toggle" title="Toggle between Celsius and Fahrenheit">
-                            <div class="temp-slider"></div>
-                            <span class="temp-label" id="temp-label">°F</span>
+                        <div class="kiosk-switch" id="kiosk-switch" title="Auto-cycle through station popups">
+                            <div class="switch-slider"></div>
                         </div>
+                        <label for="kiosk-switch" class="auto-cycle-label">Auto-cycle</label>
+                        <label for="temp-toggle">°C</label>
+                        <div class="kiosk-switch active" id="temp-toggle" title="Toggle between Celsius and Fahrenheit">
+                            <div class="switch-slider"></div>
+                        </div>
+                        <label for="temp-toggle">°F</label>
                     </div>
                 </div>
                 
-                <!-- Compact Legend -->
+                <!-- Compact Legend - Starts Visible -->
                 <div class="map-legend-compact">
-                    <button class="legend-toggle" id="legend-toggle" title="Click to show/hide marker color legend">
+                    <button class="legend-toggle" id="legend-toggle" title="Click to show/hide marker color legend" aria-expanded="true">
                         <i class="fas fa-palette"></i>
                         <span class="legend-toggle-text">Legend</span>
                     </button>
-                    <div class="legend-dropdown" id="legend-dropdown">
+                    <div class="legend-dropdown active" id="legend-dropdown">
                         <div class="legend-items-compact">
                             <div class="legend-section-header">Air Quality Stations (●)</div>
                             <div class="legend-row">
@@ -281,6 +286,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
 
 <script>
+    // Store outside click handler reference to enable proper cleanup
+    let legendOutsideClickHandler = null;
+
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize forecast tabs
         initForecastTabs();
@@ -322,14 +330,24 @@
         if (toggle && dropdown) {
             toggle.addEventListener('click', () => {
                 dropdown.classList.toggle('active');
+                // Update aria-expanded for accessibility
+                toggle.setAttribute('aria-expanded', dropdown.classList.contains('active'));
             });
             
-            // Close dropdown when clicking outside
-            document.addEventListener('click', (e) => {
+            // Remove any existing listener before adding new one to prevent memory leaks
+            if (legendOutsideClickHandler) {
+                document.removeEventListener('click', legendOutsideClickHandler);
+            }
+            
+            // Create and store the handler for proper cleanup
+            legendOutsideClickHandler = (e) => {
                 if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
                     dropdown.classList.remove('active');
+                    toggle.setAttribute('aria-expanded', 'false');
                 }
-            });
+            };
+            
+            document.addEventListener('click', legendOutsideClickHandler);
         }
     }
 
@@ -367,14 +385,33 @@
 
             const markdownContent = await outlookResponse.text();
 
-            // Extract and render preview (more lines, smaller font)
-            const previewLines = markdownContent.split('\n')
-                .filter(line => line.trim() !== '')
-                .slice(0, 8)
-                .join('\n');
+            // Extract content up to "Day 6" (keep only Day 1-5)
+            const lines = markdownContent.split('\n');
+            const previewLines = [];
+            for (const line of lines) {
+                if (line.match(/###.*Day\s*6/i)) break;  // Stop at Day 6
+                previewLines.push(line);
+            }
+            // Remove trailing empty lines
+            while (previewLines.length && previewLines[previewLines.length - 1].trim() === '') {
+                previewLines.pop();
+            }
 
             // Render markdown to HTML
-            outlookSummary.innerHTML = md.render(previewLines);
+            let renderedHtml = md.render(previewLines.join('\n'));
+
+            // Apply risk word highlighting (same as forecast_outlooks.js)
+            renderedHtml = renderedHtml
+                .replace(/\bNO RISK\b/gi, '<span class="risk-indicator risk-no">NO RISK</span>')
+                .replace(/\bLOW RISK\b/gi, '<span class="risk-indicator risk-low">LOW RISK</span>')
+                .replace(/\b(MODERATE|MEDIUM) RISK\b/gi, '<span class="risk-indicator risk-moderate">MODERATE RISK</span>')
+                .replace(/\bHIGH RISK\b/gi, '<span class="risk-indicator risk-high">HIGH RISK</span>')
+                .replace(/<strong>(NO|NONE)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-no">$1</span>')
+                .replace(/<strong>LOW<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-low">LOW</span>')
+                .replace(/<strong>(MODERATE|MEDIUM)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-moderate">$1</span>')
+                .replace(/<strong>HIGH<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-high">HIGH</span>');
+
+            outlookSummary.innerHTML = `<div class="markdown-content">${renderedHtml}</div>`;
 
             // Update the "See more" link
             if (seeMoreLink) {
@@ -391,17 +428,21 @@
         const weatherSummary = document.getElementById("weather-summary");
         if (!weatherSummary) return;
 
-        // Placeholder content - in future this would fetch from weather forecast API
+        // Launch announcement - AI weather summaries coming Dec 1
         weatherSummary.innerHTML = `
-            <div style="font-style: italic; color: var(--usu-accent); margin-bottom: 0.5rem;">
-                General Weather Summary (Placeholder)
-            </div>
-            <p><strong>Today:</strong> Partly cloudy with light winds. High around 45°F, low near 28°F.</p>
-            <p><strong>Tomorrow:</strong> Mostly sunny conditions expected. Temperatures rising to 52°F during the day.</p>
-            <p><strong>Weekend:</strong> Stable weather pattern continues with clear skies and moderate temperatures.</p>
-            <p><strong>Air Quality Impact:</strong> Light winds may contribute to pollutant accumulation in valleys during morning hours.</p>
-            <div style="font-size: 0.8rem; font-style: italic; color: var(--usu-accent); margin-top: 0.5rem;">
-                Note: This is placeholder content. Future implementation will pull from LLM-generated weather summaries.
+            <div style="text-align: center; padding: 0.5rem;">
+                <p style="font-size: 1.1rem; margin-bottom: 0.75rem;">
+                    <strong><i class="fas fa-robot"></i> AI Weather Summaries</strong>
+                </p>
+                <p style="margin-bottom: 0.5rem;">Coming December 1, 2025</p>
+                <p style="font-size: 0.9rem; color: var(--usu-accent);">
+                    Our AI-powered weather summaries are in final testing.
+                </p>
+                <p style="margin-top: 0.75rem; font-size: 0.85rem;">
+                    <a href="mailto:john.lawson@usu.edu" style="color: var(--usu-blue);">
+                        <i class="fas fa-envelope"></i> Questions? john.lawson@usu.edu
+                    </a>
+                </p>
             </div>
         `;
     }
