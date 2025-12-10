@@ -4,14 +4,14 @@
  * Staggered camera snow detection analysis to avoid UDOT API rate limits.
  * 
  * Problem: Analyzing all 20-30 cameras on every request = 60-90 API calls
- * Solution: Analyze 1-2 cameras every 30 seconds in background, cache results for 10 minutes
+ * Solution: Analyze 1 camera every 30 seconds in background, cache results for 10 minutes
  * 
  * Rate Limit: UDOT allows 10 calls/60 seconds (600 calls/hour)
- * Our usage: ~1-2 cameras * 3 views every 30s = ~3-6 calls/30s = ~360 calls/hour (well under limit)
+ * Our usage: ~1 camera * 3 views every 30s = ~3 calls/30s = ~360 calls/hour (60% of limit)
  * 
  * Features:
  * - Batch-level caching (10 minute TTL)
- * - Staggered analysis (1-2 cameras every 30 seconds)
+ * - Staggered analysis (1 camera every 30 seconds)
  * - Keep all 3 views per camera (multi-view consensus)
  * - User requests served from cache (instant, no API calls)
  */
@@ -37,7 +37,7 @@ class CameraAnalysisScheduler {
         
         // Configuration
         this.config = {
-            batchSize: 1,           // Analyze 1-2 cameras per cycle (conservative for rate limits)
+            batchSize: 1,           // Analyze 1 camera per cycle (conservative for rate limits)
             intervalSeconds: 30,    // Run every 30 seconds
             maxRetries: 3           // Retry failed analyses
         };
@@ -63,7 +63,7 @@ class CameraAnalysisScheduler {
         }
         
         console.log('🎥 Starting camera analysis scheduler...');
-        console.log(`   Analyzing ${this.config.batchSize}-${this.config.batchSize + 1} cameras every ${this.config.intervalSeconds}s`);
+        console.log(`   Analyzing ${this.config.batchSize} camera(s) every ${this.config.intervalSeconds}s`);
         console.log('   Results cached for 10 minutes');
         console.log('   All 3 camera views analyzed for multi-view consensus\n');
         
