@@ -59,12 +59,12 @@ class BackgroundRefreshService {
         }
 
         console.log('🔄 Starting background refresh service...');
-        console.log('   UDOT API Rate Limit: 10 calls/60 seconds');
+        console.log('   UDOT API Rate Limit: 10 calls/60 seconds (600 calls/hour)');
         console.log('   Our Schedule (Staggered for Safety):');
         console.log('   - Essential data: Every 60 seconds at :00 (roads, cameras, stations)');
         console.log('   - Frequent data: Every 5 minutes at :02 (plows, alerts, events)');
         console.log('   - Infrequent data: Every 15 minutes at :05/:20/:35/:50 +jitter (rest areas, passes)');
-        console.log('   - Camera analysis: 2-3 cameras every 30 seconds (staggered background analysis)');
+        console.log('   - Camera analysis: 1-2 cameras every 30 seconds (staggered, ~360 calls/hour)');
         console.log('');
 
         // Start camera analysis scheduler
