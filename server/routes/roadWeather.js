@@ -2,7 +2,14 @@ import express from 'express';
 import RoadWeatherService from '../roadWeatherService.js';
 
 const router = express.Router();
-const roadWeatherService = new RoadWeatherService();
+// Default instance for backwards compatibility
+// Will be replaced by shared instance from server.js
+let roadWeatherService = new RoadWeatherService();
+
+// Allow setting the service instance (called from server.js)
+export function setRoadWeatherService(service) {
+    roadWeatherService = service;
+}
 
 router.get('/road-weather', async (req, res) => {
     try {

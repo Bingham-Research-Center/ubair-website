@@ -35,10 +35,11 @@ function decodePolyline(encoded) {
 }
 
 class RoadWeatherService {
-    constructor() {
+    constructor(cameraAnalysisScheduler = null) {
         this.udotApiKey = process.env.UDOT_API_KEY || '';
         this.nwsUserAgent = 'BasinWX/1.0 (basinwx.com)';
         this.snowDetectionService = new SnowDetectionService();
+        this.cameraAnalysisScheduler = cameraAnalysisScheduler;
         this.uintahBasinBounds = {
             north: 41.0,    // Expanded north to include more mountain areas
             south: 39.5,    // Expanded south for broader coverage
@@ -370,8 +371,15 @@ class RoadWeatherService {
                 this.fetchUDOTWeatherStations()
             ]);
 
-            // Analyze cameras for snow conditions with temperature data from weather stations
-            const cameraSnowDetections = await this.analyzeCamerasForSnow(cameras, weatherStations);
+            // Get camera snow detections from scheduler cache (no API calls triggered)
+            // If scheduler is not available, fall back to direct analysis (backwards compatibility)
+            let cameraSnowDetections;
+            if (this.cameraAnalysisScheduler) {
+                cameraSnowDetections = this.cameraAnalysisScheduler.getCachedResults();
+            } else {
+                // Fallback: direct analysis (old behavior)
+                cameraSnowDetections = await this.analyzeCamerasForSnow(cameras, weatherStations);
+            }
 
             // Convert ALL UDOT roads to map segments (no weather estimation, UDOT data only)
             const roadSegments = udotRoads.map(udotRoad => ({
