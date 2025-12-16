@@ -92,6 +92,8 @@ class EasterEggManager {
             this.activateWelshModeEasterEgg();
         } else if (path.includes('forecast_weather')) {
             this.activateChemtrailsEasterEgg();
+        } else if (path.includes('sports')) {
+            this.activateSportsEasterEgg();
         }
     }
 
@@ -106,6 +108,11 @@ class EasterEggManager {
         if (this.welshModeActive) {
             this.switchToEnglish();
         }
+    }
+
+    /**Sports page easter egg */
+    activateSportsEasterEgg() {
+        console.log("TEST");
     }
 
     /**
