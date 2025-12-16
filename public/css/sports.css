@@ -1,0 +1,67 @@
+h1
+{
+    color: red;
+    font-family: 'Arial Black', sans-serif;
+    text-align: center;
+    margin-top: 20px;
+}
+h2
+{
+    color: black;
+    font-family: 'Arial Black', sans-serif;
+    margin-left: 15px;
+}
+/* Base style for any soil moisture indicator */
+.soil-moisture {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    color: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Very dry soil */
+.soil-moisture-dry {
+    background-color: #d32f2f;  /* red */
+}
+
+/* Low moisture */
+.soil-moisture-low {
+    background-color: #f57c00;  /* orange */
+}
+
+/* Medium/ok moisture */
+.soil-moisture-medium {
+    background-color: #fdd835;  /* yellow */
+    color: #333333;             /* better contrast on yellow */
+}
+
+/* Good/ideal moisture */
+.soil-moisture-good {
+    background-color: #388e3c;  /* green */
+}
+
+/* Too wet / waterlogged */
+.soil-moisture-wet {
+    background-color: #1976d2;  /* blue */
+}
+
+/* Optional: a simple bar-style visual */
+.soil-moisture-bar {
+    width: 150px;
+    height: 12px;
+    border-radius: 999px;
+    background-color: #eeeeee;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.soil-moisture-bar-fill {
+    height: 100%;
+    width: 50%;                 /* change this with inline style or JS */
+    background: linear-gradient(90deg, #d32f2f, #388e3c);
+    transition: width 0.3s ease;
+}
