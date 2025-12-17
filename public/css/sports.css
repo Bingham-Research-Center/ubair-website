@@ -11,6 +11,128 @@ h2
     font-family: 'Arial Black', sans-serif;
     margin-left: 15px;
 }
+
+/* Panel Style */
+.weather-summary {
+    margin-bottom: 2rem;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.condition-card {
+    background: #ffefef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(80, 22, 22, 0.1);
+    border-left: 4px solid darkred;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.condition-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgb(125, 0, 0), transparent);
+    border-radius: 0 12px 0 100%;
+    opacity: 0.1;
+}
+
+.condition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
+    border-left-color: black;
+
+    .card-icon {
+        background-color: black;
+        color: red;
+        transition: 1s;
+    }
+}
+
+.card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: black;
+    background-color: red;
+    font-size: 1.2rem;
+    transition: 2.5s;
+}
+
+.current-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: darkred;
+    margin: 0.5rem 0;
+}
+
+.trend {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+/* Forecast Container */
+.forecast-container {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.forecast-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(80, 22, 22, 0.08);
+    border: 1px solid rgba(80, 22, 22, 0.1);
+    position: relative;
+}
+
+.forecast-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, red, darkred, black);
+    border-radius: 16px 16px 0 0;
+}
+
+.forecast-section h2 {
+    color: darkred;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.forecast-section h2 i {
+    color: orangered;
+    font-size: 1.1rem;
+}
+
+.forecast-content {
+    color: #555;
+    line-height: 1.6;
+}
+
 /* Base style for any soil moisture indicator */
 .soil-moisture {
     display: inline-block;
