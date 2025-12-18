@@ -95,6 +95,14 @@ app.get('/kiosk', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/kiosk.html'));
 });
 
+app.get('/portrait-kiosk', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
+});
+
+app.get('/kiosk-portrait', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
+});
+
 app.get('/test-viz', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/test-viz.html'));
 });
