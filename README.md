@@ -90,6 +90,75 @@ We maintain docs for three audiences:
 
 Keep docs terse, current, and audience-appropriate. Prune outdated content aggressively.
 
+## Cool Commands (CHPC / Ops)
+
+A collection of useful commands for monitoring and debugging. **PRs welcome** to add your own!
+
+### Job Monitoring
+```bash
+# Watch all recent SLURM jobs (live updating)
+watch -n 5 "sacct --starttime=now-24hours --format=JobID,JobName,State,Start,Elapsed | sort -k4 -r"
+
+# Tail the newest Clyfar log automatically
+tail -f $(ls -t ~/logs/basinwx/clyfar_*.out | head -1)
+
+# Check resource usage after job completes
+sacct -j JOBID --format=JobID,JobName,MaxRSS,MaxVMSize,CPUTime,Elapsed,State,ExitCode
+```
+
+### Quick Health Checks
+```bash
+# Are observations flowing?
+curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
+
+# How many forecast files?
+curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
+
+# Akamai server logs
+ssh akamai "pm2 logs --lines 50"
+```
+
+### Storage Triage
+```bash
+# Find GEFS cache hogs
+find ~ -name "*.grib2" -type f 2>/dev/null | head -20
+
+# Quick quota check
+df -h ~
+```
+
+See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
+
+### Git Hooks
+
+Git hooks are scripts that run automatically on certain git events. Useful for reminders and automation.
+
+**Post-merge hook** (reminds to npm install after pull):
+```bash
+cat > .git/hooks/post-merge << 'EOF'
+#!/bin/bash
+if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -q "package.json"; then
+    echo "⚠️  package.json changed - run: npm install"
+fi
+EOF
+chmod +x .git/hooks/post-merge
+```
+
+### Data Troubleshooting
+```bash
+# Clyfar's Herbie cache (not default ~/.cache/herbie)
+CACHE=~/gits/clyfar/data/herbie_cache
+
+# After crash: find/delete corrupted downloads (zero or tiny files)
+find $CACHE -size 0 -name "*.grib2" -delete
+find $CACHE -size -1k -name "*.grib2" -delete
+
+# Nuclear option: clear today's cache and re-run
+rm -rf $CACHE/gefs/$(date +%Y%m%d)/
+```
+
+---
+
 ## Data Sources
 
 - **Synoptic Data**: Real-time meteorological observations compiling multiple sources (e.g., EPA, DAQ, Union Pacific, etc)

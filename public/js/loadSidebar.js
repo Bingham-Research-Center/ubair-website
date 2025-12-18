@@ -12,9 +12,7 @@ const PAGE_DISCLAIMERS = {
         Consult with agricultural extension services and professional agronomists for farming decisions.
         ©2024, Utah State University.`,
 
-    '/roads': `DISCLAIMER: Road weather information is for reference only and should not replace official
-        UDOT road conditions and travel advisories. Always check current road conditions before traveling.
-        ©2024, Utah State University.`,
+    '/roads': `This site uses real-time transportation data provided by the Utah Department of Transportation (UDOT). While we strive to display accurate information, UDOT does not guarantee the completeness or timeliness of this data. The data is provided 'as is' and may be subject to change without notice. Users should independently verify any critical information. ©2025, Utah State University.`,
 
     '/aviation': `DISCLAIMER: Aviation weather products are for planning purposes only. Always obtain official
         weather briefings from Flight Service or approved sources before flight operations.

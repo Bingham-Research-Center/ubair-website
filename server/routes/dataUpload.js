@@ -30,7 +30,8 @@ const storage = multer.diskStorage({
             'metadata': 'metadata',
             'outlooks': 'outlooks',
             'images': 'images',
-            'timeseries': 'timeseries'
+            'timeseries': 'timeseries',
+            'forecasts': 'forecasts'
         };
 
         const dataType = req.params.dataType || 'observations';
@@ -143,28 +144,32 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 
     const ext = path.extname(req.file.originalname).toLowerCase();
     const textExts = ['.md', '.txt'];
+    const imageExts = ['.png'];
 
     // Invalid type
-    if (ext !== '.json' && !textExts.includes(ext)) {
+    if (ext !== '.json' && !textExts.includes(ext) && !imageExts.includes(ext)) {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ success: false, message: 'Invalid file type' });
     }
 
-    const content = fs.readFileSync(req.file.path, 'utf8');
+    // Skip content validation for binary files (images)
+    if (!imageExts.includes(ext)) {
+      const content = fs.readFileSync(req.file.path, 'utf8');
 
-    if (ext === '.json') {
-      // JSON validation
-      try {
-        JSON.parse(content);
-      } catch {
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, message: 'Invalid JSON file' });
-      }
-    } else {
-      // Plain-text validation (ASCII only)
-      if (!/^[\x00-\x7F]*$/.test(content)) {
-        fs.unlinkSync(req.file.path);
-        return res.status(400).json({ success: false, message: 'Invalid text file' });
+      if (ext === '.json') {
+        // JSON validation
+        try {
+          JSON.parse(content);
+        } catch {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ success: false, message: 'Invalid JSON file' });
+        }
+      } else {
+        // Plain-text validation (ASCII only)
+        if (!/^[\x00-\x7F]*$/.test(content)) {
+          fs.unlinkSync(req.file.path);
+          return res.status(400).json({ success: false, message: 'Invalid text file' });
+        }
       }
     }
 
@@ -173,9 +178,9 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
 
-    // Update file list for the base static directory
-    const staticDir = path.join(process.cwd(), 'public', 'api', 'static');
-    updateFileList(staticDir);
+    // Update file list for the observations directory (where obs files actually live)
+    const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
+    updateFileList(observationsDir);
 
     res.status(200).json({
       success: true,
