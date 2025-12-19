@@ -1,6 +1,6 @@
 {
   "name": "ubair-website",
-  "version": "0.9.7",
+  "version": "1.0.0",
   "description": "Uintah Basin Air Quality Website",
   "main": "server/server.js",
   "type": "module",
