@@ -33,7 +33,7 @@ Both CHPC scripts and the web server read this manifest and enforce it.
 pip install -r requirements.txt
 
 # 2. Set your API key
-export BASINWX_API_KEY="your-key-here"
+export DATA_UPLOAD_API_KEY="your-key-here"
 
 # 3. Test connection
 python scripts/chpc_uploader.py --health-check
@@ -214,8 +214,8 @@ curl http://localhost:3000/api/monitoring/status
 
 ## Common Issues & Solutions
 
-**Problem:** "BASINWX_API_KEY not set"
-**Solution:** `export BASINWX_API_KEY="your-key"` and add to ~/.bashrc
+**Problem:** "DATA_UPLOAD_API_KEY not set"
+**Solution:** `export DATA_UPLOAD_API_KEY="your-key"` and add to ~/.bashrc
 
 **Problem:** "Manifest not loaded" in server logs
 **Solution:** Ensure DATA_MANIFEST.json is in project root

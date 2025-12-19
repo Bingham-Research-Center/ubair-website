@@ -1,7 +1,6 @@
 // Enhanced forecast_outlooks.js with proper risk word highlighting
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof markdownit === 'undefined') {
-        console.error('markdown-it library not loaded');
         return;
     }
 
@@ -22,30 +21,33 @@ document.addEventListener("DOMContentLoaded", function() {
     // Enhanced risk word highlighting function
     function highlightRiskWords(html) {
         return html
-            // NO RISK - Green
-            .replace(/\bNO RISK\b/g, '<span class="risk-indicator risk-no">NO RISK</span>')
-            .replace(/\bNO\b(?=\s+(RISK|CONCERN))/g, '<span style="color: #22c55e; font-weight: 600;">NO</span>')
+            // Full "X RISK" phrases - Green/Blue/Orange/Red pills
+            .replace(/\bNO RISK\b/gi, '<span class="risk-indicator risk-no">NO RISK</span>')
+            .replace(/\bLOW RISK\b/gi, '<span class="risk-indicator risk-low">LOW RISK</span>')
+            .replace(/\b(MODERATE|MEDIUM) RISK\b/gi, '<span class="risk-indicator risk-moderate">MODERATE RISK</span>')
+            .replace(/\bHIGH RISK\b/gi, '<span class="risk-indicator risk-high">HIGH RISK</span>')
 
-            // LOW RISK - Blue
-            .replace(/\bLOW RISK\b/g, '<span class="risk-indicator risk-low">LOW RISK</span>')
-            .replace(/\bLOW\b(?=\s+(RISK|CONFIDENCE))/g, '<span style="color: #3b82f6; font-weight: 600;">LOW</span>')
+            // Standalone risk levels (e.g., after "ELEVATED OZONE:") - also get pill styling
+            .replace(/(?<=[:]\s*)<strong>(NO|NONE)<\/strong>/gi, '<span class="risk-indicator risk-no">$1</span>')
+            .replace(/(?<=[:]\s*)<strong>LOW<\/strong>/gi, '<span class="risk-indicator risk-low">LOW</span>')
+            .replace(/(?<=[:]\s*)<strong>(MODERATE|MEDIUM)<\/strong>/gi, '<span class="risk-indicator risk-moderate">$1</span>')
+            .replace(/(?<=[:]\s*)<strong>HIGH<\/strong>/gi, '<span class="risk-indicator risk-high">HIGH</span>')
 
-            // MODERATE RISK - Orange
-            .replace(/\bMODERATE RISK\b/g, '<span class="risk-indicator risk-moderate">MODERATE RISK</span>')
-            .replace(/\bMODERATE\b(?=\s+(RISK|CONFIDENCE))/g, '<span style="color: #f59e0b; font-weight: 600;">MODERATE</span>')
+            // Standalone bold risk words without colon prefix
+            .replace(/<strong>(NO|NONE)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-no">$1</span>')
+            .replace(/<strong>LOW<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-low">LOW</span>')
+            .replace(/<strong>(MODERATE|MEDIUM)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-moderate">$1</span>')
+            .replace(/<strong>HIGH<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-high">HIGH</span>')
 
-            // HIGH RISK - Red
-            .replace(/\bHIGH RISK\b/g, '<span class="risk-indicator risk-high">HIGH RISK</span>')
-            .replace(/\bHIGH\b(?=\s+(RISK|CONFIDENCE))/g, '<span style="color: #dc2626; font-weight: 600;">HIGH</span>')
-
-            // Standalone confidence indicators
-            .replace(/\b(HIGH|MODERATE|LOW) CONFIDENCE\b/g, (match, level) => {
+            // Confidence indicators
+            .replace(/\b(HIGH|MODERATE|MEDIUM|LOW) CONFIDENCE\b/gi, (match, level) => {
                 const colors = {
                     'HIGH': '#22c55e',
                     'MODERATE': '#f59e0b',
+                    'MEDIUM': '#f59e0b',
                     'LOW': '#dc2626'
                 };
-                return `<span style="color: ${colors[level]}; font-weight: 600;">${match}</span>`;
+                return `<span style="color: ${colors[level.toUpperCase()]}; font-weight: 600;">${match.toUpperCase()}</span>`;
             });
     }
 
@@ -58,7 +60,17 @@ document.addEventListener("DOMContentLoaded", function() {
             }
 
             const response = await fetch(`/api/static/outlooks/${filename}`);
-            if (!response.ok) throw new Error(`Failed to load outlook: ${response.status}`);
+            if (!response.ok) {
+                const target = summaryOnly ? outlookSummary : outlookContent;
+                if (target) {
+                    target.innerHTML = `
+                        <div class="error">
+                            <p>Failed to load outlook: ${response.status}</p>
+                        </div>
+                    `;
+                }
+                return;
+            }
 
             const markdown = await response.text();
 
@@ -101,7 +113,6 @@ document.addEventListener("DOMContentLoaded", function() {
                 makeCollapsible();
             }
         } catch (error) {
-            console.error("Error loading outlook:", error);
             const target = summaryOnly ? outlookSummary : outlookContent;
             if (target) {
                 target.innerHTML = `
@@ -230,13 +241,15 @@ document.addEventListener("DOMContentLoaded", function() {
             archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
 
             const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
+            if (!response.ok) {
+                archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${response.status}</p></div>`;
+                return;
+            }
 
             const outlooks = await response.json();
             populateArchiveList(outlooks);
 
         } catch (error) {
-            console.error("Error loading outlooks list:", error);
             archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${error.message}</p></div>`;
         }
     }
@@ -284,7 +297,11 @@ document.addEventListener("DOMContentLoaded", function() {
     async function loadLatestOutlook(summaryOnly = false) {
         try {
             const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`Failed to load outlooks list: ${response.status}`);
+            if (!response.ok) {
+                const target = summaryOnly ? outlookSummary : outlookContent;
+                if (target) target.innerHTML = 'Error loading latest outlook.';
+                return;
+            }
 
             const outlooks = await response.json();
             if (!outlooks || outlooks.length === 0) {
@@ -295,7 +312,6 @@ document.addEventListener("DOMContentLoaded", function() {
 
             loadOutlook(outlooks[0].filename, summaryOnly);
         } catch (error) {
-            console.error("Error loading latest outlook:", error);
             const target = summaryOnly ? outlookSummary : outlookContent;
             if (target) target.innerHTML = 'Error loading latest outlook.';
         }

@@ -81,3 +81,17 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-po
     color: var(--usu-blue);
     font-size: 14px;
 }
+
+/* Weather-only station diamond markers */
+.weather-only-marker {
+    background: transparent;
+}
+
+.weather-diamond {
+    width: 10px;
+    height: 10px;
+    background: #888;
+    transform: rotate(45deg);
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}

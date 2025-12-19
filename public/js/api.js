@@ -201,10 +201,15 @@ function processObservationData(rawData, metadata = {}) {
             const metadataName = metadata[stid]?.name;
             const stationName = mapStationName(stid, metadataName);
             if (stationName && data[variable] !== undefined) {
-                result[variable][stationName] = data[variable];
-                // Store timestamp for this station
+                // Only set if not already set (merge alt station IDs, don't overwrite)
+                if (!result[variable][stationName]) {
+                    result[variable][stationName] = data[variable];
+                }
+                // Store timestamp for this station (use most recent if multiple)
                 if (stationTimestamps[stid]) {
-                    timestamps[stationName] = stationTimestamps[stid];
+                    if (!timestamps[stationName] || stationTimestamps[stid] > timestamps[stationName]) {
+                        timestamps[stationName] = stationTimestamps[stid];
+                    }
                 }
             }
         });
@@ -260,19 +265,26 @@ function mapStationName(stid, metadataName = null) {
         'KU69': 'Duchesne',       // Alternative Duchesne station
         'UINU1': 'Fort Duchesne',
         
-        // Basin Perimeter & Geographic Coverage
+        // Basin Coverage
         'UTMYT': 'Myton',
-        'COOPDINU1': 'Dinosaur NM',  // NEEDS DATA EXPORT
-        'COOPALMU1': 'Altamont',     // NEEDS DATA EXPORT
-        'UCC34': 'Bluebell',
-        'K40U': 'Manila',            // Dutch John area
-        'UTSTV': 'Starvation',
-        
+        'UBMYT': 'Myton',
+        'COOPDINU1': 'Dinosaur NM',
+        'COOPALMU1': 'Altamont',
+        // 'UCC34': 'Bluebell',      // Removed from homepage config
+        // 'K40U': 'Manila',         // Removed from homepage config
+        // 'UTSTV': 'Starvation',    // Removed from homepage config
+
+        // Additional Required Stations (primary IDs)
+        'UBRDW': 'Red Wash',
+        'UBORY': 'Ouray',
+        'UBDRF': 'Dry Fork',
+        'UBWHR': 'Whiterocks',
+
         // Mountain Passes
         'UTDAN': 'Daniels Summit',
         'UTICS': 'Indian Canyon',
         'UTSLD': 'Soldier Summit',
-        
+
         // Legacy/Alternative names (keep for compatibility)
         'BUNUT': 'Roosevelt',
         'CHPU1': 'Ouray',

@@ -51,13 +51,10 @@
 .site-logo {
     width: clamp(180px, 20vw, 300px);
     height: auto;
-    margin-left: clamp(1%, 5vw, 5%);
     flex-shrink: 0;
     border-radius: 8px;
-    /* Enhanced fade on edges - more aggressive transparency */
     -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
     mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
-    /* Add subtle shadow for depth */
     filter: drop-shadow(0 4px 12px rgba(0, 38, 58, 0.15));
     transition: all 0.3s ease;
 }
@@ -220,6 +217,14 @@
     color: #ef4444;
 }
 
+.headline-item.info {
+    border-left-color: #3b82f6;
+}
+
+.headline-item.info .headline-icon {
+    color: #3b82f6;
+}
+
 .headline-icon {
     font-size: 1.6rem;
     color: #64748b;
@@ -320,30 +325,22 @@
 }
 
 /* Disclaimer Styles */
-.overlay-container .disclaimer {
-    padding: 15px;
-    font-size: 0.75rem;
-    color: var(--usu-light-gray);
-    background-color: var(--usu-blue);
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-.outlook-content .disclaimer {
-    padding: 15px;
-    font-size: 0.75rem;
-    color: var(--usu-light-gray);
-    background-color: var(--usu-blue);
-    border-radius: 5px;
-    margin-top: 20px;
-}
-
+.overlay-container .disclaimer,
+.outlook-content .disclaimer,
 .post .disclaimer {
     padding: 15px;
     font-size: 0.75rem;
     color: var(--usu-light-gray);
     background-color: var(--usu-blue);
     border-radius: 5px;
+}
+
+.overlay-container .disclaimer {
+    margin-top: 10px;
+}
+
+.outlook-content .disclaimer,
+.post .disclaimer {
     margin-top: 20px;
 }
 
@@ -351,26 +348,30 @@
 .main-footer {
     position: fixed;
     bottom: 0;
-    right: 0;
+    left: 250px;
     width: calc(100% - 250px);
     background-color: var(--usu-blue);
     color: white;
     text-align: center;
     padding: 15px 20px;
+    min-height: 50px;
     z-index: 1000;
-    margin-left: 250px;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
 
 .footer-content {
     max-width: 1200px;
     margin: 0 auto;
+    width: 100%;
 }
 
 .footer-content p {
     margin: 0;
     font-size: 0.875rem;
     opacity: 0.9;
+    line-height: 1.5;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 
 /* Header */
@@ -390,23 +391,12 @@
     z-index: 2;
 }
 
-/* Add subtle gradient overlays */
-.visualization-container::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(45deg, transparent 0%, rgba(0, 38, 58, 0.02) 50%, transparent 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-
 /* Content Layout */
-.content {
+.content,
+main.content {
     margin-left: 270px;
     padding: 2rem;
+    padding-bottom: 100px;
     width: calc(100vw - 270px);
     box-sizing: border-box;
     position: relative;
@@ -414,11 +404,7 @@
 }
 
 main.content {
-    margin-left: 270px;
-    padding: 2rem;
-    width: calc(100vw - 270px);
     min-height: calc(100vh - 120px);
-    box-sizing: border-box;
 }
 
 /* Outlook Preview Styling */
@@ -595,31 +581,32 @@ main.content {
 
 .forecast-link a:hover {
     background: var(--usu-light-blue);
-    color: white;
+    color: var(--usu-blue);
     transform: translateY(-1px);
 }
 
-/* Compact Map Legend */
+/* Compact Map Legend - Starts Visible, Collapsible */
 .map-legend-compact {
-    position: relative;
+    margin-top: 0.75rem;
     text-align: center;
-    margin-top: 0.5rem;
 }
 
 .legend-toggle {
     background: rgba(0, 38, 58, 0.1);
     border: 1px solid rgba(0, 38, 58, 0.2);
     color: var(--usu-blue);
-    padding: 0.4rem 0.8rem;
+    padding: 0.5rem 1rem;
     border-radius: 6px;
     cursor: pointer;
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 500;
     transition: all 0.2s ease;
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.5rem;
     justify-content: center;
+    margin: 0 auto;
+    width: fit-content;
 }
 
 .legend-toggle:hover {
@@ -629,18 +616,12 @@ main.content {
 
 .legend-dropdown {
     display: none;
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: 0.75rem;
+    padding: 0.75rem;
     background: white;
     border: 1px solid rgba(0, 38, 58, 0.2);
-    border-radius: 6px;
-    padding: 0.5rem;
-    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.15);
-    z-index: 100;
-    min-width: 200px;
-    margin-top: 0.3rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
 }
 
 .legend-dropdown.active {
@@ -650,7 +631,7 @@ main.content {
 .legend-items-compact {
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.4rem;
 }
 
 .legend-row {
@@ -677,8 +658,9 @@ main.content {
 }
 
 .legend-section-header {
-    font-size: 0.8rem;
+    font-size: 0.85rem;
     font-weight: 600;
+    font-style: italic;
     color: var(--usu-blue);
     text-align: center;
     margin: 0.5rem 0 0.3rem 0;
@@ -773,68 +755,9 @@ main.content {
     transform: translateY(0);
 }
 
-/* Responsive Design - Mobile, Tablet, Laptop, Desktop */
-
-/* Tablet (768px - 1023px) - Sidebar collapses */
-@media (min-width: 768px) and (max-width: 1023px) {
-    .content {
-        margin-left: 0;
-        width: 100%;
-        padding: 1.5rem;
-    }
-
-    main.content {
-        margin-left: 0;
-    }
-
-    .sidebar_container {
-        position: fixed;
-        left: -270px;
-        transition: left 0.3s ease;
-        z-index: 1000;
-    }
-
-    .sidebar_container.active {
-        left: 0;
-    }
+.sidebar-disclaimer {
+    color: var(--usu-light-blue);
 }
 
-/* Mobile (< 768px) - Full width, stacked layout */
-@media (max-width: 767px) {
-    .content {
-        margin-left: 0;
-        width: 100%;
-        padding: 1rem;
-    }
 
-    main.content {
-        margin-left: 0;
-        padding: 1rem;
-    }
-
-    .sidebar_container {
-        position: fixed;
-        left: -270px;
-        transition: left 0.3s ease;
-        z-index: 1000;
-    }
-
-    .sidebar_container.active {
-        left: 0;
-    }
-
-    /* Stack controls vertically on mobile */
-    .controls-grid {
-        grid-template-columns: 1fr;
-    }
-
-    /* Make action buttons stack */
-    .action-buttons {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    .action-buttons button {
-        width: 100%;
-    }
-}
+/* Responsive Design - See mobile.css for comprehensive responsive styles */

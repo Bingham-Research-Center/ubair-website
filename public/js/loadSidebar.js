@@ -12,9 +12,7 @@ const PAGE_DISCLAIMERS = {
         Consult with agricultural extension services and professional agronomists for farming decisions.
         ©2024, Utah State University.`,
 
-    '/roads': `DISCLAIMER: Road weather information is for reference only and should not replace official
-        UDOT road conditions and travel advisories. Always check current road conditions before traveling.
-        ©2024, Utah State University.`,
+    '/roads': `This site uses real-time transportation data provided by the Utah Department of Transportation (UDOT). While we strive to display accurate information, UDOT does not guarantee the completeness or timeliness of this data. The data is provided 'as is' and may be subject to change without notice. Users should independently verify any critical information. ©2025, Utah State University.`,
 
     '/aviation': `DISCLAIMER: Aviation weather products are for planning purposes only. Always obtain official
         weather briefings from Flight Service or approved sources before flight operations.
@@ -62,19 +60,10 @@ async function loadSidebar() {
         // Get current page disclaimer
         const pageDisclaimer = PAGE_DISCLAIMERS[currentPath];
 
-        // If there's a disclaimer for this page, show it
-        if (pageDisclaimer) {
-            const disclaimer = document.querySelector('.sidebar-disclaimer');
-            if (disclaimer) {
-                disclaimer.style.display = 'block';
-                disclaimer.querySelector('p').textContent = pageDisclaimer;
-            }
-        }
-
-        // Highlight current page in navigation
-        // const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
-        if (currentPageLink) {
-            currentPageLink.classList.add('active');
+        // Update disclaimer text if there's a page-specific one
+        const disclaimer = document.querySelector('.sidebar-disclaimer');
+        if (disclaimer && pageDisclaimer) {
+            disclaimer.querySelector('p').textContent = pageDisclaimer;
         }
 
         // Load mobile menu script after sidebar is loaded

@@ -70,13 +70,14 @@ python chpc_uploader.py --health-check
 
 The pipeline pulls data from Synoptic Weather API using `brc-tools`, processes it, and uploads to BasinWx following the manifest schedule:
 
-| Data Type | Frequency | Schedule (cron) |
-|-----------|-----------|-----------------|
-| Observations | Every 10 min | `*/10 * * * *` |
-| Metadata | Every 6 hours | `0 */6 * * *` |
-| Time Series | Hourly | `0 * * * *` |
-| Outlooks | Twice daily | `0 6,18 * * *` |
-| Images | Every 30 min | `*/30 * * * *` |
+| Data Type | Frequency | Schedule (cron) | Automation |
+|-----------|-----------|-----------------|------------|
+| Observations | Every 10 min | `*/10 * * * *` | Automatic |
+| Metadata | Every 6 hours | `0 */6 * * *` | Automatic |
+| Time Series | Hourly | `0 * * * *` | Automatic |
+| Outlooks | Ad-hoc (once daily max, may be less) | Manual trigger | Manual |
+| Images | Every 30 min | `*/30 * * * *` | Automatic |
+| **Clyfar Forecasts** | **4× daily at 03:30, 09:30, 15:30, 21:30 UTC** | **`30 3,9,15,21 * * *`** | **[PLANNED] Automatic** |
 
 ### Create Main Pipeline Script
 
