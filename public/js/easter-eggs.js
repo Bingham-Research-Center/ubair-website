@@ -110,9 +110,68 @@ class EasterEggManager {
         }
     }
 
-    /**Sports page easter egg */
+    /**
+     *  Sports page easter egg
+     */
     activateSportsEasterEgg() {
-        console.log("TEST");
+        const easterEggHTML = `
+            <div class="easter-egg-box coin-egg" id="coinEgg">
+                <button class="easter-egg-toggle" id="coinToggle">
+                    <span class="toggle-icon">▼</span>
+                    <span class="toggle-text">COIN FLIP</span>
+                </button>
+                <div class="easter-egg-content" id="coinContent">
+                    <div class="easter-egg-text" id="coinResult">
+                        ! THIS IS CURRENTLY FOR TESTING !
+                    </div>
+                    <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
+                        FLIP A COIN AND GET A FORTUNE
+                    </button>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
+
+        // Add event listeners
+        const toggle = document.getElementById('coinToggle');
+        const content = document.getElementById('coinContent');
+        const filterBtn = document.getElementById('coinFilterBtn');
+
+        toggle.addEventListener('click', () => {
+            content.classList.toggle('hidden');
+            const icon = toggle.querySelector('.toggle-icon');
+            icon.textContent = content.classList.contains('hidden') ? '▶' : '▼';
+        });
+
+        filterBtn.addEventListener('click', () => {
+            //Decides coin side
+            const side = Math.floor(Math.random() * 2);
+            var sideFace = "N/A";
+            if (side == 0) {
+                sideFace = "TAILS"
+            } else {
+                sideFace = "HEADS"
+            }
+
+            //Decides fortune
+            const omens = [
+                "You will *probably* not find an abandoned $25,000 briefcase today.",
+                "You will *probably* not be struck by lightning tonight.",
+                "You will *probably* not win the lottery today.",
+                "You will *probably* breath today.",
+                "You will *probably* not be abducted by aliens tonight.",
+                "You will *probably* not find ancient aztec gold today.",
+                "You will *probably* have to do your taxes eventually",
+                "You will *probably* not watch Shrek with French subtitles, German audio, and Russian captions tonight.",
+                "You will continue to be on this website."
+            ];
+            const selectedOmen = omens[Math.floor(Math.random() * omens.length)];
+
+            const resultText = "You flipped a " + sideFace + "! " + selectedOmen;
+            const query = document.getElementById('coinResult');
+            query.textContent = resultText;
+        });
     }
 
     /**
