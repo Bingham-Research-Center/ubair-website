@@ -54,8 +54,8 @@ document.addEventListener('DOMContentLoaded', function() {
     fixUSULogo();
     updateMap(); // Initial data load
 
-    // Auto-refresh every x minutes
-    setInterval(updateMap, 10 * 60 * 1000);
+    // Auto-refresh every 5 minutes to match front page
+    setInterval(updateMap, 5 * 60 * 1000);
 });
 
 function setupStudyAreaToggle() {
