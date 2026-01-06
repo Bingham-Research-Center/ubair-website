@@ -114,19 +114,18 @@ class EasterEggManager {
      *  Sports page easter egg
      */
     activateSportsEasterEgg() {
+        var flips = 0;
         const easterEggHTML = `
             <div class="easter-egg-box coin-egg" id="coinEgg">
                 <button class="easter-egg-toggle" id="coinToggle">
                     <span class="toggle-icon">▼</span>
-                    <span class="toggle-text">COIN FLIP</span>
+                    <span class="toggle-text">COIN FLIP + FORTUNE</span>
                 </button>
                 <div class="easter-egg-content" id="coinContent">
-                    <div class="easter-egg-text" id="coinResult">
-                        ! THIS IS CURRENTLY FOR TESTING !
-                    </div>
                     <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
-                        FLIP A COIN AND GET A FORTUNE
+                        FLIP A COIN + GET A FORTUNE
                     </button>
+                    <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
                 </div>
             </div>
         `;
@@ -147,7 +146,7 @@ class EasterEggManager {
         filterBtn.addEventListener('click', () => {
             //Decides coin side
             const side = Math.floor(Math.random() * 2);
-            var sideFace = "N/A";
+            var sideFace;
             if (side == 0) {
                 sideFace = "TAILS"
             } else {
@@ -168,6 +167,27 @@ class EasterEggManager {
             ];
             const selectedOmen = omens[Math.floor(Math.random() * omens.length)];
 
+            //CHANGES TEXT ON FILTER BUTTON
+            flips += 1;
+            var message = "FLIP AGAIN?";
+            if (flips >= 8) {
+                message = "SLOW DOWN THERE!";
+            }
+            if (flips >= 16) {
+                message = "IT MIGHT BE TIME FOR A BREAK!";
+            }
+            if (flips >= 30) {
+                message = "YOU HAVE A BIT OF A PROBLEM!";
+            }
+            if (flips >= 50) {
+                message = "STOP IT! STOP IT!";
+            }
+            if (flips >= 75) {
+                message = "💀💀💀";
+            }
+            filterBtn.textContent = message + " (" + flips.toString() + ")";
+
+            //DISPLAYS RESULT
             const resultText = "You flipped a " + sideFace + "! " + selectedOmen;
             const query = document.getElementById('coinResult');
             query.textContent = resultText;

@@ -145,17 +145,35 @@
 .coin-egg {
     top: 80px;
     left: 280px;
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
 }
 
 .coin-btn {
-    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    background: linear-gradient(135deg, #960505 0%, #b91010 100%);
     color: darkred;
     width: 100%;
+
 }
 
 .coin-btn:hover {
-    background: linear-gradient(135deg, #047857 0%, #059669 100%);
+    background: linear-gradient(135deg, #780404 0%, #960505 100%);
+}
+
+.coin-filter-btn {
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    color: black;
+    width: 100%;
+}
+
+.coin-filter-btn:hover {
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+    color: red;
+}
+.rainbow-txt {
+    font-weight: 800;
+    background-image: linear-gradient(to left, violet, indigo, blue, green, goldenrod, orange, red);
+    background-clip: text;
+    color: transparent;
 }
 
 /* ========================================
