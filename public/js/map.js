@@ -86,72 +86,24 @@ function setupStudyAreaToggle() {
 }
 
 function setupKioskControl() {
-    // Setting up kiosk control...
-
-    // Wait for map to be fully initialized
-    setTimeout(() => {
-        // Create kiosk control using bottomright position (Leaflet standard)
-        const kioskControl = L.control({position: 'bottomright'});
-
-        kioskControl.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'kiosk-control-bottom');
-            div.innerHTML = `
-                <div class="kiosk-container-bottom">
-                    <label for="map-kiosk-toggle" class="kiosk-label">Auto-cycle stations:</label>
-                    <div class="kiosk-switch-map" id="map-kiosk-toggle">
-                        <div class="switch-slider-map">
-                            <div class="timer-fill" id="timer-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Prevent map interactions on the control
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            return div;
-        };
-
-        try {
-            kioskControl.addTo(map);
-            // Kiosk control added to map successfully
-
-            // Add event listener after control is added to DOM
-            setTimeout(() => {
-                const kioskToggle = document.getElementById('map-kiosk-toggle');
-                if (kioskToggle) {
-                    kioskToggle.addEventListener('click', function() {
-                        // Kiosk toggle clicked, toggling mode
-                        mapKioskMode = !mapKioskMode;
-                        const switchEl = this;
-                        const timerFill = document.getElementById('timer-fill');
-
-                        if (mapKioskMode) {
-                            // Starting kiosk mode...
-                            switchEl.classList.add('active');
-                            if (timerFill) {
-                                timerFill.style.animation = 'timer-fill 5s linear infinite';
-                            }
-                            startKioskMode();
-                        } else {
-                            // Stopping kiosk mode...
-                            switchEl.classList.remove('active');
-                            if (timerFill) {
-                                timerFill.style.animation = 'none';
-                            }
-                            stopKioskMode();
-                        }
-                    });
-                    // Kiosk control event listener attached
-                } else {
-                    console.error('Kiosk toggle element not found after timeout');
-                }
-            }, 200);
-        } catch (error) {
-            console.error('Error adding kiosk control to map:', error);
-        }
-    }, 500);
+    // Use the HTML-based kiosk control for better visibility
+    const kioskToggle = document.getElementById('kiosk-switch');
+    
+    if (kioskToggle) {
+        kioskToggle.addEventListener('click', function() {
+            mapKioskMode = !mapKioskMode;
+            
+            if (mapKioskMode) {
+                kioskToggle.classList.add('active');
+                startKioskMode();
+            } else {
+                kioskToggle.classList.remove('active');
+                stopKioskMode();
+            }
+        });
+    } else {
+        console.warn('Kiosk toggle element not found in DOM');
+    }
 }
 
 function fixUSULogo() {
@@ -249,6 +201,9 @@ async function updateMap() {
         measurements[variable] = stationValues[stationName] ?? null;
       }
 
+      // Get timestamp for this station
+      const stationTimestamp = observations._timestamps?.[stationName] ?? null;
+
       // Check if this is a road station (from config.js)
       const configStation = configStations[stationName];
       const isRoadStation = configStation?.type === 'road';
@@ -259,7 +214,7 @@ async function updateMap() {
         continue;
       }
 
-      const marker = createStationMarker(stationName, stationInfo, measurements, units);
+      const marker = createStationMarker(stationName, stationInfo, measurements, units, stationTimestamp);
       if (marker) {
         markers.push(marker);
         validStations++;
@@ -273,7 +228,7 @@ async function updateMap() {
 }
 
 // Helper function to create station markers (if not already defined)
-function createStationMarker(stationName, stationInfo, measurements, units = {}) {
+function createStationMarker(stationName, stationInfo, measurements, units = {}, timestamp = null) {
     try {
         const hasOzone = measurements && measurements['Ozone'] != null;
         const color = getMarkerColor(measurements);
@@ -300,9 +255,12 @@ function createStationMarker(stationName, stationInfo, measurements, units = {})
             });
         }
 
-        // Create popup content with dynamic units
-        const popupContent = createPopupContent(stationName, measurements, units);
-        marker.bindPopup(popupContent);
+        // Create popup content with dynamic units and timestamp
+        const popupContent = createPopupContent(stationName, measurements, units, timestamp);
+        marker.bindPopup(popupContent, {
+            maxWidth: 300,
+            className: 'two-column-popup'
+        });
 
         // Add to map
         marker.addTo(map);

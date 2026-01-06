@@ -84,10 +84,8 @@ function getCardinalDirection(degrees) {
     return directions[index];
 }
 
-// Create popup content for a station
-export function createPopupContent(stationName, measurements, units = {}) {
-    let content = `<h3>${stationName}</h3>`;
-
+// Create popup content for a station with two-column layout
+export function createPopupContent(stationName, measurements, units = {}, timestamp = null) {
     // Filter and sort measurements by priority
     const priorityMeasurements = Object.entries(measurements)
         .filter(([variable, value]) => {
@@ -106,23 +104,16 @@ export function createPopupContent(stationName, measurements, units = {}) {
 
     // If no priority measurements, show a message
     if (priorityMeasurements.length === 0) {
-        content += `<div class="measurement">No air quality data available</div>`;
-        return content;
+        return `<div><h3>${stationName}</h3><div>No air quality data available</div></div>`;
     }
 
-    // Display each priority measurement
-    for (const [variable, value] of priorityMeasurements) {
+    let leftCol = '';
+    let rightCol = '';
+
+    // Display each priority measurement in two columns
+    priorityMeasurements.forEach(([variable, value], index) => {
         const threshold = thresholds[variable];
-        let className = 'measurement';
-
-        if (threshold) {
-            if (value >= threshold.danger) {
-                className += ' danger';
-            } else if (value >= threshold.warning) {
-                className += ' warning';
-            }
-        }
-
+        
         // Get unit dynamically from data, with empty string as fallback
         const unit = units[variable] || '';
         let displayValue = typeof value === 'number' ? value.toFixed(1) : value;
@@ -132,12 +123,45 @@ export function createPopupContent(stationName, measurements, units = {}) {
             displayValue = getCardinalDirection(value);
         }
 
-        content += `<div class="${className}">
-            ${variable}: ${displayValue}${unit ? ' ' + unit : ''}
-        </div>`;
+        const item = `<div style="margin: 4px 0;"><strong>${variable}:</strong> ${displayValue}${unit ? ' ' + unit : ''}</div>`;
+
+        if (index % 2 === 0) {
+            leftCol += item;
+        } else {
+            rightCol += item;
+        }
+    });
+
+    // Format timestamp
+    let timestampHtml = '';
+    if (timestamp) {
+        try {
+            const date = new Date(timestamp);
+            const formatOptions = {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZoneName: 'short'
+            };
+            const formattedTime = date.toLocaleString('en-US', formatOptions);
+            timestampHtml = `<div style="text-align: center; font-size: 0.85em; color: #666; margin-top: 8px; font-style: italic;">Data from: ${formattedTime}</div>`;
+        } catch (e) {
+            // If timestamp parsing fails, don't show it
+            console.warn('Failed to parse timestamp:', timestamp);
+        }
     }
 
-    return content;
+    return `
+        <div style="min-width: 280px;">
+            <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--usu-blue);">${stationName}</h3>
+            <div style="display: flex; gap: 20px;">
+                <div style="flex: 1;">${leftCol}</div>
+                <div style="flex: 1;">${rightCol}</div>
+            </div>
+            ${timestampHtml}
+        </div>
+    `;
 }
 
 

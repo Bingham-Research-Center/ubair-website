@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BasinWx</title>
+    <title>BasinWx - Live Air Quality</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx2.ico">
 
     <!-- Font Awesome -->
@@ -15,7 +15,17 @@
 </head>
 <body data-page-type="live_aq">
 <!-- Map Container -->
-<div id="map"></div>
+<div id="map">
+    <!-- Auto-cycle control overlay on map -->
+    <div class="map-controls-overlay">
+        <div class="kiosk-switch-container">
+            <div class="kiosk-switch" id="kiosk-switch" title="Auto-cycle through station popups">
+                <div class="switch-slider"></div>
+            </div>
+            <label for="kiosk-switch" class="auto-cycle-label">Auto-cycle</label>
+        </div>
+    </div>
+</div>
 
 <!-- USU Logo -->
 <div class="usu-logo">
