@@ -73,15 +73,15 @@
 
 /* Enhanced risk indicators with background styling */
 .risk-indicator {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: 6px;
+    display: inline;
+    padding: 3px 8px;
+    border-radius: 4px;
     font-weight: 700;
-    font-size: 0.9rem;
-    margin: 0 4px;
+    font-size: inherit;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    white-space: nowrap;
 }
 
 .risk-no, .risk-low {
@@ -101,6 +101,7 @@
     color: #b91c1c;
     border: 1px solid #dc2626;
 }
+
 
 /* Confidence indicators */
 .confidence-indicator {

@@ -74,13 +74,21 @@ CHPC (Data Processing) → API Upload → Akamai Server → Web Interface
 - [ ] Regional expansion where warranted (e.g. Wyoming; Wasatch Front)
 ## Contributing
 
-We welcome contributions; guidelines will come soon for:
+We welcome contributions. Guidelines:
 
-- Code style standards
-- Testing requirements
-- Pull-request (BR) process
-- Bug reporting and/or troubleshooting
-- Working with GitHub CoPilot effectively
+- **Code style standards**: Low verbosity, prune bloat, transparent AI use
+- **Testing requirements**: Test-driven workflow to catch regressions early (see #91)
+- **Pull-request process**: Co-author git commits, review before merge
+- **Bug reporting**: Use GitHub Issues with clear reproduction steps
+- **Working with AI agents**: Document all AI contributions via git authorship
+
+### Documentation Philosophy
+We maintain docs for three audiences:
+1. **Human developers** - Technical architecture, setup guides, contribution workflow
+2. **Typical users** - Plain-language explainers, feature guides, contact info  
+3. **AI agents** - Context files (CLAUDE.md), data schemas, system architecture
+
+Keep docs terse, current, and audience-appropriate. Prune outdated content aggressively.
 
 ## Cool Commands (CHPC / Ops)
 
