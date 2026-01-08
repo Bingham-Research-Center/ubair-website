@@ -121,7 +121,9 @@
     margin-top: auto;
     flex-shrink: 0;
 }
-
+.sidebar-disclaimer:hover {
+    color: white;
+}
 .sidebar-disclaimer p {
     margin: 0.5em 0;
     line-height: 1.4;
