@@ -127,6 +127,17 @@ class EasterEggManager {
                     </button>
                     <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
                 </div>
+                
+                <button class="easter-egg-toggle" id="gameToggle">
+                    <span class="game-toggle-icon">▼</span>
+                    <span class="toggle-text">GAME</span>
+                </button>
+                    <div class="easter-egg-content" id="gameContent">
+                        <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">1</button>
+                        <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">2</button>
+                        <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
+                    </div>
+                </div>
             </div>
         `;
 
@@ -136,6 +147,9 @@ class EasterEggManager {
         const toggle = document.getElementById('coinToggle');
         const content = document.getElementById('coinContent');
         const filterBtn = document.getElementById('coinFilterBtn');
+        const gameFilterBtn = document.getElementById('gameFilterBtn');
+        const gameToggle = document.getElementById('gameToggle');
+        const gameContent = document.getElementById('gameContent');
 
         toggle.addEventListener('click', () => {
             content.classList.toggle('hidden');
@@ -143,6 +157,13 @@ class EasterEggManager {
             icon.textContent = content.classList.contains('hidden') ? '▶' : '▼';
         });
 
+        gameToggle.addEventListener('click', () => {
+            gameContent.classList.toggle('hidden');
+        });
+
+        /**
+         * COIN FLIP + FORTUNE FUNCTIONALITY
+         */
         filterBtn.addEventListener('click', () => {
             //Decides coin side
             const side = Math.floor(Math.random() * 2);
