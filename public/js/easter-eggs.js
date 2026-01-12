@@ -159,6 +159,8 @@ class EasterEggManager {
 
         gameToggle.addEventListener('click', () => {
             gameContent.classList.toggle('hidden');
+            const icon = gameToggle.querySelector('.game-toggle-icon');
+            icon.textContent = gameContent.classList.contains('hidden') ? '▶' : '▼';
         });
 
         /**
