@@ -119,7 +119,7 @@ class EasterEggManager {
             <div class="easter-egg-box coin-egg" id="coinEgg">
                 <button class="easter-egg-toggle" id="coinToggle">
                     <span class="toggle-icon">▼</span>
-                    <span class="toggle-text">COIN FLIP + FORTUNE</span>
+                    <span class="toggle-text">COIN FLIP + FORTUNE (EXPERIMENTAL)</span>
                 </button>
                 <div class="easter-egg-content" id="coinContent">
                     <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
@@ -130,13 +130,24 @@ class EasterEggManager {
                 
                 <button class="easter-egg-toggle" id="gameToggle">
                     <span class="game-toggle-icon">▼</span>
-                    <span class="toggle-text">GAME</span>
+                    <span class="toggle-text">GAME (EXPERIMENTAL)</span>
                 </button>
                     <div class="easter-egg-content" id="gameContent">
-                        <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">1</button>
-                        <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">2</button>
-                        <input type="range" min="0" max="10" value="5" class="slider game-slider" id="gameSlider">
-                        <div class="easter-egg-text rainbow-txt" id="gameResult"></div>
+                        <div class="easter-egg-text">
+                            RULES:
+                            <ul>
+                                <li class="rule-entry">You have 1000 points to guess with</li>
+                                <li class="rule-entry">You can divide them between the 2 options however you like</li>
+                                <li class="rule-entry">When you place your guess, one side is chosen</li>
+                                <li class="rule-entry">All tokens on the losing side are decreased by %75</li>
+                                <li class="rule-entry">All tokens on winning side are increased by %50</li>
+                                <li class="rule-entry">3000 Tokens to win</li>
+                            </ul>
+                        </div>
+                        <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
+                        <div class="easter-egg-text" id="gamePreportion"></div>
+                        <button class="easter-egg-action-btn coin-filter-btn" id="gameGuessBtn">Place guess</button>
+                        <div class="easter-egg-text" id="gameResult"></div>
                     </div>
                 </div>
             </div>
@@ -144,19 +155,14 @@ class EasterEggManager {
 
         document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
+        /**
+         * TOP SEGMENT WITH COIN FLIP + FORTUNE
+         */
         // Add event listeners
         const toggle = document.getElementById('coinToggle');
         const content = document.getElementById('coinContent');
         const filterBtn = document.getElementById('coinFilterBtn');
 
-        const gameFilterBtn = document.getElementById('gameFilterBtn');
-        const gameToggle = document.getElementById('gameToggle');
-        const gameContent = document.getElementById('gameContent');
-        const gameSlider = document.getElementById('gameSlider');
-
-        /**
-         * TOP SEGMENT WITH COIN FLIP + FORTUNE
-         */
         toggle.addEventListener('click', () => {
             content.classList.toggle('hidden');
             const icon = toggle.querySelector('.toggle-icon');
@@ -219,6 +225,19 @@ class EasterEggManager {
         /**
          * BOTTOM SEGMENT WITH GAME
          */
+        const gameGuessBtn = document.getElementById('gameGuessBtn');
+        const gameToggle = document.getElementById('gameToggle');
+        const gameContent = document.getElementById('gameContent');
+        const gameSlider = document.getElementById('gameSlider');
+
+        function updateSliderDisplay() {
+            const gameQuery = document.getElementById('gamePreportion');
+            var left = (gameSlider.value);
+            var right = (gameSlider.max - gameSlider.value);
+            gameQuery.textContent = left.toString() + " --- " + right.toString();
+        }
+        updateSliderDisplay();
+
         gameToggle.addEventListener('click', () => {
             gameContent.classList.toggle('hidden');
             const icon = gameToggle.querySelector('.game-toggle-icon');
@@ -226,16 +245,53 @@ class EasterEggManager {
         });
 
         gameSlider.addEventListener('input', () => {
-            const gameQuery = document.getElementById('gameResult');
-
-            var left = (gameSlider.value);
-            var right = (gameSlider.max - gameSlider.value);
-
-            gameQuery.textContent = left.toString() + " --- " + right.toString();
+            updateSliderDisplay();
         });
 
+        gameGuessBtn.addEventListener('click', () => {
+            const gameQuery = document.getElementById('gameResult');
+
+            let tokens = Number(gameSlider.max);
+            const tokensBefore = tokens;
+            const outcome = Math.floor(Math.random() * 2);
+            const left = Number(gameSlider.value);
+            const right = Number(gameSlider.max) - Number(gameSlider.value);
+            let losses = 0;
+            let gains = 0;
+
+            let winner = "";
+            if (outcome === 0) {
+                winner = "LEFT WINS! | ";
+                losses = Math.round(right * 0.75);
+                gains = Math.round(left * 0.5);
+            } else {
+                winner = "RIGHT WINS! | ";
+                losses = Math.round(left * 0.75);
+                gains = Math.round(right * 0.5);
+            }
+
+            tokens = tokens - losses + gains;
+
+            if (tokens !== 0) {
+                gameQuery.textContent = winner + "Losses:" +
+                    losses.toString() + " | Gains: " + gains.toString() +
+                    " | Tokens: " + tokens.toString() + " | Tokens before: " + tokensBefore.toString();
+            } else if (tokens <= 0) {
+                gameQuery.textContent = "YOU RAN OUT OF TOKENS! YOU LOSE!";
+            }
+            if (tokens > 3000) {
+                gameQuery.textContent = "YOU SURPASSED 3000 TOKENS! YOU WIN!";
+                console.log("WON!");
+            }
+
+            gameSlider.max = String(tokens);
+            updateSliderDisplay();
+        });
 
     }
+
+
+
 
     /**
      * Dutch John Rick Roll Easter Egg (Homepage)

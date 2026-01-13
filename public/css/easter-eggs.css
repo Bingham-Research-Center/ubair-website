@@ -191,6 +191,13 @@
     background: linear-gradient(135deg, darkred 0%, #000000 100%);
 
 }
+.rule-entry {
+    transition: all 0.2s;
+    font-size: 10px;
+}
+.rule-entry:hover {
+    font-size: 14px;
+}
 
 /* ========================================
    Dutch John Easter Egg (Homepage)
