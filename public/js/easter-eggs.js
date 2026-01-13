@@ -135,7 +135,8 @@ class EasterEggManager {
                     <div class="easter-egg-content" id="gameContent">
                         <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">1</button>
                         <button class="easter-egg-action-btn coin-filter-btn" id="gameFilterBtn">2</button>
-                        <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
+                        <input type="range" min="0" max="10" value="5" class="slider game-slider" id="gameSlider">
+                        <div class="easter-egg-text rainbow-txt" id="gameResult"></div>
                     </div>
                 </div>
             </div>
@@ -147,20 +148,19 @@ class EasterEggManager {
         const toggle = document.getElementById('coinToggle');
         const content = document.getElementById('coinContent');
         const filterBtn = document.getElementById('coinFilterBtn');
+
         const gameFilterBtn = document.getElementById('gameFilterBtn');
         const gameToggle = document.getElementById('gameToggle');
         const gameContent = document.getElementById('gameContent');
+        const gameSlider = document.getElementById('gameSlider');
 
+        /**
+         * TOP SEGMENT WITH COIN FLIP + FORTUNE
+         */
         toggle.addEventListener('click', () => {
             content.classList.toggle('hidden');
             const icon = toggle.querySelector('.toggle-icon');
             icon.textContent = content.classList.contains('hidden') ? '▶' : '▼';
-        });
-
-        gameToggle.addEventListener('click', () => {
-            gameContent.classList.toggle('hidden');
-            const icon = gameToggle.querySelector('.game-toggle-icon');
-            icon.textContent = gameContent.classList.contains('hidden') ? '▶' : '▼';
         });
 
         /**
@@ -215,6 +215,26 @@ class EasterEggManager {
             const query = document.getElementById('coinResult');
             query.textContent = resultText;
         });
+
+        /**
+         * BOTTOM SEGMENT WITH GAME
+         */
+        gameToggle.addEventListener('click', () => {
+            gameContent.classList.toggle('hidden');
+            const icon = gameToggle.querySelector('.game-toggle-icon');
+            icon.textContent = gameContent.classList.contains('hidden') ? '▶' : '▼';
+        });
+
+        gameSlider.addEventListener('input', () => {
+            const gameQuery = document.getElementById('gameResult');
+
+            var left = (gameSlider.value);
+            var right = (gameSlider.max - gameSlider.value);
+
+            gameQuery.textContent = left.toString() + " --- " + right.toString();
+        });
+
+
     }
 
     /**
