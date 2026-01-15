@@ -119,7 +119,7 @@ class EasterEggManager {
             <div class="easter-egg-box coin-egg" id="coinEgg">
                 <button class="easter-egg-toggle" id="coinToggle">
                     <span class="toggle-icon">▼</span>
-                    <span class="toggle-text">COIN FLIP + FORTUNE (EXPERIMENTAL)</span>
+                    <span class="toggle-text">COIN FLIP + FORTUNE</span>
                 </button>
                 <div class="easter-egg-content" id="coinContent">
                     <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
@@ -130,7 +130,7 @@ class EasterEggManager {
                 
                 <button class="easter-egg-toggle" id="gameToggle">
                     <span class="game-toggle-icon">▼</span>
-                    <span class="toggle-text">GAME (EXPERIMENTAL)</span>
+                    <span class="toggle-text">GAME (PROTOTYPE)</span>
                 </button>
                     <div class="easter-egg-content" id="gameContent">
                         <div class="easter-egg-text">
