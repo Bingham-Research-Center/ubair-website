@@ -191,6 +191,24 @@
     background: linear-gradient(135deg, darkred 0%, #000000 100%);
 
 }
+.game-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+}
+.game-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+}
 .rule-entry {
     transition: all 0.2s;
     font-size: 10px;
