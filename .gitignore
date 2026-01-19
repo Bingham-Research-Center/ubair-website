@@ -51,5 +51,10 @@ public/api/static/outlooks/outlook_*.md
 public/api/static/outlooks/outlooks_list.json
 public/api/static/filelist.json
 
+# Data directories
+public/api/static/forecasts/
+public/api/static/images/
+public/data/
+
 # Test artifacts
 test_observation.json
