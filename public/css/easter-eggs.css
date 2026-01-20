@@ -208,6 +208,11 @@
     cursor: pointer;
     outline: white 2px dotted;
     border: none;
+    transition: all 0.2s;
+}
+.game-slider::-moz-range-thumb:hover {
+    width: 16px;
+    height: 16px;
 }
 .rule-entry {
     transition: all 0.2s;

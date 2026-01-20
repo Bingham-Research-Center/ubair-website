@@ -111,9 +111,9 @@ class EasterEggManager {
     }
 
     /**
-     *  Sports page easter egg
+     * Random experimental easter egg features
      */
-    activateSportsEasterEgg() {
+    otherEasterEggs() {
         var flips = 0;
         const easterEggHTML = `
             <div class="easter-egg-box coin-egg" id="coinEgg">
@@ -127,38 +127,13 @@ class EasterEggManager {
                     </button>
                     <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
                 </div>
-                
-                <button class="easter-egg-toggle" id="gameToggle">
-                    <span class="game-toggle-icon">▼</span>
-                    <span class="toggle-text">GAME (PROTOTYPE)</span>
-                </button>
-                    <div class="easter-egg-content" id="gameContent">
-                        <div class="easter-egg-text">
-                            RULES:
-                            <ul>
-                                <li class="rule-entry">You have 1000 points to guess with</li>
-                                <li class="rule-entry">You can divide them between the 2 options however you like</li>
-                                <li class="rule-entry">When you place your guess, one side is chosen</li>
-                                <li class="rule-entry">All tokens on the losing side are decreased by %75</li>
-                                <li class="rule-entry">All tokens on winning side are increased by %50</li>
-                                <li class="rule-entry">3000 Tokens to win</li>
-                            </ul>
-                        </div>
-                        <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
-                        <div class="easter-egg-text" id="gamePreportion"></div>
-                        <button class="easter-egg-action-btn coin-filter-btn" id="gameGuessBtn">Place guess</button>
-                        <div class="easter-egg-text" id="gameResult"></div>
-                    </div>
-                </div>
             </div>
         `;
-
-        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
         /**
          * TOP SEGMENT WITH COIN FLIP + FORTUNE
          */
-        // Add event listeners
+            // Add event listeners
         const toggle = document.getElementById('coinToggle');
         const content = document.getElementById('coinContent');
         const filterBtn = document.getElementById('coinFilterBtn');
@@ -221,6 +196,44 @@ class EasterEggManager {
             const query = document.getElementById('coinResult');
             query.textContent = resultText;
         });
+    }
+
+
+
+
+    /**
+     *  Sports page easter egg
+     */
+    activateSportsEasterEgg() {
+        var flips = 0;
+        const easterEggHTML = `
+            <div class="easter-egg-box coin-egg" id="coinEgg">
+                <button class="easter-egg-toggle" id="gameToggle">
+                    <span class="game-toggle-icon">▼</span>
+                    <span class="toggle-text">GAME (PROTOTYPE)</span>
+                </button>
+                    <div class="easter-egg-content" id="gameContent">
+                        <div class="easter-egg-text">
+                            RULES:
+                            <ul>
+                                <li class="rule-entry">You have 1000 points to guess with</li>
+                                <li class="rule-entry">You can divide them between the 2 options however you like</li>
+                                <li class="rule-entry">When you place your guess, one side is chosen</li>
+                                <li class="rule-entry">All tokens on the losing side are decreased by %75</li>
+                                <li class="rule-entry">All tokens on winning side are increased by %50</li>
+                                <li class="rule-entry">3000 Tokens to win</li>
+                            </ul>
+                        </div>
+                        <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
+                        <div class="easter-egg-text" id="gamePreportion"></div>
+                        <button class="easter-egg-action-btn coin-filter-btn" id="gameGuessBtn">Place guess</button>
+                        <div class="easter-egg-text" id="gameResult"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
         /**
          * BOTTOM SEGMENT WITH GAME
