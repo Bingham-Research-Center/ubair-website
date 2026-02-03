@@ -34,11 +34,13 @@ function initializeMobileMenu() {
             sidebarContainer.classList.remove('active');
             menuToggle.innerHTML = '<i class="fas fa-arrow-right"></i>';
             menuToggle.setAttribute('aria-label', openLabel);
+            menuToggle.classList.remove('clear');
         } else {
             // Open menu
             sidebarContainer.classList.add('active');
             menuToggle.innerHTML = '<i class="fas fa-arrow-left"></i>';
             menuToggle.setAttribute('aria-label', closeLabel);
+            menuToggle.classList.add('clear');
         }
     }
 
