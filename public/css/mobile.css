@@ -5,7 +5,7 @@
     display: none;
     position: absolute;
     top: 50%;
-    right: -45px;
+    right: -65px;
     transform: translateY(-50%);
     z-index: 1;
     background: var(--usu-blue);
@@ -21,7 +21,15 @@
 
 .mobile-menu-toggle:hover {
     background: var(--usu-light-blue);
-    right: -48px;
+    right: -70px;
+}
+
+/* Applied to mobile-menu-toggle when open but removed when closed */
+.clear {
+    right: -15px;
+}
+.clear:hover {
+    right: -17px;
 }
 
 /* Tablet styles */

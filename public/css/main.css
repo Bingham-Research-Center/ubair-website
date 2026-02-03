@@ -351,12 +351,15 @@
     left: 250px;
     width: calc(100% - 250px);
     background-color: var(--usu-blue);
-    color: white;
+    color: var(--usu-light-blue);
     text-align: center;
     padding: 15px 20px;
     min-height: 50px;
     z-index: 1000;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+}
+.main-footer:hover {
+    color: white;
 }
 
 .footer-content {
