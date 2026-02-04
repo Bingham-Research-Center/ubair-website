@@ -3,15 +3,18 @@
     position: fixed;
     top: 0;
     left: 0;
+    bottom: 0;
     z-index: 100;
     width: 250px;
     box-sizing: border-box;
+    height: 100%;
 }
 
 .sidebar {
     background-color: var(--usu-blue);
     color: white;
-    height: 100vh;
+    height: 100%;
+    min-height: 100dvh;
     width: 100%;
     padding-top: 20px;
     box-shadow: 2px 0 5px rgba(0,0,0,0.1);
@@ -121,7 +124,9 @@
     margin-top: auto;
     flex-shrink: 0;
 }
-
+.sidebar-disclaimer:hover {
+    color: white;
+}
 .sidebar-disclaimer p {
     margin: 0.5em 0;
     line-height: 1.4;
