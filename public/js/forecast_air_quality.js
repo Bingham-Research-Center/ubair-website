@@ -190,19 +190,19 @@ function initializeTooltips() {
 let dailymaxHeatmaps = [];
 let currentInitTime = null;
 let heatmapsByInitTime = {};
-let clusteringData = null; // clustering_summary.json content
+let clusteringByInit = {}; // heatmap init time → clustering data
 let memberMode = false; // false = cluster view, true = member dropdown
 
-// Convert clustering init "20260121_0600Z" to heatmap init "20260121-0600"
-function clusterInitToHeatmapInit(clusterInit) {
-    return clusterInit.replace('Z', '').replace('_', '-');
+// Parse init time from clustering filename:
+// "forecast_clustering_summary_20260204_0600Z.json" → "20260204-0600"
+function clusterFilenameToInit(filename) {
+    const match = filename.match(/(\d{8})_(\d{4})Z\.json$/);
+    return match ? `${match[1]}-${match[2]}` : null;
 }
 
 // Find clustering data matching the current init time
 function getClusteringForInit(initTime) {
-    if (!clusteringData) return null;
-    const clusterInit = clusterInitToHeatmapInit(clusteringData.init);
-    return clusterInit === initTime ? clusteringData : null;
+    return clusteringByInit[initTime] || null;
 }
 
 // Find heatmap filename for a given clyfar member ID (e.g., "clyfar000")
@@ -213,24 +213,30 @@ function findHeatmapForMember(memberId) {
 async function fetchClusteringData() {
     try {
         const res = await fetch('/api/filelist/forecasts');
-        if (!res.ok) return null;
+        if (!res.ok) return;
         const files = await res.json();
-        const clusterFile = (Array.isArray(files) ? files : [])
-            .find(f => f === 'clustering_summary.json');
-        if (!clusterFile) return null;
-        const dataRes = await fetch(`${API_FORECASTS}/${clusterFile}`);
-        if (!dataRes.ok) return null;
-        return await dataRes.json();
-    } catch { return null; }
+        const clusterFiles = (Array.isArray(files) ? files : [])
+            .filter(f => f.startsWith('forecast_clustering_summary_') && f.endsWith('.json'));
+        // Fetch all clustering files in parallel, index by init time
+        const results = await Promise.all(clusterFiles.map(async (f) => {
+            const initTime = clusterFilenameToInit(f);
+            if (!initTime) return null;
+            try {
+                const r = await fetch(`${API_FORECASTS}/${f}`);
+                if (!r.ok) return null;
+                return { initTime, data: await r.json() };
+            } catch { return null; }
+        }));
+        results.forEach(r => { if (r) clusteringByInit[r.initTime] = r.data; });
+    } catch { /* clustering unavailable */ }
 }
 
 async function initializeClyfar() {
     try {
-        const [imageFiles, clustering] = await Promise.all([
+        const [imageFiles] = await Promise.all([
             fetchImageList(),
             fetchClusteringData()
         ]);
-        clusteringData = clustering;
 
         // Find dailymax heatmaps (filter out poss_ozone)
         const allHeatmaps = findDailymaxHeatmaps(imageFiles);
