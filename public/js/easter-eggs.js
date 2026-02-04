@@ -111,7 +111,7 @@ class EasterEggManager {
     }
 
     /**
-     * Random experimental easter egg features
+     * Random experimental easter egg features (Not used anywhere as of now)
      */
     otherEasterEggs() {
         var flips = 0;
@@ -274,11 +274,11 @@ class EasterEggManager {
 
             let winner = "";
             if (outcome === 0) {
-                winner = "LEFT WINS! | ";
+                winner = "RIGHT WINS! | ";
                 losses = Math.round(right * 0.75);
                 gains = Math.round(left * 0.5);
             } else {
-                winner = "RIGHT WINS! | ";
+                winner = "LEFT WINS! | ";
                 losses = Math.round(left * 0.75);
                 gains = Math.round(right * 0.5);
             }
