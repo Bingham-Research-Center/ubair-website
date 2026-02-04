@@ -1,9 +1,21 @@
-h1
-{
-    color: red;
-    font-family: 'Arial Black', sans-serif;
-    text-align: center;
-    margin-top: 20px;
+h1 {
+    background: linear-gradient(135deg, red, darkred);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+}
+
+body[data-page-type="sports"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, red, darkred);
+    border-radius: 2px;
 }
 h2
 {
