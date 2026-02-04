@@ -217,7 +217,7 @@ class EasterEggManager {
                         <div class="easter-egg-text">
                             RULES:
                             <ul>
-                                <li class="rule-entry">You have 1000 points to guess with</li>
+                                <li class="rule-entry">You have 1000 tokens to guess with</li>
                                 <li class="rule-entry">You can divide them between the 2 options however you like</li>
                                 <li class="rule-entry">When you place your guess, one side is chosen</li>
                                 <li class="rule-entry">All tokens on the losing side are decreased by %75</li>
