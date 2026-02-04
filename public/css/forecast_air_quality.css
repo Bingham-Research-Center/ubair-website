@@ -1101,6 +1101,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
     border-color: var(--welsh-slate);
 }
 
+.cluster-image-title {
+    font-weight: 600;
+    color: var(--air-primary);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
 /* Toggle for member mode */
 .toggle-group {
     display: flex;

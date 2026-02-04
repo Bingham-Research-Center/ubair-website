@@ -287,9 +287,12 @@ function showClusterView(clustering) {
     if (clusterRow) clusterRow.style.display = '';
     if (memberRow) memberRow.style.display = 'none';
 
+    // Sort clusters by fraction descending
+    const sorted = [...clustering.clusters].sort((a, b) => b.fraction - a.fraction);
+
     // Build cluster buttons
     if (clusterRow) {
-        clusterRow.innerHTML = clustering.clusters.map((c, i) => {
+        clusterRow.innerHTML = sorted.map((c, i) => {
             const pct = Math.round(c.fraction * 100);
             return `<button class="cluster-btn${i === 0 ? ' active' : ''}" data-medoid="${c.medoid}" data-idx="${i}" title="${c.members.length} members, ${c.clyfar_ozone.risk_level} ozone risk">Cluster ${c.id} (${pct}%)</button>`;
         }).join('');
@@ -301,14 +304,35 @@ function showClusterView(clustering) {
                 btn.classList.add('active');
                 const medoid = btn.dataset.medoid;
                 const heatmap = findHeatmapForMember(medoid);
-                renderStaticImage('heatmap-image-container', heatmap, 'Daily Max Ozone Heatmap');
+                renderClusterImage(medoid, heatmap);
             });
         });
 
-        // Show first cluster's medoid
-        const firstMedoid = clustering.clusters[0].medoid;
-        renderStaticImage('heatmap-image-container', findHeatmapForMember(firstMedoid), 'Daily Max Ozone Heatmap');
+        // Show first (highest-fraction) cluster's medoid
+        renderClusterImage(sorted[0].medoid, findHeatmapForMember(sorted[0].medoid));
     }
+}
+
+function renderClusterImage(medoid, heatmapFile) {
+    const container = document.getElementById('heatmap-image-container');
+    if (!container) return;
+
+    const title = `Representative Member (${medoid})`;
+    const titleHtml = `<div class="cluster-image-title">${title}</div>`;
+
+    if (!heatmapFile) {
+        container.innerHTML = titleHtml + `
+            <div class="chart-no-data">
+                <i class="fas fa-cloud-sun fa-3x"></i>
+                <p>Heatmap not available for ${medoid}</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = titleHtml + `
+        <img src="${API_IMAGES}/${heatmapFile}" alt="Daily Max Ozone Heatmap - ${medoid}"
+             class="forecast-image" loading="lazy"
+             onerror="this.parentElement.innerHTML='<div class=\\'chart-error\\'><i class=\\'fas fa-exclamation-triangle\\'></i><p>Image failed to load</p></div>'" />`;
 }
 
 function showMemberView() {
