@@ -51,6 +51,10 @@ public/api/static/outlooks/outlook_*.md
 public/api/static/outlooks/outlooks_list.json
 public/api/static/outlooks/file_list.json
 public/api/static/filelist.json
+public/api/static/observations/filelist.json
+
+# LLM-generated outlook PDFs (uploaded by CHPC pipeline)
+public/api/static/llm_outlooks/
 
 # Data directories
 public/api/static/forecasts/
