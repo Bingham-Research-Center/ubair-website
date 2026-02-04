@@ -14,7 +14,6 @@ class EasterEggManager {
         this.active = false;
         this.konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
         this.userSequence = [];
-        this.easterEggs = [];
 
         this.initKonamiListener();
     }
@@ -113,8 +112,9 @@ class EasterEggManager {
     /**
      * Random experimental easter egg features (Not used anywhere as of now)
      */
+    // noinspection JSUnusedGlobalSymbols (this shuts up WebStorm telling me this method is unused)
     otherEasterEggs() {
-        var flips = 0;
+        let flips = 0;
         const easterEggHTML = `
             <div class="easter-egg-box coin-egg" id="coinEgg">
                 <button class="easter-egg-toggle" id="coinToggle">
@@ -129,6 +129,8 @@ class EasterEggManager {
                 </div>
             </div>
         `;
+
+        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
         /**
          * TOP SEGMENT WITH COIN FLIP + FORTUNE
@@ -150,8 +152,8 @@ class EasterEggManager {
         filterBtn.addEventListener('click', () => {
             //Decides coin side
             const side = Math.floor(Math.random() * 2);
-            var sideFace;
-            if (side == 0) {
+            let sideFace;
+            if (side === 0) {
                 sideFace = "TAILS"
             } else {
                 sideFace = "HEADS"
@@ -173,7 +175,7 @@ class EasterEggManager {
 
             //CHANGES TEXT ON FILTER BUTTON
             flips += 1;
-            var message = "FLIP AGAIN?";
+            let message = "FLIP AGAIN?";
             if (flips >= 8) {
                 message = "SLOW DOWN THERE!";
             }
@@ -205,7 +207,6 @@ class EasterEggManager {
      *  Sports page easter egg
      */
     activateSportsEasterEgg() {
-        var flips = 0;
         const easterEggHTML = `
             <div class="easter-egg-box coin-egg" id="coinEgg">
                 <button class="easter-egg-toggle" id="gameToggle">
@@ -245,8 +246,8 @@ class EasterEggManager {
 
         function updateSliderDisplay() {
             const gameQuery = document.getElementById('gamePreportion');
-            var left = (gameSlider.value);
-            var right = (gameSlider.max - gameSlider.value);
+            let left = (gameSlider.value);
+            let right = (gameSlider.max - gameSlider.value);
             gameQuery.textContent = left.toString() + " --- " + right.toString();
         }
         updateSliderDisplay();
@@ -269,10 +270,10 @@ class EasterEggManager {
             const outcome = Math.floor(Math.random() * 2);
             const left = Number(gameSlider.value);
             const right = Number(gameSlider.max) - Number(gameSlider.value);
-            let losses = 0;
-            let gains = 0;
+            let losses;
+            let gains;
 
-            let winner = "";
+            let winner;
             if (outcome === 0) {
                 winner = "RIGHT WINS! | ";
                 losses = Math.round(right * 0.75);
