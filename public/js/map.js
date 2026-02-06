@@ -10,8 +10,8 @@ function mapStationName(stid, metadataName) {
         'KU69': 'Duchesne', 'UINU1': 'Fort Duchesne', 'UTMYT': 'Myton',
         'COOPDINU1': 'Dinosaur NM', 'COOPALMU1': 'Altamont', 'UCC34': 'Bluebell',
         'K40U': 'Manila', 'UTSTV': 'Starvation', 'UTDAN': 'Daniels Summit',
-        'UTICS': 'Indian Canyon', 'UTSLD': 'Soldier Summit', 'BUNUT': 'Roosevelt',
-        'CHPU1': 'Ouray', 'CEN': 'Vernal', 'QHW': 'Whiterocks', 'RDN': 'Red Wash'
+        'UBRDW': 'Red Wash', 'UBORY': 'Ouray', 'UBDRF': 'Dry Fork', 'UBWHR': 'Whiterocks',
+        'UTICS': 'Indian Canyon', 'UTSLD': 'Soldier Summit'
     };
 
     if (!prettyNames[stid] && metadataName) {
@@ -44,6 +44,8 @@ let mapKioskMode = false;
 let mapKioskInterval;
 let currentStationIndex = 0;
 let markers = [];
+let useCelsius = false; // Default to Fahrenheit (matches homepage default)
+let lastUnits = {}; // Cache units for popup rebuilds
 
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -51,6 +53,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setupStudyAreaToggle();
     setupKioskControl();
+    setupUnitToggle();
     fixUSULogo();
     updateMap(); // Initial data load
 
@@ -154,6 +157,32 @@ function setupKioskControl() {
     }, 500);
 }
 
+function setupUnitToggle() {
+    const toggle = document.getElementById('unit-toggle');
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            useCelsius = !useCelsius;
+            if (useCelsius) {
+                this.classList.remove('active');
+            } else {
+                this.classList.add('active');
+            }
+
+            // Rebuild all popups with new units
+            map.closePopup();
+            markers.forEach(marker => {
+                const opts = marker.options;
+                if (opts.stationName && opts.measurements) {
+                    const popupContent = createPopupContent(
+                        opts.stationName, opts.measurements, lastUnits, useCelsius
+                    );
+                    marker.bindPopup(popupContent);
+                }
+            });
+        });
+    }
+}
+
 function fixUSULogo() {
     const usuLogoContainer = document.querySelector('.usu-logo');
     if (usuLogoContainer) {
@@ -221,6 +250,7 @@ async function updateMap() {
 
     // Extract units from observations data
     const units = observations._units || {};
+    lastUnits = units;
     console.log('DEBUG: units:', units);
 
     // Clear existing markers
@@ -279,29 +309,19 @@ function createStationMarker(stationName, stationInfo, measurements, units = {})
         const color = getMarkerColor(measurements);
         let marker;
 
-        if (hasOzone) {
-            // Circle marker for AQ stations with ozone data
-            marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
-                color: '#fff',
-                weight: 2,
-                fillColor: color,
-                fillOpacity: 0.8,
-                radius: 12
-            });
-        } else {
-            // Diamond marker for weather-only stations
-            marker = L.marker([stationInfo.lat, stationInfo.lng], {
-                icon: L.divIcon({
-                    className: 'weather-only-marker',
-                    html: '<div class="weather-diamond"></div>',
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
-                })
-            });
-        }
+        // Circle marker for all stations — color indicates status
+        marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
+            color: '#fff',
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8,
+            radius: hasOzone ? 12 : 9,
+            stationName: stationName,
+            measurements: measurements
+        });
 
-        // Create popup content with dynamic units
-        const popupContent = createPopupContent(stationName, measurements, units);
+        // Create popup content with dynamic units and current unit preference
+        const popupContent = createPopupContent(stationName, measurements, units, useCelsius);
         marker.bindPopup(popupContent);
 
         // Add to map
