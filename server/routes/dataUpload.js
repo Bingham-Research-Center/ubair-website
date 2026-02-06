@@ -29,6 +29,7 @@ const storage = multer.diskStorage({
             'observations': 'observations',
             'metadata': 'metadata',
             'outlooks': 'outlooks',
+            'llm_outlooks': 'llm_outlooks',
             'images': 'images',
             'timeseries': 'timeseries',
             'forecasts': 'forecasts'
@@ -144,16 +145,16 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 
     const ext = path.extname(req.file.originalname).toLowerCase();
     const textExts = ['.md', '.txt'];
-    const imageExts = ['.png'];
+    const binaryExts = ['.png', '.pdf'];
 
     // Invalid type
-    if (ext !== '.json' && !textExts.includes(ext) && !imageExts.includes(ext)) {
+    if (ext !== '.json' && !textExts.includes(ext) && !binaryExts.includes(ext)) {
       fs.unlinkSync(req.file.path);
       return res.status(400).json({ success: false, message: 'Invalid file type' });
     }
 
-    // Skip content validation for binary files (images)
-    if (!imageExts.includes(ext)) {
+    // Skip content validation for binary files (images, PDFs)
+    if (!binaryExts.includes(ext)) {
       const content = fs.readFileSync(req.file.path, 'utf8');
 
       if (ext === '.json') {
