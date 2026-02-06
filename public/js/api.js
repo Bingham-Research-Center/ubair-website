@@ -285,12 +285,10 @@ function mapStationName(stid, metadataName = null) {
         'UTICS': 'Indian Canyon',
         'UTSLD': 'Soldier Summit',
 
-        // Legacy/Alternative names (keep for compatibility)
-        'BUNUT': 'Roosevelt',
-        'CHPU1': 'Ouray',
-        'CEN': 'Vernal',
-        'QHW': 'Whiterocks',
-        'RDN': 'Red Wash'
+        // Legacy/Alternative names removed:
+        // BUNUT (Bunnells Ridge near Heber), CEN (Centerville SLC),
+        // CHPU1 (Chepeta 12k ft), QHW (Hawthorne SLC), RDN (Red Narrows Soldier Summit)
+        // were incorrectly mapped to basin station names
     };
     
     // Priority 2: Clean up metadata names if no pretty name exists
