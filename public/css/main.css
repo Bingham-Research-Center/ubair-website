@@ -49,6 +49,7 @@
 }
 
 .site-logo {
+    display: block;
     width: clamp(180px, 20vw, 300px);
     height: auto;
     flex-shrink: 0;
@@ -58,6 +59,35 @@
     filter: drop-shadow(0 4px 12px rgba(0, 38, 58, 0.15));
     transition: all 0.3s ease;
 }
+.glade {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    border-radius: 8px;
+}
+.glade::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        75deg,
+        white 0%,
+        lightblue 50%,
+        var(--usu-light-blue) 100%
+    );
+    transform: skewX(-20deg);
+    transition: left 0.8s ease;
+    pointer-events: none;
+}
+.glade:hover::before {
+    left: 150%;
+}
+
+
+
 
 .headlines-dashboard {
     flex: 1;
