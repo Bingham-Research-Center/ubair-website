@@ -221,22 +221,29 @@ function initializeRoadCarousel(stationsData, eventsData) {
         `<div class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
     ).join('');
 
-    // Add event listeners for manual controls
-    document.getElementById('prev-road').addEventListener('click', () => {
-        previousRoad(stationsData, eventsData);
-    });
+    // Add event listeners for manual controls (replace any existing handlers)
+    const prevButton = document.getElementById('prev-road');
+    const nextButton = document.getElementById('next-road');
 
-    document.getElementById('next-road').addEventListener('click', () => {
-        nextRoad(stationsData, eventsData);
-    });
+    if (prevButton) {
+        prevButton.onclick = () => {
+            previousRoad(stationsData, eventsData);
+        };
+    }
 
-    // Add indicator click handlers
-    indicatorsContainer.addEventListener('click', (e) => {
+    if (nextButton) {
+        nextButton.onclick = () => {
+            nextRoad(stationsData, eventsData);
+        };
+    }
+
+    // Add indicator click handlers (replace any existing handler)
+    indicatorsContainer.onclick = (e) => {
         if (e.target.classList.contains('carousel-indicator')) {
             const index = parseInt(e.target.dataset.index);
             showRoad(index, stationsData, eventsData);
         }
-    });
+    };
 
     // Show first road and start auto-rotation
     showRoad(0, stationsData, eventsData);
