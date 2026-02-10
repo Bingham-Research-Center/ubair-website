@@ -290,7 +290,10 @@ class RoadWeatherMap {
                     if (weatherData && weatherData.current) {
                         locationData.windSpeed = weatherData.current.windSpeed;
                         locationData.precipitation = weatherData.current.precipitation;
-                        locationData.visibility = weatherData.current.visibility ? weatherData.current.visibility / 1000 : null;
+                        if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
+                            locationData.visibility = weatherData.current.visibility;
+                            locationData.visibilityUnit = 'm';
+                        }
                         locationData.temperature = weatherData.current.temperature;
                     }
                 }
@@ -524,7 +527,10 @@ class RoadWeatherMap {
                             locationData.windSpeed = weatherData.current.windSpeed;
                             locationData.windGust = weatherData.current.windGust;
                             locationData.precipitation = weatherData.current.precipitation;
-                            locationData.visibility = weatherData.current.visibility ? weatherData.current.visibility / 1000 : null; // Convert m to km
+                            if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
+                                locationData.visibility = weatherData.current.visibility;
+                                locationData.visibilityUnit = 'm';
+                            }
                             locationData.airTemp = weatherData.current.temperature;
                         }
                     }

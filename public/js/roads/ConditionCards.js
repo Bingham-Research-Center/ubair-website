@@ -25,9 +25,25 @@ function updateConditionCardsWithLocation(locationData) {
     const visCard = document.querySelector('.condition-card-compact.visibility .value');
     if (visCard) {
         const vis = locationData.visibility;
+        const visUnit = locationData.visibilityUnit;
         if (vis && vis > 0) {
             const maxVis = unitsSystem.isMetric ? 16 : 10; // 16 km ≈ 10 mi
-            visCard.textContent = vis > maxVis ? `${maxVis}+ ${unitsSystem.getVisibilityUnit()}` : unitsSystem.formatVisibility(vis);
+            let limitValue = vis;
+            let formattedVis = unitsSystem.formatVisibility(vis);
+
+            if (visUnit === 'm') {
+                const km = vis / 1000;
+                limitValue = unitsSystem.isMetric ? km : km / 1.60934;
+                formattedVis = unitsSystem.formatVisibilityFromMeters(vis);
+            } else if (visUnit === 'km') {
+                const km = vis;
+                limitValue = unitsSystem.isMetric ? km : km / 1.60934;
+                formattedVis = unitsSystem.formatVisibilityFromKm(vis);
+            } else if (unitsSystem.isMetric) {
+                limitValue = vis * 1.60934;
+            }
+
+            visCard.textContent = limitValue > maxVis ? `${maxVis}+ ${unitsSystem.getVisibilityUnit()}` : formattedVis;
         } else {
             visCard.textContent = `-- ${unitsSystem.getVisibilityUnit()}`;
         }
