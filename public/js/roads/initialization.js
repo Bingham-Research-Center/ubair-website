@@ -127,8 +127,8 @@ function refreshUnitsDisplays() {
  */
 async function smartRefreshRoutes() {
     // Close any open popups to avoid stale unit displays
-    if (window.roadMap && window.roadMap.map) {
-        window.roadMap.map.closePopup();
+    if (window.roadWeatherMap && window.roadWeatherMap.map) {
+        window.roadWeatherMap.map.closePopup();
     }
 
     // Get cached data (or refresh if needed)
@@ -146,12 +146,12 @@ async function smartRefreshRoutes() {
     ]);
 
     // Refresh map components that show units (but reuse existing markers)
-    if (window.roadMap) {
+    if (window.roadWeatherMap) {
         // Only refresh station popups, not reload all data
         refreshStationPopups();
 
         // Reload mountain passes with new units (these come from different API)
-        window.roadMap.loadMountainPasses();
+        window.roadWeatherMap.loadMountainPasses();
     }
 }
 
@@ -268,8 +268,8 @@ async function smartRefreshBasinRoads(data) {
  */
 function refreshStationPopups() {
     // Refresh any open weather station popups with new units
-    if (window.roadMap && window.roadMap.stationMarkers) {
-        window.roadMap.stationMarkers.forEach((marker, stationId) => {
+    if (window.roadWeatherMap && window.roadWeatherMap.stationMarkers) {
+        window.roadWeatherMap.stationMarkers.forEach((marker, stationId) => {
             if (marker.isPopupOpen()) {
                 marker.closePopup();
             }
