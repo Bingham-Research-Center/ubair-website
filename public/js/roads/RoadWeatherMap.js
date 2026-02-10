@@ -640,11 +640,13 @@ class RoadWeatherMap {
             camera._density = this.calculateCameraDensity(camera, allCameras);
         }
 
+        const seed = this.getCameraVisibilitySeed(camera);
+
         // High zoom (11): Show most cameras
         if (zoom >= 11) {
             if (camera._density < 3) return true;
-            if (camera._density < 6) return Math.random() < 0.7;
-            return Math.random() < 0.5;
+            if (camera._density < 6) return seed < 0.7;
+            return seed < 0.5;
         }
 
         // Medium zoom (10): Show ~40% - more aggressive filtering
@@ -652,9 +654,9 @@ class RoadWeatherMap {
             // Show isolated cameras only
             if (camera._density < 2) return true;
             // Show 30% of low-density clusters
-            if (camera._density < 4) return Math.random() < 0.3;
+            if (camera._density < 4) return seed < 0.3;
             // Show 15% of high-density clusters
-            return Math.random() < 0.15;
+            return seed < 0.15;
         }
 
         // Default zoom (9): Show ~25% - very aggressive
@@ -662,14 +664,14 @@ class RoadWeatherMap {
             // Only show isolated cameras
             if (camera._density < 2) return true;
             // Show 20% of any clusters
-            return Math.random() < 0.2;
+            return seed < 0.2;
         }
 
         // Low zoom (<9): Show cluster representatives only (~15%)
         // Show only very isolated cameras
         if (camera._density < 1) return true;
         // Show 10% of anything else
-        return Math.random() < 0.1;
+        return seed < 0.1;
     }
 
     /**
@@ -696,6 +698,28 @@ class RoadWeatherMap {
         }
 
         return nearbyCount;
+    }
+
+    /**
+     * Create a deterministic visibility seed for a camera marker
+     * @param {Object} camera - Camera object with id/lat/lng
+     * @returns {number} Number in [0, 1)
+     */
+    getCameraVisibilitySeed(camera) {
+        if (camera._visibilitySeed !== undefined) {
+            return camera._visibilitySeed;
+        }
+
+        const key = `${camera.id}-${camera.lat.toFixed(5)}-${camera.lng.toFixed(5)}`;
+        let hash = 0;
+
+        for (let i = 0; i < key.length; i++) {
+            hash = ((hash << 5) - hash) + key.charCodeAt(i);
+            hash |= 0;
+        }
+
+        camera._visibilitySeed = Math.abs(hash) % 1000 / 1000;
+        return camera._visibilitySeed;
     }
 
     /**
