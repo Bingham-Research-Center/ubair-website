@@ -41,7 +41,7 @@ function updateConditionCardsWithLocation(locationData) {
             if (typeof precip === 'string') {
                 precipCard.textContent = precip === 'none' ? 'None' : precip;
             } else {
-                precipCard.textContent = precip > 0 ? `${precip} in/hr` : 'None';
+                precipCard.textContent = precip > 0 ? unitsSystem.formatPrecipitationRateFromMm(precip) : 'None';
             }
         } else {
             precipCard.textContent = '--';

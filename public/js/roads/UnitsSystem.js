@@ -48,6 +48,23 @@ class UnitsSystem {
     }
 
     /**
+     * Format precipitation rate when input is in millimeters per hour
+     * @param {number|string} mmPerHour - Precipitation rate in mm/hr
+     * @returns {string} Formatted precipitation rate
+     */
+    formatPrecipitationRateFromMm(mmPerHour) {
+        if (mmPerHour === '--' || mmPerHour === null || mmPerHour === undefined) return '--';
+        const rate = parseFloat(mmPerHour);
+        if (isNaN(rate)) return '--';
+
+        if (this.isMetric) {
+            return `${rate.toFixed(1)} mm/hr`;
+        }
+        const inchesPerHour = rate / 25.4;
+        return `${inchesPerHour.toFixed(2)} in/hr`;
+    }
+
+    /**
      * Format visibility with current unit system
      * @param {number|string} miles - Visibility in miles
      * @returns {string} Formatted visibility string
