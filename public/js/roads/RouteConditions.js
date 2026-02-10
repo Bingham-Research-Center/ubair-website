@@ -24,19 +24,13 @@ async function loadUS40Conditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for US-40
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
+        }
 
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles
-        routeDataCache.stations = stationsData;
-        routeDataCache.events = eventsData;
-        routeDataCache.lastUpdated = Date.now();
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Filter data for US-40 corridor
         const us40Stations = stationsData.filter(station =>
@@ -74,21 +68,13 @@ async function loadUS191Conditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for US-191
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
-
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles (if not already populated)
-        if (!routeDataCache.stations) {
-            routeDataCache.stations = stationsData;
-            routeDataCache.events = eventsData;
-            routeDataCache.lastUpdated = Date.now();
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
         }
+
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Filter data for US-191 corridor
         const us191Stations = stationsData.filter(station =>
@@ -182,21 +168,13 @@ async function loadBasinRoadsConditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for Basin Roads
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
-
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles (if not already populated)
-        if (!routeDataCache.stations) {
-            routeDataCache.stations = stationsData;
-            routeDataCache.events = eventsData;
-            routeDataCache.lastUpdated = Date.now();
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
         }
+
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Initialize carousel
         initializeRoadCarousel(stationsData, eventsData.events || []);
