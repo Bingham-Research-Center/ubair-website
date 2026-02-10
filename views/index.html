@@ -51,53 +51,34 @@
                         <i class="fas fa-robot"></i> AI Summary
                     </button>
                 </div>
-                <div class="town-selector">
-                    <label for="town-select">
-                        <i class="fas fa-map-marker-alt"></i>
-                    </label>
-                    <select id="town-select" class="town-dropdown">
-                        <option value="roosevelt" selected>Roosevelt</option>
-                        <option value="vernal">Vernal</option>
-                        <option value="duchesne">Duchesne</option>
-                        <option value="ouray">Ouray</option>
-                        <option value="dinosaur">Dinosaur</option>
-                        <option value="bonanza">Bonanza</option>
-                    </select>
-                </div>
             </div>
 
             <div class="tab-content">
-                <!-- Warnings Tab - Launch Announcement -->
+                <!-- Alerts Tab -->
                 <div id="warnings-content" class="tab-panel active">
-                    <div class="headline-items">
-                        <div class="headline-item info">
-                            <i class="fas fa-rocket headline-icon"></i>
+                    <div class="alerts-grid">
+                        <div class="headline-item info" id="alerts-forecast">
+                            <i class="fas fa-calendar-week headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Official Launch</span>
-                                <span class="headline-value">December 1, 2025</span>
+                                <span class="headline-label">Next 5 Days</span>
+                                <span class="headline-value" id="alerts-ozone-risk">Loading...</span>
                             </div>
                         </div>
-                        <div class="headline-item info">
-                            <i class="fas fa-flask headline-icon"></i>
+                        <div class="headline-item info alerts-snow-panel" id="alerts-snow">
+                            <i class="fas fa-snowflake headline-icon"></i>
                             <div class="headline-text">
-                                <span class="headline-label">Status</span>
-                                <span class="headline-value">Final Testing</span>
+                                <span class="headline-label">Snow Likely?</span>
+                                <span class="headline-value" id="alerts-snow-value">Loading...</span>
+                                <span class="headline-detail" id="alerts-snow-detail"></span>
                             </div>
                         </div>
-                        <div class="headline-item info">
+                        <a href="/live_aq" class="headline-item info alerts-map-link">
                             <i class="fas fa-map-marked-alt headline-icon"></i>
                             <div class="headline-text">
                                 <span class="headline-label">Live Map</span>
-                                <span class="headline-value">Active Now</span>
+                                <span class="headline-value"><span class="live-dot"></span> Active Now</span>
                             </div>
-                        </div>
-                        <div class="headline-item info">
-                            <i class="fas fa-envelope headline-icon"></i>
-                            <div class="headline-text">
-                                <span class="headline-label">Questions?</span>
-                                <span class="headline-value">john.lawson@usu.edu</span>
-                            </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
 
@@ -196,8 +177,8 @@
                             <div class="legend-row">
                                 <div class="legend-color" style="background-color: red;"></div>
                                 <span>Danger (≥70)</span>
-                                <div class="legend-color" style="background-color: #B8D4E3;"></div>
-                                <span>Weather Only</span>
+                                <div class="legend-color" style="background-color: #4A90D2;"></div>
+                                <span>Active (weather only)</span>
                             </div>
                             <div class="legend-row">
                                 <div class="legend-color" style="background-color: gray;"></div>
@@ -206,11 +187,13 @@
                             <div class="legend-section-header">Road Weather Stations (♦)</div>
                             <div class="legend-row">
                                 <div class="legend-color legend-diamond" style="background-color: #28A745;"></div>
-                                <span>No Snow</span>
-                                <div class="legend-color legend-diamond" style="background-color: #4A90E2;"></div>
-                                <span>Snow Likely</span>
+                                <span>All Clear</span>
+                                <div class="legend-color legend-diamond" style="background-color: #FFC107;"></div>
+                                <span>Caution</span>
                             </div>
                             <div class="legend-row">
+                                <div class="legend-color legend-diamond" style="background-color: #DC3545;"></div>
+                                <span>Hazardous</span>
                                 <div class="legend-color legend-diamond" style="background-color: gray;"></div>
                                 <span>No Data</span>
                             </div>
@@ -304,6 +287,8 @@
         // Load initial content
         loadAirQualityForecast();
         loadWeatherForecast();
+        loadAlertsOzoneRisk();
+        loadAlertsSnowForecast();
     });
 
     function initForecastTabs() {
@@ -452,11 +437,11 @@
     function initForecastCollapse() {
         const collapseBtn = document.getElementById('forecast-collapse');
         const forecastContainer = document.querySelector('.forecast-container-dashboard');
-        
+
         if (collapseBtn && forecastContainer) {
             collapseBtn.addEventListener('click', () => {
                 const isCollapsed = collapseBtn.classList.contains('collapsed');
-                
+
                 if (isCollapsed) {
                     // Expand
                     collapseBtn.classList.remove('collapsed');
@@ -467,6 +452,80 @@
                     forecastContainer.classList.add('collapsed');
                 }
             });
+        }
+    }
+
+    async function loadAlertsOzoneRisk() {
+        const riskEl = document.getElementById('alerts-ozone-risk');
+        if (!riskEl) return;
+
+        try {
+            const response = await fetch('/api/static/outlooks/outlooks_list.json');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const outlooks = await response.json();
+            if (outlooks.length === 0) {
+                riskEl.textContent = 'No outlook available';
+                return;
+            }
+
+            const outlookResponse = await fetch(`/api/static/outlooks/${outlooks[0].filename}`);
+            if (!outlookResponse.ok) throw new Error(`HTTP ${outlookResponse.status}`);
+            const markdown = await outlookResponse.text();
+
+            // Extract risk levels from Day 1-5 headings
+            const riskLevels = [];
+            const lines = markdown.split('\n');
+            for (const line of lines) {
+                if (line.match(/###.*Day\s*6/i)) break;
+                const riskMatch = line.match(/\*\*(NO(?:\s*RISK)?|NONE|LOW|MODERATE|MEDIUM|HIGH)(?:\s*RISK)?\*\*/i);
+                if (riskMatch) {
+                    riskLevels.push(riskMatch[1].toUpperCase().replace(/\s*RISK/, ''));
+                }
+            }
+
+            if (riskLevels.length === 0) {
+                riskEl.textContent = 'See full outlook';
+                return;
+            }
+
+            // Build compact risk summary
+            const riskHtml = riskLevels.map((level, i) => {
+                let cls = 'risk-no';
+                if (level === 'LOW') cls = 'risk-low';
+                else if (level === 'MODERATE' || level === 'MEDIUM') cls = 'risk-moderate';
+                else if (level === 'HIGH') cls = 'risk-high';
+                return `<span class="risk-indicator ${cls}" style="font-size:0.75rem; padding:2px 6px; margin:1px;">D${i+1}: ${level}</span>`;
+            }).join(' ');
+
+            riskEl.innerHTML = riskHtml;
+
+        } catch (err) {
+            console.error('Error loading alerts ozone risk:', err);
+            riskEl.textContent = 'Unable to load';
+        }
+    }
+
+    async function loadAlertsSnowForecast() {
+        const snowEl = document.getElementById('alerts-snow-value');
+        const detailEl = document.getElementById('alerts-snow-detail');
+        if (!snowEl) return;
+
+        try {
+            const response = await fetch('/api/static/forecasts/gefs_snow_summary.json');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+
+            if (data.median_max_snow_inches > 0.5) {
+                snowEl.textContent = `${data.median_max_snow_inches.toFixed(1)} inches possible`;
+                if (detailEl && data.period_description) {
+                    detailEl.textContent = data.period_description;
+                }
+            } else {
+                snowEl.textContent = 'No significant snow expected';
+            }
+        } catch (err) {
+            // Graceful fallback — GEFS JSON may not exist yet
+            snowEl.textContent = 'No significant snow expected';
         }
     }
 </script>

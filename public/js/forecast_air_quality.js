@@ -49,9 +49,28 @@ function groupHeatmapsByInitTime(heatmaps) {
 document.addEventListener('DOMContentLoaded', async function() {
     initializeTabs();
     initializeTooltips();
+    loadLatestFfionOutlook();
     await loadLLMSummaries();
     await initializeClyfar();
 });
+
+async function loadLatestFfionOutlook() {
+    try {
+        const res = await fetch('/api/filelist/llm_outlooks');
+        if (!res.ok) return;
+        const files = await res.json();
+        const pdfs = (Array.isArray(files) ? files : [])
+            .filter(f => f.endsWith('.pdf'))
+            .sort();
+        if (pdfs.length === 0) return;
+        const latest = pdfs[pdfs.length - 1];
+        const btn = document.getElementById('ffion-outlook-btn');
+        if (btn) {
+            btn.href = `/api/static/llm_outlooks/${latest}`;
+            btn.style.display = '';
+        }
+    } catch { /* button stays hidden */ }
+}
 
 function initializeTabs() {
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -171,11 +190,53 @@ function initializeTooltips() {
 let dailymaxHeatmaps = [];
 let currentInitTime = null;
 let heatmapsByInitTime = {};
+let clusteringByInit = {}; // heatmap init time → clustering data
+let memberMode = false; // false = cluster view, true = member dropdown
+
+// Parse init time from clustering filename:
+// "forecast_clustering_summary_20260204_0600Z.json" → "20260204-0600"
+function clusterFilenameToInit(filename) {
+    const match = filename.match(/(\d{8})_(\d{4})Z\.json$/);
+    return match ? `${match[1]}-${match[2]}` : null;
+}
+
+// Find clustering data matching the current init time
+function getClusteringForInit(initTime) {
+    return clusteringByInit[initTime] || null;
+}
+
+// Find heatmap filename for a given clyfar member ID (e.g., "clyfar000")
+function findHeatmapForMember(memberId) {
+    return dailymaxHeatmaps.find(f => f.includes(memberId));
+}
+
+async function fetchClusteringData() {
+    try {
+        const res = await fetch('/api/filelist/forecasts');
+        if (!res.ok) return;
+        const files = await res.json();
+        const clusterFiles = (Array.isArray(files) ? files : [])
+            .filter(f => f.startsWith('forecast_clustering_summary_') && f.endsWith('.json'));
+        // Fetch all clustering files in parallel, index by init time
+        const results = await Promise.all(clusterFiles.map(async (f) => {
+            const initTime = clusterFilenameToInit(f);
+            if (!initTime) return null;
+            try {
+                const r = await fetch(`${API_FORECASTS}/${f}`);
+                if (!r.ok) return null;
+                return { initTime, data: await r.json() };
+            } catch { return null; }
+        }));
+        results.forEach(r => { if (r) clusteringByInit[r.initTime] = r.data; });
+    } catch { /* clustering unavailable */ }
+}
 
 async function initializeClyfar() {
-    // Static PNG mode for Dec 2025 launch
     try {
-        const imageFiles = await fetchImageList();
+        const [imageFiles] = await Promise.all([
+            fetchImageList(),
+            fetchClusteringData()
+        ]);
 
         // Find dailymax heatmaps (filter out poss_ozone)
         const allHeatmaps = findDailymaxHeatmaps(imageFiles);
@@ -186,14 +247,11 @@ async function initializeClyfar() {
             const initTimes = Object.keys(heatmapsByInitTime).sort().reverse();
 
             if (initTimes.length > 0) {
-                // Select most recent init time
                 currentInitTime = initTimes[0];
                 dailymaxHeatmaps = heatmapsByInitTime[currentInitTime];
 
-                // Create dropdowns (init time + member)
                 createDropdowns(initTimes);
-                // Show first member by default
-                renderStaticImage('heatmap-image-container', dailymaxHeatmaps[0], 'Daily Max Ozone Heatmap');
+                showDefaultView();
             } else {
                 showNoDataMessage();
             }
@@ -214,17 +272,90 @@ async function initializeClyfar() {
     }
 }
 
+function showDefaultView() {
+    const clustering = getClusteringForInit(currentInitTime);
+    if (clustering && !memberMode) {
+        showClusterView(clustering);
+    } else {
+        showMemberView();
+    }
+}
+
+function showClusterView(clustering) {
+    const clusterRow = document.getElementById('cluster-buttons');
+    const memberRow = document.getElementById('member-selector-group');
+    if (clusterRow) clusterRow.style.display = '';
+    if (memberRow) memberRow.style.display = 'none';
+
+    // Sort clusters by fraction descending
+    const sorted = [...clustering.clusters].sort((a, b) => b.fraction - a.fraction);
+
+    // Build cluster buttons
+    if (clusterRow) {
+        clusterRow.innerHTML = sorted.map((c, i) => {
+            const pct = Math.round(c.fraction * 100);
+            return `<button class="cluster-btn${i === 0 ? ' active' : ''}" data-medoid="${c.medoid}" data-idx="${i}" title="${c.members.length} members, ${c.clyfar_ozone.risk_level} ozone risk">Cluster ${c.id} (${pct}%)</button>`;
+        }).join('');
+
+        // Bind click events
+        clusterRow.querySelectorAll('.cluster-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                clusterRow.querySelectorAll('.cluster-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                const medoid = btn.dataset.medoid;
+                const heatmap = findHeatmapForMember(medoid);
+                renderClusterImage(medoid, heatmap);
+            });
+        });
+
+        // Show first (highest-fraction) cluster's medoid
+        renderClusterImage(sorted[0].medoid, findHeatmapForMember(sorted[0].medoid));
+    }
+}
+
+function renderClusterImage(medoid, heatmapFile) {
+    const container = document.getElementById('heatmap-image-container');
+    if (!container) return;
+
+    const title = `Representative Member (${medoid})`;
+    const titleHtml = `<div class="cluster-image-title">${title}</div>`;
+
+    if (!heatmapFile) {
+        container.innerHTML = titleHtml + `
+            <div class="chart-no-data">
+                <i class="fas fa-cloud-sun fa-3x"></i>
+                <p>Heatmap not available for ${medoid}</p>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = titleHtml + `
+        <img src="${API_IMAGES}/${heatmapFile}" alt="Daily Max Ozone Heatmap - ${medoid}"
+             class="forecast-image" loading="lazy"
+             onerror="this.parentElement.innerHTML='<div class=\\'chart-error\\'><i class=\\'fas fa-exclamation-triangle\\'></i><p>Image failed to load</p></div>'" />`;
+}
+
+function showMemberView() {
+    const clusterRow = document.getElementById('cluster-buttons');
+    const memberRow = document.getElementById('member-selector-group');
+    if (clusterRow) clusterRow.style.display = 'none';
+    if (memberRow) memberRow.style.display = '';
+
+    updateMemberDropdown();
+
+    // Show first member
+    if (dailymaxHeatmaps.length > 0) {
+        renderStaticImage('heatmap-image-container', dailymaxHeatmaps[0], 'Daily Max Ozone Heatmap');
+    }
+}
+
 function createDropdowns(initTimes) {
     const container = document.getElementById('exceedance-heatmap');
     if (!container) return;
 
-    // Build member dropdown for current init time
-    const members = dailymaxHeatmaps.map(f => {
-        const match = f.match(/clyfar(\d{3})/);
-        return match ? parseInt(match[1], 10) + 1 : null;
-    }).filter(n => n !== null);
+    const clustering = getClusteringForInit(currentInitTime);
+    const hasCluster = !!clustering;
 
-    // Create wrapper with both dropdowns
     const wrapper = document.createElement('div');
     wrapper.className = 'heatmap-with-dropdown';
     wrapper.innerHTML = `
@@ -233,10 +364,17 @@ function createDropdowns(initTimes) {
                 <label for="inittime-selector">Forecast Run:</label>
                 <select id="inittime-selector" class="member-dropdown"></select>
             </div>
-            <div class="dropdown-group">
-                <label for="member-selector">Ensemble Member:</label>
-                <select id="member-selector" class="member-dropdown"></select>
+            <div class="dropdown-group toggle-group">
+                <label class="toggle-label" for="member-mode-toggle">
+                    <input type="checkbox" id="member-mode-toggle" ${hasCluster ? '' : 'checked disabled'}>
+                    Choose by member
+                </label>
             </div>
+        </div>
+        <div id="cluster-buttons" class="cluster-buttons" style="${hasCluster ? '' : 'display:none'}"></div>
+        <div id="member-selector-group" class="dropdown-group" style="${hasCluster ? 'display:none' : ''}">
+            <label for="member-selector">Ensemble Member:</label>
+            <select id="member-selector" class="member-dropdown"></select>
         </div>
         <div id="heatmap-image-container"></div>
     `;
@@ -254,22 +392,28 @@ function createDropdowns(initTimes) {
     });
 
     // Populate member dropdown
-    updateMemberDropdown(members);
+    updateMemberDropdown();
 
     // Event: init time changed
     initTimeDropdown.addEventListener('change', (e) => {
         currentInitTime = e.target.value;
         dailymaxHeatmaps = heatmapsByInitTime[currentInitTime];
 
-        // Rebuild member dropdown
-        const newMembers = dailymaxHeatmaps.map(f => {
-            const match = f.match(/clyfar(\d{3})/);
-            return match ? parseInt(match[1], 10) + 1 : null;
-        }).filter(n => n !== null);
-        updateMemberDropdown(newMembers);
+        const newClustering = getClusteringForInit(currentInitTime);
+        const toggle = document.getElementById('member-mode-toggle');
+        if (newClustering) {
+            toggle.disabled = false;
+            if (!memberMode) {
+                toggle.checked = false;
+            }
+        } else {
+            toggle.checked = true;
+            toggle.disabled = true;
+            memberMode = true;
+        }
 
-        // Show first member of new init time
-        renderStaticImage('heatmap-image-container', dailymaxHeatmaps[0], 'Daily Max Ozone Heatmap');
+        updateMemberDropdown();
+        showDefaultView();
     });
 
     // Event: member changed
@@ -277,17 +421,27 @@ function createDropdowns(initTimes) {
         const idx = parseInt(e.target.value, 10);
         renderStaticImage('heatmap-image-container', dailymaxHeatmaps[idx], 'Daily Max Ozone Heatmap');
     });
+
+    // Event: toggle cluster/member mode
+    document.getElementById('member-mode-toggle').addEventListener('change', (e) => {
+        memberMode = e.target.checked;
+        showDefaultView();
+    });
 }
 
-function updateMemberDropdown(members) {
+function updateMemberDropdown() {
     const dropdown = document.getElementById('member-selector');
     if (!dropdown) return;
 
     dropdown.innerHTML = '';
-    members.forEach((num, idx) => {
+    dailymaxHeatmaps.forEach((f, idx) => {
+        const match = f.match(/clyfar(\d{3})/);
+        if (!match) return;
+        const clyfarId = `clyfar${match[1]}`;
+        const memberNum = parseInt(match[1], 10) + 1;
         const option = document.createElement('option');
         option.value = idx;
-        option.textContent = `Member ${num}`;
+        option.textContent = `Member ${memberNum} (${clyfarId})`;
         dropdown.appendChild(option);
     });
 }
