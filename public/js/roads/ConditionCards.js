@@ -118,14 +118,14 @@ async function updateCardsWithFallback() {
         if (response.ok) {
             const data = await response.json();
             if (data && data.current) {
-                const tempF = Math.round(data.current.temperature * 9/5 + 32);
-                const windMph = Math.round(data.current.windSpeed * 2.237);
+                const tempC = data.current.temperature;
+                const windKmh = data.current.windSpeed;
 
                 const roadTempCard = document.querySelector('.condition-card-compact.road-temp .value');
-                if (roadTempCard) roadTempCard.textContent = unitsSystem.formatTemperature(tempF);
+                if (roadTempCard) roadTempCard.textContent = unitsSystem.formatTemperatureFromCelsius(tempC);
 
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
-                if (windCard) windCard.textContent = unitsSystem.formatWindSpeed(windMph);
+                if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
             }
         }
     } catch (error) {

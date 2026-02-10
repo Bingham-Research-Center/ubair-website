@@ -31,6 +31,23 @@ class UnitsSystem {
     }
 
     /**
+     * Format temperature when input is in Celsius
+     * @param {number|string} celsius - Temperature in Celsius
+     * @returns {string} Formatted temperature string
+     */
+    formatTemperatureFromCelsius(celsius) {
+        if (celsius === '--' || celsius === null || celsius === undefined) return '--';
+        const temp = parseFloat(celsius);
+        if (isNaN(temp)) return '--';
+
+        if (this.isMetric) {
+            return `${temp.toFixed(1)}°C`;
+        }
+        const fahrenheit = temp * 9/5 + 32;
+        return `${fahrenheit.toFixed(1)}°F`;
+    }
+
+    /**
      * Format wind speed with current unit system
      * @param {number|string} mph - Wind speed in miles per hour
      * @returns {string} Formatted wind speed string
@@ -45,6 +62,23 @@ class UnitsSystem {
             return `${kmh.toFixed(1)} km/h`;
         }
         return `${speed.toFixed(1)} mph`;
+    }
+
+    /**
+     * Format wind speed when input is in km/h
+     * @param {number|string} kmh - Wind speed in kilometers per hour
+     * @returns {string} Formatted wind speed string
+     */
+    formatWindSpeedFromKmh(kmh) {
+        if (kmh === '--' || kmh === null || kmh === undefined) return '--';
+        const speed = parseFloat(kmh);
+        if (isNaN(speed)) return '--';
+
+        if (this.isMetric) {
+            return `${speed.toFixed(1)} km/h`;
+        }
+        const mph = speed / 1.60934;
+        return `${mph.toFixed(1)} mph`;
     }
 
     /**
