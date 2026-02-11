@@ -87,46 +87,6 @@
     padding-bottom: 0.5rem;
 }
 
-.town-selector {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    background: linear-gradient(135deg, rgba(0, 38, 58, 0.03) 0%, rgba(98, 124, 139, 0.03) 100%);
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-}
-
-.town-selector label {
-    color: var(--usu-blue);
-    font-size: 1rem;
-    display: flex;
-    align-items: center;
-}
-
-.town-dropdown {
-    padding: 0.5rem 0.75rem;
-    border: 2px solid var(--usu-light-gray);
-    border-radius: 6px;
-    background: white;
-    color: var(--usu-blue);
-    font-weight: 600;
-    font-size: 0.95rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    min-width: 120px;
-}
-
-.town-dropdown:hover {
-    border-color: var(--usu-blue);
-    background: rgba(0, 38, 58, 0.02);
-}
-
-.town-dropdown:focus {
-    outline: none;
-    border-color: var(--usu-blue);
-    box-shadow: 0 0 0 3px rgba(0, 38, 58, 0.1);
-}
 
 .dashboard-tabs .tab-button {
     padding: 0.6rem 1.2rem;
@@ -678,6 +638,50 @@ main.content {
 .legend-diamond {
     transform: rotate(45deg);
     border-radius: 0 !important;
+}
+
+/* Alerts Tab Grid Layout */
+.alerts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 0.875rem;
+}
+
+.alerts-snow-panel {
+    grid-row: 1 / 3;
+    grid-column: 2;
+}
+
+.alerts-map-link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.alerts-map-link:hover {
+    background: #eef2ff;
+}
+
+.live-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #22c55e;
+    margin-right: 4px;
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.headline-detail {
+    font-size: 0.85rem;
+    color: #64748b;
+    font-weight: 400;
 }
 
 /* Dashboard Section Spacing */

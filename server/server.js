@@ -7,7 +7,7 @@ import { createServer } from 'http';
 
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
-import roadWeatherRoutes from './routes/roadWeather.js';
+import roadWeatherRoutes, { setRoadWeatherService } from './routes/roadWeather.js';
 import trafficEventsRoutes from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
@@ -18,6 +18,13 @@ const PORT = process.env.PORT || 8000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize background refresh service (includes camera analysis scheduler)
+const backgroundRefresh = new BackgroundRefreshService();
+
+// Share the roadWeatherService instance with routes
+// This ensures all routes use the same instance with camera analysis scheduler
+setRoadWeatherService(backgroundRefresh.roadWeatherService);
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads)
 app.use(express.json({ type: 'application/json' }));
@@ -129,7 +136,7 @@ app.get('/api/filelist/:dataType', async (req, res) => {
         const { dataType } = req.params;
         const dataDir = path.join(__dirname, '../public/api/static', dataType);
         const files = await fs.readdir(dataDir);
-        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'));
+        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf'));
         res.json(allowedFiles);
     } catch (error) {
         res.status(500).json({ error: `Failed to list files for ${req.params.dataType}` });
@@ -177,10 +184,6 @@ app.get('/api/live-observations', async (req, res) => {
 
 // Create HTTP server
 const server = createServer(app);
-
-
-// Initialize background refresh service
-const backgroundRefresh = new BackgroundRefreshService();
 
 server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
