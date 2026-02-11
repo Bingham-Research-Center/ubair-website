@@ -118,6 +118,41 @@ curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
 ssh akamai "pm2 logs --lines 50"
 ```
 
+### Automated Email Report
+The server can send a scheduled monitoring report email (pipeline status + camera scheduler stats).
+
+Set these environment variables on the server:
+```bash
+REPORT_EMAIL_ENABLED=true
+REPORT_EMAIL_TO=you@example.com
+REPORT_EMAIL_FROM=basinwx@example.com
+REPORT_EMAIL_SMTP_HOST=smtp.example.com
+REPORT_EMAIL_SMTP_PORT=587
+REPORT_EMAIL_SMTP_SECURE=false
+REPORT_EMAIL_SMTP_USER=your-smtp-user
+REPORT_EMAIL_SMTP_PASS=your-smtp-password
+REPORT_EMAIL_SCHEDULE_ENABLED=false
+REPORT_EMAIL_CRON="0 8 * * *"
+REPORT_EMAIL_TIMEZONE=America/Denver
+REPORT_EMAIL_NOTIFY_ON_STARTUP=true
+REPORT_EMAIL_NOTIFY_ON_SHUTDOWN=true
+REPORT_EMAIL_SUBJECT_PREFIX="BasinWx Status Report"
+```
+
+Notes:
+- `REPORT_EMAIL_CRON` uses standard 5-field cron format.
+- Lifecycle reports are controlled by `REPORT_EMAIL_NOTIFY_ON_STARTUP` and `REPORT_EMAIL_NOTIFY_ON_SHUTDOWN`.
+- Scheduled reports are optional and require `REPORT_EMAIL_SCHEDULE_ENABLED=true`.
+- Service is disabled unless `REPORT_EMAIL_ENABLED=true`.
+
+Warm-restore metric endpoint:
+```bash
+curl -s https://basinwx.com/api/road-weather/camera-scheduler-status | jq '.warmRestore'
+```
+Returns startup restore diagnostics including:
+- `restoredDetectionsCount`
+- `restoredSnapshotAgeMinutes`
+
 ### Storage Triage
 ```bash
 # Find GEFS cache hogs
@@ -194,4 +229,3 @@ Other than JRL's [email address](mailto:john.lawson@usu.edu), further informatio
 - Ozone Alert program for receiving email outlooks when there is a elevated risk of **high wintertime ozone** in the Uinta Basin.
 - GitHub Issues: [Report bugs or request features (more for the tech-minded)](https://github.com/bingham-research-center/ubair-website/issues)
 ---
-
