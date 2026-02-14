@@ -936,11 +936,19 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
 
         events.forEach(event => {
             if (!event.latitude || !event.longitude) return;
+            const safeDisplayColor = sanitizeHexColor(event.displayColor, '#6c757d');
+            const safeDisplayIcon = escapeHtml(event.displayIcon || '🚧');
+            const safeEventName = escapeHtml(event.name || 'Traffic Event');
+            const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown roadway');
+            const safeEventType = escapeHtml((event.eventType || 'Unknown').replace(/([A-Z])/g, ' $1').trim());
+            const safeDescription = escapeHtml(event.shortDescription || event.description || 'No details available');
+            const safeSeverity = escapeHtml(event.severity || '');
+            const safePriority = Number.isFinite(Number(event.priority)) ? Number(event.priority) : 0;
 
             // Create custom icon based on event type
             const iconHtml = `
                 <div style="
-                    background-color: ${event.displayColor};
+                    background-color: ${safeDisplayColor};
                     color: white;
                     border-radius: 50%;
                     width: 30px;
@@ -953,7 +961,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
                     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                     font-weight: bold;
                 ">
-                    ${event.displayIcon}
+                    ${safeDisplayIcon}
                 </div>
             `;
 
@@ -970,25 +978,25 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
             // Create popup content
             const popupContent = `
                 <div class="traffic-event-popup" style="max-width: 300px;">
-                    <h4 style="margin: 0 0 10px 0; color: ${event.displayColor};">
-                        ${event.displayIcon} ${event.name}
+                    <h4 style="margin: 0 0 10px 0; color: ${safeDisplayColor};">
+                        ${safeDisplayIcon} ${safeEventName}
                     </h4>
                     <div style="margin-bottom: 8px;">
-                        <strong>Road:</strong> ${event.roadwayName}
+                        <strong>Road:</strong> ${safeRoadwayName}
                     </div>
                     <div style="margin-bottom: 8px;">
-                        <strong>Type:</strong> ${event.eventType.replace(/([A-Z])/g, ' $1').trim()}
+                        <strong>Type:</strong> ${safeEventType}
                     </div>
                     ${event.isFullClosure ? '<div style="color: #dc2626; font-weight: bold; margin-bottom: 8px;">⚠️ FULL CLOSURE</div>' : ''}
                     <div style="margin-bottom: 8px;">
                         <strong>Description:</strong><br>
                         <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; font-size: 14px; margin-top: 4px;">
-                            ${event.shortDescription}
+                            ${safeDescription}
                         </div>
                     </div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 12px; color: #666;">
-                        <span><strong>Priority:</strong> ${event.priority}/10</span>
-                        ${event.severity ? `<span><strong>Severity:</strong> ${event.severity}</span>` : ''}
+                        <span><strong>Priority:</strong> ${safePriority}/10</span>
+                        ${event.severity ? `<span><strong>Severity:</strong> ${safeSeverity}</span>` : ''}
                     </div>
                     <div style="margin-top: 8px; font-size: 11px; color: #999;">
                         <strong>Start:</strong> ${new Date(event.startDate).toLocaleString()}<br>
@@ -1039,6 +1047,8 @@ RoadWeatherMap.prototype.addRoadClosureOverlays = function(events) {
                         className: 'road-closure-overlay',
                         pane: 'closurePane'
                     });
+                    const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown road');
+                    const safeLocation = escapeHtml(event.location || 'Location unavailable');
 
                     // Add popup with closure information
                     const popupContent = `
@@ -1046,8 +1056,8 @@ RoadWeatherMap.prototype.addRoadClosureOverlays = function(events) {
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚫 Road Closure
                             </h4>
-                            <p style="margin: 0 0 4px 0;"><strong>${event.roadwayName}</strong></p>
-                            <p style="margin: 0 0 8px 0; font-size: 12px;">${event.location}</p>
+                            <p style="margin: 0 0 4px 0;"><strong>${safeRoadwayName}</strong></p>
+                            <p style="margin: 0 0 8px 0; font-size: 12px;">${safeLocation}</p>
                             <p style="margin: 0; font-size: 11px; color: #666;">
                                 Click marker for full details
                             </p>
@@ -1122,14 +1132,15 @@ RoadWeatherMap.prototype.loadTrafficAlerts = async function() {
 RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
         alerts.forEach(alert => {
             // Check if alert indicates a road closure
-            const message = alert.message.toLowerCase();
+            const rawMessage = typeof alert.message === 'string' ? alert.message : '';
+            const message = rawMessage.toLowerCase();
             const isClosure = message.includes('closed') || message.includes('closure');
 
             if (!isClosure) return;
 
             // Extract highway information
-            const highwayMatch = alert.message.match(/(US-\d+|I-\d+|SR-\d+)/gi);
-            const milepointMatch = alert.message.match(/MP\s*(\d+)(?:-(\d+))?/i);
+            const highwayMatch = rawMessage.match(/(US-\d+|I-\d+|SR-\d+)/gi);
+            const milepointMatch = rawMessage.match(/MP\s*(\d+)(?:-(\d+))?/i);
 
             if (highwayMatch && milepointMatch) {
                 const highway = highwayMatch[0];
@@ -1140,6 +1151,9 @@ RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
                 const closureCoords = this.approximateHighwayCoordinates(highway, mpStart, mpEnd);
 
                 if (closureCoords.length > 0) {
+                    const safeHighway = escapeHtml(highway);
+                    const safeMessage = escapeHtml(rawMessage);
+                    const safeSeverity = escapeHtml(alert.severity || 'Unknown');
                     const alertOverlay = L.polyline(closureCoords, {
                         color: '#dc2626',
                         weight: 15,
@@ -1154,10 +1168,10 @@ RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚨 UDOT Alert: Road Closure
                             </h4>
-                            <p style="margin: 0 0 8px 0; font-weight: bold;">${highway}</p>
-                            <p style="margin: 0 0 8px 0; font-size: 12px;">${alert.message}</p>
+                            <p style="margin: 0 0 8px 0; font-weight: bold;">${safeHighway}</p>
+                            <p style="margin: 0 0 8px 0; font-size: 12px;">${safeMessage}</p>
                             <p style="margin: 0; font-size: 10px; color: #666;">
-                                Severity: ${alert.severity} | Until: ${alert.endTime ? new Date(alert.endTime).toLocaleString() : 'Unknown'}
+                                Severity: ${safeSeverity} | Until: ${alert.endTime ? new Date(alert.endTime).toLocaleString() : 'Unknown'}
                             </p>
                         </div>
                     `;
