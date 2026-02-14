@@ -163,6 +163,8 @@ async function smartRefreshUS40(data) {
     if (!container) return;
 
     try {
+        const eventsData = data.events || {};
+
         // Filter data for US-40 corridor (match original filtering logic)
         const us40Stations = data.stations.filter(station =>
             station.name.toLowerCase().includes('roosevelt') ||
@@ -204,6 +206,8 @@ async function smartRefreshUS191(data) {
     if (!container) return;
 
     try {
+        const eventsData = data.events || {};
+
         // Filter data for US-191 corridor (match original filtering logic)
         const us191Stations = data.stations.filter(station =>
             station.name.toLowerCase().includes('duchesne') ||
