@@ -424,6 +424,10 @@ function nextRoad(stationsData, eventsData) {
  * Start automatic carousel rotation (30 seconds per slide)
  */
 function startAutoRotation(stationsData, eventsData) {
+    if (autoRotateTimer) {
+        clearInterval(autoRotateTimer);
+    }
+
     autoRotateTimer = setInterval(() => {
         const nextIndex = currentRoadIndex === basinRoads.length - 1 ? 0 : currentRoadIndex + 1;
         showRoad(nextIndex, stationsData, eventsData);
