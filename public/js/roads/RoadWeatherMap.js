@@ -227,15 +227,19 @@ class RoadWeatherMap {
 
         // All roads now have proper multi-point coordinates
         const roadLayer = L.polyline(segment.coordinates, lineStyle);
+        const safeSegmentName = escapeHtml(segment.name || 'Road Segment');
+        const safeConditionToken = sanitizeClassToken(segment.condition, 'gray');
+        const safeStatus = escapeHtml(segment.status || 'No Data');
+        const safeBadgeClass = sanitizeClassToken(badgeClass, 'monitored-badge');
 
         // Build popup content with additional info for camera-monitored segments
         let popupContent = `
             <div class="road-popup">
-                <h4>${segment.name}</h4>
-                <div class="road-status ${segment.condition}">
-                    Status: ${segment.status}
+                <h4>${safeSegmentName}</h4>
+                <div class="road-status ${safeConditionToken}">
+                    Status: ${safeStatus}
                 </div>
-                <div class="${badgeClass}">
+                <div class="${safeBadgeClass}">
                     ${isCameraMonitored ? '📹 Camera Monitored' : (isEstimated ? '📊 Estimated' : '🛰️ Monitored')}
                 </div>`;
 
@@ -247,26 +251,35 @@ class RoadWeatherMap {
             let confidenceBadge = '';
             if (detection.confidenceLevel) {
                 const level = detection.confidenceLevel;
-                confidenceBadge = `<span class="confidence-badge confidence-${level.badge}"
-                                         style="background-color: ${level.color}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;"
-                                         title="${level.name}: Based on camera analysis and temperature data">
-                                        ${level.icon} ${level.displayText}
+                const safeLevelBadge = sanitizeClassToken(level.badge, 'unknown');
+                const safeLevelColor = sanitizeHexColor(level.color, '#6c757d');
+                const safeLevelName = escapeHtml(level.name || 'Confidence');
+                const safeLevelIcon = escapeHtml(level.icon || 'ℹ️');
+                const safeLevelDisplay = escapeHtml(level.displayText || 'Unknown');
+                confidenceBadge = `<span class="confidence-badge confidence-${safeLevelBadge}"
+                                         style="background-color: ${safeLevelColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;"
+                                         title="${safeLevelName}: Based on camera analysis and temperature data">
+                                        ${safeLevelIcon} ${safeLevelDisplay}
                                     </span>`;
             } else {
                 // Fallback to simple percentage display
-                confidenceBadge = `${Math.round(detection.confidence * 100)}%`;
+                const confidencePercent = Number.isFinite(Number(detection.confidence)) ? Math.round(Number(detection.confidence) * 100) : 0;
+                confidenceBadge = `${confidencePercent}%`;
             }
 
+            const safeSnowLevel = escapeHtml(detection.snowLevel || 'Unknown');
+            const safeAnalysisTime = detection.timestamp ? new Date(detection.timestamp).toLocaleTimeString() : 'Unknown';
             popupContent += `
                 <div class="camera-detection-info">
-                    <p><strong>Snow Level:</strong> ${detection.snowLevel}</p>
+                    <p><strong>Snow Level:</strong> ${safeSnowLevel}</p>
                     <p><strong>Confidence:</strong> ${confidenceBadge}</p>
-                    <p><strong>Last Analysis:</strong> ${new Date(detection.timestamp).toLocaleTimeString()}</p>
+                    <p><strong>Last Analysis:</strong> ${safeAnalysisTime}</p>
                 </div>`;
         }
 
+        const safeDataSource = escapeHtml(dataSource);
         popupContent += `
-                <p class="data-source">${dataSource}</p>
+                <p class="data-source">${safeDataSource}</p>
             </div>`;
 
         roadLayer.bindPopup(popupContent);
@@ -338,16 +351,24 @@ class RoadWeatherMap {
         // Format temperature and wind values using units system
         const airTemp = station.airTemperature ? unitsSystem.formatTemperature(station.airTemperature) : '--';
         const surfaceTemp = station.surfaceTemp ? unitsSystem.formatTemperature(station.surfaceTemp) : '--';
-        const humidity = station.relativeHumidity ? `${station.relativeHumidity}%` : '--';
+        const humidityValue = Number.isFinite(Number(station.relativeHumidity)) ? Math.round(Number(station.relativeHumidity)) : null;
+        const humidity = humidityValue !== null ? `${humidityValue}%` : '--';
         const windSpeed = station.windSpeedAvg ? unitsSystem.formatWindSpeed(station.windSpeedAvg) : '--';
         const windDir = station.windDirection || '--';
         const windGust = station.windSpeedGust ? unitsSystem.formatWindSpeed(station.windSpeedGust) : '--';
+        const safeStationName = escapeHtml(station.name || 'Weather Station');
+        const safeConditionClass = sanitizeClassToken(station.condition?.condition, 'unknown');
+        const safeConditionStatus = escapeHtml(station.condition?.status || 'Unknown');
+        const safeSurfaceStatus = escapeHtml(station.surfaceStatus || 'Unknown');
+        const safeWindDir = escapeHtml(windDir);
+        const safePrecipitation = escapeHtml(station.precipitation || '');
+        const safeUpdatedTime = station.lastUpdated ? new Date(station.lastUpdated).toLocaleTimeString() : 'Unknown';
 
         marker.bindPopup(`
             <div class="weather-station-popup">
-                <h4>🌡️ ${station.name}</h4>
-                <div class="station-status ${station.condition.condition}">
-                    ${station.condition.status}
+                <h4>🌡️ ${safeStationName}</h4>
+                <div class="station-status ${safeConditionClass}">
+                    ${safeConditionStatus}
                 </div>
 
                 <div class="weather-details">
@@ -358,20 +379,20 @@ class RoadWeatherMap {
                         <strong>Surface Temperature:</strong> ${surfaceTemp}
                     </div>
                     <div class="weather-row">
-                        <strong>Surface Status:</strong> ${station.surfaceStatus || 'Unknown'}
+                        <strong>Surface Status:</strong> ${safeSurfaceStatus}
                     </div>
                     <div class="weather-row">
                         <strong>Humidity:</strong> ${humidity}
                     </div>
                     <div class="weather-row">
-                        <strong>Wind:</strong> ${windSpeed} ${windDir}
+                        <strong>Wind:</strong> ${windSpeed} ${safeWindDir}
                     </div>
                     ${station.windSpeedGust ? `<div class="weather-row"><strong>Wind Gusts:</strong> ${windGust}</div>` : ''}
-                    ${station.precipitation ? `<div class="weather-row"><strong>Precipitation:</strong> ${station.precipitation}</div>` : ''}
+                    ${station.precipitation ? `<div class="weather-row"><strong>Precipitation:</strong> ${safePrecipitation}</div>` : ''}
                 </div>
 
                 <div class="data-timestamp">
-                    Updated: ${new Date(station.lastUpdated).toLocaleTimeString()}
+                    Updated: ${safeUpdatedTime}
                 </div>
                 <div class="data-source">
                     Real-time UDOT Weather Station
@@ -415,6 +436,8 @@ class RoadWeatherMap {
         cameras.forEach(camera => {
             // Find camera analysis data
             const detection = cameraDetections.find(d => d.cameraId === camera.id.toString());
+            const safeCameraName = escapeHtml(camera.name || 'Traffic Camera');
+            const safeCameraNavId = sanitizeIdentifier(camera.id, 'camera');
 
             // Determine ring color based on analysis
             let ringColor = '#808080'; // Default gray for no analysis
@@ -474,32 +497,49 @@ class RoadWeatherMap {
             });
 
             // Create popup with camera feed and analysis info
-            const cameraViews = camera.views.map(view =>
-                `<div class="camera-view">
-                    <div class="camera-image-container"
-                         onclick="window.mapStateManager.navigateToWebcam('${camera.id}', window.roadWeatherMap?.map)"
-                         style="cursor: pointer;">
-                        <img src="${view.url}" alt="${view.description}"
-                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                        <div class="click-overlay">
-                            🔍 Click to view full screen
+            const cameraViews = (Array.isArray(camera.views) ? camera.views : []).map(view => {
+                const safeViewDescription = escapeHtml(view.description || 'Camera view');
+                const safeViewUrl = sanitizeHttpUrl(view.url || '');
+                return `
+                    <div class="camera-view">
+                        <div class="camera-image-container"
+                             onclick="window.mapStateManager.navigateToWebcam('${safeCameraNavId}', window.roadWeatherMap?.map)"
+                             style="cursor: pointer;">
+                            ${safeViewUrl ? `
+                                <img src="${safeViewUrl}" alt="${safeViewDescription}"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div style="display: none; padding: 10px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+                                    Camera feed unavailable
+                                </div>
+                            ` : `
+                                <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+                                    Camera feed unavailable
+                                </div>
+                            `}
+                            <div class="click-overlay">
+                                🔍 Click to view full screen
+                            </div>
                         </div>
-                        <div style="display: none; padding: 10px; background: #f0f0f0; border-radius: 4px; text-align: center;">
-                            Camera feed unavailable
-                        </div>
+                        <p>${safeViewDescription}</p>
+                    </div>`;
+            }).join('') || `
+                <div class="camera-view">
+                    <div style="padding: 10px; background: #f0f0f0; border-radius: 4px; text-align: center;">
+                        Camera feed unavailable
                     </div>
-                    <p>${view.description}</p>
-                </div>`
-            ).join('');
+                </div>`;
 
             // Add analysis info to popup if available
             let analysisInfo = '';
             if (detection) {
+                const confidencePercent = Number.isFinite(Number(detection.confidence)) ? Math.round(Number(detection.confidence) * 100) : 0;
+                const safeSnowLevel = escapeHtml(detection.snowLevel || 'Unknown');
+                const safeConditionText = escapeHtml(conditionText);
                 analysisInfo = `
                     <div class="analysis-section">
-                        <p><strong>Condition:</strong> ${conditionText}</p>
-                        <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
+                        <p><strong>Condition:</strong> ${safeConditionText}</p>
+                        <p><strong>Confidence:</strong> ${confidencePercent}%</p>
+                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${safeSnowLevel}</p>` : ''}
                     </div>`;
             }
 
@@ -564,7 +604,7 @@ class RoadWeatherMap {
             // Minimal popup - just camera feed and analysis
             marker.bindPopup(`
                 <div class="camera-popup">
-                    <h4>${camera.name}</h4>
+                    <h4>${safeCameraName}</h4>
                     ${cameraViews}
                     ${analysisInfo}
                 </div>
@@ -1179,6 +1219,14 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
         let iconColor = '#10b981'; // Green for active
         let iconSize = 32;
         let pulseAnimation = '';
+        const bearingAngle = Number.isFinite(Number(plow.bearingAngle)) ? Number(plow.bearingAngle) : 0;
+        const safeFleetId = escapeHtml(plow.fleetId || 'Unknown');
+        const safeStatusText = escapeHtml((plow.status || 'unknown').toUpperCase());
+        const safeBearing = escapeHtml(plow.bearing || 'Unknown');
+        const safeVehicleId = escapeHtml(plow.name || 'Unknown');
+        const safeLastUpdate = Number.isFinite(Number(plow.lastUpdateMinutesAgo))
+            ? `${Math.max(0, Math.round(Number(plow.lastUpdateMinutesAgo)))} minutes ago`
+            : 'Unknown';
 
         if (plow.status === 'active') {
             iconColor = '#10b981'; // Green
@@ -1209,12 +1257,12 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
                     display: flex;
                     align-items: center;
                     justify-content: center;
-                    transform: rotate(${plow.bearingAngle}deg);
+                    transform: rotate(${bearingAngle}deg);
                     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
                     border: 2px solid white;
                 ">
                     <div style="
-                        transform: rotate(-${plow.bearingAngle}deg);
+                        transform: rotate(-${bearingAngle}deg);
                         font-size: ${iconSize * 0.5}px;
                     ">🚜</div>
                 </div>
@@ -1257,7 +1305,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
         const popupContent = `
             <div class="snow-plow-popup" style="min-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: ${iconColor};">
-                    🚜 Snow Plow ${plow.fleetId}
+                    🚜 Snow Plow ${safeFleetId}
                 </h4>
                 <div style="margin-bottom: 8px;">
                     <strong>Status:</strong>
@@ -1267,16 +1315,16 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
                         background: ${iconColor}20;
                         color: ${iconColor};
                         font-weight: bold;
-                    ">${plow.status.toUpperCase()}</span>
+                    ">${safeStatusText}</span>
                 </div>
                 <div style="margin-bottom: 8px;">
-                    <strong>Direction:</strong> ${plow.bearing}
+                    <strong>Direction:</strong> ${safeBearing}
                 </div>
                 <div style="margin-bottom: 8px;">
-                    <strong>Last Update:</strong> ${plow.lastUpdateMinutesAgo} minutes ago
+                    <strong>Last Update:</strong> ${safeLastUpdate}
                 </div>
                 <div style="font-size: 11px; color: #666; margin-top: 10px;">
-                    Vehicle ID: ${plow.name}
+                    Vehicle ID: ${safeVehicleId}
                 </div>
             </div>
         `;
@@ -1297,7 +1345,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
 
             routeLine.bindPopup(`
                 <div style="font-size: 12px;">
-                    <strong>🚜 Plow ${plow.fleetId} Route</strong><br>
+                    <strong>🚜 Plow ${safeFleetId} Route</strong><br>
                     Recent path traveled
                 </div>
             `);
@@ -1360,6 +1408,15 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 statusEmoji = '✅';
                 statusText = 'OPEN';
         }
+        const safePassName = escapeHtml(pass.name || 'Mountain Pass');
+        const safeElevation = escapeHtml(pass.elevation || 'Unknown');
+        const safeRoadway = escapeHtml(pass.roadway || 'Unknown');
+        const safeStatusEmoji = escapeHtml(statusEmoji);
+        const safeStatusText = escapeHtml(statusText);
+        const safeSurfaceStatus = escapeHtml(pass.surfaceStatus || 'Unknown');
+        const safeWindDirection = escapeHtml(pass.windDirection || '');
+        const safeVisibility = escapeHtml(pass.visibility || '');
+        const safeStationName = escapeHtml(pass.stationName || '');
 
         // Create mountain pass icon with elevation badge
         const iconHtml = `
@@ -1389,7 +1446,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                     font-weight: bold;
                     white-space: nowrap;
                     box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-                ">${pass.elevation}</div>
+                ">${safeElevation}</div>
             </div>
         `;
 
@@ -1411,10 +1468,10 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Current Conditions</h5>
                     ${pass.airTemperature ? `<div><strong>Air Temp:</strong> ${unitsSystem.formatTemperature(pass.airTemperature)}</div>` : ''}
                     ${pass.surfaceTemp ? `<div><strong>Surface:</strong> ${unitsSystem.formatTemperature(pass.surfaceTemp)}</div>` : ''}
-                    ${pass.surfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${pass.surfaceStatus}</div>` : ''}
-                    ${pass.windSpeed ? `<div><strong>Wind:</strong> ${unitsSystem.formatWindSpeed(pass.windSpeed)} ${pass.windDirection || ''}</div>` : ''}
+                    ${pass.surfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${safeSurfaceStatus}</div>` : ''}
+                    ${pass.windSpeed ? `<div><strong>Wind:</strong> ${unitsSystem.formatWindSpeed(pass.windSpeed)} ${safeWindDirection}</div>` : ''}
                     ${pass.windGust ? `<div><strong>Gusts:</strong> ${unitsSystem.formatWindSpeed(pass.windGust)}</div>` : ''}
-                    ${pass.visibility ? `<div><strong>Visibility:</strong> ${pass.visibility}</div>` : ''}
+                    ${pass.visibility ? `<div><strong>Visibility:</strong> ${safeVisibility}</div>` : ''}
                 </div>
             `;
         }
@@ -1422,14 +1479,16 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         let seasonalInfo = '';
         if (pass.seasonalInfo && pass.seasonalInfo.length > 0) {
             const info = pass.seasonalInfo[0];
+            const safeSeasonalStatus = escapeHtml(info.status || 'Unknown');
+            const safeSeasonalDescription = escapeHtml(info.description || '');
             seasonalInfo = `
                 <div style="margin: 10px 0; padding: 10px; background: ${info.isClosed ? '#fee2e2' : '#dcfce7'}; border-radius: 4px;">
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Seasonal Closure</h5>
                     <div style="font-weight: bold; color: ${info.isClosed ? '#dc2626' : '#10b981'};">
-                        ${info.status}
+                        ${safeSeasonalStatus}
                     </div>
                     <div style="font-size: 11px; margin-top: 4px; color: #666;">
-                        ${info.description}
+                        ${safeSeasonalDescription}
                     </div>
                 </div>
             `;
@@ -1438,7 +1497,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         const popupContent = `
             <div class="mountain-pass-popup" style="min-width: 280px; max-width: 350px;">
                 <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                    ⛰️ ${pass.name}
+                    ⛰️ ${safePassName}
                 </h4>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <span style="
@@ -1448,19 +1507,19 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                         color: ${iconColor};
                         font-weight: bold;
                         font-size: 12px;
-                    ">${statusEmoji} ${statusText}</span>
+                    ">${safeStatusEmoji} ${safeStatusText}</span>
                     <span style="font-size: 12px; color: #666;">
-                        Elev: ${pass.elevation}
+                        Elev: ${safeElevation}
                     </span>
                 </div>
                 <div style="margin-bottom: 8px;">
-                    <strong>Highway:</strong> ${pass.roadway}
+                    <strong>Highway:</strong> ${safeRoadway}
                 </div>
                 ${weatherInfo}
                 ${seasonalInfo}
                 ${pass.stationName ? `
                     <div style="font-size: 11px; color: #999; margin-top: 10px;">
-                        Data from: ${pass.stationName}
+                        Data from: ${safeStationName}
                     </div>
                 ` : ''}
             </div>
@@ -1498,6 +1557,15 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
     this.restAreaMarkers.clear();
 
     restAreas.forEach(restArea => {
+        const safeName = escapeHtml(restArea.name || 'Rest Area');
+        const safeLocation = escapeHtml(restArea.location || 'Unknown');
+        const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
+        const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
+        const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
+        const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
+        const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
+        const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
+
         // Create rest area icon with stall count indicator
         const iconHtml = `
             <div style="position: relative;">
@@ -1513,7 +1581,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     border: 2px solid white;
                     font-size: 18px;
                 ">🅿️</div>
-                ${restArea.totalStalls > 0 ? `
+                ${safeTotalStalls > 0 ? `
                     <div style="
                         position: absolute;
                         bottom: -3px;
@@ -1527,7 +1595,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                         min-width: 16px;
                         text-align: center;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                    ">${restArea.totalStalls}</div>
+                    ">${safeTotalStalls}</div>
                 ` : ''}
             </div>
         `;
@@ -1544,25 +1612,25 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
 
         // Build detailed popup content
         let facilitiesInfo = '';
-        if (restArea.carStalls > 0 || restArea.truckStalls > 0) {
+        if (safeCarStalls > 0 || safeTruckStalls > 0) {
             facilitiesInfo = `
                 <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Parking Facilities</h5>
-                    ${restArea.carStalls > 0 ? `<div><strong>Car Stalls:</strong> ${restArea.carStalls}</div>` : ''}
-                    ${restArea.truckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${restArea.truckStalls}</div>` : ''}
-                    <div><strong>Total:</strong> ${restArea.totalStalls} stalls</div>
+                    ${safeCarStalls > 0 ? `<div><strong>Car Stalls:</strong> ${safeCarStalls}</div>` : ''}
+                    ${safeTruckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${safeTruckStalls}</div>` : ''}
+                    <div><strong>Total:</strong> ${safeTotalStalls} stalls</div>
                 </div>
             `;
         }
 
         let imageSection = '';
-        if (restArea.imageUrl && restArea.imageUrl !== '') {
+        if (safeImageUrl) {
             imageSection = `
                 <div class="rest-area-image" style="margin: 10px 0;">
-                    <img src="${restArea.imageUrl}"
-                         alt="${restArea.name}"
+                    <img src="${safeImageUrl}"
+                         alt="${safeName}"
                          style="max-width: 280px; width: 100%; height: auto; border-radius: 4px; cursor: pointer;"
-                         onclick="window.open('${restArea.imageUrl}', '_blank')"
+                         onclick="window.open('${safeImageUrl}', '_blank')"
                          onerror="this.style.display='none'">
                 </div>
             `;
@@ -1571,21 +1639,21 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const popupContent = `
             <div class="rest-area-popup" style="min-width: 250px; max-width: 300px;">
                 <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                    🅿️ ${restArea.name}
+                    🅿️ ${safeName}
                 </h4>
                 <div style="margin-bottom: 8px;">
-                    <strong>Location:</strong> ${restArea.location}
+                    <strong>Location:</strong> ${safeLocation}
                 </div>
-                ${restArea.yearBuilt ? `
+                ${safeYearBuilt ? `
                     <div style="margin-bottom: 8px;">
-                        <strong>Year Built:</strong> ${restArea.yearBuilt}
+                        <strong>Year Built:</strong> ${safeYearBuilt}
                     </div>
                 ` : ''}
                 ${facilitiesInfo}
                 ${restArea.nearestCommunities ? `
                     <div style="margin: 10px 0; font-size: 11px; color: #666;">
                         <strong>Nearest Communities:</strong><br>
-                        ${restArea.nearestCommunities}
+                        ${safeNearestCommunities}
                     </div>
                 ` : ''}
                 ${imageSection}

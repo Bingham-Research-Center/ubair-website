@@ -31,6 +31,47 @@ function sanitizeHexColor(value, fallback = '#6c757d') {
 }
 
 /**
+ * Restrict dynamic class token values
+ * @param {*} value - Candidate token value
+ * @param {string} fallback - Fallback token when value is invalid
+ * @returns {string} Sanitized class token
+ */
+function sanitizeClassToken(value, fallback = 'unknown') {
+    const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    return token || fallback;
+}
+
+/**
+ * Restrict dynamic identifier values used in inline handlers
+ * @param {*} value - Candidate identifier value
+ * @param {string} fallback - Fallback when value is invalid
+ * @returns {string} Sanitized identifier
+ */
+function sanitizeIdentifier(value, fallback = '') {
+    const identifier = String(value || '').replace(/[^A-Za-z0-9_-]/g, '');
+    return identifier || fallback;
+}
+
+/**
+ * Restrict dynamic URLs to http/https
+ * @param {*} value - Candidate URL
+ * @param {string} fallback - Fallback URL when value is invalid
+ * @returns {string} Sanitized absolute URL or fallback
+ */
+function sanitizeHttpUrl(value, fallback = '') {
+    if (typeof value !== 'string' || value.trim() === '') return fallback;
+    try {
+        const url = new URL(value, window.location.origin);
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+            return url.href;
+        }
+    } catch (error) {
+        // Ignore invalid URLs and return fallback
+    }
+    return fallback;
+}
+
+/**
  * Calculate distance between two lat/lng coordinates using Haversine formula
  * @param {number} lat1 - First point latitude
  * @param {number} lng1 - First point longitude
