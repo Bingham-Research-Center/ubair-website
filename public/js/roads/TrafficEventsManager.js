@@ -125,6 +125,9 @@ class TrafficEventsManager {
             statusText = 'Completed';
         }
 
+        const descriptionText = typeof event.description === 'string' ? event.description : '';
+        const titleText = event.name || (descriptionText ? descriptionText.substring(0, 60) : 'Traffic Event');
+
         return `
             <div class="event-card" style="
                 border: 1px solid #e5e7eb;
@@ -137,7 +140,7 @@ class TrafficEventsManager {
                 <div class="event-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div class="event-title" style="flex: 1;">
                         <h4 style="margin: 0 0 4px 0; color: ${event.displayColor}; display: flex; align-items: center; gap: 8px;">
-                            ${event.displayIcon} ${event.name || event.description.substring(0, 60)}
+                            ${event.displayIcon} ${titleText}
                             ${event.isFullClosure ? '<span style="background: #dc2626; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">CLOSURE</span>' : ''}
                         </h4>
                         <p style="margin: 0; color: #666; font-size: 14px;">${event.roadwayName}</p>
@@ -156,7 +159,7 @@ class TrafficEventsManager {
                 </div>
 
                 <div class="event-description" style="margin-bottom: 12px;">
-                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${event.description}</p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${descriptionText || 'No description available.'}</p>
                 </div>
 
                 <div class="event-details" style="
