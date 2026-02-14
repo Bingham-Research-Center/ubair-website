@@ -5,6 +5,32 @@
  */
 
 /**
+ * Escape user-controlled text before inserting into HTML templates
+ * @param {*} value - Any value to escape
+ * @returns {string} HTML-escaped string
+ */
+function escapeHtml(value) {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+/**
+ * Restrict dynamic CSS colors to hex values only
+ * @param {*} value - Candidate color string
+ * @param {string} fallback - Fallback color when value is invalid
+ * @returns {string} Sanitized color
+ */
+function sanitizeHexColor(value, fallback = '#6c757d') {
+    if (typeof value !== 'string') return fallback;
+    return /^#[0-9a-fA-F]{3,8}$/.test(value) ? value : fallback;
+}
+
+/**
  * Calculate distance between two lat/lng coordinates using Haversine formula
  * @param {number} lat1 - First point latitude
  * @param {number} lng1 - First point longitude
@@ -30,6 +56,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
  */
 function displayRouteConditions(container, data) {
     const { routeName, stations, events, cities } = data;
+    const safeRouteName = escapeHtml(routeName);
 
     // Calculate metrics
     const avgTemp = stations.length > 0 ?
@@ -72,18 +99,18 @@ function displayRouteConditions(container, data) {
 
         ${events.length > 0 ? `
             <div class="route-incidents">
-                <h4><i class="fas fa-exclamation-triangle"></i> Current Incidents on ${routeName}</h4>
+                <h4><i class="fas fa-exclamation-triangle"></i> Current Incidents on ${safeRouteName}</h4>
                 ${events.slice(0, 3).map(event => `
                     <div class="incident-item ${event.eventType === 'construction' ? 'construction' : ''}">
-                        <strong>${event.eventType?.toUpperCase() || 'INCIDENT'}:</strong> ${event.description || event.message}
-                        ${event.location ? `<br><small>📍 ${event.location}</small>` : ''}
+                        <strong>${escapeHtml(event.eventType?.toUpperCase() || 'INCIDENT')}:</strong> ${escapeHtml(event.description || event.message || 'No details available')}
+                        ${event.location ? `<br><small>📍 ${escapeHtml(event.location)}</small>` : ''}
                     </div>
                 `).join('')}
                 ${events.length > 3 ? `<small>... and ${events.length - 3} more incidents</small>` : ''}
             </div>
         ` : `
             <div class="route-incidents">
-                <div class="no-incidents">✅ No current incidents reported on ${routeName}</div>
+                <div class="no-incidents">✅ No current incidents reported on ${safeRouteName}</div>
             </div>
         `}
     `;
@@ -168,7 +195,7 @@ function displayErrorState(container, message) {
     container.innerHTML = `
         <div class="conditions-loading">
             <i class="fas fa-exclamation-triangle"></i>
-            <p>${message}</p>
+            <p>${escapeHtml(message)}</p>
         </div>
     `;
 }

@@ -347,6 +347,7 @@ function createRoadSlideContent(road, stations, events) {
     // Calculate metrics like the other route conditions
     const avgTemp = stations.length > 0 ?
         Math.round(stations.reduce((sum, s) => sum + (parseFloat(s.airTemperature) || 0), 0) / stations.length) : '--';
+    const safeRoadShortName = escapeHtml(road.shortName);
 
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
@@ -385,18 +386,18 @@ function createRoadSlideContent(road, stations, events) {
 
         ${events.length > 0 ? `
             <div class="route-incidents">
-                <h4><i class="fas fa-exclamation-triangle"></i> Current Incidents on ${road.shortName}</h4>
+                <h4><i class="fas fa-exclamation-triangle"></i> Current Incidents on ${safeRoadShortName}</h4>
                 ${events.slice(0, 2).map(event => `
                     <div class="incident-item ${event.eventType === 'construction' ? 'construction' : ''}">
-                        <strong>${event.eventType?.toUpperCase() || 'INCIDENT'}:</strong> ${event.description || event.message}
-                        ${event.location ? `<br><small>📍 ${event.location}</small>` : ''}
+                        <strong>${escapeHtml(event.eventType?.toUpperCase() || 'INCIDENT')}:</strong> ${escapeHtml(event.description || event.message || 'No details available')}
+                        ${event.location ? `<br><small>📍 ${escapeHtml(event.location)}</small>` : ''}
                     </div>
                 `).join('')}
                 ${events.length > 2 ? `<small>... and ${events.length - 2} more incidents</small>` : ''}
             </div>
         ` : `
             <div class="route-incidents">
-                <div class="no-incidents">✅ No current incidents reported on ${road.shortName}</div>
+                <div class="no-incidents">✅ No current incidents reported on ${safeRoadShortName}</div>
             </div>
         `}
     `;
