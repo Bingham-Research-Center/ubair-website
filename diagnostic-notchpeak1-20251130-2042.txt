@@ -1,0 +1,232 @@
+========================================
+UBAIR DIAGNOSTIC REPORT
+========================================
+Hostname: notchpeak1
+Date: Sun Nov 30 20:42:33 MST 2025
+User: u0737349
+PWD: /uufs/chpc.utah.edu/common/home/u0737349/gits/ubair-website
+
+Detected server type: CHPC
+
+========================================
+1. WEBSITE DATA DIRECTORIES
+========================================
+Website root found: /uufs/chpc.utah.edu/common/home/u0737349/gits/ubair-website
+
+--- Directory structure ---
+total 1
+drwxr-xr-x 2 u0737349 lawson 4096 Nov  4 04:08 .
+drwxr-xr-x 2 u0737349 lawson 4096 Nov  4 04:08 ..
+-rw-r--r-- 1 u0737349 lawson   73 Nov  4 04:08 filelist.json
+drwxr-xr-x 2 u0737349 lawson 4096 Nov  4 04:08 metadata
+drwxr-xr-x 2 u0737349 lawson 4096 Nov  4 04:08 observations
+drwxr-xr-x 2 u0737349 lawson 4096 Nov  4 04:08 outlooks
+
+--- observations/ ---
+File count: 3
+Most recent 5 files:
+total 43
+-rw-r--r-- 1 u0737349 lawson   314 Nov  4 04:08 test_observation.json
+-rw-r--r-- 1 u0737349 lawson   148 Nov  4 04:08 test_obs.json
+-rw-r--r-- 1 u0737349 lawson 42815 Nov  4 04:08 map_obs_20250731_0228Z.json
+
+Newest file: /uufs/chpc.utah.edu/common/home/u0737349/gits/ubair-website/public/api/static/observations/test_observation.json
+First 500 chars:
+[
+  {
+    "stid": "TEST_STATION",
+    "variable": "air_temp",
+    "value": 20.5,
+    "date_time": "2025-09-30T14:00:00.000Z",
+    "units": "Celsius"
+  },
+  {
+    "stid": "TEST_STATION",
+    "variable": "ozone_concentration",
+    "value": 45.2,
+    "date_time": "2025-09-30T14:00:00.000Z",
+    "units": "ppb"
+  }
+]
+
+
+--- metadata/ ---
+File count: 1
+Most recent 5 files:
+total 8
+-rw-r--r-- 1 u0737349 lawson 7628 Nov  4 04:08 map_obs_meta_20250731_0228Z.json
+
+Newest file: /uufs/chpc.utah.edu/common/home/u0737349/gits/ubair-website/public/api/static/metadata/map_obs_meta_20250731_0228Z.json
+First 500 chars:
+[
+  {
+    "stid":"BUNUT",
+    "name":"Bunnells Ridge",
+    "elevation":8800.0,
+    "latitude":40.314757,
+    "longitude":-111.563976
+  },
+  {
+    "stid":"CEN",
+    "name":"Centerville",
+    "elevation":4231.0,
+    "latitude":40.94968,
+    "longitude":-111.891629
+  },
+  {
+    "stid":"CHPU1",
+    "name":"CHEPETA",
+    "elevation":12120.0,
+    "latitude":40.81028,
+    "longitude":-110.07333
+  },
+  {
+    "stid":"CLN",
+    "name":"ALTA - COLLINS",
+    "elevation":9662.0,
+    "latitude":40.5763,
+    "
+
+--- images/ ---
+Directory does not exist
+
+--- forecasts/ ---
+Directory does not exist
+
+--- outlooks/ ---
+File count: 6
+Most recent 5 files:
+total 18
+-rw-r--r-- 1 u0737349 lawson  299 Nov  4 04:08 test_outlook.md
+-rw-r--r-- 1 u0737349 lawson 1610 Nov  4 04:08 template.md
+-rw-r--r-- 1 u0737349 lawson 5443 Nov  4 04:08 outlook_20241230_1430.md
+-rw-r--r-- 1 u0737349 lawson 3993 Nov  4 04:08 outlook_20240315_0930.md
+-rw-r--r-- 1 u0737349 lawson 4985 Nov  4 04:08 outlook_20240205_1115.md
+
+
+--- timeseries/ ---
+Directory does not exist
+
+--- filelist.json ---
+Exists. Contents:
+[
+  "map_obs_20250731_0228Z.json",
+  "map_obs_meta_20250731_0228Z.json"
+]
+--- GEFS PNG Search ---
+
+--- Heatmap Search ---
+
+
+========================================
+2. CLYFAR STATUS (CHPC ONLY)
+========================================
+Clyfar found at: /uufs/chpc.utah.edu/common/home/u0737349/gits/clyfar
+
+--- Git status ---
+866e1ea feat: smart resubmit on GEFS 404 (exit code 75)
+d1ed1f9 chore: increase SLURM memory to 48G (was hitting 32G limit)
+e60c1ae perf: parallelize PNG uploads with ThreadPoolExecutor
+598965f fix: update Clyfar schedule to 05/11/17/23 UTC
+8c85b1c chore: remove old session handoff files
+integration-clyfar-v0.9.5
+?? .mplconfig/
+
+--- Data output directory ---
+total 5
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 29 23:32 20251129_1800Z
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 29 20:33 20251129_1200Z
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 29 18:20 20251128_1200Z
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 29 18:02 herbie_cache
+-rw-r--r-- 1 u0737349 lawson 2889 Nov 28 15:03 elev_0p25.parquet
+-rw-r--r-- 1 u0737349 lawson 1679 Nov 28 15:03 elev_0p5.parquet
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 28 15:03 geog
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 28 14:43 20251128_0600Z
+drwxr-xr-x 2 u0737349 lawson 4096 Nov 26 16:54 20251126_1200Z
+
+--- Recent PNG files ---
+
+--- Recent JSON files ---
+/uufs/chpc.utah.edu/common/home/u0737349/gits/clyfar/.mplconfig/fontlist-v390.json
+
+--- Crontab ---
+MAILTO="j.lawson@utah.edu"
+SHELL=/bin/bash
+HOME=/uufs/chpc.utah.edu/common/home/u0737349
+
+# Observations - Every 5 minutes
+*/5 * * * * /bin/bash -c 'source ~/.bashrc_basinwx && source ~/software/pkg/miniforge3/etc/profile.d/conda.sh && conda activate clyfar-nov2025 && python ~/gits/brc-tools/brc_tools/download/get_map_obs.py >> ~/logs/obs.log 2>&1'
+  
+# Clyfar (MST times for waiting 5 hours after each GEFS in UTC) - not MDT...
+0 22,4,10,16 * * * /bin/bash -c 'source ~/.bashrc_basinwx && export PATH=$PATH:/uufs/notchpeak.peaks/sys/installdir/slurm/std/bin && cd ~/gits/clyfar && sbatch scripts/submit_clyfar.sh' >> ~/logs/clyfar_submit.log 2>&1
+
+--- Recent log files ---
+Checking /uufs/chpc.utah.edu/common/home/u0737349/logs:
+-rw-r--r-- 1 u0737349 lawson 223 Nov 30 16:00 /uufs/chpc.utah.edu/common/home/u0737349/logs/clyfar_submit.log
+Checking /tmp:
+
+--- Conda environments ---
+
+# conda environments:
+#
+                       /uufs/chpc.utah.edu/common/home/u0737349/anaconda3
+                       /uufs/chpc.utah.edu/common/home/u0737349/anaconda3/envs/clyfar-v1
+                       /uufs/chpc.utah.edu/common/home/u0737349/anaconda3/envs/ubwo-fcst
+base                   /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3
+clyfar-dec2025         /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3/envs/clyfar-dec2025
+clyfar-miniconda       /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3/envs/clyfar-miniconda
+clyfar-nov2025       * /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3/envs/clyfar-nov2025
+clyfar-v1p0            /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3/envs/clyfar-v1p0
+ubair-data-push        /uufs/chpc.utah.edu/common/home/u0737349/software/pkg/miniforge3/envs/ubair-data-push
+
+
+--- Test integration-clyfar-v0.9.5 env ---
+Could not activate integration-clyfar-v0.9.5
+
+--- brc-tools location ---
+brc-tools found at: /uufs/chpc.utah.edu/common/home/u0737349/gits/brc-tools
+b89e697 fix: comment out offline UBAIR stations, add working AQ station list
+d9a74e5 docs: Update AGENT-INDEX for 27 Nov session
+16164bc fix: Add missing UBAIR ozone stations to obs_map_stids
+integration-clyfar-v0.9.5
+
+
+========================================
+3. NODE/PM2 STATUS (AKAMAI ONLY)
+========================================
+Not Akamai - skipping PM2 checks
+
+========================================
+4. API ENDPOINT TEST
+========================================
+--- Testing localhost API ---
+GET http://localhost:3000/api/filelist/observations
+HTTP 404
+GET http://localhost:3000/api/filelist/images
+HTTP 404
+GET http://localhost:3000/api/filelist/forecasts
+HTTP 404
+
+--- Testing production API ---
+GET https://basinwx.com/api/filelist/observations
+HTTP 200
+GET https://basinwx.com/api/filelist/images
+HTTP 200
+GET https://basinwx.com/api/filelist/forecasts
+HTTP 200
+
+========================================
+5. DISK SPACE
+========================================
+Filesystem                                    Size  Used Avail Use% Mounted on
+eth.vast.chpc.utah.edu:/home/lawson/u0737349  2.0T  1.5T  552G  74% /uufs/chpc.utah.edu/common/home/u0737349
+
+========================================
+6. RECENT SYSTEM ACTIVITY
+========================================
+--- Files modified in last 24 hours in static dir ---
+
+========================================
+END OF DIAGNOSTIC REPORT
+========================================
+Please share this output for analysis.
