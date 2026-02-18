@@ -63,3 +63,16 @@ public/data/
 
 # Test artifacts
 test_observation.json
+test_outlook.md
+
+# Diagnostic dumps
+diagnostic-*.txt
+
+# Generated file listings
+filetree.txt
+
+# Raw data files
+data/
+
+# Example/scratch data
+example/
