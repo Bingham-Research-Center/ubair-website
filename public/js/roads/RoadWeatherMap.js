@@ -1549,7 +1549,10 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                          alt="${restArea.name}"
                          style="max-width: 280px; width: 100%; height: auto; border-radius: 4px; cursor: pointer;"
                          onclick="window.open('${restArea.imageUrl}', '_blank')"
-                         onerror="this.style.display='none'">
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; padding: 10px; background: #f3f4f6; border-radius: 4px; text-align: center; font-size: 12px; color: #6b7280;">
+                        Rest area image unavailable
+                    </div>
                 </div>
             `;
         }
