@@ -27,6 +27,7 @@ class RoadWeatherMap {
         this.mountainPassMarkers = new Map();
         this.restAreaMarkers = new Map();
         this.refreshTimer = null;
+        this.weatherStationsVisible = false;
     }
 
     init() {
@@ -403,7 +404,9 @@ class RoadWeatherMap {
             updateConditionCardsWithLocation(locationData);
         });
 
-        marker.addTo(this.map);
+        if (this.weatherStationsVisible) {
+            marker.addTo(this.map);
+        }
         this.stationMarkers.set(station.id, marker);
     }
 
@@ -821,6 +824,14 @@ class RoadWeatherMap {
                             </div>
                         </div>
                     </div>
+                        <div class="legend-section">
+                            <h5>Layer Toggles</h5>
+                            <label class="legend-toggle-item">
+                                <input type="checkbox" id="toggle-weather-stations">
+                                <span>🌡️ Weather Stations</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -841,12 +852,30 @@ class RoadWeatherMap {
                         arrow.classList.add('rotated');
                     }
                 });
+
+                const stationToggle = document.getElementById('toggle-weather-stations');
+                if (stationToggle) {
+                    stationToggle.addEventListener('change', (e) => {
+                        this.toggleWeatherStations(e.target.checked);
+                    });
+                }
             }, 100);
 
             return div;
         };
 
         legend.addTo(this.map);
+    }
+
+    toggleWeatherStations(visible) {
+        this.weatherStationsVisible = visible;
+        this.stationMarkers.forEach(marker => {
+            if (visible) {
+                marker.addTo(this.map);
+            } else {
+                this.map.removeLayer(marker);
+            }
+        });
     }
 
     clearLayers() {

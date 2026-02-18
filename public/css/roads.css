@@ -242,12 +242,36 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 /* Compact card color variants */
-.condition-card-compact.road-temp {
+.condition-card-compact.road-conditions {
     border-color: var(--roads-surface);
 }
 
-.condition-card-compact.road-temp .card-icon-small {
+.condition-card-compact.road-conditions .card-icon-small {
     background: linear-gradient(135deg, var(--roads-surface), #4b5563);
+}
+
+.condition-card-compact.road-conditions.level-green {
+    border-color: var(--roads-good);
+}
+
+.condition-card-compact.road-conditions.level-green .card-icon-small {
+    background: linear-gradient(135deg, var(--roads-good), #059669);
+}
+
+.condition-card-compact.road-conditions.level-yellow {
+    border-color: var(--roads-warning);
+}
+
+.condition-card-compact.road-conditions.level-yellow .card-icon-small {
+    background: linear-gradient(135deg, var(--roads-warning), #d97706);
+}
+
+.condition-card-compact.road-conditions.level-red {
+    border-color: var(--roads-danger);
+}
+
+.condition-card-compact.road-conditions.level-red .card-icon-small {
+    background: linear-gradient(135deg, var(--roads-danger), #b91c1c);
 }
 
 .condition-card-compact.visibility {
@@ -951,6 +975,21 @@ body[data-page-type="roads"] .leaflet-drag-target {
     font-size: 10px;
     color: #333;
     font-weight: 500;
+}
+
+.legend-toggle-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 10px;
+    color: #333;
+    font-weight: 500;
+}
+
+.legend-toggle-item input[type="checkbox"] {
+    margin: 0;
+    cursor: pointer;
 }
 
 /* Road Closure Overlays */

@@ -101,12 +101,7 @@ function refreshUnitsDisplays() {
     // Refresh condition cards on the map
     updateConditionCards();
 
-    // Update default unit labels in HTML
-    const roadTempCard = document.querySelector('.condition-card-compact.road-temp .value');
-    if (roadTempCard && roadTempCard.textContent.includes('--')) {
-        roadTempCard.textContent = `--${unitsSystem.getTempUnit()}`;
-    }
-
+    // Update default unit labels in HTML when showing placeholders
     const windCard = document.querySelector('.condition-card-compact.wind .value');
     if (windCard && windCard.textContent.includes('--')) {
         windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
