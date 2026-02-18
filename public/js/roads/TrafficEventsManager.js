@@ -270,7 +270,7 @@ class TrafficEventsManager {
     createAlertCard(alert) {
         const startDate = new Date(alert.startTime);
         const endDate = alert.endTime ? new Date(alert.endTime) : null;
-        const severityToken = String(alert.severity || 'unknown').toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'unknown';
+        const severityToken = sanitizeClassToken(alert.severity || 'unknown') || 'unknown';
         const safeSeverity = escapeHtml(alert.severity || 'unknown');
         const safeMessage = escapeHtml(alert.message || '');
         const safeNotes = escapeHtml(alert.notes || '');
