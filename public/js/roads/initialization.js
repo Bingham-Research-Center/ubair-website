@@ -127,13 +127,13 @@ function refreshUnitsDisplays() {
  */
 async function smartRefreshRoutes() {
     // Close any open popups to avoid stale unit displays
-    if (window.roadMap && window.roadMap.map) {
-        window.roadMap.map.closePopup();
+    if (window.roadWeatherMap && window.roadWeatherMap.map) {
+        window.roadWeatherMap.map.closePopup();
     }
 
     // Get cached data (or refresh if needed)
     const data = await routeDataCache.getData();
-    if (!data) {
+    if (!data || !Array.isArray(data.stations) || !data.events) {
         console.error('Failed to get route data for units refresh');
         return;
     }
@@ -146,12 +146,12 @@ async function smartRefreshRoutes() {
     ]);
 
     // Refresh map components that show units (but reuse existing markers)
-    if (window.roadMap) {
+    if (window.roadWeatherMap) {
         // Only refresh station popups, not reload all data
         refreshStationPopups();
 
         // Reload mountain passes with new units (these come from different API)
-        window.roadMap.loadMountainPasses();
+        window.roadWeatherMap.loadMountainPasses();
     }
 }
 
@@ -163,6 +163,8 @@ async function smartRefreshUS40(data) {
     if (!container) return;
 
     try {
+        const eventsData = data.events || {};
+
         // Filter data for US-40 corridor (match original filtering logic)
         const us40Stations = data.stations.filter(station =>
             station.name.toLowerCase().includes('roosevelt') ||
@@ -204,6 +206,8 @@ async function smartRefreshUS191(data) {
     if (!container) return;
 
     try {
+        const eventsData = data.events || {};
+
         // Filter data for US-191 corridor (match original filtering logic)
         const us191Stations = data.stations.filter(station =>
             station.name.toLowerCase().includes('duchesne') ||
@@ -268,8 +272,8 @@ async function smartRefreshBasinRoads(data) {
  */
 function refreshStationPopups() {
     // Refresh any open weather station popups with new units
-    if (window.roadMap && window.roadMap.stationMarkers) {
-        window.roadMap.stationMarkers.forEach((marker, stationId) => {
+    if (window.roadWeatherMap && window.roadWeatherMap.stationMarkers) {
+        window.roadWeatherMap.stationMarkers.forEach((marker, stationId) => {
             if (marker.isPopupOpen()) {
                 marker.closePopup();
             }
