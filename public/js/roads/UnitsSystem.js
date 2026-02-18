@@ -99,6 +99,37 @@ class UnitsSystem {
     }
 
     /**
+     * Format visibility when input is in kilometers
+     * @param {number|string} km - Visibility in kilometers
+     * @returns {string} Formatted visibility string
+     */
+    formatVisibilityFromKm(km) {
+        if (km === '--' || km === null || km === undefined) return '--';
+        const vis = parseFloat(km);
+        if (isNaN(vis)) return '--';
+
+        if (this.isMetric) {
+            return `${vis.toFixed(1)} km`;
+        }
+        const miles = vis / 1.60934;
+        return `${miles.toFixed(1)} mi`;
+    }
+
+    /**
+     * Format visibility when input is in meters
+     * @param {number|string} meters - Visibility in meters
+     * @returns {string} Formatted visibility string
+     */
+    formatVisibilityFromMeters(meters) {
+        if (meters === '--' || meters === null || meters === undefined) return '--';
+        const vis = parseFloat(meters);
+        if (isNaN(vis)) return '--';
+
+        const km = vis / 1000;
+        return this.formatVisibilityFromKm(km);
+    }
+
+    /**
      * Toggle between Imperial and Metric systems
      * @returns {boolean} New metric state (true = metric, false = imperial)
      */
