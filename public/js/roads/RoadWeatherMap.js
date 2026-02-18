@@ -2530,7 +2530,6 @@ RoadWeatherMap.prototype.interpolateLatLng = function(targetMp, knownPoints, coo
 // Removed duplicate clearLayers method - using instance method instead
 
 // TrafficEventsManager class moved to /public/js/roads/TrafficEventsManager.js
-// Digital road signs functionality removed - not needed
 
 let trafficEventsManager;
 
