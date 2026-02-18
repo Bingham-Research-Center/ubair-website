@@ -429,12 +429,16 @@ class RoadWeatherMap {
         if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
             this.map.removeLayer(this.cameraClusterGroup);
         }
-        this.cameraClusterGroup = (typeof L.markerClusterGroup === 'function')
-            ? L.markerClusterGroup({
+        if (typeof L.markerClusterGroup === 'function') {
+            this.cameraClusterGroup = L.markerClusterGroup({
                 showCoverageOnHover: false,
                 chunkedLoading: true
-            })
-            : null;
+            });
+        } else {
+            console.warn('Leaflet.markercluster is not available; skipping traffic camera rendering to avoid performance issues.');
+            this.cameraClusterGroup = null;
+            return;
+        }
 
         // Store camera data for click events
         this.cameraData = cameras;
