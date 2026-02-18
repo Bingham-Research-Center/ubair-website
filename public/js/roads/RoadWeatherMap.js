@@ -785,9 +785,10 @@ class RoadWeatherMap {
         this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
         if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
             this.map.removeLayer(this.cameraClusterGroup);
+            this.cameraClusterGroup = null;
+        } else {
+            this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
         }
-        this.cameraClusterGroup = null;
-        this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
         this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
         this.roadLayers.clear();
         this.stationMarkers.clear();
