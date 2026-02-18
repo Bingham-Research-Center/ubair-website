@@ -192,6 +192,7 @@ let currentInitTime = null;
 let heatmapsByInitTime = {};
 let clusteringByInit = {}; // heatmap init time → clustering data
 let memberMode = false; // false = cluster view, true = member dropdown
+let shortcutsInitialized = false;
 
 // Parse init time from clustering filename:
 // "forecast_clustering_summary_20260204_0600Z.json" → "20260204-0600"
@@ -252,6 +253,7 @@ async function initializeClyfar() {
 
                 createDropdowns(initTimes);
                 showDefaultView();
+                initializeHeatmapShortcuts();
             } else {
                 showNoDataMessage();
             }
@@ -376,6 +378,7 @@ function createDropdowns(initTimes) {
             <label for="member-selector">Ensemble Member:</label>
             <select id="member-selector" class="member-dropdown"></select>
         </div>
+        <div class="heatmap-shortcuts-hint">Shortcuts: m = toggle cluster/member, &lt; = previous, &gt; = next</div>
         <div id="heatmap-image-container"></div>
     `;
 
@@ -443,6 +446,81 @@ function updateMemberDropdown() {
         option.value = idx;
         option.textContent = `Member ${memberNum} (${clyfarId})`;
         dropdown.appendChild(option);
+    });
+}
+
+function isInteractiveElement(el) {
+    if (!el) return false;
+    const tag = (el.tagName || '').toLowerCase();
+    return tag === 'input' || tag === 'textarea' || tag === 'select' || el.isContentEditable;
+}
+
+function stepMemberSelection(delta) {
+    const dropdown = document.getElementById('member-selector');
+    if (!dropdown || dropdown.options.length <= 1) return;
+
+    const currentIdx = dropdown.selectedIndex >= 0 ? dropdown.selectedIndex : 0;
+    const nextIdx = (currentIdx + delta + dropdown.options.length) % dropdown.options.length;
+    dropdown.selectedIndex = nextIdx;
+
+    const memberIdx = parseInt(dropdown.options[nextIdx].value, 10);
+    if (!Number.isNaN(memberIdx)) {
+        renderStaticImage('heatmap-image-container', dailymaxHeatmaps[memberIdx], 'Daily Max Ozone Heatmap');
+    }
+}
+
+function stepClusterSelection(delta) {
+    const clusterRow = document.getElementById('cluster-buttons');
+    if (!clusterRow || clusterRow.style.display === 'none') return;
+
+    const buttons = Array.from(clusterRow.querySelectorAll('.cluster-btn'));
+    if (buttons.length <= 1) return;
+
+    let currentIdx = buttons.findIndex(btn => btn.classList.contains('active'));
+    if (currentIdx < 0) currentIdx = 0;
+    const nextIdx = (currentIdx + delta + buttons.length) % buttons.length;
+
+    buttons.forEach(btn => btn.classList.remove('active'));
+    const target = buttons[nextIdx];
+    target.classList.add('active');
+
+    const medoid = target.dataset.medoid;
+    renderClusterImage(medoid, findHeatmapForMember(medoid));
+}
+
+function toggleViewModeWithShortcut() {
+    const toggle = document.getElementById('member-mode-toggle');
+    if (!toggle || toggle.disabled) return;
+    toggle.checked = !toggle.checked;
+    memberMode = toggle.checked;
+    showDefaultView();
+}
+
+function initializeHeatmapShortcuts() {
+    if (shortcutsInitialized) return;
+    shortcutsInitialized = true;
+
+    document.addEventListener('keydown', (e) => {
+        if (isInteractiveElement(e.target)) return;
+
+        if (e.key.toLowerCase() === 'm') {
+            e.preventDefault();
+            toggleViewModeWithShortcut();
+            return;
+        }
+
+        const prevPressed = e.key === '<' || (e.key === ',' && e.shiftKey);
+        const nextPressed = e.key === '>' || (e.key === '.' && e.shiftKey);
+        if (!prevPressed && !nextPressed) return;
+
+        e.preventDefault();
+        const delta = prevPressed ? -1 : 1;
+        const hasCluster = !!getClusteringForInit(currentInitTime);
+        if (!memberMode && hasCluster) {
+            stepClusterSelection(delta);
+        } else {
+            stepMemberSelection(delta);
+        }
     });
 }
 
