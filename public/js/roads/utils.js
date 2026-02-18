@@ -27,7 +27,7 @@ function escapeHtml(value) {
  */
 function sanitizeHexColor(value, fallback = '#6c757d') {
     if (typeof value !== 'string') return fallback;
-    return /^#[0-9a-fA-F]{3,8}$/.test(value) ? value : fallback;
+    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value) ? value : fallback;
 }
 
 /**
