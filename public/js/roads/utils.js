@@ -26,7 +26,7 @@ function escapeHtml(value) {
  * @returns {string} Sanitized class token
  */
 function sanitizeClassToken(value, fallback = 'unknown') {
-    const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const token = String(value ?? '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
     return token || fallback;
 }
 
@@ -37,18 +37,7 @@ function sanitizeClassToken(value, fallback = 'unknown') {
  * @returns {string} Sanitized identifier
  */
 function sanitizeIdentifier(value, fallback = '') {
-    const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
-    return token || fallback;
-}
-
-/**
- * Restrict dynamic identifier values used in inline handlers
- * @param {*} value - Candidate identifier value
- * @param {string} fallback - Fallback when value is invalid
- * @returns {string} Sanitized identifier
- */
-function sanitizeIdentifier(value, fallback = '') {
-    const identifier = String(value || '').replace(/[^A-Za-z0-9_-]/g, '');
+    const identifier = String(value ?? '').replace(/[^A-Za-z0-9_-]/g, '');
     return identifier || fallback;
 }
 
