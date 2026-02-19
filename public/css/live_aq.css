@@ -368,7 +368,7 @@ body[data-page-type="live_aq"] .overlay-container {
 .unit-toggle-control {
     position: fixed;
     top: 20px;
-    left: calc(250px + 20px);
+    left: calc(250px + 60px);
     z-index: 1001;
     display: flex;
     align-items: center;
