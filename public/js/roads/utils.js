@@ -20,23 +20,23 @@ function escapeHtml(value) {
 }
 
 /**
- * Restrict dynamic CSS colors to hex values only
- * @param {*} value - Candidate color string
- * @param {string} fallback - Fallback color when value is invalid
- * @returns {string} Sanitized color
- */
-function sanitizeHexColor(value, fallback = '#6c757d') {
-    if (typeof value !== 'string') return fallback;
-    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value) ? value : fallback;
-}
-
-/**
  * Restrict dynamic class token values
  * @param {*} value - Candidate token value
  * @param {string} fallback - Fallback token when value is invalid
  * @returns {string} Sanitized class token
  */
 function sanitizeClassToken(value, fallback = 'unknown') {
+    const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    return token || fallback;
+}
+
+/**
+ * Restrict dynamic identifier values used in inline handlers
+ * @param {*} value - Candidate identifier value
+ * @param {string} fallback - Fallback when value is invalid
+ * @returns {string} Sanitized identifier
+ */
+function sanitizeIdentifier(value, fallback = '') {
     const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
     return token || fallback;
 }
