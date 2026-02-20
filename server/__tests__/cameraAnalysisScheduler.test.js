@@ -170,7 +170,7 @@ describe('CameraAnalysisScheduler', () => {
             scheduler.start();
 
             expect(scheduler.isRunning).toBe(true);
-            expect(scheduler.analysisInterval).not.toBeNull();
+            expect(scheduler.analysisTimeout).not.toBeNull();
         });
 
         it('should stop scheduler', () => {
@@ -178,16 +178,16 @@ describe('CameraAnalysisScheduler', () => {
             scheduler.stop();
 
             expect(scheduler.isRunning).toBe(false);
-            expect(scheduler.analysisInterval).toBeNull();
+            expect(scheduler.analysisTimeout).toBeNull();
         });
 
         it('should not start if already running', () => {
             scheduler.start();
-            const interval = scheduler.analysisInterval;
+            const interval = scheduler.analysisTimeout;
 
             scheduler.start(); // Try to start again
 
-            expect(scheduler.analysisInterval).toBe(interval); // Same interval
+            expect(scheduler.analysisTimeout).toBe(interval); // Same interval
         });
 
         it('should not stop if already stopped', () => {
