@@ -24,7 +24,9 @@ describe('CameraAnalysisScheduler', () => {
     describe('Initialization', () => {
         it('should initialize with default configuration', () => {
             expect(scheduler.config.batchSize).toBe(1);
-            expect(scheduler.config.intervalSeconds).toBe(30);
+            expect(scheduler.config.intervalSeconds).toBe(25);
+            expect(scheduler.config.jitterSeconds).toBe(4);
+            expect(scheduler.config.cachePaddingFactor).toBe(1.05);
             expect(scheduler.config.maxRetries).toBe(3);
         });
 
@@ -42,6 +44,41 @@ describe('CameraAnalysisScheduler', () => {
 
         it('should not be running initially', () => {
             expect(scheduler.isRunning).toBe(false);
+        });
+    });
+
+    describe('Environment Variable Overrides', () => {
+        const envBackup = {};
+        const envKeys = [
+            'CAMERA_INTERVAL_SECONDS', 'CAMERA_BATCH_SIZE',
+            'CAMERA_JITTER_SECONDS', 'CAMERA_CACHE_PADDING', 'CAMERA_MAX_RETRIES'
+        ];
+
+        beforeEach(() => {
+            envKeys.forEach(k => { envBackup[k] = process.env[k]; });
+        });
+
+        afterEach(() => {
+            envKeys.forEach(k => {
+                if (envBackup[k] === undefined) delete process.env[k];
+                else process.env[k] = envBackup[k];
+            });
+        });
+
+        it('should use env vars when set', () => {
+            process.env.CAMERA_INTERVAL_SECONDS = '30';
+            process.env.CAMERA_BATCH_SIZE = '2';
+            process.env.CAMERA_JITTER_SECONDS = '6';
+            process.env.CAMERA_CACHE_PADDING = '1.3';
+            process.env.CAMERA_MAX_RETRIES = '5';
+
+            const s = new CameraAnalysisScheduler();
+
+            expect(s.config.intervalSeconds).toBe(30);
+            expect(s.config.batchSize).toBe(2);
+            expect(s.config.jitterSeconds).toBe(6);
+            expect(s.config.cachePaddingFactor).toBe(1.3);
+            expect(s.config.maxRetries).toBe(5);
         });
     });
 
@@ -110,11 +147,11 @@ describe('CameraAnalysisScheduler', () => {
         it('should calculate correct API calls per hour with default config', () => {
             scheduler.cameraQueue = new Array(20).fill({ id: 1 });
 
-            // batchSize=1, intervalSeconds=30, viewsPerCamera=3
-            // (1 camera * 3 views) * (3600 / 30) = 3 * 120 = 360 calls/hour
+            // batchSize=1, intervalSeconds=25, viewsPerCamera=3
+            // (1 camera * 3 views) * (3600 / 25) = 3 * 144 = 432 calls/hour
             const rate = scheduler.calculateApiCallRate();
 
-            expect(rate).toBe(360);
+            expect(rate).toBe(432);
         });
 
         it('should return 0 when no cameras in queue', () => {

@@ -21,10 +21,14 @@
 - Pending: Reduce detection staleness timeout, implement category-based deprioritization.
 
 ## Technical Details
-- **Scheduler TTL:** Dynamic, sized to full rotation of all cameras with 1.2x padding (10–20 min typical).
+- **Scheduler TTL:** Dynamic, sized to full rotation of all cameras with configurable padding.
+  - Defaults: 25s interval, 1.05x padding → 100 cams ≈ 44 min TTL, 150 cams ≈ 66 min TTL.
+  - Previous (30s interval, 1.2x padding) produced 60–90 min TTL — the earlier "10–20 min typical" claim was incorrect.
+- **Env-var tunables:** `CAMERA_INTERVAL_SECONDS`, `CAMERA_CACHE_PADDING`, `CAMERA_JITTER_SECONDS` (see `.env.example`).
 - **Rest areas:** Not included in scheduler queue; fetched and rendered separately.
 - **Deprioritization:** Rest areas already excluded from scheduler; further deprioritization not needed unless requirements change.
-- **Reducing staleness:** Lower `cachePaddingFactor` or allow configurable minimum TTL in scheduler.
+- **Marker clustering:** Frontend now uses Leaflet marker clustering instead of random camera filtering.
+- **Sanitizer fixes:** Input sanitization bugs in road weather service have been fixed.
 
 ## Outstanding Questions/Actions
 - Specify new TTL or padding factor for detection staleness.

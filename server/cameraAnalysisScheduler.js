@@ -1,16 +1,23 @@
 /**
  * Camera Analysis Scheduler
- * 
+ *
  * Staggered camera snow detection analysis to avoid UDOT API rate limits.
- * 
+ *
  * Rate Limit: UDOT allows 10 calls/60 seconds (600 calls/hour)
- * Our usage: ~1 camera * 3 views every 30s = ~360 calls/hour (60% of limit)
- * 
+ * Our usage: ~1 camera * 3 views every 25s = ~432 calls/hour (72% of limit)
+ *
+ * Rotation times (at 25s interval, batch size 1):
+ *   100 cameras → 42 min rotation, ~44 min TTL (1.05x padding)
+ *   150 cameras → 63 min rotation, ~66 min TTL (1.05x padding)
+ *
+ * All scheduler tunables are configurable via environment variables
+ * (see .env.example). Defaults are chosen to balance freshness vs rate limit.
+ *
  * Features:
  * - Dynamic cache TTL sized to full rotation (no premature expiry)
  * - Spatial queue ordering (farthest-point) for uniform early coverage
- * - Random jitter (0-5s) per cycle to smooth request pattern
- * - Staggered analysis (1 camera every 30 seconds)
+ * - Random jitter (0-4s) per cycle to smooth request pattern
+ * - Staggered analysis (1 camera every 25 seconds)
  * - Keep all 3 views per camera (multi-view consensus)
  * - User requests served from cache (instant, no API calls)
  */
@@ -32,13 +39,13 @@ class CameraAnalysisScheduler {
         this.analysisTimeout = null;
         this.currentBatch = 0;
         
-        // Configuration
+        // Configuration (env-var overridable, see .env.example)
         this.config = {
-            batchSize: 1,
-            intervalSeconds: 30,
-            jitterSeconds: 5,       // random 0-5s added per cycle
-            cachePaddingFactor: 1.2, // TTL = rotation time * 1.2
-            maxRetries: 3
+            batchSize: parseInt(process.env.CAMERA_BATCH_SIZE, 10) || 1,
+            intervalSeconds: parseInt(process.env.CAMERA_INTERVAL_SECONDS, 10) || 25,
+            jitterSeconds: parseInt(process.env.CAMERA_JITTER_SECONDS, 10) || 4,
+            cachePaddingFactor: parseFloat(process.env.CAMERA_CACHE_PADDING) || 1.05,
+            maxRetries: parseInt(process.env.CAMERA_MAX_RETRIES, 10) || 3
         };
         
         // Cache TTL computed dynamically from camera count
@@ -66,7 +73,8 @@ class CameraAnalysisScheduler {
         }
         
         console.log('🎥 Starting camera analysis scheduler...');
-        console.log(`   Batch: ${this.config.batchSize} camera(s) every ~${this.config.intervalSeconds}s (+0-${this.config.jitterSeconds}s jitter)`);
+        console.log(`   Effective config: interval=${this.config.intervalSeconds}s, batch=${this.config.batchSize}, jitter=0-${this.config.jitterSeconds}s, cachePadding=${this.config.cachePaddingFactor}x, maxRetries=${this.config.maxRetries}`);
+        console.log(`   Est. API calls/hr: ${this.calculateApiCallRate()} (UDOT limit: 600)`);
         console.log('   Cache TTL: dynamic (sized to full rotation)\n');
         
         this.isRunning = true;
