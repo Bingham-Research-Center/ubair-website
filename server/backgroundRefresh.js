@@ -7,7 +7,7 @@
  * Refresh Schedule:
  * - High-frequency (60s): Roads, cameras, weather stations
  * - Medium-frequency (5min): Snow plows, alerts, events
- * - Low-frequency (15min): Rest areas, mountain passes, digital signs
+ * - Low-frequency (15min): Rest areas, mountain passes
  *
  * UDOT Rate Limit: 10 calls per 60 seconds
  * Our usage: ~4 calls/minute average (60% under limit)
@@ -221,7 +221,7 @@ class BackgroundRefreshService {
         try {
             console.log(`[${new Date().toISOString()}] Refreshing infrequent data...`);
 
-            // Fetch infrequent data (2 UDOT API calls - digital signs removed due to 404)
+            // Fetch infrequent data (2 UDOT API calls)
             await Promise.all([
                 this.roadWeatherService.fetchUDOTRestAreas(),
                 this.roadWeatherService.fetchMountainPasses()
@@ -256,7 +256,7 @@ class BackgroundRefreshService {
     calculateApiCallRate() {
         // Essential: 3 calls every 60 seconds = 3 calls/min
         // Frequent: 3 calls every 5 minutes = 0.6 calls/min
-        // Infrequent: 2 calls every 15 minutes = 0.13 calls/min (signs removed)
+        // Infrequent: 2 calls every 15 minutes = 0.13 calls/min
         // Total: ~3.73 calls/min average
         return 3 + (3/5) + (2/15);
     }
