@@ -73,6 +73,7 @@ class UnitsSystem {
 
 // Global units system instance
 const unitsSystem = new UnitsSystem();
+const EXPERIMENTAL_ROAD_MODE_KEY = 'roadsExperimentalMode';
 
 // Data cache for route conditions to avoid redundant API calls
 const routeDataCache = {
@@ -133,6 +134,7 @@ class RoadWeatherMap {
         this.mountainPassMarkers = new Map();
         this.restAreaMarkers = new Map();
         this.refreshTimer = null;
+        this.experimentalRoadMode = localStorage.getItem(EXPERIMENTAL_ROAD_MODE_KEY) === 'true';
     }
 
     init() {
@@ -510,6 +512,49 @@ class RoadWeatherMap {
         this.stationMarkers.set(station.id, marker);
     }
 
+    isExperimentalRoadModeEnabled() {
+        return this.experimentalRoadMode === true;
+    }
+
+    setExperimentalRoadMode(enabled) {
+        this.experimentalRoadMode = enabled === true;
+        localStorage.setItem(EXPERIMENTAL_ROAD_MODE_KEY, this.experimentalRoadMode ? 'true' : 'false');
+    }
+
+    formatSnowLevelLabel(snowLevel) {
+        switch (snowLevel) {
+            case 'none': return 'Clear';
+            case 'light': return 'Light Snow';
+            case 'moderate': return 'Moderate Snow';
+            case 'heavy': return 'Heavy Snow';
+            case 'unknown': return 'Unknown';
+            default: return snowLevel || 'Unknown';
+        }
+    }
+
+    getPerViewBreakdownHtml(detection) {
+        if (!Array.isArray(detection?.perViewDetections) || detection.perViewDetections.length === 0) {
+            return '<p class="experimental-note"><strong>Per-view:</strong> Not available.</p>';
+        }
+
+        const rows = detection.perViewDetections.map((view) => {
+            const confidence = typeof view.confidence === 'number' ? `${Math.round(view.confidence * 100)}%` : '--';
+            const level = this.formatSnowLevelLabel(view.snowLevel);
+            const viewName = view.description || `View ${view.viewIndex + 1}`;
+            const suffix = view.error ? ` (${view.error})` : '';
+
+            return `<div class="per-view-row">
+                <span class="per-view-name">${viewName}</span>
+                <span class="per-view-values">${level} · ${confidence}${suffix}</span>
+            </div>`;
+        }).join('');
+
+        return `
+            <div class="per-view-breakdown">
+                <h5>Per-view breakdown</h5>
+                ${rows}
+            </div>`;
+    }
 
     renderTrafficCameras(cameras, cameraDetections = []) {
         if (!cameras || cameras.length === 0) return;
@@ -517,6 +562,7 @@ class RoadWeatherMap {
         // Store camera data for click events
         this.cameraData = cameras;
         this.cameraDetections = cameraDetections;
+        const experimentalMode = this.isExperimentalRoadModeEnabled();
 
         cameras.forEach(camera => {
             // Find camera analysis data
@@ -528,7 +574,12 @@ class RoadWeatherMap {
             let conditionText = 'No Analysis';
 
             if (detection) {
-                if (detection.temperatureOverride) {
+                const isMixed = detection.displayState === 'mixed' || detection.aggregation?.mixed === true;
+
+                if (experimentalMode && isMixed) {
+                    ringColor = '#fd7e14'; // Amber for mixed/in-progress
+                    conditionText = 'Mixed / In Progress';
+                } else if (detection.temperatureOverride) {
                     ringColor = '#28a745'; // Green for temperature override
                     conditionText = `Clear (${unitsSystem.formatTemperature(detection.temperature)})`;
                 } else {
@@ -601,11 +652,35 @@ class RoadWeatherMap {
             // Add analysis info to popup if available
             let analysisInfo = '';
             if (detection) {
+                const confidenceValue = typeof detection.confidence === 'number'
+                    ? `${Math.round(detection.confidence * 100)}%`
+                    : '--';
+                const isMixed = detection.displayState === 'mixed' || detection.aggregation?.mixed === true;
+                const spreadPercent = typeof detection.aggregation?.confidenceSpread === 'number'
+                    ? `${Math.round(detection.aggregation.confidenceSpread * 100)}%`
+                    : '--';
+                const viewsAnalyzed = detection.aggregation?.viewsAnalyzed ?? '--';
+                const viewsAvailable = detection.aggregation?.viewsAvailable ?? '--';
+
+                const mixedBadge = (experimentalMode && isMixed)
+                    ? `<p><span class="confidence-badge confidence-likely mixed-indicator">~ Mixed Views</span></p>`
+                    : '';
+                const experimentalDetails = experimentalMode
+                    ? `
+                        <p class="experimental-note"><strong>Mode:</strong> Experimental (opt-in)</p>
+                        <p><strong>View Spread:</strong> ${spreadPercent}</p>
+                        <p><strong>Views:</strong> ${viewsAnalyzed}/${viewsAvailable} analyzed</p>
+                        ${this.getPerViewBreakdownHtml(detection)}
+                      `
+                    : '';
+
                 analysisInfo = `
                     <div class="analysis-section">
+                        ${mixedBadge}
                         <p><strong>Condition:</strong> ${conditionText}</p>
-                        <p><strong>Confidence:</strong> ${Math.round(detection.confidence * 100)}%</p>
-                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${detection.snowLevel}</p>` : ''}
+                        <p><strong>Confidence:</strong> ${confidenceValue}</p>
+                        ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${this.formatSnowLevelLabel(detection.snowLevel)}</p>` : ''}
+                        ${experimentalDetails}
                     </div>`;
             }
 
@@ -2912,6 +2987,38 @@ function initializeUnitsToggle() {
     });
 }
 
+function initializeExperimentalRoadToggle() {
+    const experimentalToggle = document.getElementById('experimental-road-toggle');
+    const experimentalStatus = document.getElementById('experimental-road-status');
+
+    if (!experimentalToggle) return;
+
+    const isEnabled = localStorage.getItem(EXPERIMENTAL_ROAD_MODE_KEY) === 'true';
+    experimentalToggle.checked = isEnabled;
+
+    if (experimentalStatus) {
+        experimentalStatus.textContent = isEnabled ? 'Enabled' : 'Disabled';
+    }
+
+    if (window.roadWeatherMap) {
+        window.roadWeatherMap.setExperimentalRoadMode(isEnabled);
+    }
+
+    experimentalToggle.addEventListener('change', function() {
+        const enabled = this.checked;
+        localStorage.setItem(EXPERIMENTAL_ROAD_MODE_KEY, enabled ? 'true' : 'false');
+
+        if (experimentalStatus) {
+            experimentalStatus.textContent = enabled ? 'Enabled' : 'Disabled';
+        }
+
+        if (window.roadWeatherMap) {
+            window.roadWeatherMap.setExperimentalRoadMode(enabled);
+            window.roadWeatherMap.loadRoadWeatherData();
+        }
+    });
+}
+
 function refreshUnitsDisplays() {
     // Refresh condition cards on the map
     updateConditionCards();
@@ -3109,7 +3216,7 @@ function refreshStationPopups() {
 // Initialize units toggle when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     initializeUnitsToggle();
+    initializeExperimentalRoadToggle();
 });
 
 // Initialization moved to the first DOMContentLoaded listener above
-

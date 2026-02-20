@@ -173,6 +173,50 @@ body[data-page-type="roads"] .leaflet-drag-target {
     margin-left: 4px;
 }
 
+/* Experimental road AI toggle */
+.experimental-toggle-container {
+    position: absolute;
+    top: 74px;
+    right: 20px;
+    z-index: 1001;
+    max-width: 260px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-left: 3px solid #fd7e14;
+    padding: 8px 10px;
+}
+
+.experimental-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f2937;
+    cursor: pointer;
+}
+
+.experimental-toggle-label input {
+    margin: 0;
+    width: 14px;
+    height: 14px;
+    accent-color: #fd7e14;
+}
+
+.experimental-warning {
+    margin: 6px 0 0 0;
+    font-size: 11px;
+    line-height: 1.3;
+    color: #9a3412;
+}
+
+.experimental-warning strong {
+    display: inline-block;
+    margin-left: 4px;
+}
+
 /* Horizontal condition cards - minimal badges */
 .condition-cards-horizontal {
     display: flex;
@@ -1171,6 +1215,21 @@ body[data-page-type="roads"] .leaflet-drag-target {
         font-size: 10px;
     }
 
+    .experimental-toggle-container {
+        top: 66px;
+        right: 15px;
+        max-width: 220px;
+        padding: 6px 8px;
+    }
+
+    .experimental-toggle-label {
+        font-size: 12px;
+    }
+
+    .experimental-warning {
+        font-size: 10px;
+    }
+
     .conditions-overlay {
         bottom: 15px;
         left: 50%;
@@ -1843,6 +1902,47 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .analysis-section p {
     margin: 2px 0 !important;
     font-size: 11px !important;
+}
+
+.mixed-indicator {
+    background-color: #fd7e14 !important;
+    border: 1px solid #ea580c !important;
+    color: #fff !important;
+}
+
+.experimental-note {
+    margin-top: 6px !important;
+    color: #b45309;
+}
+
+.per-view-breakdown {
+    margin-top: 6px;
+    border-top: 1px dashed #d1d5db;
+    padding-top: 6px;
+}
+
+.per-view-breakdown h5 {
+    margin: 0 0 4px 0 !important;
+    font-size: 11px !important;
+    color: #374151;
+}
+
+.per-view-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin: 2px 0;
+    font-size: 10px;
+}
+
+.per-view-name {
+    color: #111827;
+    font-weight: 600;
+}
+
+.per-view-values {
+    color: #4b5563;
+    text-align: right;
 }
 
 /* Ensure camera popups stay within map bounds and have consistent sizing */
