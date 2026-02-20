@@ -93,6 +93,21 @@ async function updateConditionCards() {
             return;
         }
 
+        // Fetch camera detections to supplement station data
+        let cameraSnowDetected = false;
+        try {
+            const cameraResponse = await fetch('/api/road-weather/data');
+            if (cameraResponse.ok) {
+                const cameraData = await cameraResponse.json();
+                const detections = cameraData.cameraDetections || [];
+                cameraSnowDetected = detections.some(
+                    d => d.snowDetected === true && d.confidence >= 0.5
+                );
+            }
+        } catch (e) {
+            console.warn('Could not fetch camera detections for summary bar:', e.message);
+        }
+
         // --- Road Conditions: worst-case across all stations ---
         const condCard = document.querySelector('.condition-card-compact.road-conditions');
         const condValue = condCard?.querySelector('.value');
@@ -106,6 +121,11 @@ async function updateConditionCards() {
                     worstLevel = level;
                     worstStatus = s.condition.status;
                 }
+            }
+            // Escalate to at least yellow if cameras detect snow
+            if (cameraSnowDetected && CONDITION_PRIORITY[worstLevel] < CONDITION_PRIORITY['yellow']) {
+                worstLevel = 'yellow';
+                worstStatus = 'Caution';
             }
             condValue.textContent = worstStatus;
             condCard.classList.remove('level-green', 'level-yellow', 'level-red');
@@ -142,7 +162,7 @@ async function updateConditionCards() {
         // --- Precipitation: aggregate type across stations ---
         const precipCard = document.querySelector('.condition-card-compact.precipitation .value');
         if (precipCard) {
-            let hasSnow = false;
+            let hasSnow = cameraSnowDetected;
             let hasRain = false;
             let hasWet = false;
 

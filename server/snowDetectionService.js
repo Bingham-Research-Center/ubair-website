@@ -24,7 +24,7 @@ class SnowDetectionService {
         
         // Temperature thresholds for snow possibility
         this.temperatureThresholds = {
-            noSnowTemp: 40,        // Above 40°F (4.4°C) - no snow possible
+            noSnowTemp: 36,        // Above 36°F (2.2°C) - no snow possible
             lowSnowTemp: 35,       // 35-40°F - snow unlikely but possible
             snowTemp: 32,          // Below 32°F (0°C) - snow likely
             heavySnowTemp: 25      // Below 25°F - heavy snow conditions likely
