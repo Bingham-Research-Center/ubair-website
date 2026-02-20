@@ -3,14 +3,13 @@
  * 
  * Staggered camera snow detection analysis to avoid UDOT API rate limits.
  * 
- * Problem: Analyzing all 20-30 cameras on every request = 60-90 API calls
- * Solution: Analyze 1 camera every 30 seconds in background, cache results for 10 minutes
- * 
  * Rate Limit: UDOT allows 10 calls/60 seconds (600 calls/hour)
- * Our usage: ~1 camera * 3 views every 30s = ~3 calls/30s = ~360 calls/hour (60% of limit)
+ * Our usage: ~1 camera * 3 views every 30s = ~360 calls/hour (60% of limit)
  * 
  * Features:
- * - Batch-level caching (10 minute TTL)
+ * - Dynamic cache TTL sized to full rotation (no premature expiry)
+ * - Spatial queue ordering (farthest-point) for uniform early coverage
+ * - Random jitter (0-5s) per cycle to smooth request pattern
  * - Staggered analysis (1 camera every 30 seconds)
  * - Keep all 3 views per camera (multi-view consensus)
  * - User requests served from cache (instant, no API calls)
@@ -23,24 +22,28 @@ class CameraAnalysisScheduler {
     constructor() {
         this.snowDetectionService = new SnowDetectionService();
         
-        // Cache for complete camera analysis results (10 minute TTL)
-        this.cache = new NodeCache({ stdTTL: 600, checkperiod: 60 });
-        
-        // Queue of cameras to analyze
+        // Queue of cameras to analyze (spatially sorted on first load)
         this.cameraQueue = [];
         this.weatherStations = [];
+        this.queueSorted = false;
         
         // Analysis state
         this.isRunning = false;
-        this.analysisInterval = null;
+        this.analysisTimeout = null;
         this.currentBatch = 0;
         
         // Configuration
         this.config = {
-            batchSize: 1,           // Analyze 1 camera per cycle (conservative for rate limits)
-            intervalSeconds: 30,    // Run every 30 seconds
-            maxRetries: 3           // Retry failed analyses
+            batchSize: 1,
+            intervalSeconds: 30,
+            jitterSeconds: 5,       // random 0-5s added per cycle
+            cachePaddingFactor: 1.2, // TTL = rotation time * 1.2
+            maxRetries: 3
         };
+        
+        // Cache TTL computed dynamically from camera count
+        this.cacheTTLSeconds = 600; // default until cameras arrive
+        this.cache = new NodeCache({ stdTTL: this.cacheTTLSeconds, checkperiod: 120 });
         
         // Statistics
         this.stats = {
@@ -63,18 +66,11 @@ class CameraAnalysisScheduler {
         }
         
         console.log('🎥 Starting camera analysis scheduler...');
-        console.log(`   Analyzing ${this.config.batchSize} camera(s) every ${this.config.intervalSeconds}s`);
-        console.log('   Results cached for 10 minutes');
-        console.log('   All 3 camera views analyzed for multi-view consensus\n');
+        console.log(`   Batch: ${this.config.batchSize} camera(s) every ~${this.config.intervalSeconds}s (+0-${this.config.jitterSeconds}s jitter)`);
+        console.log('   Cache TTL: dynamic (sized to full rotation)\n');
         
         this.isRunning = true;
-        
-        // Run analysis immediately, then every 30 seconds
-        this.runAnalysisCycle();
-        
-        this.analysisInterval = setInterval(() => {
-            this.runAnalysisCycle();
-        }, this.config.intervalSeconds * 1000);
+        this.scheduleNextCycle();
         
         console.log('✓ Camera analysis scheduler started\n');
     }
@@ -90,14 +86,25 @@ class CameraAnalysisScheduler {
         
         console.log('🛑 Stopping camera analysis scheduler...');
         
-        if (this.analysisInterval) {
-            clearInterval(this.analysisInterval);
-            this.analysisInterval = null;
+        if (this.analysisTimeout) {
+            clearTimeout(this.analysisTimeout);
+            this.analysisTimeout = null;
         }
         
         this.isRunning = false;
-        
         console.log('✓ Camera analysis scheduler stopped\n');
+    }
+    
+    /**
+     * Schedule the next analysis cycle with random jitter
+     */
+    scheduleNextCycle() {
+        if (!this.isRunning) return;
+        const jitter = Math.random() * this.config.jitterSeconds * 1000;
+        const delay = this.config.intervalSeconds * 1000 + jitter;
+        this.analysisTimeout = setTimeout(() => {
+            this.runAnalysisCycle().then(() => this.scheduleNextCycle());
+        }, delay);
     }
     
     /**
@@ -105,10 +112,71 @@ class CameraAnalysisScheduler {
      * Called by background refresh service when new data arrives
      */
     updateCameraList(cameras, weatherStations = []) {
-        this.cameraQueue = cameras;
         this.weatherStations = weatherStations;
-        
-        console.log(`   Updated camera queue: ${cameras.length} cameras`);
+
+        // Spatial sort only on first load (farthest-point ordering)
+        if (!this.queueSorted && cameras.length > 0) {
+            this.cameraQueue = this.spatialSort(cameras);
+            this.queueSorted = true;
+            this.updateCacheTTL(cameras.length);
+            console.log(`   Camera queue: ${cameras.length} cameras (spatially sorted, TTL ${this.cacheTTLSeconds}s)`);
+        } else {
+            // Preserve spatial order; only add genuinely new cameras
+            const existingIds = new Set(this.cameraQueue.map(c => c.id));
+            const newCams = cameras.filter(c => !existingIds.has(c.id));
+            if (newCams.length > 0) {
+                this.cameraQueue.push(...newCams);
+                this.updateCacheTTL(this.cameraQueue.length);
+            }
+        }
+    }
+    
+    /**
+     * Set cache TTL to cover a full rotation with padding
+     */
+    updateCacheTTL(cameraCount) {
+        const rotationSeconds = cameraCount * this.config.intervalSeconds / this.config.batchSize;
+        this.cacheTTLSeconds = Math.ceil(rotationSeconds * this.config.cachePaddingFactor);
+        this.cache.options.stdTTL = this.cacheTTLSeconds;
+    }
+    
+    /**
+     * Greedy farthest-point spatial sort for uniform early coverage.
+     * O(n^2) — trivial for ~150 cameras.
+     */
+    spatialSort(cameras) {
+        const hasCoordsArr = cameras.filter(c => c.lat != null && c.lng != null);
+        const noCoords = cameras.filter(c => c.lat == null || c.lng == null);
+        if (hasCoordsArr.length === 0) return cameras;
+
+        const sorted = [];
+        const remaining = [...hasCoordsArr];
+
+        // Start with first camera
+        sorted.push(remaining.shift());
+
+        while (remaining.length > 0) {
+            let bestIdx = 0;
+            let bestDist = -1;
+            for (let i = 0; i < remaining.length; i++) {
+                // Min distance to any already-selected camera
+                let minDist = Infinity;
+                for (const s of sorted) {
+                    const dlat = remaining[i].lat - s.lat;
+                    const dlng = remaining[i].lng - s.lng;
+                    const d = dlat * dlat + dlng * dlng;
+                    if (d < minDist) minDist = d;
+                }
+                if (minDist > bestDist) {
+                    bestDist = minDist;
+                    bestIdx = i;
+                }
+            }
+            sorted.push(remaining.splice(bestIdx, 1)[0]);
+        }
+
+        // Cameras without coords go at the end
+        return sorted.concat(noCoords);
     }
     
     /**
@@ -191,8 +259,8 @@ class CameraAnalysisScheduler {
             }
         });
         
-        // Store complete batch result with 10 minute cache
-        this.cache.set('all_camera_detections', allResults, 600);
+        // Store complete batch result
+        this.cache.set('all_camera_detections', allResults, this.cacheTTLSeconds);
         
         console.log(`   ✓ Updated batch cache: ${allResults.length} cameras`);
     }
