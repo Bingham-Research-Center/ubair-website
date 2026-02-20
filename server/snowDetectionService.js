@@ -44,10 +44,12 @@ class SnowDetectionService {
      * @param {string} imageUrl - URL of the camera image
      * @param {string} cameraId - Camera identifier
      * @param {Object} weatherData - Optional weather station data for temperature
+     * @param {string|null} analysisKey - Optional key for per-view cache/history isolation
      * @returns {Promise<Object>} Snow detection result
      */
-    async analyzeImageForSnow(imageUrl, cameraId, weatherData = null) {
-        const cacheKey = `snow_detection_${cameraId}`;
+    async analyzeImageForSnow(imageUrl, cameraId, weatherData = null, analysisKey = null) {
+        const historyKey = analysisKey || cameraId;
+        const cacheKey = `snow_detection_${historyKey}`;
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
@@ -57,6 +59,7 @@ class SnowDetectionService {
             if (temperatureCheck.skipAnalysis) {
                 const result = {
                     cameraId,
+                    analysisKey: historyKey,
                     timestamp: Date.now(),
                     snowDetected: false,
                     snowLevel: 'none',
@@ -86,20 +89,27 @@ class SnowDetectionService {
             const imageBuffer = await response.buffer();
             
             // Analyze the image for snow
-            const analysisResult = await this.processImageForSnow(imageBuffer, cameraId, temperatureCheck);
+            const analysisResult = await this.processImageForSnow(imageBuffer, historyKey, temperatureCheck);
+            analysisResult.cameraId = cameraId;
+            analysisResult.analysisKey = historyKey;
             
             // Store in history for temporal analysis
-            this.updateDetectionHistory(cameraId, analysisResult);
+            this.updateDetectionHistory(historyKey, analysisResult);
             
             // Apply temporal smoothing
-            const smoothedResult = this.applyTemporalSmoothing(cameraId, analysisResult);
+            const smoothedResult = this.applyTemporalSmoothing(historyKey, analysisResult);
+            smoothedResult.cameraId = cameraId;
+            smoothedResult.analysisKey = historyKey;
             
             cache.set(cacheKey, smoothedResult);
             return smoothedResult;
 
         } catch (error) {
             console.error(`Snow detection error for camera ${cameraId}:`, error.message);
-            return this.getDefaultResult(cameraId, 'error');
+            return {
+                ...this.getDefaultResult(cameraId, 'error'),
+                analysisKey: historyKey
+            };
         }
     }
 
@@ -551,6 +561,166 @@ class SnowDetectionService {
     }
 
     /**
+     * Normalize camera view status text
+     * @param {string} status - Raw status string
+     * @returns {string} Normalized status
+     */
+    normalizeViewStatus(status) {
+        if (typeof status !== 'string') return '';
+        return status.trim();
+    }
+
+    /**
+     * Determine if a camera view should be analyzed
+     * @param {Object} view - Camera view object
+     * @returns {boolean} True if view has a usable URL and is not marked offline
+     */
+    isViewAnalyzable(view) {
+        if (!view || typeof view.url !== 'string' || view.url.trim().length === 0) {
+            return false;
+        }
+
+        const status = this.normalizeViewStatus(view.status).toLowerCase();
+        if (!status) return true;
+
+        const offlineTerms = ['offline', 'down', 'no feed', 'unavailable'];
+        return !offlineTerms.some(term => status.includes(term));
+    }
+
+    /**
+     * Severity rank used for worst-case aggregation
+     * @param {string} snowLevel - Snow level label
+     * @returns {number} Severity rank
+     */
+    getSnowSeverityRank(snowLevel) {
+        switch (snowLevel) {
+            case 'heavy': return 3;
+            case 'moderate': return 2;
+            case 'light': return 1;
+            case 'none': return 0;
+            default: return -1;
+        }
+    }
+
+    /**
+     * Map snow level to frontend display state
+     * @param {string} snowLevel - Snow level label
+     * @returns {string} Display state value
+     */
+    mapSnowLevelToDisplayState(snowLevel) {
+        switch (snowLevel) {
+            case 'none': return 'clear';
+            case 'light': return 'light';
+            case 'moderate': return 'moderate';
+            case 'heavy': return 'heavy';
+            default: return 'clear';
+        }
+    }
+
+    /**
+     * Build a default per-view record when the view cannot be analyzed
+     * @param {number} viewIndex - View index
+     * @param {string} description - View description
+     * @param {string} status - View status
+     * @param {string} error - Error code
+     * @returns {Object} View-level detection record
+     */
+    buildDefaultViewDetection(viewIndex, description, status, error) {
+        return {
+            viewIndex,
+            description,
+            status,
+            snowDetected: false,
+            snowLevel: 'unknown',
+            confidence: 0,
+            temperatureOverride: false,
+            temperature: null,
+            whitePixelPercentage: 0,
+            timestamp: Date.now(),
+            error
+        };
+    }
+
+    /**
+     * Aggregate per-view detections into one camera-level detection
+     * @param {string} cameraId - Camera identifier
+     * @param {Array} perViewDetections - View-level detections
+     * @param {number} viewsAvailable - Total views reported by camera
+     * @returns {Object} Aggregated camera detection
+     */
+    aggregateCameraViewDetections(cameraId, perViewDetections = [], viewsAvailable = 0) {
+        const validSnowLevels = new Set(['none', 'light', 'moderate', 'heavy']);
+        const successfulViews = perViewDetections.filter(
+            (view) => !view.error && validSnowLevels.has(view.snowLevel)
+        );
+
+        if (successfulViews.length === 0) {
+            return {
+                ...this.getDefaultResult(cameraId, viewsAvailable > 0 ? 'no_valid_views' : 'no_image_url'),
+                perViewDetections,
+                aggregation: {
+                    policy: 'worst_case_max',
+                    mixed: false,
+                    confidenceSpread: 0,
+                    viewsAvailable,
+                    viewsAnalyzed: 0
+                },
+                displayState: 'clear'
+            };
+        }
+
+        const worstCaseView = successfulViews.reduce((worst, current) => {
+            const currentRank = this.getSnowSeverityRank(current.snowLevel);
+            const worstRank = this.getSnowSeverityRank(worst.snowLevel);
+
+            if (currentRank > worstRank) {
+                return current;
+            }
+
+            if (currentRank === worstRank && (current.confidence || 0) > (worst.confidence || 0)) {
+                return current;
+            }
+
+            return worst;
+        }, successfulViews[0]);
+
+        const confidences = successfulViews.map((view) => view.confidence || 0);
+        const maxConfidence = Math.max(...confidences);
+        const minConfidence = Math.min(...confidences);
+        const confidenceSpread = Math.max(0, maxConfidence - minConfidence);
+        const mixed = confidenceSpread >= 0.25;
+        const confidenceLevel = getConfidenceLevel(maxConfidence);
+
+        return {
+            cameraId,
+            timestamp: Date.now(),
+            snowDetected: worstCaseView.snowLevel !== 'none',
+            snowLevel: worstCaseView.snowLevel,
+            whitePixelPercentage: worstCaseView.whitePixelPercentage || 0,
+            confidence: maxConfidence,
+            confidenceLevel: {
+                name: confidenceLevel.name,
+                displayText: confidenceLevel.displayText,
+                badge: confidenceLevel.badge,
+                color: confidenceLevel.color,
+                icon: confidenceLevel.icon
+            },
+            temperatureOverride: successfulViews.every((view) => view.temperatureOverride),
+            temperature: worstCaseView.temperature,
+            temperatureInfo: worstCaseView.temperatureInfo || null,
+            perViewDetections,
+            aggregation: {
+                policy: 'worst_case_max',
+                mixed,
+                confidenceSpread,
+                viewsAvailable,
+                viewsAnalyzed: successfulViews.length
+            },
+            displayState: mixed ? 'mixed' : this.mapSnowLevelToDisplayState(worstCaseView.snowLevel)
+        };
+    }
+
+    /**
      * Analyze multiple cameras in batch with weather data
      * @param {Array} cameras - Array of camera objects with id and views
      * @param {Array} weatherStations - Array of weather station data
@@ -571,24 +741,59 @@ class SnowDetectionService {
                 Promise.allSettled(
                     chunk.map(async (camera) => {
                         try {
-                            // Use first view for analysis (could be enhanced to analyze multiple views)
-                            const imageUrl = camera.views && camera.views.length > 0 ? camera.views[0].url : null;
-
-                            if (!imageUrl) {
-                                return this.getDefaultResult(camera.id, 'no_image_url');
-                            }
+                            const cameraId = camera.id.toString();
+                            const views = Array.isArray(camera.views) ? camera.views : [];
 
                             // Find nearest weather station for temperature data
                             const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+                            const perViewDetections = await Promise.all(
+                                views.map(async (view, viewIndex) => {
+                                    const description = view?.description || `View ${viewIndex + 1}`;
+                                    const status = this.normalizeViewStatus(view?.status);
+                                    const imageUrl = typeof view?.url === 'string' ? view.url.trim() : '';
 
-                            const result = await this.analyzeImageForSnow(
-                                imageUrl,
-                                camera.id.toString(),
-                                nearestStation
+                                    if (!this.isViewAnalyzable({ ...view, url: imageUrl })) {
+                                        return this.buildDefaultViewDetection(
+                                            viewIndex,
+                                            description,
+                                            status,
+                                            imageUrl ? 'view_offline' : 'no_image_url'
+                                        );
+                                    }
+
+                                    const analysisKey = `${cameraId}:view:${viewIndex}`;
+                                    const viewResult = await this.analyzeImageForSnow(
+                                        imageUrl,
+                                        cameraId,
+                                        nearestStation,
+                                        analysisKey
+                                    );
+
+                                    return {
+                                        viewIndex,
+                                        description,
+                                        status,
+                                        snowDetected: viewResult.snowDetected,
+                                        snowLevel: viewResult.snowLevel,
+                                        confidence: viewResult.confidence,
+                                        temperatureOverride: viewResult.temperatureOverride || false,
+                                        temperature: viewResult.temperature ?? null,
+                                        temperatureInfo: viewResult.temperatureInfo || null,
+                                        whitePixelPercentage: viewResult.whitePixelPercentage || 0,
+                                        timestamp: viewResult.timestamp || Date.now(),
+                                        error: viewResult.error || null
+                                    };
+                                })
+                            );
+
+                            const aggregatedResult = this.aggregateCameraViewDetections(
+                                cameraId,
+                                perViewDetections,
+                                views.length
                             );
 
                             return {
-                                ...result,
+                                ...aggregatedResult,
                                 cameraName: camera.name,
                                 cameraLocation: { lat: camera.lat, lng: camera.lng },
                                 nearestStationDistance: nearestStation ?
@@ -596,7 +801,18 @@ class SnowDetectionService {
                             };
                         } catch (error) {
                             console.error(`Error analyzing camera ${camera.id}:`, error.message);
-                            return this.getDefaultResult(camera.id.toString(), 'analysis_error');
+                            return {
+                                ...this.getDefaultResult(camera.id.toString(), 'analysis_error'),
+                                perViewDetections: [],
+                                aggregation: {
+                                    policy: 'worst_case_max',
+                                    mixed: false,
+                                    confidenceSpread: 0,
+                                    viewsAvailable: Array.isArray(camera.views) ? camera.views.length : 0,
+                                    viewsAnalyzed: 0
+                                },
+                                displayState: 'clear'
+                            };
                         }
                     })
                 )

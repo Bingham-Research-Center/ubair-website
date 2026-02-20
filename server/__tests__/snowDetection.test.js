@@ -9,7 +9,7 @@
  */
 
 import SnowDetectionService from '../snowDetectionService.js';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('SnowDetectionService - Synthetic Data Tests', () => {
     let service;
@@ -258,6 +258,139 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
             console.log('Detailed Results:', results.method1_current);
 
             expect(accuracy).toBeGreaterThan(0); // Basic sanity check
+        });
+    });
+
+    describe('Multi-view Camera Aggregation', () => {
+        it('analyzes all views and aggregates with worst-case severity', async () => {
+            const analyzeSpy = jest.spyOn(service, 'analyzeImageForSnow')
+                .mockImplementation(async (imageUrl, cameraId, weatherData, analysisKey) => {
+                    if (imageUrl.includes('view-a')) {
+                        return {
+                            cameraId,
+                            analysisKey,
+                            timestamp: Date.now(),
+                            snowDetected: false,
+                            snowLevel: 'none',
+                            confidence: 0.4,
+                            whitePixelPercentage: 2,
+                            temperatureOverride: false
+                        };
+                    }
+                    if (imageUrl.includes('view-b')) {
+                        return {
+                            cameraId,
+                            analysisKey,
+                            timestamp: Date.now(),
+                            snowDetected: true,
+                            snowLevel: 'heavy',
+                            confidence: 0.85,
+                            whitePixelPercentage: 42,
+                            temperatureOverride: false
+                        };
+                    }
+
+                    return {
+                        cameraId,
+                        analysisKey,
+                        timestamp: Date.now(),
+                        snowDetected: false,
+                        snowLevel: 'none',
+                        confidence: 0.35,
+                        whitePixelPercentage: 1,
+                        temperatureOverride: false
+                    };
+                });
+
+            const cameras = [{
+                id: 101,
+                name: 'Test Camera',
+                lat: 40.2,
+                lng: -110.1,
+                views: [
+                    { url: 'https://example.com/view-a.jpg', status: 'Operational', description: 'North' },
+                    { url: 'https://example.com/view-b.jpg', status: 'Operational', description: 'South' },
+                    { url: 'https://example.com/view-c.jpg', status: 'Operational', description: 'East' }
+                ]
+            }];
+
+            const results = await service.analyzeCamerasBatch(cameras, []);
+            const cameraResult = results[0];
+
+            expect(analyzeSpy).toHaveBeenCalledTimes(3);
+            expect(cameraResult.snowLevel).toBe('heavy');
+            expect(cameraResult.confidence).toBe(0.85);
+            expect(cameraResult.aggregation.policy).toBe('worst_case_max');
+            expect(cameraResult.aggregation.viewsAvailable).toBe(3);
+            expect(cameraResult.aggregation.viewsAnalyzed).toBe(3);
+            expect(cameraResult.perViewDetections).toHaveLength(3);
+            expect(cameraResult.perViewDetections.map(view => view.viewIndex)).toEqual([0, 1, 2]);
+
+            const analysisKeys = analyzeSpy.mock.calls.map(call => call[3]);
+            expect(new Set(analysisKeys).size).toBe(3);
+            expect(analysisKeys).toContain('101:view:0');
+            expect(analysisKeys).toContain('101:view:1');
+            expect(analysisKeys).toContain('101:view:2');
+        });
+
+        it('marks mixed state when confidence spread is >= 0.25', () => {
+            const aggregated = service.aggregateCameraViewDetections('202', [
+                {
+                    viewIndex: 0,
+                    snowLevel: 'none',
+                    confidence: 0.25,
+                    temperatureOverride: false,
+                    whitePixelPercentage: 1
+                },
+                {
+                    viewIndex: 1,
+                    snowLevel: 'light',
+                    confidence: 0.5,
+                    temperatureOverride: false,
+                    whitePixelPercentage: 12
+                }
+            ], 2);
+
+            expect(aggregated.aggregation.mixed).toBe(true);
+            expect(aggregated.aggregation.confidenceSpread).toBeCloseTo(0.25, 5);
+            expect(aggregated.displayState).toBe('mixed');
+        });
+
+        it('keeps non-analyzable views in metadata while aggregating successful views', async () => {
+            const analyzeSpy = jest.spyOn(service, 'analyzeImageForSnow')
+                .mockResolvedValue({
+                    cameraId: '303',
+                    analysisKey: '303:view:1',
+                    timestamp: Date.now(),
+                    snowDetected: false,
+                    snowLevel: 'none',
+                    confidence: 0.6,
+                    whitePixelPercentage: 3,
+                    temperatureOverride: false
+                });
+
+            const cameras = [{
+                id: 303,
+                name: 'Mixed Availability Camera',
+                lat: 40.1,
+                lng: -109.9,
+                views: [
+                    { url: '', status: 'Operational', description: 'Missing URL' },
+                    { url: 'https://example.com/view-ok.jpg', status: 'Operational', description: 'Working View' },
+                    { url: 'https://example.com/view-offline.jpg', status: 'Offline', description: 'Offline View' }
+                ]
+            }];
+
+            const [result] = await service.analyzeCamerasBatch(cameras, []);
+
+            expect(analyzeSpy).toHaveBeenCalledTimes(1);
+            expect(result.aggregation.viewsAvailable).toBe(3);
+            expect(result.aggregation.viewsAnalyzed).toBe(1);
+            expect(result.perViewDetections).toHaveLength(3);
+            expect(result.perViewDetections.filter(v => v.error).length).toBe(2);
+            expect(result.perViewDetections[0].error).toBe('no_image_url');
+            expect(result.perViewDetections[2].error).toBe('view_offline');
+            expect(result.snowLevel).toBe('none');
         });
     });
 
