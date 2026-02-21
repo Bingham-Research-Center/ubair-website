@@ -542,10 +542,13 @@ class RoadWeatherMap {
             const level = this.formatSnowLevelLabel(view.snowLevel);
             const viewName = view.description || `View ${view.viewIndex + 1}`;
             const suffix = view.error ? ` (${view.error})` : '';
+            const frameInfo = (view.isAnimated && view.frameAggregation)
+                ? ` · Frames ${view.frameAggregation.framesSampled}/${view.frameAggregation.framesAvailable}`
+                : '';
 
             return `<div class="per-view-row">
                 <span class="per-view-name">${viewName}</span>
-                <span class="per-view-values">${level} · ${confidence}${suffix}</span>
+                <span class="per-view-values">${level} · ${confidence}${frameInfo}${suffix}</span>
             </div>`;
         }).join('');
 
@@ -554,6 +557,29 @@ class RoadWeatherMap {
                 <h5>Per-view breakdown</h5>
                 ${rows}
             </div>`;
+    }
+
+    getFrameSamplingSummaryHtml(detection) {
+        if (detection?.isAnimated && detection?.frameAggregation) {
+            return `<p><strong>Frames:</strong> ${detection.frameAggregation.framesSampled}/${detection.frameAggregation.framesAvailable} sampled (animated feed)</p>`;
+        }
+
+        if (!Array.isArray(detection?.perViewDetections)) {
+            return '';
+        }
+
+        const animatedViews = detection.perViewDetections.filter(view => view.isAnimated && view.frameAggregation);
+        if (animatedViews.length === 0) {
+            return '';
+        }
+
+        const sampled = animatedViews.reduce((sum, view) => sum + (view.frameAggregation.framesSampled || 0), 0);
+        const available = animatedViews.reduce((sum, view) => sum + (view.frameAggregation.framesAvailable || 0), 0);
+        if (available <= 0) {
+            return '';
+        }
+
+        return `<p><strong>Frames:</strong> ${sampled}/${available} sampled (animated feeds)</p>`;
     }
 
     renderTrafficCameras(cameras, cameraDetections = []) {
@@ -669,7 +695,8 @@ class RoadWeatherMap {
                     ? `
                         <p class="experimental-note"><strong>Mode:</strong> Experimental (opt-in)</p>
                         <p><strong>View Spread:</strong> ${spreadPercent}</p>
-                        <p><strong>Views:</strong> ${viewsAnalyzed}/${viewsAvailable} analyzed</p>
+                        <p><strong>Feeds:</strong> ${viewsAnalyzed}/${viewsAvailable} analyzed</p>
+                        ${this.getFrameSamplingSummaryHtml(detection)}
                         ${this.getPerViewBreakdownHtml(detection)}
                       `
                     : '';

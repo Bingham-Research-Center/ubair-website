@@ -394,6 +394,74 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
         });
     });
 
+    describe('Image Format Decoding and GIF Sampling', () => {
+        it('detects mime type from header and signature bytes', () => {
+            const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+            const jpgHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
+            const gifHeader = Buffer.from('GIF89a');
+            const rawRgb = Buffer.from([20, 20, 20, 220, 220, 220]);
+
+            expect(service.detectImageMime(pngHeader, null)).toBe('image/png');
+            expect(service.detectImageMime(jpgHeader, null)).toBe('image/jpeg');
+            expect(service.detectImageMime(gifHeader, null)).toBe('image/gif');
+            expect(service.detectImageMime(rawRgb, null)).toBe('image/raw-rgb');
+            expect(service.detectImageMime(rawRgb, 'image/jpeg; charset=binary')).toBe('image/jpeg');
+        });
+
+        it('aggregates GIF frames with worst-case policy and frame metadata', async () => {
+            const frameBlack = new Uint8ClampedArray([0, 0, 0, 255]); // 0% white
+            const frameWhite = new Uint8ClampedArray([255, 255, 255, 255]); // 100% white
+
+            jest.spyOn(service, 'decodeGifFramesForSampling').mockReturnValue({
+                totalFrames: 12,
+                frames: [
+                    { frameIndex: 0, width: 1, height: 1, data: frameBlack },
+                    { frameIndex: 4, width: 1, height: 1, data: frameWhite }
+                ]
+            });
+
+            const result = await service.processImageForSnow(
+                Buffer.from('GIF89a'),
+                'gif-cam-1',
+                null,
+                'image/gif'
+            );
+
+            expect(result.contentType).toBe('image/gif');
+            expect(result.isAnimated).toBe(true);
+            expect(result.frameAggregation).toBeDefined();
+            expect(result.frameAggregation.framesAvailable).toBe(12);
+            expect(result.frameAggregation.framesSampled).toBe(2);
+            expect(result.snowLevel).toBe('heavy');
+            expect(result.confidence).toBeGreaterThan(0.5);
+        });
+
+        it('uses still-image decode path for PNG/JPEG content types', async () => {
+            const rgba = new Uint8ClampedArray([
+                255, 255, 255, 255,
+                0, 0, 0, 255
+            ]);
+
+            jest.spyOn(service, 'decodeStillImageToRgba').mockReturnValue({
+                width: 2,
+                height: 1,
+                data: rgba
+            });
+
+            const result = await service.processImageForSnow(
+                Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+                'png-cam-1',
+                null,
+                'image/png'
+            );
+
+            expect(result.contentType).toBe('image/png');
+            expect(result.isAnimated).toBe(false);
+            expect(result.frameAggregation).toBeNull();
+            expect(result.snowLevel).toBe('heavy');
+        });
+    });
+
     describe('Edge Cases and Robustness', () => {
         it('should handle very small images', async () => {
             const image = generateSyntheticImage({ width: 50, height: 50, whitePixelPercent: 20 });
