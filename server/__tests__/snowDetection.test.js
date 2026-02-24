@@ -162,16 +162,16 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
     });
 
     describe('Temperature Override Tests', () => {
-        it('should skip analysis when temperature is above 40°F', async () => {
-            const tempCheck = service.checkTemperatureConditions({ airTemperature: 45 });
+        it('should skip analysis when temperature is above 36°F', async () => {
+            const tempCheck = service.checkTemperatureConditions({ airTemperature: 37 });
 
             expect(tempCheck.skipAnalysis).toBe(true);
             expect(tempCheck.confidence).toBeGreaterThan(0.9);
             expect(tempCheck.reason).toContain('Too warm');
         });
 
-        it('should analyze with low confidence in marginal temps (35-40°F)', async () => {
-            const tempCheck = service.checkTemperatureConditions({ airTemperature: 37 });
+        it('should analyze with low confidence in marginal temps (35-36°F)', async () => {
+            const tempCheck = service.checkTemperatureConditions({ airTemperature: 36 });
 
             expect(tempCheck.skipAnalysis).toBe(false);
             expect(tempCheck.confidence).toBeLessThan(0.5);

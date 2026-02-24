@@ -118,29 +118,4 @@ router.get('/road-weather/rest-areas', async (req, res) => {
     }
 });
 
-router.get('/road-weather/digital-signs', async (req, res) => {
-    try {
-        const signs = await roadWeatherService.fetchUDOTDigitalSigns();
-        res.json({
-            success: true,
-            timestamp: new Date().toISOString(),
-            totalSigns: signs.length,
-            constructionSigns: signs.filter(s => s.category === 'construction').length,
-            incidentSigns: signs.filter(s => s.category === 'incident').length,
-            weatherSigns: signs.filter(s => s.category === 'weather').length,
-            closureSigns: signs.filter(s => s.category === 'closure').length,
-            trafficSigns: signs.filter(s => s.category === 'traffic').length,
-            advisorySigns: signs.filter(s => s.category === 'advisory').length,
-            signs: signs
-        });
-    } catch (error) {
-        console.error('Error fetching digital signs:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch digital signs data',
-            message: error.message
-        });
-    }
-});
-
 export default router;

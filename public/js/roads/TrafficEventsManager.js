@@ -125,6 +125,18 @@ class TrafficEventsManager {
             statusText = 'Completed';
         }
 
+        const descriptionText = typeof event.description === 'string' ? event.description : '';
+        const titleText = event.name || (descriptionText ? descriptionText.substring(0, 60) : 'Traffic Event');
+        const safeDisplayColor = sanitizeHexColor(event.displayColor, '#6c757d');
+        const safeDisplayIcon = escapeHtml(event.displayIcon || '🚧');
+        const safeTitleText = escapeHtml(titleText);
+        const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown roadway');
+        const safeDescriptionText = escapeHtml(descriptionText || 'No description available.');
+        const safeEventType = escapeHtml((event.eventType || 'Unknown').replace(/([A-Z])/g, ' $1').trim());
+        const safeSeverity = escapeHtml(event.severity || 'Unknown');
+        const safeComment = escapeHtml(event.comment || '');
+        const safePriority = Number.isFinite(Number(event.priority)) ? Number(event.priority) : 0;
+
         return `
             <div class="event-card" style="
                 border: 1px solid #e5e7eb;
@@ -136,11 +148,11 @@ class TrafficEventsManager {
             ">
                 <div class="event-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div class="event-title" style="flex: 1;">
-                        <h4 style="margin: 0 0 4px 0; color: ${event.displayColor}; display: flex; align-items: center; gap: 8px;">
-                            ${event.displayIcon} ${event.name || event.description.substring(0, 60)}
+                        <h4 style="margin: 0 0 4px 0; color: ${safeDisplayColor}; display: flex; align-items: center; gap: 8px;">
+                            ${safeDisplayIcon} ${safeTitleText}
                             ${event.isFullClosure ? '<span style="background: #dc2626; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">CLOSURE</span>' : ''}
                         </h4>
-                        <p style="margin: 0; color: #666; font-size: 14px;">${event.roadwayName}</p>
+                        <p style="margin: 0; color: #666; font-size: 14px;">${safeRoadwayName}</p>
                     </div>
                     <div class="event-status">
                         <span class="${statusClass}" style="
@@ -150,13 +162,13 @@ class TrafficEventsManager {
                             font-weight: 500;
                         ">${statusText}</span>
                         <div style="text-align: right; margin-top: 4px; font-size: 11px; color: #999;">
-                            Priority: ${event.priority}/10
+                            Priority: ${safePriority}/10
                         </div>
                     </div>
                 </div>
 
                 <div class="event-description" style="margin-bottom: 12px;">
-                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${event.description}</p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${safeDescriptionText}</p>
                 </div>
 
                 <div class="event-details" style="
@@ -167,10 +179,10 @@ class TrafficEventsManager {
                     color: #666;
                 ">
                     <div>
-                        <strong>Type:</strong> ${event.eventType.replace(/([A-Z])/g, ' $1').trim()}
+                        <strong>Type:</strong> ${safeEventType}
                     </div>
                     <div>
-                        <strong>Severity:</strong> ${event.severity || 'Unknown'}
+                        <strong>Severity:</strong> ${safeSeverity}
                     </div>
                     <div>
                         <strong>Start:</strong> ${startDate.toLocaleDateString()} ${startDate.toLocaleTimeString()}
@@ -189,7 +201,7 @@ class TrafficEventsManager {
                         font-size: 13px;
                         color: #555;
                     ">
-                        <strong>Additional Info:</strong> ${event.comment}
+                        <strong>Additional Info:</strong> ${safeComment}
                     </div>
                 ` : ''}
             </div>
@@ -203,7 +215,7 @@ class TrafficEventsManager {
                 <div class="events-error" style="text-align: center; padding: 40px; color: #dc2626;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
                     <h3 style="margin: 0 0 8px 0;">Error Loading Events</h3>
-                    <p style="margin: 0;">${message}</p>
+                    <p style="margin: 0;">${escapeHtml(message)}</p>
                     <button onclick="trafficEventsManager.loadAllEventsData()"
                             style="margin-top: 16px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
                         Retry
@@ -259,24 +271,29 @@ class TrafficEventsManager {
     createAlertCard(alert) {
         const startDate = new Date(alert.startTime);
         const endDate = alert.endTime ? new Date(alert.endTime) : null;
+        const severityToken = sanitizeClassToken(alert.severity || 'unknown');
+        const safeSeverity = escapeHtml(alert.severity || 'unknown');
+        const safeMessage = escapeHtml(alert.message || '');
+        const safeNotes = escapeHtml(alert.notes || '');
+        const safeRegions = Array.isArray(alert.regions) ? alert.regions.map(region => escapeHtml(region)).join(', ') : '';
 
         return `
-            <div class="alert-card ${alert.severity}-importance">
+            <div class="alert-card ${severityToken}-importance">
                 <div class="alert-header">
                     <div class="alert-info">
-                        <span class="alert-severity ${alert.severity}">${alert.severity}</span>
+                        <span class="alert-severity ${severityToken}">${safeSeverity}</span>
                         ${alert.highImportance ? '<i class="fas fa-exclamation-triangle" style="color: #dc2626; margin-left: 8px;" title="High Importance"></i>' : ''}
                         ${alert.sendNotification ? '<i class="fas fa-bell" style="color: #f59e0b; margin-left: 4px;" title="Notification Alert"></i>' : ''}
                     </div>
                 </div>
 
                 <div class="alert-message">
-                    ${alert.message}
+                    ${safeMessage}
                 </div>
 
                 ${alert.notes ? `
                     <div class="alert-notes">
-                        <strong>Additional Info:</strong> ${alert.notes}
+                        <strong>Additional Info:</strong> ${safeNotes}
                     </div>
                 ` : ''}
 
@@ -287,7 +304,7 @@ class TrafficEventsManager {
 
                 ${alert.regions && alert.regions.length > 0 ? `
                     <div class="alert-regions">
-                        <strong>Regions:</strong> ${alert.regions.join(', ')}
+                        <strong>Regions:</strong> ${safeRegions}
                     </div>
                 ` : ''}
             </div>
@@ -301,7 +318,7 @@ class TrafficEventsManager {
                 <div style="text-align: center; padding: 2rem; color: #dc2626;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
                     <h4 style="margin: 0 0 0.5rem 0;">Error Loading Alerts</h4>
-                    <p style="margin: 0;">${message}</p>
+                    <p style="margin: 0;">${escapeHtml(message)}</p>
                 </div>
             `;
         }

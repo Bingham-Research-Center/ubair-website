@@ -24,19 +24,13 @@ async function loadUS40Conditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for US-40
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
+        }
 
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles
-        routeDataCache.stations = stationsData;
-        routeDataCache.events = eventsData;
-        routeDataCache.lastUpdated = Date.now();
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Filter data for US-40 corridor
         const us40Stations = stationsData.filter(station =>
@@ -74,21 +68,13 @@ async function loadUS191Conditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for US-191
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
-
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles (if not already populated)
-        if (!routeDataCache.stations) {
-            routeDataCache.stations = stationsData;
-            routeDataCache.events = eventsData;
-            routeDataCache.lastUpdated = Date.now();
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
         }
+
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Filter data for US-191 corridor
         const us191Stations = stationsData.filter(station =>
@@ -182,21 +168,13 @@ async function loadBasinRoadsConditions() {
     if (!container) return;
 
     try {
-        // Get weather stations and traffic events for Basin Roads
-        const [stationsResponse, eventsResponse] = await Promise.all([
-            fetch('/api/road-weather/stations'),
-            fetch('/api/traffic-events')
-        ]);
-
-        const stationsData = await stationsResponse.json();
-        const eventsData = await eventsResponse.json();
-
-        // Populate cache for future units toggles (if not already populated)
-        if (!routeDataCache.stations) {
-            routeDataCache.stations = stationsData;
-            routeDataCache.events = eventsData;
-            routeDataCache.lastUpdated = Date.now();
+        const data = await routeDataCache.getData();
+        if (!data || !data.stations || !data.events) {
+            throw new Error('Route data unavailable');
         }
+
+        const stationsData = data.stations;
+        const eventsData = data.events;
 
         // Initialize carousel
         initializeRoadCarousel(stationsData, eventsData.events || []);
@@ -221,22 +199,29 @@ function initializeRoadCarousel(stationsData, eventsData) {
         `<div class="carousel-indicator ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
     ).join('');
 
-    // Add event listeners for manual controls
-    document.getElementById('prev-road').addEventListener('click', () => {
-        previousRoad(stationsData, eventsData);
-    });
+    // Add event listeners for manual controls (replace any existing handlers)
+    const prevButton = document.getElementById('prev-road');
+    const nextButton = document.getElementById('next-road');
 
-    document.getElementById('next-road').addEventListener('click', () => {
-        nextRoad(stationsData, eventsData);
-    });
+    if (prevButton) {
+        prevButton.onclick = () => {
+            previousRoad(stationsData, eventsData);
+        };
+    }
 
-    // Add indicator click handlers
-    indicatorsContainer.addEventListener('click', (e) => {
+    if (nextButton) {
+        nextButton.onclick = () => {
+            nextRoad(stationsData, eventsData);
+        };
+    }
+
+    // Add indicator click handlers (replace any existing handler)
+    indicatorsContainer.onclick = (e) => {
         if (e.target.classList.contains('carousel-indicator')) {
             const index = parseInt(e.target.dataset.index);
             showRoad(index, stationsData, eventsData);
         }
-    });
+    };
 
     // Show first road and start auto-rotation
     showRoad(0, stationsData, eventsData);
@@ -417,6 +402,10 @@ function nextRoad(stationsData, eventsData) {
  * Start automatic carousel rotation (30 seconds per slide)
  */
 function startAutoRotation(stationsData, eventsData) {
+    if (autoRotateTimer) {
+        clearInterval(autoRotateTimer);
+    }
+
     autoRotateTimer = setInterval(() => {
         const nextIndex = currentRoadIndex === basinRoads.length - 1 ? 0 : currentRoadIndex + 1;
         showRoad(nextIndex, stationsData, eventsData);
