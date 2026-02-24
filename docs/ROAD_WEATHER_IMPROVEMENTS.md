@@ -37,8 +37,8 @@ Implemented **P1 priority items** for road weather system with **100% test pass 
      - Sun glare rejection
 
   3. **Temperature Override Tests**: 3 tests
-     - Skip analysis above 40°F
-     - Low confidence in marginal temps (35-40°F)
+     - Skip analysis above 36°F
+     - Low confidence in marginal temps (35-36°F)
      - High confidence in cold conditions (<25°F)
 
   4. **Temporal Smoothing Tests**: 2 tests

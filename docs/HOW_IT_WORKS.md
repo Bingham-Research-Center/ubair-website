@@ -175,8 +175,8 @@ Temperature is **super important** for snow detection:
 
 | Temperature | What It Means | Action |
 |-------------|---------------|--------|
-| **Above 40°F** | Too warm for snow | Don't even analyze the image - it's definitely not snow ❌ |
-| **35-40°F** | Marginal snow temps | Analyze with low confidence (might be melting) ⚠️ |
+| **Above 36°F** | Too warm for snow | Don't even analyze the image - it's definitely not snow ❌ |
+| **35-36°F** | Marginal snow temps | Analyze with low confidence (might be melting) ⚠️ |
 | **32-35°F** | Good snow temps | Normal analysis - snow is possible ✅ |
 | **Below 25°F** | Perfect snow temps | High confidence - snow very likely if we see white pixels ✅✅ |
 

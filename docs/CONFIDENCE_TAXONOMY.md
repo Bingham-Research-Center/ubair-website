@@ -22,7 +22,7 @@ This document defines the **3-level confidence taxonomy** used throughout the Ui
   - Conflicting data sources
   - Estimated values from regional weather
   - Stale data (>2 hours old)
-  - Marginal temperature conditions (35-40°F for snow)
+  - Marginal temperature conditions (35-36°F for snow)
 
 **Example**: "Possible snow on SR-121" when:
 - Camera analysis disabled
