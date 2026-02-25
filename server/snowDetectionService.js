@@ -113,9 +113,13 @@ class SnowDetectionService {
         let skipAnalysis = false;
         let reason = '';
         let confidence = 0.5;
+        let surfaceStatusConfidence = null;
 
-        // Try to get temperature from weather data
-        if (weatherData && weatherData.airTemperature) {
+        // Prefer surfaceTemp (road surface) over airTemperature when available
+        if (weatherData && weatherData.surfaceTemp != null && !isNaN(parseFloat(weatherData.surfaceTemp))) {
+            temperature = parseFloat(weatherData.surfaceTemp);
+            reason += 'Using road surface temp. ';
+        } else if (weatherData && weatherData.airTemperature != null && !isNaN(parseFloat(weatherData.airTemperature))) {
             temperature = parseFloat(weatherData.airTemperature);
         }
 
@@ -123,7 +127,7 @@ class SnowDetectionService {
         if (temperature === null) {
             const month = new Date().getMonth() + 1;
             const hour = new Date().getHours();
-            
+
             // Rough seasonal temperature estimation for Uintah Basin
             if (month >= 6 && month <= 8) { // Summer months
                 temperature = hour < 6 || hour > 20 ? 65 : 85; // Cooler at night/early morning
@@ -137,23 +141,66 @@ class SnowDetectionService {
             reason += 'Estimated temperature. ';
         }
 
-        // Temperature-based decisions
-        if (temperature > this.temperatureThresholds.noSnowTemp) {
-            skipAnalysis = true;
-            confidence = 0.95;
-            reason += `Too warm for snow (${Math.round(temperature)}°F)`;
-        } else if (temperature > this.temperatureThresholds.lowSnowTemp) {
-            skipAnalysis = false; // Still analyze but adjust confidence
-            confidence = 0.3; // Low confidence for snow in marginal temps
-            reason += `Marginal snow conditions (${Math.round(temperature)}°F)`;
-        } else if (temperature < this.temperatureThresholds.heavySnowTemp) {
-            skipAnalysis = false;
-            confidence = 0.9; // High baseline confidence for very cold conditions
-            reason += `Ideal snow conditions (${Math.round(temperature)}°F)`;
-        } else {
-            skipAnalysis = false;
-            confidence = 0.7; // Good confidence for typical snow temps
-            reason += `Snow possible (${Math.round(temperature)}°F)`;
+        // Check RWIS surfaceStatus for direct road condition signals
+        if (weatherData && weatherData.surfaceStatus) {
+            const status = weatherData.surfaceStatus.toLowerCase();
+            const precip = (weatherData.precipitation || '').toLowerCase();
+
+            if (status.includes('ice') || status.includes('icy')) {
+                skipAnalysis = false;
+                confidence = 0.95;
+                surfaceStatusConfidence = 0.95;
+                reason += `RWIS reports icy surface. `;
+            } else if (status.includes('snow')) {
+                skipAnalysis = false;
+                confidence = 0.9;
+                surfaceStatusConfidence = 0.9;
+                reason += `RWIS reports snow on surface. `;
+            } else if (status.includes('wet') && temperature <= 32) {
+                skipAnalysis = false;
+                confidence = 0.7;
+                surfaceStatusConfidence = 0.7;
+                reason += `RWIS reports wet surface at freezing temps. `;
+            } else if (status.includes('wet')) {
+                skipAnalysis = false;
+                confidence = 0.3;
+                surfaceStatusConfidence = 0.3;
+                reason += `RWIS reports wet surface (above freezing). `;
+            } else if (status.includes('dry')) {
+                skipAnalysis = true;
+                confidence = 0.95;
+                surfaceStatusConfidence = 0.95;
+                reason += `RWIS reports dry surface. `;
+            }
+
+            // Precipitation field boosts/reduces confidence
+            if (precip.includes('snow') || precip.includes('ice')) {
+                confidence = Math.min(1, confidence + 0.05);
+                reason += 'Precip sensor confirms snow/ice. ';
+            } else if (precip.includes('none') || precip.includes('dry') || precip === '') {
+                confidence = Math.max(0, confidence - 0.03);
+            }
+        }
+
+        // Fall back to temperature-only decisions if surfaceStatus didn't set them
+        if (surfaceStatusConfidence === null) {
+            if (temperature > this.temperatureThresholds.noSnowTemp) {
+                skipAnalysis = true;
+                confidence = 0.95;
+                reason += `Too warm for snow (${Math.round(temperature)}°F)`;
+            } else if (temperature > this.temperatureThresholds.lowSnowTemp) {
+                skipAnalysis = false;
+                confidence = 0.3;
+                reason += `Marginal snow conditions (${Math.round(temperature)}°F)`;
+            } else if (temperature < this.temperatureThresholds.heavySnowTemp) {
+                skipAnalysis = false;
+                confidence = 0.9;
+                reason += `Ideal snow conditions (${Math.round(temperature)}°F)`;
+            } else {
+                skipAnalysis = false;
+                confidence = 0.7;
+                reason += `Snow possible (${Math.round(temperature)}°F)`;
+            }
         }
 
         return {
@@ -161,7 +208,15 @@ class SnowDetectionService {
             skipAnalysis,
             confidence,
             reason,
-            temperatureFactor: this.getTemperatureFactor(temperature)
+            temperatureFactor: this.getTemperatureFactor(temperature),
+            rwisInfluence: {
+                surfaceStatus: (weatherData && weatherData.surfaceStatus) || null,
+                surfaceTemp: (weatherData && weatherData.surfaceTemp != null) ? parseFloat(weatherData.surfaceTemp) : null,
+                precipitation: (weatherData && weatherData.precipitation) || null,
+                stationName: (weatherData && weatherData.name) || null,
+                stationDistance: null, // filled in by caller
+                surfaceStatusConfidence: surfaceStatusConfidence
+            }
         };
     }
 
@@ -380,6 +435,24 @@ class SnowDetectionService {
             });
         }
 
+        // Source 3: RWIS surface sensor confidence
+        if (temperatureInfo?.rwisInfluence?.surfaceStatus) {
+            const status = temperatureInfo.rwisInfluence.surfaceStatus.toLowerCase();
+            let rwisConfidence = 0.5;
+            if (status.includes('snow') || status.includes('ice') || status.includes('icy')) {
+                rwisConfidence = snowLevel !== 'none' ? 0.95 : 0.7; // agrees or disagrees with camera
+            } else if (status.includes('dry')) {
+                rwisConfidence = snowLevel === 'none' ? 0.95 : 0.3; // agrees or disagrees
+            } else if (status.includes('wet')) {
+                rwisConfidence = 0.5; // neutral
+            }
+            sources.push({
+                confidence: rwisConfidence,
+                weight: 2.0, // RWIS sensors are direct road measurements — highest weight
+                source: 'RWIS surface sensor'
+            });
+        }
+
         // Calculate composite confidence
         let baseConfidence = calculateCompositeConfidence(sources);
 
@@ -587,12 +660,24 @@ class SnowDetectionService {
                                 nearestStation
                             );
 
+                            const stationDistance = nearestStation
+                                ? Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng))
+                                : null;
+
                             return {
                                 ...result,
                                 cameraName: camera.name,
                                 cameraLocation: { lat: camera.lat, lng: camera.lng },
-                                nearestStationDistance: nearestStation ?
-                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null
+                                nearestStationDistance: stationDistance,
+                                rwisData: nearestStation ? {
+                                    stationName: nearestStation.name,
+                                    surfaceStatus: nearestStation.surfaceStatus || null,
+                                    surfaceTemp: nearestStation.surfaceTemp != null ? parseFloat(nearestStation.surfaceTemp) : null,
+                                    airTemperature: nearestStation.airTemperature || null,
+                                    precipitation: nearestStation.precipitation || null,
+                                    distance: stationDistance,
+                                    lastUpdated: nearestStation.lastUpdated || null
+                                } : null
                             };
                         } catch (error) {
                             console.error(`Error analyzing camera ${camera.id}:`, error.message);

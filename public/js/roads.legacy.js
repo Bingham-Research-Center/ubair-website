@@ -1068,7 +1068,7 @@ function updateConditionCardsWithLocation(locationData) {
     const visCard = document.querySelector('.condition-card-compact.visibility .value');
     if (visCard) {
         const vis = locationData.visibility;
-        if (vis && vis > 0) {
+        if (vis !== null && vis !== undefined && vis >= 0) {
             const maxVis = unitsSystem.isMetric ? 16 : 10; // 16 km ≈ 10 mi
             visCard.textContent = vis > maxVis ? `${maxVis}+ ${unitsSystem.getVisibilityUnit()}` : unitsSystem.formatVisibility(vis);
         } else {
