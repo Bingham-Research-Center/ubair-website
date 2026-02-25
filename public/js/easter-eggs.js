@@ -112,7 +112,7 @@ class EasterEggManager {
     /**
      * Random experimental easter egg features (Not used anywhere as of now)
      */
-    // noinspection JSUnusedGlobalSymbols (this shuts up WebStorm telling me this method is unused)
+    // noinspection JSUnusedGlobalSymbols (this shuts up WebStorm raising an warning)
     otherEasterEggs() {
         let flips = 0;
         const easterEggHTML = `
@@ -132,10 +132,6 @@ class EasterEggManager {
 
         document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
-        /**
-         * TOP SEGMENT WITH COIN FLIP + FORTUNE
-         */
-            // Add event listeners
         const toggle = document.getElementById('coinToggle');
         const content = document.getElementById('coinContent');
         const filterBtn = document.getElementById('coinFilterBtn');
@@ -236,9 +232,6 @@ class EasterEggManager {
 
         document.body.insertAdjacentHTML('beforeend', easterEggHTML);
 
-        /**
-         * BOTTOM SEGMENT WITH GAME
-         */
         const gameGuessBtn = document.getElementById('gameGuessBtn');
         const gameToggle = document.getElementById('gameToggle');
         const gameContent = document.getElementById('gameContent');
