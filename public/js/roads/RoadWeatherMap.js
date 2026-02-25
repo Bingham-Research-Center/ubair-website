@@ -554,11 +554,15 @@ class RoadWeatherMap {
 
                 // RWIS station context line
                 const rwisLine = detection.rwisData
-                    ? `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
-                           <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
-                           <strong>Surface:</strong> ${escapeHtml(detection.rwisData.surfaceStatus || 'N/A')}
-                           ${detection.rwisData.surfaceTemp != null ? ` | <strong>Road Temp:</strong> ${Math.round(detection.rwisData.surfaceTemp)}\u00B0F` : ''}
-                       </p>`
+                    ? (detection.rwisData.tooDistant
+                        ? `<p class="rwis-info" style="font-size: 0.85em; color: #999; margin-top: 4px;">
+                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi) — too distant
+                           </p>`
+                        : `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
+                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
+                               <strong>Surface:</strong> ${escapeHtml(detection.rwisData.surfaceStatus || 'N/A')}
+                               ${detection.rwisData.surfaceTemp != null ? ` | <strong>Road Temp:</strong> ${Math.round(detection.rwisData.surfaceTemp)}\u00B0F` : ''}
+                           </p>`)
                     : '';
 
                 analysisInfo = `
