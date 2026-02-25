@@ -7,7 +7,7 @@
  * Refresh Schedule:
  * - High-frequency (60s): Roads, cameras, weather stations
  * - Medium-frequency (5min): Snow plows, alerts, events
- * - Low-frequency (15min): Rest areas, mountain passes, digital signs
+ * - Low-frequency (15min): Rest areas, mountain passes
  *
  * UDOT Rate Limit: 10 calls per 60 seconds
  * Our usage: ~4 calls/minute average (60% under limit)
@@ -16,10 +16,15 @@
 import cron from 'node-cron';
 import RoadWeatherService from './roadWeatherService.js';
 import TrafficEventsService from './trafficEventsService.js';
+import CameraAnalysisScheduler from './cameraAnalysisScheduler.js';
 
 class BackgroundRefreshService {
     constructor() {
-        this.roadWeatherService = new RoadWeatherService();
+        // Create camera analysis scheduler first
+        this.cameraAnalysisScheduler = new CameraAnalysisScheduler();
+        
+        // Pass scheduler to road weather service
+        this.roadWeatherService = new RoadWeatherService(this.cameraAnalysisScheduler);
         this.trafficEventsService = new TrafficEventsService();
         this.jobs = [];
         this.isRunning = false;
@@ -54,12 +59,16 @@ class BackgroundRefreshService {
         }
 
         console.log('🔄 Starting background refresh service...');
-        console.log('   UDOT API Rate Limit: 10 calls/60 seconds');
+        console.log('   UDOT API Rate Limit: 10 calls/60 seconds (600 calls/hour)');
         console.log('   Our Schedule (Staggered for Safety):');
         console.log('   - Essential data: Every 60 seconds at :00 (roads, cameras, stations)');
         console.log('   - Frequent data: Every 5 minutes at :02 (plows, alerts, events)');
         console.log('   - Infrequent data: Every 15 minutes at :05/:20/:35/:50 +jitter (rest areas, passes)');
+        console.log('   - Camera analysis: 1 camera every 30 seconds (staggered, ~360 calls/hour)');
         console.log('');
+
+        // Start camera analysis scheduler
+        this.cameraAnalysisScheduler.start();
 
         // High-frequency: Every 60 seconds
         // Fetches: roads, cameras, weather stations (3 API calls)
@@ -111,6 +120,9 @@ class BackgroundRefreshService {
     stop() {
         console.log('🛑 Stopping background refresh service...');
 
+        // Stop camera analysis scheduler
+        this.cameraAnalysisScheduler.stop();
+
         for (const job of this.jobs) {
             job.stop();
         }
@@ -151,11 +163,14 @@ class BackgroundRefreshService {
             console.log(`[${new Date().toISOString()}] Refreshing essential data...`);
 
             // Fetch essential data (3 UDOT API calls)
-            await Promise.all([
+            const [roads, cameras, weatherStations] = await Promise.all([
                 this.roadWeatherService.fetchUDOTRoadConditions(),
                 this.roadWeatherService.fetchUDOTCameras(),
                 this.roadWeatherService.fetchUDOTWeatherStations()
             ]);
+
+            // Update camera analysis scheduler with new camera list
+            this.cameraAnalysisScheduler.updateCameraList(cameras, weatherStations);
 
             const duration = Date.now() - startTime;
             this.stats.lastRefresh.essential = new Date();
@@ -206,7 +221,7 @@ class BackgroundRefreshService {
         try {
             console.log(`[${new Date().toISOString()}] Refreshing infrequent data...`);
 
-            // Fetch infrequent data (2 UDOT API calls - digital signs removed due to 404)
+            // Fetch infrequent data (2 UDOT API calls)
             await Promise.all([
                 this.roadWeatherService.fetchUDOTRestAreas(),
                 this.roadWeatherService.fetchMountainPasses()
@@ -241,7 +256,7 @@ class BackgroundRefreshService {
     calculateApiCallRate() {
         // Essential: 3 calls every 60 seconds = 3 calls/min
         // Frequent: 3 calls every 5 minutes = 0.6 calls/min
-        // Infrequent: 2 calls every 15 minutes = 0.13 calls/min (signs removed)
+        // Infrequent: 2 calls every 15 minutes = 0.13 calls/min
         // Total: ~3.73 calls/min average
         return 3 + (3/5) + (2/15);
     }

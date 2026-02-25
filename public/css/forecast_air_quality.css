@@ -205,6 +205,16 @@ body[data-page-type="forecast_air_quality"] h1::after {
     transform: translateY(-1px);
 }
 
+.ffion-btn {
+    background: rgba(200, 16, 46, 0.1);
+    color: var(--welsh-red);
+}
+
+.ffion-btn:hover {
+    background: var(--welsh-red);
+    color: white;
+}
+
 /* Forecast Summary Grid */
 .forecast-summary-grid {
     display: grid;
@@ -1061,11 +1071,83 @@ body[data-page-type="forecast_air_quality"] h1::after {
     }
 }
 
+/* Cluster buttons */
+.cluster-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cluster-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid var(--welsh-slate);
+    border-radius: 8px;
+    background: white;
+    color: var(--welsh-slate);
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.cluster-btn:hover {
+    background: var(--air-background);
+    border-color: var(--welsh-sea);
+}
+
+.cluster-btn.active {
+    background: var(--welsh-slate);
+    color: white;
+    border-color: var(--welsh-slate);
+}
+
+.cluster-image-title {
+    font-weight: 600;
+    color: var(--air-primary);
+    font-size: 0.95rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Toggle for member mode */
+.toggle-group {
+    display: flex;
+    align-items: center;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    color: var(--air-primary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+}
+
+.toggle-label input[type="checkbox"] {
+    accent-color: var(--welsh-sea);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+}
+
+.toggle-label input[type="checkbox"]:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
 /* Member dropdown for heatmaps */
 .heatmap-with-dropdown {
     display: flex;
     flex-direction: column;
     gap: 1rem;
+}
+
+.heatmap-shortcuts-hint {
+    font-size: 0.85rem;
+    color: #4b5563;
+    margin-top: -0.25rem;
 }
 
 .dropdown-row {

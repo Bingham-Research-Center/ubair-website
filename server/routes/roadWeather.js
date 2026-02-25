@@ -2,7 +2,14 @@ import express from 'express';
 import RoadWeatherService from '../roadWeatherService.js';
 
 const router = express.Router();
-const roadWeatherService = new RoadWeatherService();
+// Default instance for backwards compatibility
+// Will be replaced by shared instance from server.js
+let roadWeatherService = new RoadWeatherService();
+
+// Allow setting the service instance (called from server.js)
+export function setRoadWeatherService(service) {
+    roadWeatherService = service;
+}
 
 router.get('/road-weather', async (req, res) => {
     try {
@@ -106,31 +113,6 @@ router.get('/road-weather/rest-areas', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch rest areas data',
-            message: error.message
-        });
-    }
-});
-
-router.get('/road-weather/digital-signs', async (req, res) => {
-    try {
-        const signs = await roadWeatherService.fetchUDOTDigitalSigns();
-        res.json({
-            success: true,
-            timestamp: new Date().toISOString(),
-            totalSigns: signs.length,
-            constructionSigns: signs.filter(s => s.category === 'construction').length,
-            incidentSigns: signs.filter(s => s.category === 'incident').length,
-            weatherSigns: signs.filter(s => s.category === 'weather').length,
-            closureSigns: signs.filter(s => s.category === 'closure').length,
-            trafficSigns: signs.filter(s => s.category === 'traffic').length,
-            advisorySigns: signs.filter(s => s.category === 'advisory').length,
-            signs: signs
-        });
-    } catch (error) {
-        console.error('Error fetching digital signs:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch digital signs data',
             message: error.message
         });
     }

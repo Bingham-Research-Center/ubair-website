@@ -15,6 +15,8 @@
     <link rel="stylesheet" href="/public/css/roads.css">
     <link rel="stylesheet" href="/public/css/kiosk.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -120,13 +122,13 @@
                             <!-- Bottom condition cards overlay -->
                             <div class="conditions-overlay">
                                 <div class="condition-cards-horizontal">
-                                    <div class="condition-card-compact road-temp">
+                                    <div class="condition-card-compact road-conditions">
                                         <div class="card-icon-small">
                                             <i class="fas fa-road"></i>
                                         </div>
                                         <div class="card-data">
-                                            <h5>Road Surface</h5>
-                                            <p class="value">--°F</p>
+                                            <h5>Road Conditions</h5>
+                                            <p class="value">--</p>
                                         </div>
                                     </div>
 
@@ -411,12 +413,22 @@
 
     <!-- Load Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- Load markdown-it for forecast content -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
 
     <!-- Load JavaScript Modules -->
     <script type="module" src="/public/js/config.js"></script>
+    <!-- Roads.js modules (extracted for maintainability) -->
+    <script src="/public/js/roads/UnitsSystem.js"></script>
+    <script src="/public/js/roads/DataCache.js"></script>
+    <script src="/public/js/roads/utils.js"></script>
+    <script src="/public/js/roads/RoadWeatherMap.js"></script>
+    <script src="/public/js/roads/TrafficEventsManager.js"></script>
+    <script src="/public/js/roads/RouteConditions.js"></script>
+    <script src="/public/js/roads/ConditionCards.js"></script>
+    <script src="/public/js/roads/initialization.js"></script>
     <script src="/public/js/roads.js"></script>
     <script type="module" src="/public/js/kiosk.js"></script>
 </body>
