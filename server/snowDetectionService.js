@@ -660,9 +660,11 @@ class SnowDetectionService {
                                 nearestStation
                             );
 
+                            const MAX_RWIS_DISTANCE_MI = 10;
                             const stationDistance = nearestStation
                                 ? Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng))
                                 : null;
+                            const rwisUsable = nearestStation && stationDistance <= MAX_RWIS_DISTANCE_MI;
 
                             return {
                                 ...result,
@@ -671,11 +673,12 @@ class SnowDetectionService {
                                 nearestStationDistance: stationDistance,
                                 rwisData: nearestStation ? {
                                     stationName: nearestStation.name,
-                                    surfaceStatus: nearestStation.surfaceStatus || null,
-                                    surfaceTemp: nearestStation.surfaceTemp != null ? parseFloat(nearestStation.surfaceTemp) : null,
+                                    surfaceStatus: rwisUsable ? (nearestStation.surfaceStatus || null) : null,
+                                    surfaceTemp: rwisUsable && nearestStation.surfaceTemp != null ? parseFloat(nearestStation.surfaceTemp) : null,
                                     airTemperature: nearestStation.airTemperature || null,
-                                    precipitation: nearestStation.precipitation || null,
+                                    precipitation: rwisUsable ? (nearestStation.precipitation || null) : null,
                                     distance: stationDistance,
+                                    tooDistant: !rwisUsable,
                                     lastUpdated: nearestStation.lastUpdated || null
                                 } : null
                             };
