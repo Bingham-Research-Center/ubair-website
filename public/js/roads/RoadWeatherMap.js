@@ -551,11 +551,22 @@ class RoadWeatherMap {
                 const confidencePercent = Number.isFinite(Number(detection.confidence)) ? Math.round(Number(detection.confidence) * 100) : 0;
                 const safeSnowLevel = escapeHtml(detection.snowLevel || 'Unknown');
                 const safeConditionText = escapeHtml(conditionText);
+
+                // RWIS station context line
+                const rwisLine = detection.rwisData
+                    ? `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
+                           <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
+                           <strong>Surface:</strong> ${escapeHtml(detection.rwisData.surfaceStatus || 'N/A')}
+                           ${detection.rwisData.surfaceTemp != null ? ` | <strong>Road Temp:</strong> ${Math.round(detection.rwisData.surfaceTemp)}\u00B0F` : ''}
+                       </p>`
+                    : '';
+
                 analysisInfo = `
                     <div class="analysis-section">
                         <p><strong>Condition:</strong> ${safeConditionText}</p>
                         <p><strong>Confidence:</strong> ${confidencePercent}%</p>
                         ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${safeSnowLevel}</p>` : ''}
+                        ${rwisLine}
                     </div>`;
             }
 
