@@ -1321,7 +1321,6 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         const safeElevation = escapeHtml(pass.elevation || 'Unknown');
         const safeSurfaceStatus = escapeHtml(pass.surfaceStatus || 'Unknown');
         const safeWindDirection = escapeHtml(pass.windDirection || '');
-        const safeVisibility = escapeHtml(pass.visibility || '');
         // Determine icon and color based on pass status
         let iconColor, statusEmoji, statusText;
 
@@ -1405,7 +1404,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                     ${safeSurfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${safeSurfaceStatus}</div>` : ''}
                     ${pass.windSpeed ? `<div><strong>Wind:</strong> ${unitsSystem.formatWindSpeed(pass.windSpeed)} ${safeWindDirection}</div>` : ''}
                     ${pass.windGust ? `<div><strong>Gusts:</strong> ${unitsSystem.formatWindSpeed(pass.windGust)}</div>` : ''}
-                    ${pass.visibility ? `<div><strong>Visibility:</strong> ${safeVisibility}</div>` : ''}
+                    ${pass.visibility != null ? `<div><strong>Visibility:</strong> ${unitsSystem.formatVisibility(pass.visibility)}</div>` : ''}
                 </div>
             `;
         }
