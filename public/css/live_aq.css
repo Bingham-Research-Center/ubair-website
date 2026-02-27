@@ -24,6 +24,18 @@ body[data-page-type="live_aq"] #map {
     max-height: 100vh !important;
 }
 
+/* Top-left controls stack (positioned below Leaflet zoom) */
+.map-controls-stack {
+    position: fixed;
+    top: 112px;
+    left: calc(250px + 10px);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: auto;
+}
+
 /* Ensure map tiles load properly and fill container */
 body[data-page-type="live_aq"] #map .leaflet-container {
     position: absolute !important;
@@ -238,11 +250,35 @@ body[data-page-type="live_aq"] .overlay-container {
     bottom: 100px !important; /* Move up to avoid footer */
 }
 
+.autocycle-toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--usu-blue);
+}
+
+.autocycle-label {
+    white-space: nowrap;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
     body[data-page-type="live_aq"] #map {
         left: 0 !important;
         width: 100vw !important;
+    }
+
+    .map-controls-stack {
+        left: 10px;
+        top: 112px;
     }
 
     .overlay-container {
@@ -362,4 +398,57 @@ body[data-page-type="live_aq"] .overlay-container {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Unit Toggle Control */
+.unit-toggle-control {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 6px 12px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--usu-blue);
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--usu-blue);
+}
+
+.unit-toggle-switch {
+    width: 44px;
+    height: 22px;
+    background: #ddd;
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border: 1px solid var(--usu-blue);
+}
+
+.unit-toggle-switch.active {
+    background: var(--usu-blue);
+}
+
+.unit-switch-slider {
+    width: 18px;
+    height: 18px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.unit-toggle-switch.active .unit-switch-slider {
+    transform: translateX(22px);
+}
+
+@media (max-width: 768px) {
+    .map-controls-stack {
+        left: 10px;
+        top: 112px;
+    }
 }

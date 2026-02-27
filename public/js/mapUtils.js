@@ -12,9 +12,9 @@ export function getMarkerColor(measurements) {
 
     const ozoneValue = measurements['Ozone'];
 
-    // Has data but no ozone data = gray (since color scheme is for ozone ppb)
+    // Has data but no ozone data = blue (active weather-only station)
     if (ozoneValue === null || ozoneValue === undefined) {
-        return 'gray';
+        return '#4A90D2';
     }
 
     const ozoneThreshold = thresholds['Ozone'];
@@ -33,24 +33,36 @@ export function getMarkerColor(measurements) {
     }
 }
 
-// Determine marker color for road weather stations (snow likelihood)
-// roadWeatherData should contain live data from UDOT API with snowLikely property
-export function getRoadWeatherColor(stationName, measurements, roadWeatherData = null) {
+// Determine marker color for road weather stations based on conditions
+export function getRoadCautionLevel(measurements) {
     // Check if station has ANY data at all
     const hasAnyData = Object.values(measurements).some(value => value !== null && value !== undefined);
 
-    // No data at all = gray marker (missing data)
     if (!hasAnyData) {
-        return 'gray';
+        return { color: 'gray', level: 'no-data' };
     }
 
-    // Get snow likelihood from live road weather data
-    if (!roadWeatherData || !roadWeatherData[stationName]) {
-        return '#B8D4E3'; // Default if not found
+    const temp = measurements['Temperature'];
+    const wind = measurements['Wind Speed'];
+    const snow = measurements['Snow Depth'];
+
+    // Need at least temperature to assess conditions
+    if (temp === null || temp === undefined) {
+        return { color: 'gray', level: 'no-data' };
     }
 
-    // Snow likely = blue, no snow = green
-    return roadWeatherData[stationName].snowLikely ? '#4A90E2' : '#28A745';
+    // Red/Hazardous: freezing AND (high wind OR significant snow)
+    if (temp < 0 && ((wind != null && wind > 15) || (snow != null && snow > 50))) {
+        return { color: '#DC3545', level: 'hazardous' };
+    }
+
+    // Yellow/Caution: near freezing OR moderate wind OR any snow
+    if (temp <= 2 || (wind != null && wind >= 10) || (snow != null && snow > 0)) {
+        return { color: '#FFC107', level: 'caution' };
+    }
+
+    // Green/All Clear
+    return { color: '#28A745', level: 'clear' };
 }
 
 // Check if station is a road weather station
@@ -85,7 +97,7 @@ function getCardinalDirection(degrees) {
 }
 
 // Create popup content for a station
-export function createPopupContent(stationName, measurements, units = {}) {
+export function createPopupContent(stationName, measurements, units = {}, useCelsius = true) {
     let content = `<h3>${stationName}</h3>`;
 
     // Filter and sort measurements by priority
@@ -124,12 +136,26 @@ export function createPopupContent(stationName, measurements, units = {}) {
         }
 
         // Get unit dynamically from data, with empty string as fallback
-        const unit = units[variable] || '';
+        let unit = units[variable] || '';
         let displayValue = typeof value === 'number' ? value.toFixed(1) : value;
 
         // Convert wind direction to cardinal
         if (variable === 'Wind Direction') {
             displayValue = getCardinalDirection(value);
+        }
+
+        // Convert temperature to Fahrenheit if needed
+        if (variable === 'Temperature' && !useCelsius && typeof value === 'number') {
+            displayValue = ((value * 9/5) + 32).toFixed(1);
+            unit = '°F';
+        } else if (variable === 'Temperature') {
+            unit = unit || '°C';
+        }
+
+        // Convert wind speed to mph if in Fahrenheit mode
+        if (variable === 'Wind Speed' && !useCelsius && typeof value === 'number') {
+            displayValue = (value * 2.237).toFixed(1);
+            unit = 'mph';
         }
 
         content += `<div class="${className}">

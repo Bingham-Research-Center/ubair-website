@@ -1,6 +1,7 @@
 import { stations } from './config.js';
-import { getMarkerColor, getRoadWeatherColor, isRoadWeatherStation, createPopupContent } from './mapUtils.js';
+import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
+import { buildStationMeasurements } from './mapShared.js';
 
 // Initialize map with proper center and zoom for dashboard view
 const map = L.map('map', {
@@ -29,10 +30,14 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let kioskMode = false;
 let kioskInterval;
+let kioskPopupTimeout = null;
 let currentStationIndex = 0;
 let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
+const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
+const AUTO_CYCLE_POPUP_DELAY_MS = 220;
+const AUTO_CYCLE_PAN_DURATION_S = 0.8;
 
 // Wait for DOM to load before setting up
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,8 +75,46 @@ function toggleKiosk() {
     }
 }
 
+function clearKioskPopupTimeout() {
+    if (kioskPopupTimeout) {
+        clearTimeout(kioskPopupTimeout);
+        kioskPopupTimeout = null;
+    }
+}
+
+function getAutoCyclePanTarget(markerLatLng) {
+    const markerPoint = map.latLngToContainerPoint(markerLatLng);
+    const targetCenterPoint = L.point(
+        markerPoint.x - AUTO_CYCLE_PAN_OFFSET_PX.x,
+        markerPoint.y - AUTO_CYCLE_PAN_OFFSET_PX.y
+    );
+    return map.containerPointToLatLng(targetCenterPoint);
+}
+
+function focusMarkerForAutocycle(marker) {
+    if (!kioskMode || !marker || !map.hasLayer(marker)) {
+        return;
+    }
+
+    clearKioskPopupTimeout();
+
+    const targetCenter = getAutoCyclePanTarget(marker.getLatLng());
+    map.panTo(targetCenter, { animate: true, duration: AUTO_CYCLE_PAN_DURATION_S });
+
+    kioskPopupTimeout = setTimeout(() => {
+        if (!kioskMode || !marker || !map.hasLayer(marker)) {
+            kioskPopupTimeout = null;
+            return;
+        }
+        marker.openPopup();
+        kioskPopupTimeout = null;
+    }, AUTO_CYCLE_POPUP_DELAY_MS);
+}
+
 function startKioskMode() {
     if (markers.length === 0) return;
+    clearInterval(kioskInterval);
+    clearKioskPopupTimeout();
 
     // Generate random order for cycling (preserved until page leave)
     // Always start with Castle Peak
@@ -99,23 +142,24 @@ function startKioskMode() {
 
     // Start immediately with Castle Peak
     map.closePopup();
-    if (markers[kioskOrder[currentStationIndex]]) {
-        markers[kioskOrder[currentStationIndex]].openPopup();
-    }
+    focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
     currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
 
     // Then continue with interval
     kioskInterval = setInterval(() => {
         map.closePopup();
-        if (markers[kioskOrder[currentStationIndex]]) {
-            markers[kioskOrder[currentStationIndex]].openPopup();
+        if (kioskOrder.length === 0) {
+            return;
         }
+        focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
         currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
     }, 4000); // 4 second intervals
 }
 
 function stopKioskMode() {
     clearInterval(kioskInterval);
+    kioskInterval = null;
+    clearKioskPopupTimeout();
     map.closePopup();
 }
 
@@ -137,9 +181,10 @@ function toggleTemperature() {
         const stationName = marker.options.stationName;
         const measurements = marker.options.measurements;
         const dateTime = marker.options.dateTime;
-        
+        const isRoad = marker.options.isRoadStation || false;
+
         if (stationName && measurements) {
-            const popupContent = createTwoColumnPopup(stationName, measurements, dateTime);
+            const popupContent = createTwoColumnPopup(stationName, measurements, dateTime, isRoad);
             marker.bindPopup(popupContent, {
                 maxWidth: 300,
                 className: 'two-column-popup'
@@ -167,27 +212,21 @@ async function updateMiniMap() {
 
         // Add markers for each station
         for (const [stationName, coordinates] of Object.entries(stations)) {
-            const measurements = {
-                'Ozone': data['Ozone']?.[stationName] ?? null,
-                'PM2.5': data['PM2.5']?.[stationName] ?? null,
-                'NOx': data['NOx']?.[stationName] ?? null,
-                'NO': data['NO']?.[stationName] ?? null,
-                'NO2': data['NO2']?.[stationName] ?? null,
-                'Temperature': data['Temperature']?.[stationName] ?? null,
-                'Wind Speed': data['Wind Speed']?.[stationName] ?? null,
-                'Wind Direction': data['Wind Direction']?.[stationName] ?? null,
-                'Pressure': data['Pressure']?.[stationName] ?? null,
-                'Humidity': data['Humidity']?.[stationName] ?? null
-            };
+            const measurements = buildStationMeasurements(data, stationName);
 
             const stationTimestamp = data._timestamps?.[stationName] ?? null;
-            const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp);
-            
             // Check if this is a road weather station by type from config
-            const stationType = coordinates.type;
-            const isRoadStation = isRoadWeatherStation(stationType);
-            const markerColor = isRoadStation ? getRoadWeatherColor(stationName, measurements) : getMarkerColor(measurements);
-            
+            const isRoadStation = isRoadWeatherStation(coordinates.type);
+            const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp, isRoadStation);
+
+            let markerColor;
+            if (isRoadStation) {
+                const caution = getRoadCautionLevel(measurements);
+                markerColor = caution.color;
+            } else {
+                markerColor = getMarkerColor(measurements);
+            }
+
             // Create different marker shapes for road weather stations
             let markerHtml;
             if (isRoadStation) {
@@ -204,11 +243,12 @@ async function updateMiniMap() {
                 iconSize: [24, 24]
             });
 
-            const marker = L.marker([coordinates.lat, coordinates.lng], { 
+            const marker = L.marker([coordinates.lat, coordinates.lng], {
                 icon: markerIcon,
                 stationName: stationName,
                 measurements: measurements,
-                dateTime: stationTimestamp
+                dateTime: stationTimestamp,
+                isRoadStation: isRoadStation
             })
                 .bindPopup(popupContent, {
                     maxWidth: 300,
@@ -251,11 +291,17 @@ function formatMeasurement(pollutant, value) {
         case 'Ozone':
             return { displayValue: Math.round(numValue), unit: ' ppb' };
         case 'Wind Speed':
-            const roundedWind = Math.round(numValue);
+            let windValue = numValue;
+            let windUnit = ' m/s';
+            if (!useCelsius) {
+                windValue = numValue * 2.237;
+                windUnit = ' mph';
+            }
+            const roundedWind = Math.round(windValue);
             if (roundedWind === 0) {
                 return { displayValue: 'Calm', unit: '' };
             }
-            return { displayValue: roundedWind, unit: ' m/s' };
+            return { displayValue: roundedWind, unit: windUnit };
         case 'Wind Direction':
             return { displayValue: getCardinalDirection(numValue), unit: '' };
         case 'Pressure':
@@ -268,6 +314,8 @@ function formatMeasurement(pollutant, value) {
         case 'NO':
         case 'NO2':
             return { displayValue: Math.round(numValue), unit: ' ppb' };
+        case 'Snow Depth':
+            return { displayValue: Math.round(numValue), unit: ' mm' };
         case 'Humidity':
             return { displayValue: Math.round(numValue), unit: '%' };
         default:
@@ -283,9 +331,9 @@ function getCardinalDirection(degrees) {
     return directions[index];
 }
 
-function createTwoColumnPopup(stationName, measurements, timestamp = null) {
+function createTwoColumnPopup(stationName, measurements, timestamp = null, isRoadStation = false) {
     // Priority variables: Air quality + essential meteorology
-    const priorityVars = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2', 'Temperature', 'Wind Speed', 'Wind Direction'];
+    const priorityVars = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2', 'Temperature', 'Wind Speed', 'Wind Direction', 'Snow Depth'];
 
     // Filter for priority variables only
     const validMeasurements = Object.entries(measurements)
@@ -334,6 +382,10 @@ function createTwoColumnPopup(stationName, measurements, timestamp = null) {
         }
     }
 
+    const roadLink = isRoadStation
+        ? `<div style="text-align: center; margin-top: 8px;"><a href="/roads" style="color: var(--usu-blue); font-size: 0.85em; font-weight: 500;">View Road Weather &rarr;</a></div>`
+        : '';
+
     return `
         <div style="min-width: 280px;">
             <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--usu-blue);">${stationName}</h3>
@@ -342,6 +394,7 @@ function createTwoColumnPopup(stationName, measurements, timestamp = null) {
                 <div style="flex: 1;">${rightCol}</div>
             </div>
             ${timestampHtml}
+            ${roadLink}
         </div>
     `;
 }

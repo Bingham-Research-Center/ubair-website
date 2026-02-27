@@ -17,6 +17,26 @@
 <!-- Map Container -->
 <div id="map"></div>
 
+<!-- Map Controls (stacked below zoom buttons) -->
+<div class="map-controls-stack">
+    <div class="unit-toggle-control">
+        <label>°C</label>
+        <div class="unit-toggle-switch active" id="unit-toggle" title="Toggle °C / °F">
+            <div class="unit-switch-slider"></div>
+        </div>
+        <label>°F</label>
+    </div>
+
+    <div class="autocycle-toggle-control">
+        <label for="map-kiosk-toggle" class="autocycle-label">Auto-cycle</label>
+        <div class="kiosk-switch-map" id="map-kiosk-toggle" title="Auto-cycle stations">
+            <div class="switch-slider-map">
+                <div class="timer-fill" id="timer-fill"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- USU Logo -->
 <div class="usu-logo">
     <img src="/public/images/images-removebg-preview.png" alt="Logo">

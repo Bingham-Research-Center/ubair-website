@@ -1,34 +1,7 @@
 import { getMarkerColor, createPopupContent } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 import { stations as configStations } from './config.js';
-
-// Replicate mapStationName to ensure we use the same mapping as api.js
-function mapStationName(stid, metadataName) {
-    const prettyNames = {
-        'UBHSP': 'Horsepool', 'UBCSP': 'Castle Peak', 'UB7ST': 'Seven Sisters',
-        'KVEL': 'Vernal', 'K74V': 'Roosevelt', 'COOPDSNU1': 'Duchesne',
-        'KU69': 'Duchesne', 'UINU1': 'Fort Duchesne', 'UTMYT': 'Myton',
-        'COOPDINU1': 'Dinosaur NM', 'COOPALMU1': 'Altamont', 'UCC34': 'Bluebell',
-        'K40U': 'Manila', 'UTSTV': 'Starvation', 'UTDAN': 'Daniels Summit',
-        'UTICS': 'Indian Canyon', 'UTSLD': 'Soldier Summit', 'BUNUT': 'Roosevelt',
-        'CHPU1': 'Ouray', 'CEN': 'Vernal', 'QHW': 'Whiterocks', 'RDN': 'Red Wash'
-    };
-
-    if (!prettyNames[stid] && metadataName) {
-        // Clean metadata name
-        return metadataName
-            .replace(/\s+COOPB?$/, '')
-            .replace(/\s+RADIO$/, '')
-            .replace(/^ALTA\s*-\s*/, 'Alta ')
-            .replace(/\s*NM\s*-\s*/, ' ')
-            .toLowerCase()
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
-    }
-
-    return prettyNames[stid] || metadataName || stid;
-}
+import { buildStationMeasurements, mapStationName } from './mapShared.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -109.7], 9.5);
@@ -42,8 +15,17 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 // Initialize kiosk mode variables
 let mapKioskMode = false;
 let mapKioskInterval;
+let mapKioskPopupTimeout = null;
+let mapKioskMoveEndHandler = null;
 let currentStationIndex = 0;
 let markers = [];
+let cycleMarkers = [];
+let useCelsius = false; // Default to Fahrenheit (matches homepage default)
+let lastUnits = {}; // Cache units for popup rebuilds
+const AUTO_CYCLE_PAN_OFFSET_PX = { x: 130, y: 20 };
+const AUTO_CYCLE_PAN_DURATION_S = 0.8;
+const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
+const BASIN_STATION_NAMES = new Set(Object.keys(configStations));
 
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -51,11 +33,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     setupStudyAreaToggle();
     setupKioskControl();
+    setupUnitToggle();
     fixUSULogo();
     updateMap(); // Initial data load
 
-    // Auto-refresh every x minutes
-    setInterval(updateMap, 10 * 60 * 1000);
+    // Keep in sync with homepage map refresh cadence
+    setInterval(updateMap, 5 * 60 * 1000);
 });
 
 function setupStudyAreaToggle() {
@@ -86,72 +69,56 @@ function setupStudyAreaToggle() {
 }
 
 function setupKioskControl() {
-    // Setting up kiosk control...
+    const kioskToggle = document.getElementById('map-kiosk-toggle');
+    if (!kioskToggle) {
+        console.error('Kiosk toggle element not found');
+        return;
+    }
 
-    // Wait for map to be fully initialized
-    setTimeout(() => {
-        // Create kiosk control using bottomright position (Leaflet standard)
-        const kioskControl = L.control({position: 'bottomright'});
+    kioskToggle.addEventListener('click', function() {
+        mapKioskMode = !mapKioskMode;
+        const timerFill = document.getElementById('timer-fill');
 
-        kioskControl.onAdd = function(map) {
-            const div = L.DomUtil.create('div', 'kiosk-control-bottom');
-            div.innerHTML = `
-                <div class="kiosk-container-bottom">
-                    <label for="map-kiosk-toggle" class="kiosk-label">Auto-cycle stations:</label>
-                    <div class="kiosk-switch-map" id="map-kiosk-toggle">
-                        <div class="switch-slider-map">
-                            <div class="timer-fill" id="timer-fill"></div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            // Prevent map interactions on the control
-            L.DomEvent.disableClickPropagation(div);
-            L.DomEvent.disableScrollPropagation(div);
-
-            return div;
-        };
-
-        try {
-            kioskControl.addTo(map);
-            // Kiosk control added to map successfully
-
-            // Add event listener after control is added to DOM
-            setTimeout(() => {
-                const kioskToggle = document.getElementById('map-kiosk-toggle');
-                if (kioskToggle) {
-                    kioskToggle.addEventListener('click', function() {
-                        // Kiosk toggle clicked, toggling mode
-                        mapKioskMode = !mapKioskMode;
-                        const switchEl = this;
-                        const timerFill = document.getElementById('timer-fill');
-
-                        if (mapKioskMode) {
-                            // Starting kiosk mode...
-                            switchEl.classList.add('active');
-                            if (timerFill) {
-                                timerFill.style.animation = 'timer-fill 5s linear infinite';
-                            }
-                            startKioskMode();
-                        } else {
-                            // Stopping kiosk mode...
-                            switchEl.classList.remove('active');
-                            if (timerFill) {
-                                timerFill.style.animation = 'none';
-                            }
-                            stopKioskMode();
-                        }
-                    });
-                    // Kiosk control event listener attached
-                } else {
-                    console.error('Kiosk toggle element not found after timeout');
-                }
-            }, 200);
-        } catch (error) {
-            console.error('Error adding kiosk control to map:', error);
+        if (mapKioskMode) {
+            this.classList.add('active');
+            if (timerFill) {
+                timerFill.style.animation = 'timer-fill 5s linear infinite';
+            }
+            startKioskMode();
+        } else {
+            this.classList.remove('active');
+            if (timerFill) {
+                timerFill.style.animation = 'none';
+            }
+            stopKioskMode();
         }
-    }, 500);
+    });
+}
+
+function setupUnitToggle() {
+    const toggle = document.getElementById('unit-toggle');
+    if (toggle) {
+        toggle.addEventListener('click', function() {
+            useCelsius = !useCelsius;
+            if (useCelsius) {
+                this.classList.remove('active');
+            } else {
+                this.classList.add('active');
+            }
+
+            // Rebuild all popups with new units
+            map.closePopup();
+            markers.forEach(marker => {
+                const opts = marker.options;
+                if (opts.stationName && opts.measurements) {
+                    const popupContent = createPopupContent(
+                        opts.stationName, opts.measurements, lastUnits, useCelsius
+                    );
+                    marker.bindPopup(popupContent, getPopupOptions());
+                }
+            });
+        });
+    }
 }
 
 function fixUSULogo() {
@@ -172,29 +139,181 @@ function fixUSULogo() {
     }
 }
 
+function clearMapKioskPopupTimeout() {
+    if (mapKioskPopupTimeout) {
+        clearTimeout(mapKioskPopupTimeout);
+        mapKioskPopupTimeout = null;
+    }
+    if (mapKioskMoveEndHandler) {
+        map.off('moveend', mapKioskMoveEndHandler);
+        mapKioskMoveEndHandler = null;
+    }
+}
+
+function getAutoCyclePanTarget(markerLatLng) {
+    const markerPoint = map.latLngToContainerPoint(markerLatLng);
+    const targetCenterPoint = L.point(
+        markerPoint.x - AUTO_CYCLE_PAN_OFFSET_PX.x,
+        markerPoint.y - AUTO_CYCLE_PAN_OFFSET_PX.y
+    );
+    return map.containerPointToLatLng(targetCenterPoint);
+}
+
+function focusMarkerForAutocycle(marker) {
+    if (!mapKioskMode || !marker || !map.hasLayer(marker)) {
+        return;
+    }
+
+    clearMapKioskPopupTimeout();
+
+    const targetCenter = getAutoCyclePanTarget(marker.getLatLng());
+    const openPopupIfValid = () => {
+        clearMapKioskPopupTimeout();
+        if (!mapKioskMode || !marker || !map.hasLayer(marker)) {
+            return;
+        }
+        marker.openPopup();
+    };
+
+    mapKioskMoveEndHandler = () => {
+        openPopupIfValid();
+    };
+    map.on('moveend', mapKioskMoveEndHandler);
+
+    mapKioskPopupTimeout = setTimeout(openPopupIfValid, AUTO_CYCLE_MOVEEND_FALLBACK_MS);
+    map.panTo(targetCenter, { animate: true, duration: AUTO_CYCLE_PAN_DURATION_S });
+}
+
+function getVisibleElementRect(element, mapRect) {
+    if (!element) return null;
+    const rect = element.getBoundingClientRect();
+
+    const intersectsMap =
+        rect.width > 0 &&
+        rect.height > 0 &&
+        rect.right > mapRect.left &&
+        rect.left < mapRect.right &&
+        rect.bottom > mapRect.top &&
+        rect.top < mapRect.bottom;
+
+    if (!intersectsMap) {
+        return null;
+    }
+    return rect;
+}
+
+function applyLeftInset(insets, element, mapRect, margin = 12) {
+    const rect = getVisibleElementRect(element, mapRect);
+    if (!rect) return;
+    insets.left = Math.max(insets.left, rect.right - mapRect.left + margin);
+}
+
+function applyRightInset(insets, element, mapRect, margin = 12) {
+    const rect = getVisibleElementRect(element, mapRect);
+    if (!rect) return;
+    insets.right = Math.max(insets.right, mapRect.right - rect.left + margin);
+}
+
+function applyTopInset(insets, element, mapRect, margin = 12) {
+    const rect = getVisibleElementRect(element, mapRect);
+    if (!rect) return;
+    insets.top = Math.max(insets.top, rect.bottom - mapRect.top + margin);
+}
+
+function applyBottomInset(insets, element, mapRect, margin = 12) {
+    const rect = getVisibleElementRect(element, mapRect);
+    if (!rect) return;
+    insets.bottom = Math.max(insets.bottom, mapRect.bottom - rect.top + margin);
+}
+
+function getPopupPanPadding() {
+    const mapRect = map.getContainer().getBoundingClientRect();
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+    const insets = isMobile
+        ? { top: 82, right: 24, bottom: 124, left: 24 }
+        : { top: 92, right: 28, bottom: 100, left: 150 };
+
+    const selectors = [
+        '.leaflet-control-zoom',
+        '.map-controls-stack',
+        '.study-area-toggle',
+        '.overlay-container',
+        '.warning-levels-overlay',
+        '.main-footer',
+        '.usu-logo'
+    ];
+
+    const elements = selectors.reduce((acc, selector) => {
+        acc[selector] = document.querySelector(selector);
+        return acc;
+    }, {});
+
+    applyLeftInset(insets, elements['.leaflet-control-zoom'], mapRect);
+    applyTopInset(insets, elements['.leaflet-control-zoom'], mapRect);
+
+    applyLeftInset(insets, elements['.map-controls-stack'], mapRect);
+    applyTopInset(insets, elements['.map-controls-stack'], mapRect);
+
+    applyRightInset(insets, elements['.study-area-toggle'], mapRect);
+    applyTopInset(insets, elements['.study-area-toggle'], mapRect);
+
+    applyRightInset(insets, elements['.overlay-container'], mapRect);
+    applyTopInset(insets, elements['.overlay-container'], mapRect);
+
+    applyRightInset(insets, elements['.warning-levels-overlay'], mapRect);
+    applyBottomInset(insets, elements['.warning-levels-overlay'], mapRect);
+
+    applyBottomInset(insets, elements['.main-footer'], mapRect);
+
+    applyLeftInset(insets, elements['.usu-logo'], mapRect);
+    applyBottomInset(insets, elements['.usu-logo'], mapRect);
+
+    return {
+        topLeft: L.point(Math.round(insets.left), Math.round(insets.top)),
+        bottomRight: L.point(Math.round(insets.right), Math.round(insets.bottom))
+    };
+}
+
+function getPopupOptions() {
+    const panPadding = getPopupPanPadding();
+    return {
+        autoPan: true,
+        keepInView: true,
+        maxWidth: 340,
+        minWidth: 220,
+        className: 'station-popup',
+        autoPanPaddingTopLeft: panPadding.topLeft,
+        autoPanPaddingBottomRight: panPadding.bottomRight
+    };
+}
+
 function startKioskMode() {
-    if (markers.length === 0) {
+    if (cycleMarkers.length === 0) {
         // No markers available for kiosk mode
         return;
     }
+
+    if (mapKioskInterval) {
+        clearInterval(mapKioskInterval);
+        mapKioskInterval = null;
+    }
+    clearMapKioskPopupTimeout();
 
     // Starting kiosk mode with available markers
     currentStationIndex = 0;
 
     // Open first popup immediately
-    if (markers[0]) {
-        markers[0].openPopup();
-        // Opened popup for first station
-    }
+    map.closePopup();
+    focusMarkerForAutocycle(cycleMarkers[currentStationIndex]);
 
     // Start interval for subsequent popups
     mapKioskInterval = setInterval(() => {
         map.closePopup();
-        currentStationIndex = (currentStationIndex + 1) % markers.length;
-        if (markers[currentStationIndex]) {
-            markers[currentStationIndex].openPopup();
-            // Cycling to next station popup
+        if (cycleMarkers.length === 0) {
+            return;
         }
+        currentStationIndex = (currentStationIndex + 1) % cycleMarkers.length;
+        focusMarkerForAutocycle(cycleMarkers[currentStationIndex]);
     }, 5000);
 }
 
@@ -204,6 +323,7 @@ function stopKioskMode() {
         clearInterval(mapKioskInterval);
         mapKioskInterval = null;
     }
+    clearMapKioskPopupTimeout();
     map.closePopup();
 }
 
@@ -221,52 +341,48 @@ async function updateMap() {
 
     // Extract units from observations data
     const units = observations._units || {};
+    lastUnits = units;
     console.log('DEBUG: units:', units);
 
     // Clear existing markers
     markers.forEach(m => map.removeLayer(m));
     markers = [];
+    cycleMarkers = [];
 
-    // Build stationCoords from the metadata object
-    const stationCoords = {};
-    Object.entries(metadata).forEach(([stid, info]) => {
-      stationCoords[stid] = { lat: info.lat, lng: info.lng };
-    });
-    console.log('DEBUG: stationCoords keys:', Object.keys(stationCoords));
-
+    const cycleMarkerByStationName = new Map();
     let validStations = 0;
-    for (const stid of Object.keys(stationCoords)) {
-      const stationInfo = stationCoords[stid];
-      const measurements = {};
-
-      // Use the same mapping function as api.js to get the station name
-      const metadataName = metadata[stid]?.name;
-      const stationName = mapStationName(stid, metadataName);
-
-      // Map each variable's values by station name
-      for (const [variable, stationValues] of Object.entries(observations)) {
-        if (variable === '_timestamps' || variable === '_units') continue;
-        measurements[variable] = stationValues[stationName] ?? null;
-      }
-
-      // Check if this is a road station (from config.js)
-      const configStation = configStations[stationName];
-      const isRoadStation = configStation?.type === 'road';
-      const hasAQData = measurements['Ozone'] != null || measurements['PM2.5'] != null;
-
-      // Skip road stations without AQ data
-      if (isRoadStation && !hasAQData) {
+    let skippedStations = 0;
+    for (const [stid, info] of Object.entries(metadata || {})) {
+      const stationLat = info?.lat;
+      const stationLng = info?.lng;
+      if (!Number.isFinite(stationLat) || !Number.isFinite(stationLng)) {
+        skippedStations++;
         continue;
       }
 
+      const stationName = mapStationName(stid, info?.name);
+      const stationInfo = { lat: stationLat, lng: stationLng };
+      const measurements = buildStationMeasurements(observations, stationName);
       const marker = createStationMarker(stationName, stationInfo, measurements, units);
       if (marker) {
         markers.push(marker);
         validStations++;
+        if (BASIN_STATION_NAMES.has(stationName) && !cycleMarkerByStationName.has(stationName)) {
+          cycleMarkerByStationName.set(stationName, marker);
+        }
+      } else {
+        skippedStations++;
       }
     }
 
-    // Map updated successfully with station data
+    cycleMarkers = Object.keys(configStations)
+      .map(stationName => cycleMarkerByStationName.get(stationName))
+      .filter(Boolean);
+
+    console.log(
+      `Live AQ markers: rendered ${validStations}, skipped ${skippedStations}, ` +
+      `metadata stations ${Object.keys(metadata || {}).length}, cycle stations ${cycleMarkers.length}`
+    );
   } catch (error) {
     console.error('Failed to update map:', error);
   }
@@ -279,30 +395,20 @@ function createStationMarker(stationName, stationInfo, measurements, units = {})
         const color = getMarkerColor(measurements);
         let marker;
 
-        if (hasOzone) {
-            // Circle marker for AQ stations with ozone data
-            marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
-                color: '#fff',
-                weight: 2,
-                fillColor: color,
-                fillOpacity: 0.8,
-                radius: 12
-            });
-        } else {
-            // Diamond marker for weather-only stations
-            marker = L.marker([stationInfo.lat, stationInfo.lng], {
-                icon: L.divIcon({
-                    className: 'weather-only-marker',
-                    html: '<div class="weather-diamond"></div>',
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
-                })
-            });
-        }
+        // Circle marker for all stations — color indicates status
+        marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
+            color: '#fff',
+            weight: 2,
+            fillColor: color,
+            fillOpacity: 0.8,
+            radius: hasOzone ? 12 : 9,
+            stationName: stationName,
+            measurements: measurements
+        });
 
-        // Create popup content with dynamic units
-        const popupContent = createPopupContent(stationName, measurements, units);
-        marker.bindPopup(popupContent);
+        // Create popup content with dynamic units and current unit preference
+        const popupContent = createPopupContent(stationName, measurements, units, useCelsius);
+        marker.bindPopup(popupContent, getPopupOptions());
 
         // Add to map
         marker.addTo(map);

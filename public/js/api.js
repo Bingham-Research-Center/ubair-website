@@ -1,4 +1,5 @@
 // Real API implementation for fetching live obs and time series data
+import { mapStationName } from './mapShared.js';
 
 /**
  * Fetch time series data from Synoptic API via server proxy
@@ -148,7 +149,7 @@ function processMetadata(rawMeta) {
  * Transforms [{stid, variable, value, units}...] to {variable: {station: value}}
  * Also preserves units information in a separate _units object
  */
-function processObservationData(rawData, metadata = {}) {
+export function processObservationData(rawData, metadata = {}) {
     if (!Array.isArray(rawData)) {
         throw new Error('Expected array of observations');
     }
@@ -202,12 +203,12 @@ function processObservationData(rawData, metadata = {}) {
             const stationName = mapStationName(stid, metadataName);
             if (stationName && data[variable] !== undefined) {
                 // Only set if not already set (merge alt station IDs, don't overwrite)
-                if (!result[variable][stationName]) {
+                if (result[variable][stationName] === undefined) {
                     result[variable][stationName] = data[variable];
                 }
                 // Store timestamp for this station (use most recent if multiple)
                 if (stationTimestamps[stid]) {
-                    if (!timestamps[stationName] || stationTimestamps[stid] > timestamps[stationName]) {
+                    if (timestamps[stationName] === undefined || stationTimestamps[stid] > timestamps[stationName]) {
                         timestamps[stationName] = stationTimestamps[stid];
                     }
                 }
@@ -246,73 +247,3 @@ function mapVariableName(variable) {
     return mappings[variable] || variable;
 }
 
-
-/**
- * Map station IDs to display names
- */
-function mapStationName(stid, metadataName = null) {
-    // Priority 1: Pretty hardcoded names for key Uintah Basin stations
-    const prettyNames = {
-        // Core Air Quality Monitoring
-        'UBHSP': 'Horsepool',
-        'UBCSP': 'Castle Peak',
-        'UB7ST': 'Seven Sisters',
-        
-        // Population Centers
-        'KVEL': 'Vernal',
-        'K74V': 'Roosevelt',
-        'COOPDSNU1': 'Duchesne',  // NEEDS DATA EXPORT
-        'KU69': 'Duchesne',       // Alternative Duchesne station
-        'UINU1': 'Fort Duchesne',
-        
-        // Basin Coverage
-        'UTMYT': 'Myton',
-        'UBMYT': 'Myton',
-        'COOPDINU1': 'Dinosaur NM',
-        'COOPALMU1': 'Altamont',
-        // 'UCC34': 'Bluebell',      // Removed from homepage config
-        // 'K40U': 'Manila',         // Removed from homepage config
-        // 'UTSTV': 'Starvation',    // Removed from homepage config
-
-        // Additional Required Stations (primary IDs)
-        'UBRDW': 'Red Wash',
-        'UBORY': 'Ouray',
-        'UBDRF': 'Dry Fork',
-        'UBWHR': 'Whiterocks',
-
-        // Mountain Passes
-        'UTDAN': 'Daniels Summit',
-        'UTICS': 'Indian Canyon',
-        'UTSLD': 'Soldier Summit',
-
-        // Legacy/Alternative names (keep for compatibility)
-        'BUNUT': 'Roosevelt',
-        'CHPU1': 'Ouray',
-        'CEN': 'Vernal',
-        'QHW': 'Whiterocks',
-        'RDN': 'Red Wash'
-    };
-    
-    // Priority 2: Clean up metadata names if no pretty name exists
-    if (!prettyNames[stid] && metadataName) {
-        return cleanMetadataName(metadataName);
-    }
-    
-    // Priority 3: Fallback to pretty name, metadata name, or station ID
-    return prettyNames[stid] || metadataName || stid;
-}
-
-function cleanMetadataName(name) {
-    if (!name) return name;
-    
-    // Clean up common ugly patterns in weather station names
-    return name
-        .replace(/\s+COOPB?$/, '') // Remove "COOP" suffix
-        .replace(/\s+RADIO$/, '') // Remove "RADIO" suffix  
-        .replace(/^ALTA\s*-\s*/, 'Alta ') // Clean "ALTA - COLLINS" -> "Alta Collins"
-        .replace(/\s*NM\s*-\s*/, ' ') // Clean "DINOSAUR NM-QUARRY" -> "DINOSAUR QUARRY"
-        .toLowerCase()
-        .split(' ')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ');
-}
