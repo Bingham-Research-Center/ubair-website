@@ -98,6 +98,15 @@ describe('CameraAnalysisScheduler', () => {
             expect(scheduler.weatherStations).toEqual(stations);
         });
 
+        it('should increase cache TTL for large camera queues', () => {
+            const cameras = Array.from({ length: 145 }, (_, i) => ({ id: i + 1, name: `Camera ${i + 1}` }));
+
+            scheduler.updateCameraList(cameras, []);
+
+            expect(scheduler.cacheTTLSeconds).toBeGreaterThan(600);
+            expect(scheduler.cacheTTLSeconds).toBe(4950);
+        });
+
         it('should handle empty camera list', () => {
             scheduler.updateCameraList([], []);
 
@@ -141,6 +150,16 @@ describe('CameraAnalysisScheduler', () => {
             expect(results).toHaveLength(2);
             expect(scheduler.stats.cacheHits).toBe(1);
         });
+
+        it('should read individual cached results when camera queue is empty', () => {
+            scheduler.cache.set('camera_1', { cameraId: '1', snowDetected: true });
+
+            const results = scheduler.getCachedResults();
+
+            expect(results).toHaveLength(1);
+            expect(results[0].cameraId).toBe('1');
+            expect(scheduler.stats.cacheHits).toBe(1);
+        });
     });
 
     describe('API Call Rate Calculation', () => {
@@ -182,8 +201,18 @@ describe('CameraAnalysisScheduler', () => {
             expect(stats).toHaveProperty('cacheHits');
             expect(stats).toHaveProperty('cacheMisses');
             expect(stats).toHaveProperty('cacheHitRate');
+            expect(stats).toHaveProperty('warmRestore');
             expect(stats).toHaveProperty('estimatedApiCallsPerHour');
             expect(stats).toHaveProperty('config');
+        });
+
+        it('should expose warm-restore defaults when no disk restore occurred', () => {
+            const stats = scheduler.getStats();
+
+            expect(stats.warmRestore.enabled).toBe(false);
+            expect(stats.warmRestore.restoredFromDisk).toBe(false);
+            expect(stats.warmRestore.restoredDetectionsCount).toBe(0);
+            expect(stats.warmRestore.restoredSnapshotAgeMinutes).toBeNull();
         });
 
         it('should calculate cache hit rate correctly', () => {
