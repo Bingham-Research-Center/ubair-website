@@ -29,6 +29,7 @@ class RoadWeatherMap {
         this.restAreaMarkers = new Map();
         this.refreshTimer = null;
         this.weatherStationsVisible = false;
+        this.experimentalRoadMode = false;
     }
 
     init() {
@@ -565,12 +566,24 @@ class RoadWeatherMap {
                            </p>`)
                     : '';
 
+                // Experimental per-view breakdown
+                const experimentalMode = this.experimentalRoadMode === true;
+                const isMixed = detection.displayState === 'mixed' || detection.aggregation?.mixed === true;
+                const mixedBadge = (experimentalMode && isMixed)
+                    ? `<p><span class="confidence-badge confidence-likely mixed-indicator">~ Mixed Views</span></p>`
+                    : '';
+                const experimentalDetails = experimentalMode
+                    ? this._buildExperimentalDetails(detection)
+                    : '';
+
                 analysisInfo = `
                     <div class="analysis-section">
+                        ${mixedBadge}
                         <p><strong>Condition:</strong> ${safeConditionText}</p>
                         <p><strong>Confidence:</strong> ${confidencePercent}%</p>
                         ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${safeSnowLevel}</p>` : ''}
                         ${rwisLine}
+                        ${experimentalDetails}
                     </div>`;
             }
 
@@ -861,6 +874,45 @@ class RoadWeatherMap {
             this.map.remove();
             this.map = null;
         }
+    }
+
+    _formatSnowLevelLabel(snowLevel) {
+        const labels = { none: 'Clear', light: 'Light Snow', moderate: 'Moderate Snow', heavy: 'Heavy Snow', unknown: 'Unknown' };
+        return labels[snowLevel] || snowLevel || 'Unknown';
+    }
+
+    _buildExperimentalDetails(detection) {
+        const spreadPercent = typeof detection.aggregation?.confidenceSpread === 'number'
+            ? `${Math.round(detection.aggregation.confidenceSpread * 100)}%` : '--';
+        const viewsAnalyzed = detection.aggregation?.viewsAnalyzed ?? '--';
+        const viewsAvailable = detection.aggregation?.viewsAvailable ?? '--';
+        const perViewHtml = this._getPerViewBreakdownHtml(detection);
+
+        return `
+            <p class="experimental-note"><strong>Mode:</strong> Experimental (opt-in)</p>
+            <p><strong>View Spread:</strong> ${spreadPercent}</p>
+            <p><strong>Views:</strong> ${viewsAnalyzed}/${viewsAvailable} analyzed</p>
+            ${perViewHtml}`;
+    }
+
+    _getPerViewBreakdownHtml(detection) {
+        if (!Array.isArray(detection?.perViewDetections) || detection.perViewDetections.length === 0) {
+            return '<p class="experimental-note"><strong>Per-view:</strong> Not available.</p>';
+        }
+
+        const rows = detection.perViewDetections.map((view) => {
+            const confidence = typeof view.confidence === 'number' ? `${Math.round(view.confidence * 100)}%` : '--';
+            const level = this._formatSnowLevelLabel(view.snowLevel);
+            const viewName = escapeHtml(view.description || `View ${view.viewIndex + 1}`);
+            const suffix = view.error ? ` (${escapeHtml(view.error)})` : '';
+
+            return `<div class="per-view-row">
+                <span class="per-view-name">${viewName}</span>
+                <span class="per-view-values">${level} · ${confidence}${suffix}</span>
+            </div>`;
+        }).join('');
+
+        return `<div class="per-view-breakdown"><h5>Per-view breakdown</h5>${rows}</div>`;
     }
 }
 
