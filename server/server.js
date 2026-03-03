@@ -16,7 +16,7 @@ import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8000;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,6 +86,10 @@ app.get('/agriculture', (req, res) => {
 
 app.get('/roads', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/roads.html'));
+});
+
+app.get('/sports', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/sports.html'));
 });
 
 app.get('/aviation', (req, res) => {

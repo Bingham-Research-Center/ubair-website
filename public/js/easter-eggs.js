@@ -14,7 +14,6 @@ class EasterEggManager {
         this.active = false;
         this.konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
         this.userSequence = [];
-        this.easterEggs = [];
 
         this.initKonamiListener();
     }
@@ -92,6 +91,8 @@ class EasterEggManager {
             this.activateWelshModeEasterEgg();
         } else if (path.includes('forecast_weather')) {
             this.activateChemtrailsEasterEgg();
+        } else if (path.includes('sports')) {
+            this.activateSportsEasterEgg();
         }
     }
 
@@ -107,6 +108,197 @@ class EasterEggManager {
             this.switchToEnglish();
         }
     }
+
+    /**
+     * Random experimental easter egg features (Not used anywhere as of now)
+     */
+    // noinspection JSUnusedGlobalSymbols (this shuts up WebStorm raising an warning)
+    otherEasterEggs() {
+        let flips = 0;
+        const easterEggHTML = `
+            <div class="easter-egg-box coin-egg" id="coinEgg">
+                <button class="easter-egg-toggle" id="coinToggle">
+                    <span class="toggle-icon">▼</span>
+                    <span class="toggle-text">COIN FLIP + FORTUNE</span>
+                </button>
+                <div class="easter-egg-content" id="coinContent">
+                    <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
+                        FLIP A COIN + GET A FORTUNE
+                    </button>
+                    <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
+
+        const toggle = document.getElementById('coinToggle');
+        const content = document.getElementById('coinContent');
+        const filterBtn = document.getElementById('coinFilterBtn');
+
+        toggle.addEventListener('click', () => {
+            content.classList.toggle('hidden');
+            const icon = toggle.querySelector('.toggle-icon');
+            icon.textContent = content.classList.contains('hidden') ? '▶' : '▼';
+        });
+
+        /**
+         * COIN FLIP + FORTUNE FUNCTIONALITY
+         */
+        filterBtn.addEventListener('click', () => {
+            //Decides coin side
+            const side = Math.floor(Math.random() * 2);
+            let sideFace;
+            if (side === 0) {
+                sideFace = "TAILS"
+            } else {
+                sideFace = "HEADS"
+            }
+
+            //Decides fortune
+            const omens = [
+                "You will *probably* not find an abandoned $25,000 briefcase today.",
+                "You will *probably* not be struck by lightning tonight.",
+                "You will *probably* not win the lottery today.",
+                "You will *probably* breath today.",
+                "You will *probably* not be abducted by aliens tonight.",
+                "You will *probably* not find ancient aztec gold today.",
+                "You will *probably* have to do your taxes eventually",
+                "You will *probably* not watch Shrek with French subtitles, German audio, and Russian captions tonight.",
+                "You will continue to be on this website."
+            ];
+            const selectedOmen = omens[Math.floor(Math.random() * omens.length)];
+
+            //CHANGES TEXT ON FILTER BUTTON
+            flips += 1;
+            let message = "FLIP AGAIN?";
+            if (flips >= 8) {
+                message = "SLOW DOWN THERE!";
+            }
+            if (flips >= 16) {
+                message = "IT MIGHT BE TIME FOR A BREAK!";
+            }
+            if (flips >= 30) {
+                message = "YOU HAVE A BIT OF A PROBLEM!";
+            }
+            if (flips >= 50) {
+                message = "STOP IT! STOP IT!";
+            }
+            if (flips >= 75) {
+                message = "💀💀💀";
+            }
+            filterBtn.textContent = message + " (" + flips.toString() + ")";
+
+            //DISPLAYS RESULT
+            const resultText = "You flipped a " + sideFace + "! " + selectedOmen;
+            const query = document.getElementById('coinResult');
+            query.textContent = resultText;
+        });
+    }
+
+
+
+
+    /**
+     *  Sports page easter egg
+     */
+    activateSportsEasterEgg() {
+        const easterEggHTML = `
+            <div class="easter-egg-box coin-egg" id="coinEgg">
+                <button class="easter-egg-toggle" id="gameToggle">
+                    <span class="game-toggle-icon">▼</span>
+                    <span class="toggle-text">GAME (PROTOTYPE)</span>
+                </button>
+                    <div class="easter-egg-content" id="gameContent">
+                        <div class="easter-egg-text">
+                            RULES:
+                            <ul>
+                                <li class="rule-entry">You have 1000 tokens to guess with</li>
+                                <li class="rule-entry">You can divide them between the 2 options however you like</li>
+                                <li class="rule-entry">When you place your guess, one side is chosen</li>
+                                <li class="rule-entry">All tokens on the losing side are decreased by %75</li>
+                                <li class="rule-entry">All tokens on winning side are increased by %50</li>
+                                <li class="rule-entry">3000 Tokens to win</li>
+                            </ul>
+                        </div>
+                        <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
+                        <div class="easter-egg-text" id="gamePreportion"></div>
+                        <button class="easter-egg-action-btn coin-filter-btn" id="gameGuessBtn">Place guess</button>
+                        <div class="easter-egg-text" id="gameResult"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
+
+        const gameGuessBtn = document.getElementById('gameGuessBtn');
+        const gameToggle = document.getElementById('gameToggle');
+        const gameContent = document.getElementById('gameContent');
+        const gameSlider = document.getElementById('gameSlider');
+
+        function updateSliderDisplay() {
+            const gameQuery = document.getElementById('gamePreportion');
+            let left = (gameSlider.value);
+            let right = (gameSlider.max - gameSlider.value);
+            gameQuery.textContent = left.toString() + " --- " + right.toString();
+        }
+        updateSliderDisplay();
+
+        gameToggle.addEventListener('click', () => {
+            gameContent.classList.toggle('hidden');
+            const icon = gameToggle.querySelector('.game-toggle-icon');
+            icon.textContent = gameContent.classList.contains('hidden') ? '▶' : '▼';
+        });
+
+        gameSlider.addEventListener('input', () => {
+            updateSliderDisplay();
+        });
+
+        gameGuessBtn.addEventListener('click', () => {
+            const gameQuery = document.getElementById('gameResult');
+
+            let tokens = Number(gameSlider.max);
+            const tokensBefore = tokens;
+            const outcome = Math.floor(Math.random() * 2);
+            const left = Number(gameSlider.value);
+            const right = Number(gameSlider.max) - Number(gameSlider.value);
+            let losses;
+            let gains;
+
+            let winner;
+            if (outcome === 0) {
+                winner = "RIGHT WINS! | ";
+                losses = Math.round(right * 0.75);
+                gains = Math.round(left * 0.5);
+            } else {
+                winner = "LEFT WINS! | ";
+                losses = Math.round(left * 0.75);
+                gains = Math.round(right * 0.5);
+            }
+
+            tokens = tokens - losses + gains;
+
+            if (tokens !== 0) {
+                gameQuery.textContent = winner + "Losses:" +
+                    losses.toString() + " | Gains: " + gains.toString() +
+                    " | Tokens: " + tokens.toString() + " | Tokens before: " + tokensBefore.toString();
+            } else if (tokens <= 0) {
+                gameQuery.textContent = "YOU RAN OUT OF TOKENS! YOU LOSE!";
+            }
+            if (tokens > 3000) {
+                gameQuery.textContent = "YOU SURPASSED 3000 TOKENS! YOU WIN!";
+                console.log("WON!");
+            }
+
+            gameSlider.max = String(tokens);
+            updateSliderDisplay();
+        });
+
+    }
+
+
+
 
     /**
      * Dutch John Rick Roll Easter Egg (Homepage)
