@@ -24,6 +24,38 @@ router.get('/road-weather', async (req, res) => {
     }
 });
 
+router.get('/road-weather/camera-scheduler-status', (req, res) => {
+    try {
+        const scheduler = roadWeatherService.cameraAnalysisScheduler;
+        if (!scheduler) {
+            return res.status(503).json({
+                success: false,
+                error: 'Camera analysis scheduler is not available'
+            });
+        }
+
+        const stats = scheduler.getStats();
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            warmRestore: {
+                restoredDetectionsCount: stats.warmRestore?.restoredDetectionsCount ?? 0,
+                restoredSnapshotAgeMinutes: stats.warmRestore?.restoredSnapshotAgeMinutes ?? null,
+                restoredFromDisk: stats.warmRestore?.restoredFromDisk ?? false
+            },
+            scheduler: stats
+        });
+    } catch (error) {
+        console.error('Error fetching camera scheduler status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch camera scheduler status',
+            message: error.message
+        });
+    }
+});
+
 // Removed unused /road-weather/conditions endpoint
 
 // Removed unused /road-weather/nws/:lat/:lon endpoint
