@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
 import SnowDetectionService from './snowDetectionService.js';
@@ -362,44 +364,324 @@ class RoadWeatherService {
         return majorRoads;
     }
 
+    loadHRRRForecast() {
+        const cacheKey = 'hrrr_road_forecast';
+        const cached = cache.get(cacheKey);
+        if (cached) return cached;
+
+        try {
+            const filePath = path.join(process.cwd(), 'public', 'api', 'static', 'road-forecast', 'latest.json');
+            if (!fs.existsSync(filePath)) {
+                return null;
+            }
+
+            const raw = fs.readFileSync(filePath, 'utf8');
+            const forecast = JSON.parse(raw);
+
+            // Reject if init_time is more than 3 hours old
+            if (forecast.init_time) {
+                const initAge = Date.now() - new Date(forecast.init_time).getTime();
+                if (initAge > 3 * 60 * 60 * 1000) {
+                    console.log('HRRR forecast too old, skipping');
+                    return null;
+                }
+            }
+
+            cache.set(cacheKey, forecast, 3600);
+            return forecast;
+        } catch (error) {
+            console.warn('Could not load HRRR forecast:', error.message);
+            return null;
+        }
+    }
+
+    getHRRRConditionAtPoint(lat, lon, hrrrForecast) {
+        if (!hrrrForecast || !hrrrForecast.points || hrrrForecast.points.length === 0) {
+            return null;
+        }
+
+        // Find nearest point by Euclidean distance
+        let nearest = null;
+        let minDist = Infinity;
+        for (const pt of hrrrForecast.points) {
+            const dlat = pt.lat - lat;
+            const dlon = pt.lon - lon;
+            const dist = dlat * dlat + dlon * dlon;
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = pt;
+            }
+        }
+
+        if (!nearest) return null;
+
+        // Extract first forecast hour
+        const fc = nearest.forecasts?.[0] || nearest;
+
+        return {
+            temperature: fc.temp_2m,
+            precipitation: fc.precip_1hr || 0,
+            snowfall: (fc.precip_type === 'snow') ? (fc.precip_1hr || 0) : 0,
+            windSpeed: fc.wind_speed_10m || 0,
+            visibility: (fc.visibility || 10) * 1000 // km → meters
+        };
+    }
+
+    // --- Ensemble helpers ---
+
+    cameraSnowLevelToCondition(snowLevel) {
+        switch (snowLevel) {
+            case 'heavy':
+                return { condition: 'red', status: 'Heavy Snow', reason: 'Heavy snow on camera' };
+            case 'moderate':
+                return { condition: 'yellow', status: 'Moderate Snow', reason: 'Moderate snow on camera' };
+            case 'light':
+                return { condition: 'yellow', status: 'Light Snow', reason: 'Light snow on camera' };
+            case 'none':
+            case 'unknown':
+            default:
+                return { condition: 'green', status: 'Clear', reason: 'No snow detected' };
+        }
+    }
+
+    gatherSourcesForSegment(segment, hrrrForecast, cameraDetections, stations) {
+        const DEFAULT_WEIGHTS = { udot: 0.50, hrrr: 0.25, camera: 0.15, station: 0.10 };
+        const sources = [];
+
+        // 1. UDOT road condition (already computed)
+        if (segment.overallCondition && segment.overallCondition.condition !== 'gray') {
+            sources.push({
+                name: 'udot',
+                condition: segment.overallCondition.condition,
+                status: segment.overallCondition.status,
+                reason: segment.overallCondition.reason,
+                weight: DEFAULT_WEIGHTS.udot
+            });
+        }
+
+        // 2. HRRR forecast at segment midpoint
+        if (hrrrForecast && segment.coordinates && segment.coordinates.length > 0) {
+            const midIdx = Math.floor(segment.coordinates.length / 2);
+            const midpoint = segment.coordinates[midIdx];
+            const hrrrWeather = this.getHRRRConditionAtPoint(midpoint[0], midpoint[1], hrrrForecast);
+            if (hrrrWeather) {
+                const hrrrRoadCondition = this.estimateRoadCondition({ route: segment.route || segment.name || '', name: segment.name || '' }, hrrrWeather);
+                if (hrrrRoadCondition.condition !== 'gray') {
+                    sources.push({
+                        name: 'hrrr',
+                        condition: hrrrRoadCondition.condition,
+                        status: hrrrRoadCondition.status,
+                        reason: hrrrRoadCondition.reason,
+                        weight: DEFAULT_WEIGHTS.hrrr
+                    });
+                }
+            }
+        }
+
+        // 3. Camera snow detection — find cameras within 15 miles of segment
+        if (cameraDetections && cameraDetections.length > 0 && segment.coordinates && segment.coordinates.length > 0) {
+            const nearbyCameraConditions = [];
+            for (const det of cameraDetections) {
+                if (!det.cameraLocation) continue;
+                const dist = this.getDistanceToSegment(
+                    { lat: det.cameraLocation.lat, lng: det.cameraLocation.lng },
+                    segment.coordinates
+                );
+                if (dist < 15) {
+                    nearbyCameraConditions.push(this.cameraSnowLevelToCondition(det.snowLevel));
+                }
+            }
+            if (nearbyCameraConditions.length > 0) {
+                const worst = this.getWorstCondition(nearbyCameraConditions);
+                if (worst.condition !== 'gray') {
+                    sources.push({
+                        name: 'camera',
+                        condition: worst.condition,
+                        status: worst.status,
+                        reason: worst.reason,
+                        weight: DEFAULT_WEIGHTS.camera
+                    });
+                }
+            }
+        }
+
+        // 4. Weather stations — find stations within 20 miles of segment
+        if (stations && stations.length > 0 && segment.coordinates && segment.coordinates.length > 0) {
+            const nearbyStationConditions = [];
+            for (const st of stations) {
+                const dist = this.getDistanceToSegment(st, segment.coordinates);
+                if (dist < 20 && st.condition && st.condition.condition !== 'gray') {
+                    nearbyStationConditions.push(st.condition);
+                }
+            }
+            if (nearbyStationConditions.length > 0) {
+                const worst = this.getWorstCondition(nearbyStationConditions);
+                if (worst.condition !== 'gray') {
+                    sources.push({
+                        name: 'station',
+                        condition: worst.condition,
+                        status: worst.status,
+                        reason: worst.reason,
+                        weight: DEFAULT_WEIGHTS.station
+                    });
+                }
+            }
+        }
+
+        return sources;
+    }
+
+    computeEnsembleCondition(sources) {
+        const SEVERITY = { green: 0, yellow: 1, red: 2 };
+
+        // Filter out gray/unknown
+        const valid = sources.filter(s => SEVERITY[s.condition] !== undefined);
+
+        if (valid.length === 0) {
+            return { condition: 'gray', status: 'No Data', reason: 'No data sources available', sources: [], ensembleScore: null };
+        }
+
+        // Redistribute weights proportionally among available sources
+        const totalWeight = valid.reduce((sum, s) => sum + s.weight, 0);
+        const normalized = valid.map(s => ({ ...s, weight: s.weight / totalWeight }));
+
+        // Compute weighted average score
+        const ensembleScore = normalized.reduce((sum, s) => sum + s.weight * SEVERITY[s.condition], 0);
+
+        // Threshold to final condition
+        let condition, status;
+        if (ensembleScore < 0.5) {
+            condition = 'green';
+            status = 'Clear';
+        } else if (ensembleScore < 1.5) {
+            condition = 'yellow';
+            status = 'Use Caution';
+        } else {
+            condition = 'red';
+            status = 'Dangerous';
+        }
+
+        // Build summary reason
+        const reasonParts = normalized.map(s => `${s.name} ${s.status.toLowerCase()}`);
+        const reason = `Ensemble: ${reasonParts.join(', ')}`;
+
+        return {
+            condition,
+            status,
+            reason,
+            sources: normalized.map(s => ({ name: s.name, condition: s.condition, weight: parseFloat(s.weight.toFixed(2)) })),
+            ensembleScore: parseFloat(ensembleScore.toFixed(2))
+        };
+    }
+
+    buildAdditionalRoadSegmentsFromHRRR(hrrrForecast) {
+        if (!hrrrForecast) return [];
+
+        // Road definitions for segments not covered by UDOT
+        const additionalRoads = [
+            {
+                id: 'sr121',
+                name: 'SR-121 (Vernal to Manila)',
+                route: 'SR-121',
+                waypoints: [
+                    [40.4555, -109.5287],
+                    [40.4900, -109.4600],
+                    [40.5200, -109.4200],
+                    [40.5500, -109.3900],
+                    [40.5800, -109.3600],
+                    [40.6100, -109.3300]
+                ]
+            }
+        ];
+
+        return additionalRoads.map(road => {
+            // Sample HRRR at every waypoint, take worst-case
+            const waypointConditions = road.waypoints
+                .map(wp => {
+                    const weather = this.getHRRRConditionAtPoint(wp[0], wp[1], hrrrForecast);
+                    if (!weather) return null;
+                    return this.estimateRoadCondition(road, weather);
+                })
+                .filter(Boolean);
+
+            const worstCondition = waypointConditions.length > 0
+                ? this.getWorstCondition(waypointConditions)
+                : { condition: 'gray', status: 'No Data', reason: 'HRRR data unavailable' };
+
+            // Build ensemble with only HRRR source (weight redistributes to 100%)
+            const ensembleResult = this.computeEnsembleCondition([
+                { name: 'hrrr', condition: worstCondition.condition, status: worstCondition.status, reason: worstCondition.reason, weight: 0.25 }
+            ]);
+
+            return {
+                id: `hrrr-${road.id}`,
+                name: road.name,
+                route: road.route,
+                coordinates: road.waypoints,
+                overallCondition: ensembleResult,
+                type: 'hrrr_estimated',
+                lastUpdated: hrrrForecast.init_time || new Date().toISOString()
+            };
+        });
+    }
+
     async getCompleteRoadData() {
         try {
+            // 1. Load HRRR forecast (sync, from disk cache)
+            const hrrrForecast = this.loadHRRRForecast();
+            if (hrrrForecast) {
+                console.log('HRRR forecast loaded for ensemble');
+            }
+
+            // 2. Fetch all live data sources in parallel
             const [udotRoads, cameras, weatherStations] = await Promise.all([
                 this.fetchUDOTRoadConditions(),
                 this.fetchUDOTCameras(),
                 this.fetchUDOTWeatherStations()
             ]);
 
-            // Analyze cameras for snow conditions with temperature data from weather stations
-            const cameraSnowDetections = await this.analyzeCamerasForSnow(cameras, weatherStations);
+            // 3. Analyze cameras for snow (with HRRR temperature fallback)
+            const cameraSnowDetections = await this.analyzeCamerasForSnow(cameras, weatherStations, hrrrForecast);
 
-            // Convert ALL UDOT roads to map segments (no weather estimation, UDOT data only)
-            const roadSegments = udotRoads.map(udotRoad => ({
-                id: `udot-${udotRoad.id}`,
-                name: udotRoad.name,
-                route: this.extractRouteNumber(udotRoad.name),
-                coordinates: udotRoad.coordinates,
-                overallCondition: udotRoad.condition,
-                type: 'monitored',
-                lastUpdated: udotRoad.lastUpdated,
-                roadCondition: udotRoad.roadCondition,
-                weatherCondition: udotRoad.weatherCondition,
-                restriction: udotRoad.restriction
-            }));
+            // 4. Build UDOT road segments with ensemble conditions
+            const roadSegments = udotRoads.map(udotRoad => {
+                const segment = {
+                    id: `udot-${udotRoad.id}`,
+                    name: udotRoad.name,
+                    route: this.extractRouteNumber(udotRoad.name),
+                    coordinates: udotRoad.coordinates,
+                    overallCondition: udotRoad.condition,
+                    type: 'monitored',
+                    lastUpdated: udotRoad.lastUpdated,
+                    roadCondition: udotRoad.roadCondition,
+                    weatherCondition: udotRoad.weatherCondition,
+                    restriction: udotRoad.restriction
+                };
 
-            // Camera analysis will be shown as colored rings around camera icons instead of road segments
-            const allRoadSegments = roadSegments;
+                // Compute ensemble from all available sources
+                const sources = this.gatherSourcesForSegment(segment, hrrrForecast, cameraSnowDetections, weatherStations);
+                segment.overallCondition = this.computeEnsembleCondition(sources);
+
+                return segment;
+            });
+
+            // 5. Build additional road segments from HRRR (roads not covered by UDOT)
+            const additionalSegments = this.buildAdditionalRoadSegmentsFromHRRR(hrrrForecast);
+
+            const allRoadSegments = [...roadSegments, ...additionalSegments];
 
             return {
                 segments: allRoadSegments,
                 cameras: cameras,
                 stations: weatherStations,
                 cameraDetections: cameraSnowDetections,
+                hrrrAvailable: hrrrForecast !== null,
                 totalRoads: allRoadSegments.length,
                 totalCameras: cameras.length,
                 totalStations: weatherStations.length,
                 cameraAnalyzedLocations: cameraSnowDetections.length,
                 monitoredRoads: roadSegments.length,
+                additionalRoads: additionalSegments.length,
                 lastUpdated: new Date().toISOString()
             };
         } catch (error) {
@@ -408,15 +690,13 @@ class RoadWeatherService {
         }
     }
 
-    async analyzeCamerasForSnow(cameras, weatherStations = []) {
+    async analyzeCamerasForSnow(cameras, weatherStations = [], hrrrForecast = null) {
         try {
-            const detectionResults = await this.snowDetectionService.analyzeCamerasBatch(cameras, weatherStations);
-
-
+            const detectionResults = await this.snowDetectionService.analyzeCamerasBatch(cameras, weatherStations, hrrrForecast);
             return detectionResults;
         } catch (error) {
             console.error('Error analyzing cameras for snow:', error);
-            return []; // Return empty array on error to avoid breaking the main flow
+            return [];
         }
     }
 
@@ -444,51 +724,25 @@ class RoadWeatherService {
         return roadName.split(' ')[0] || 'Local';
     }
 
-    async fetchAdditionalRoadNetwork() {
-        const cacheKey = 'additional_roads';
-        const cached = cache.get(cacheKey);
-        if (cached) return cached;
-
+    async getCurrentWeatherCondition(lat = 40.3033, lon = -109.7) {
+        // Try HRRR forecast first for per-waypoint resolution
         try {
-            // Main highways and important connecting roads in Uintah Basin
-            const additionalRoads = [
-                {
-                    id: 'sr121',
-                    name: 'SR-121 (Vernal to Manila)',
-                    route: 'SR-121',
-                    coordinates: [
-                        [40.4555, -109.5287], // Vernal
-                        [40.4900, -109.4600],
-                        [40.5200, -109.4200],
-                        [40.5500, -109.3900],
-                        [40.5800, -109.3600],
-                        [40.6100, -109.3300]  // Towards Manila
-                    ]
+            const hrrrForecast = this.loadHRRRForecast();
+            if (hrrrForecast) {
+                const hrrrCondition = this.getHRRRConditionAtPoint(lat, lon, hrrrForecast);
+                if (hrrrCondition) {
+                    console.log('Using HRRR forecast for weather condition');
+                    return hrrrCondition;
                 }
-            ];
-
-            // Add estimated conditions based on weather data
-            const weatherCondition = await this.getCurrentWeatherCondition();
-            const processedRoads = additionalRoads.map(road => ({
-                ...road,
-                estimatedCondition: this.estimateRoadCondition(road, weatherCondition)
-            }));
-
-            cache.set(cacheKey, processedRoads, 600); // Cache for 10 minutes
-            return processedRoads;
-
+            }
         } catch (error) {
-            console.error('Error fetching additional road network:', error);
-            return [];
+            console.warn('HRRR lookup failed, falling back to Open-Meteo:', error.message);
         }
-    }
 
-    async getCurrentWeatherCondition() {
+        // Fall back to Open-Meteo
         try {
-            // Use Open-Meteo for current weather in basin center
-            const lat = 40.3033;
-            const lng = -109.7;
-            const weather = await this.fetchOpenMeteoData(lat, lng);
+            console.log('Falling back to Open-Meteo for weather condition');
+            const weather = await this.fetchOpenMeteoData(lat, lon);
 
             if (weather && weather.current) {
                 return {

@@ -32,7 +32,8 @@ const storage = multer.diskStorage({
             'llm_outlooks': 'llm_outlooks',
             'images': 'images',
             'timeseries': 'timeseries',
-            'forecasts': 'forecasts'
+            'forecasts': 'forecasts',
+            'road-forecast': 'road-forecast'
         };
 
         const dataType = req.params.dataType || 'observations';
@@ -182,6 +183,13 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     // Update file list for the observations directory (where obs files actually live)
     const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
     updateFileList(observationsDir);
+
+    // Copy road-forecast uploads to latest.json for easy access
+    if (dataType === 'road-forecast') {
+      const latestPath = path.join(process.cwd(), 'public', 'api', 'static', 'road-forecast', 'latest.json');
+      fs.copyFileSync(req.file.path, latestPath);
+      console.log(`[${new Date().toISOString()}] Road forecast latest.json updated`);
+    }
 
     res.status(200).json({
       success: true,

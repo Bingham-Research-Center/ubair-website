@@ -21,6 +21,30 @@ router.get('/road-weather', async (req, res) => {
 
 // Removed unused /road-weather/nws/:lat/:lon endpoint
 
+router.get('/road-weather/forecast', async (req, res) => {
+    try {
+        const forecast = roadWeatherService.loadHRRRForecast();
+        if (!forecast) {
+            return res.status(404).json({
+                success: false,
+                error: 'No HRRR road forecast available'
+            });
+        }
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            forecast
+        });
+    } catch (error) {
+        console.error('Error fetching HRRR road forecast:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch HRRR road forecast',
+            message: error.message
+        });
+    }
+});
+
 router.get('/road-weather/openmeteo/:lat/:lon', async (req, res) => {
     try {
         const { lat, lon } = req.params;

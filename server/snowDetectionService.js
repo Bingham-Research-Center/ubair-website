@@ -551,12 +551,42 @@ class SnowDetectionService {
     }
 
     /**
+     * Get HRRR temperature for a camera location as fallback when no weather station nearby
+     * @param {number} lat - Camera latitude
+     * @param {number} lng - Camera longitude
+     * @param {Object} hrrrForecast - HRRR forecast data with points array
+     * @returns {number|null} Temperature in °C, or null if unavailable
+     */
+    _getHRRRTemperatureForCamera(lat, lng, hrrrForecast) {
+        if (!hrrrForecast || !hrrrForecast.points || hrrrForecast.points.length === 0) {
+            return null;
+        }
+
+        let nearest = null;
+        let minDist = Infinity;
+        for (const pt of hrrrForecast.points) {
+            const dlat = pt.lat - lat;
+            const dlon = pt.lon - lng;
+            const dist = dlat * dlat + dlon * dlon;
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = pt;
+            }
+        }
+
+        if (!nearest) return null;
+        const fc = nearest.forecasts?.[0] || nearest;
+        return fc.temp_2m ?? null;
+    }
+
+    /**
      * Analyze multiple cameras in batch with weather data
      * @param {Array} cameras - Array of camera objects with id and views
      * @param {Array} weatherStations - Array of weather station data
+     * @param {Object} hrrrForecast - Optional HRRR forecast for temperature fallback
      * @returns {Promise<Array>} Array of detection results
      */
-    async analyzeCamerasBatch(cameras, weatherStations = []) {
+    async analyzeCamerasBatch(cameras, weatherStations = [], hrrrForecast = null) {
         // Process cameras in parallel with concurrency limit
         const concurrencyLimit = 5;
         const chunks = [];
@@ -579,7 +609,15 @@ class SnowDetectionService {
                             }
 
                             // Find nearest weather station for temperature data
-                            const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+                            let nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+
+                            // Fall back to HRRR temperature if no weather station nearby
+                            if (!nearestStation && hrrrForecast) {
+                                const hrrrTemp = this._getHRRRTemperatureForCamera(camera.lat, camera.lng, hrrrForecast);
+                                if (hrrrTemp !== null) {
+                                    nearestStation = { airTemperature: (hrrrTemp * 9/5) + 32, source: 'hrrr' };
+                                }
+                            }
 
                             const result = await this.analyzeImageForSnow(
                                 imageUrl,
@@ -592,7 +630,7 @@ class SnowDetectionService {
                                 cameraName: camera.name,
                                 cameraLocation: { lat: camera.lat, lng: camera.lng },
                                 nearestStationDistance: nearestStation ?
-                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat, nearestStation.lng)) : null
+                                    Math.round(this.calculateDistance(camera.lat, camera.lng, nearestStation.lat || 0, nearestStation.lng || 0)) : null
                             };
                         } catch (error) {
                             console.error(`Error analyzing camera ${camera.id}:`, error.message);

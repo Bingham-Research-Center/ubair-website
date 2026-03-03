@@ -55,6 +55,7 @@ public/api/static/filelist.json
 # Data directories
 public/api/static/forecasts/
 public/api/static/images/
+public/api/static/road-forecast/
 public/data/
 
 # Test artifacts
