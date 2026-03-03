@@ -1068,7 +1068,7 @@ function updateConditionCardsWithLocation(locationData) {
     const visCard = document.querySelector('.condition-card-compact.visibility .value');
     if (visCard) {
         const vis = locationData.visibility;
-        if (vis && vis > 0) {
+        if (vis !== null && vis !== undefined && vis >= 0) {
             const maxVis = unitsSystem.isMetric ? 16 : 10; // 16 km ≈ 10 mi
             visCard.textContent = vis > maxVis ? `${maxVis}+ ${unitsSystem.getVisibilityUnit()}` : unitsSystem.formatVisibility(vis);
         } else {
@@ -2198,28 +2198,16 @@ class TrafficEventsManager {
 
     async loadAlerts() {
         try {
-            const [alertsResponse, signsResponse] = await Promise.all([
-                fetch('/api/alerts'),
-                fetch('/api/road-weather/digital-signs')
-            ]);
+            const alertsResponse = await fetch('/api/alerts');
 
             if (!alertsResponse.ok) {
                 throw new Error(`Alerts HTTP ${alertsResponse.status}`);
             }
 
             const alertsData = await alertsResponse.json();
-            let digitalSigns = [];
-
-            // Digital signs are optional - don't fail if unavailable
-            if (signsResponse.ok) {
-                const signsData = await signsResponse.json();
-                if (signsData.success && signsData.signs) {
-                    digitalSigns = signsData.signs;
-                }
-            }
 
             if (alertsData.success && alertsData.alerts) {
-                this.displayAlertsAndSigns(alertsData.alerts, digitalSigns);
+                this.displayAlerts(alertsData.alerts);
             } else {
                 throw new Error('Invalid response format');
             }
@@ -2229,54 +2217,26 @@ class TrafficEventsManager {
         }
     }
 
-    displayAlertsAndSigns(alerts, digitalSigns = []) {
+    displayAlerts(alerts) {
         const container = document.getElementById('alerts-container');
         if (!container) {
             console.error('TrafficEventsManager: Alerts container not found');
             return;
         }
 
-        // Filter digital signs by priority - show high priority (1-2) messages first
-        const prioritySigns = digitalSigns.filter(sign => sign.priority <= 2).slice(0, 5);
-
-        if (alerts.length === 0 && prioritySigns.length === 0) {
+        if (alerts.length === 0) {
             container.innerHTML = `
                 <div class="no-alerts">
                     <i class="fas fa-check-circle"></i>
                     <h4>No Active Alerts</h4>
-                    <p>All clear - no UDOT alerts or digital sign messages for the region.</p>
+                    <p>All clear - no UDOT alerts for the region.</p>
                 </div>
             `;
             return;
         }
 
-        let content = '';
-
-        // Add alerts first
-        if (alerts.length > 0) {
-            const alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
-            content += `<div class="alerts-list">${alertsHtml}</div>`;
-        }
-
-        // Add digital signs section
-        if (prioritySigns.length > 0) {
-            const signsHtml = prioritySigns.map(sign => this.createDigitalSignCard(sign)).join('');
-            content += `
-                <div class="digital-signs-section">
-                    <h4 style="margin: 1.5rem 0 1rem 0; padding-left: 1rem; color: #1e40af;">
-                        <i class="fas fa-sign"></i> Digital Highway Signs
-                    </h4>
-                    <div class="signs-list">${signsHtml}</div>
-                </div>
-            `;
-        }
-
-        container.innerHTML = content;
-    }
-
-    displayAlerts(alerts) {
-        // Backward compatibility - call the new method with empty signs
-        this.displayAlertsAndSigns(alerts, []);
+        const alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
+        container.innerHTML = `<div class="alerts-list">${alertsHtml}</div>`;
     }
 
     createAlertCard(alert) {
@@ -2313,45 +2273,6 @@ class TrafficEventsManager {
                         <strong>Regions:</strong> ${alert.regions.join(', ')}
                     </div>
                 ` : ''}
-            </div>
-        `;
-    }
-
-    createDigitalSignCard(sign) {
-        // Get category icon
-        const categoryIcon = {
-            'construction': 'fas fa-hard-hat',
-            'incident': 'fas fa-exclamation-triangle',
-            'weather': 'fas fa-cloud-snow',
-            'closure': 'fas fa-road-barrier',
-            'traffic': 'fas fa-traffic-light',
-            'advisory': 'fas fa-info-circle'
-        }[sign.category] || 'fas fa-sign';
-
-        // Get priority styling
-        const priorityClass = sign.priority === 1 ? 'high-priority' : 'medium-priority';
-        const priorityLabel = sign.priority === 1 ? 'High' : sign.priority === 2 ? 'Medium' : 'Low';
-
-        return `
-            <div class="digital-sign-card ${priorityClass}">
-                <div class="sign-header">
-                    <div class="sign-info">
-                        <i class="${categoryIcon}" style="color: #1e40af; margin-right: 8px;"></i>
-                        <span class="sign-location">${sign.location}</span>
-                        <span class="sign-priority ${priorityClass}">${priorityLabel} Priority</span>
-                    </div>
-                    <div class="sign-category">${sign.category.charAt(0).toUpperCase() + sign.category.slice(1)}</div>
-                </div>
-
-                <div class="sign-message">
-                    ${sign.message}
-                </div>
-
-                <div class="sign-details">
-                    <span><strong>Highway:</strong> ${sign.roadway}</span>
-                    <span><strong>Direction:</strong> ${sign.direction}</span>
-                    ${sign.distance ? `<span><strong>Distance:</strong> ${unitsSystem.formatVisibility(sign.distance)}</span>` : ''}
-                </div>
             </div>
         `;
     }
@@ -2963,7 +2884,6 @@ async function smartRefreshRoutes() {
         smartRefreshUS40(data),
         smartRefreshUS191(data),
         smartRefreshBasinRoads(data),
-        smartRefreshAlerts()
     ]);
 
     // Refresh map components that show units (but reuse existing markers)
@@ -3071,35 +2991,6 @@ async function smartRefreshBasinRoads(data) {
                 <p>Failed to refresh Basin Roads conditions</p>
             </div>
         `;
-    }
-}
-
-async function smartRefreshAlerts() {
-    // Only refresh digital signs that show distance units
-    const container = document.getElementById('alerts-container');
-    if (!container) return;
-
-    try {
-        // Re-fetch digital signs data to refresh any distance displays
-        const signsResponse = await fetch('/api/road-weather/digital-signs');
-        if (signsResponse.ok) {
-            const signsData = await signsResponse.json();
-            if (signsData.success && signsData.signs) {
-                // Update any visible digital signs with new distance units
-                const signCards = container.querySelectorAll('.digital-sign-card');
-                signCards.forEach((card, index) => {
-                    const sign = signsData.signs[index];
-                    if (sign && sign.distance) {
-                        const distanceSpan = card.querySelector('.sign-details span:last-child');
-                        if (distanceSpan && distanceSpan.textContent.includes('Distance:')) {
-                            distanceSpan.innerHTML = `<strong>Distance:</strong> ${unitsSystem.formatVisibility(sign.distance)}`;
-                        }
-                    }
-                });
-            }
-        }
-    } catch (error) {
-        console.error('Error refreshing digital signs for units:', error);
     }
 }
 

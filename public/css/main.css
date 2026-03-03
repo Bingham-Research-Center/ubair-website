@@ -343,8 +343,8 @@
     background-color: var(--usu-blue);
     color: var(--usu-light-blue);
     text-align: center;
-    padding: 15px 20px;
-    min-height: 50px;
+    padding: 8px 20px;
+    min-height: 35px;
     z-index: 1000;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
 }
@@ -360,7 +360,7 @@
 
 .footer-content p {
     margin: 0;
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     opacity: 0.9;
     line-height: 1.5;
     word-wrap: break-word;

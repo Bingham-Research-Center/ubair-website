@@ -12,6 +12,8 @@ import trafficEventsRoutes from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
+import { getMonitor } from './monitoring/dataMonitor.js';
+import ReportEmailService from './reportEmailService.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,6 +23,11 @@ const __dirname = path.dirname(__filename);
 
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
+const reportEmailService = new ReportEmailService({
+    getStatusReport: () => getMonitor().getStatusReport(),
+    getBackgroundStats: () => backgroundRefresh.getStats(),
+    getCameraStats: () => backgroundRefresh.cameraAnalysisScheduler.getStats()
+});
 
 // Share the roadWeatherService instance with routes
 // This ensures all routes use the same instance with camera analysis scheduler
@@ -188,6 +195,76 @@ server.listen(PORT, () => {
 
     // Start background UDOT API refresh
     backgroundRefresh.start();
+    reportEmailService.start();
+});
+
+let isShuttingDown = false;
+const shutdown = async (signal, options = {}) => {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
+
+    console.log(`\nReceived ${signal}. Shutting down services...`);
+
+    const shutdownContext = {
+        signal,
+        reason: options.reason || 'graceful_shutdown',
+        pid: process.pid,
+        uptimeSeconds: Math.round(process.uptime()),
+        exitCode: options.exitCode ?? 0
+    };
+
+    if (options.error) {
+        shutdownContext.error = options.error.stack || options.error.message || String(options.error);
+    }
+
+    try {
+        await Promise.race([
+            reportEmailService.sendShutdownNotification(shutdownContext),
+            new Promise((resolve) => setTimeout(resolve, 4000))
+        ]);
+    } catch (error) {
+        console.error(`Failed to send shutdown report email: ${error.message}`);
+    }
+
+    reportEmailService.stop();
+    backgroundRefresh.stop();
+
+    server.close(() => {
+        console.log('Server shutdown complete');
+        process.exit(options.exitCode ?? 0);
+    });
+
+    setTimeout(() => {
+        console.error('Forced shutdown after timeout');
+        process.exit(1);
+    }, 10000).unref();
+};
+
+process.on('SIGINT', () => {
+    void shutdown('SIGINT', { reason: 'interrupt_signal', exitCode: 0 });
+});
+
+process.on('SIGTERM', () => {
+    void shutdown('SIGTERM', { reason: 'terminate_signal', exitCode: 0 });
+});
+
+process.on('uncaughtException', (error) => {
+    console.error('Uncaught exception:', error);
+    void shutdown('uncaughtException', {
+        reason: 'uncaught_exception',
+        error,
+        exitCode: 1
+    });
+});
+
+process.on('unhandledRejection', (reason) => {
+    const rejectionError = reason instanceof Error ? reason : new Error(String(reason));
+    console.error('Unhandled rejection:', rejectionError);
+    void shutdown('unhandledRejection', {
+        reason: 'unhandled_rejection',
+        error: rejectionError,
+        exitCode: 1
+    });
 });
 
 // Error handling middleware

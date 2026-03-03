@@ -54,8 +54,16 @@ const routeDataCache = {
      */
     async getData() {
         if (!this.isValid()) {
-            await this.updateCache();
+            const refreshed = await this.updateCache();
+            if (!refreshed) {
+                return null;
+            }
         }
+
+        if (!Array.isArray(this.stations) || !this.events) {
+            return null;
+        }
+
         return { stations: this.stations, events: this.events };
     }
 };

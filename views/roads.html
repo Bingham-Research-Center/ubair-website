@@ -19,6 +19,8 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 </head>
 <body data-page-type="roads">
     <!-- Colored Bar -->
@@ -40,16 +42,16 @@
 
                 <!-- Instructions removed to prevent blocking map interaction -->
 
-                <!-- Bottom condition cards overlay -->
+                <!-- Bottom driving conditions summary overlay -->
                 <div class="conditions-overlay">
                     <div class="condition-cards-horizontal">
-                        <div class="condition-card-compact road-temp">
+                        <div class="condition-card-compact road-conditions">
                             <div class="card-icon-small">
                                 <i class="fas fa-road"></i>
                             </div>
                             <div class="card-data">
-                                <h5>Road Surface</h5>
-                                <p class="value">--°F</p>
+                                <h5>Road Conditions</h5>
+                                <p class="value">--</p>
                             </div>
                         </div>
 
@@ -92,6 +94,17 @@
                         <span id="units-label">Imperial</span>
                         <i class="fas fa-exchange-alt"></i>
                     </button>
+                </div>
+
+                <div class="experimental-toggle-container">
+                    <label class="experimental-toggle-label" for="experimental-road-toggle">
+                        <input type="checkbox" id="experimental-road-toggle">
+                        <span>Experimental Road AI</span>
+                    </label>
+                    <p class="experimental-warning">
+                        Highly experimental. Not for critical decisions.
+                        <strong id="experimental-road-status">Disabled</strong>
+                    </p>
                 </div>
             </div>
         </section>
@@ -243,6 +256,7 @@
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
     <script src="/public/js/map-state-manager.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <!-- Roads.js modules (extracted for maintainability) -->

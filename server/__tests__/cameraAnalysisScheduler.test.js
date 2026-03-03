@@ -24,7 +24,9 @@ describe('CameraAnalysisScheduler', () => {
     describe('Initialization', () => {
         it('should initialize with default configuration', () => {
             expect(scheduler.config.batchSize).toBe(1);
-            expect(scheduler.config.intervalSeconds).toBe(30);
+            expect(scheduler.config.intervalSeconds).toBe(25);
+            expect(scheduler.config.jitterSeconds).toBe(4);
+            expect(scheduler.config.cachePaddingFactor).toBe(1.05);
             expect(scheduler.config.maxRetries).toBe(3);
         });
 
@@ -45,6 +47,41 @@ describe('CameraAnalysisScheduler', () => {
         });
     });
 
+    describe('Environment Variable Overrides', () => {
+        const envBackup = {};
+        const envKeys = [
+            'CAMERA_INTERVAL_SECONDS', 'CAMERA_BATCH_SIZE',
+            'CAMERA_JITTER_SECONDS', 'CAMERA_CACHE_PADDING', 'CAMERA_MAX_RETRIES'
+        ];
+
+        beforeEach(() => {
+            envKeys.forEach(k => { envBackup[k] = process.env[k]; });
+        });
+
+        afterEach(() => {
+            envKeys.forEach(k => {
+                if (envBackup[k] === undefined) delete process.env[k];
+                else process.env[k] = envBackup[k];
+            });
+        });
+
+        it('should use env vars when set', () => {
+            process.env.CAMERA_INTERVAL_SECONDS = '30';
+            process.env.CAMERA_BATCH_SIZE = '2';
+            process.env.CAMERA_JITTER_SECONDS = '6';
+            process.env.CAMERA_CACHE_PADDING = '1.3';
+            process.env.CAMERA_MAX_RETRIES = '5';
+
+            const s = new CameraAnalysisScheduler();
+
+            expect(s.config.intervalSeconds).toBe(30);
+            expect(s.config.batchSize).toBe(2);
+            expect(s.config.jitterSeconds).toBe(6);
+            expect(s.config.cachePaddingFactor).toBe(1.3);
+            expect(s.config.maxRetries).toBe(5);
+        });
+    });
+
     describe('Camera List Updates', () => {
         it('should update camera list', () => {
             const cameras = [
@@ -59,6 +96,15 @@ describe('CameraAnalysisScheduler', () => {
 
             expect(scheduler.cameraQueue).toEqual(cameras);
             expect(scheduler.weatherStations).toEqual(stations);
+        });
+
+        it('should increase cache TTL for large camera queues', () => {
+            const cameras = Array.from({ length: 145 }, (_, i) => ({ id: i + 1, name: `Camera ${i + 1}` }));
+
+            scheduler.updateCameraList(cameras, []);
+
+            expect(scheduler.cacheTTLSeconds).toBeGreaterThan(600);
+            expect(scheduler.cacheTTLSeconds).toBe(4950);
         });
 
         it('should handle empty camera list', () => {
@@ -104,17 +150,27 @@ describe('CameraAnalysisScheduler', () => {
             expect(results).toHaveLength(2);
             expect(scheduler.stats.cacheHits).toBe(1);
         });
+
+        it('should read individual cached results when camera queue is empty', () => {
+            scheduler.cache.set('camera_1', { cameraId: '1', snowDetected: true });
+
+            const results = scheduler.getCachedResults();
+
+            expect(results).toHaveLength(1);
+            expect(results[0].cameraId).toBe('1');
+            expect(scheduler.stats.cacheHits).toBe(1);
+        });
     });
 
     describe('API Call Rate Calculation', () => {
         it('should calculate correct API calls per hour with default config', () => {
             scheduler.cameraQueue = new Array(20).fill({ id: 1 });
 
-            // batchSize=1, intervalSeconds=30, viewsPerCamera=3
-            // (1 camera * 3 views) * (3600 / 30) = 3 * 120 = 360 calls/hour
+            // batchSize=1, intervalSeconds=25, viewsPerCamera=3
+            // (1 camera * 3 views) * (3600 / 25) = 3 * 144 = 432 calls/hour
             const rate = scheduler.calculateApiCallRate();
 
-            expect(rate).toBe(360);
+            expect(rate).toBe(432);
         });
 
         it('should return 0 when no cameras in queue', () => {
@@ -145,8 +201,18 @@ describe('CameraAnalysisScheduler', () => {
             expect(stats).toHaveProperty('cacheHits');
             expect(stats).toHaveProperty('cacheMisses');
             expect(stats).toHaveProperty('cacheHitRate');
+            expect(stats).toHaveProperty('warmRestore');
             expect(stats).toHaveProperty('estimatedApiCallsPerHour');
             expect(stats).toHaveProperty('config');
+        });
+
+        it('should expose warm-restore defaults when no disk restore occurred', () => {
+            const stats = scheduler.getStats();
+
+            expect(stats.warmRestore.enabled).toBe(false);
+            expect(stats.warmRestore.restoredFromDisk).toBe(false);
+            expect(stats.warmRestore.restoredDetectionsCount).toBe(0);
+            expect(stats.warmRestore.restoredSnapshotAgeMinutes).toBeNull();
         });
 
         it('should calculate cache hit rate correctly', () => {
@@ -170,7 +236,7 @@ describe('CameraAnalysisScheduler', () => {
             scheduler.start();
 
             expect(scheduler.isRunning).toBe(true);
-            expect(scheduler.analysisInterval).not.toBeNull();
+            expect(scheduler.analysisTimeout).not.toBeNull();
         });
 
         it('should stop scheduler', () => {
@@ -178,16 +244,16 @@ describe('CameraAnalysisScheduler', () => {
             scheduler.stop();
 
             expect(scheduler.isRunning).toBe(false);
-            expect(scheduler.analysisInterval).toBeNull();
+            expect(scheduler.analysisTimeout).toBeNull();
         });
 
         it('should not start if already running', () => {
             scheduler.start();
-            const interval = scheduler.analysisInterval;
+            const interval = scheduler.analysisTimeout;
 
             scheduler.start(); // Try to start again
 
-            expect(scheduler.analysisInterval).toBe(interval); // Same interval
+            expect(scheduler.analysisTimeout).toBe(interval); // Same interval
         });
 
         it('should not stop if already stopped', () => {
