@@ -123,6 +123,7 @@
     background-color: rgba(0, 0, 0, 0.1);
     margin-top: auto;
     flex-shrink: 0;
+    transition: 0.4s ease-in all;
 }
 .sidebar-disclaimer:hover {
     color: white;
@@ -190,7 +191,7 @@
     border-radius: 4px;
     margin-left: auto;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 
 /* Dropdown Menu */

@@ -347,6 +347,7 @@
     min-height: 35px;
     z-index: 1000;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    transition: 0.4s ease-in all;
 }
 .main-footer:hover {
     color: white;
