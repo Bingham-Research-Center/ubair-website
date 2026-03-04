@@ -83,14 +83,14 @@ function setupKioskControl() {
             this.classList.add('active');
             this.setAttribute('aria-checked', 'true');
             if (timerFill) {
-                timerFill.style.animation = 'timer-fill 5s linear infinite';
+                timerFill.classList.add('running');;
             }
             startKioskMode();
         } else {
             this.classList.remove('active');
             this.setAttribute('aria-checked', 'false');
             if (timerFill) {
-                timerFill.style.animation = 'none';
+                timerFill.classList.remove('running');
             }
             stopKioskMode();
         }

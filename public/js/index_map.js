@@ -51,11 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupKioskControl() {
-    // The kiosk control is now part of the HTML structure
+    // Setup for timer-fill
     const kioskSwitch = document.getElementById('kiosk-switch');
-    if (kioskSwitch) {
-        kioskSwitch.addEventListener('click', toggleKiosk);
-    }
+    let timerFill = document.getElementById('timer-fill');
+    timerFill = document.createElement('span');
+    timerFill.id = 'timer-fill';
+    timerFill.className = 'timer-fill';
+    kioskSwitch.addEventListener('click', toggleKiosk);
     
     // Setup temperature toggle
     const tempToggle = document.getElementById('temp-toggle');
@@ -67,13 +69,20 @@ function setupKioskControl() {
 function toggleKiosk() {
     kioskMode = !kioskMode;
     const switchEl = document.getElementById('kiosk-switch');
+    const timerFill = document.getElementById('timer-fill');
 
     if (kioskMode) {
         startKioskMode();
         switchEl.classList.add('active');
+        if (timerFill) {
+            timerFill.classList.add('running');
+        }
     } else {
         stopKioskMode();
         switchEl.classList.remove('active');
+        if (timerFill) {
+            timerFill.classList.remove('running');
+        }
     }
 }
 
