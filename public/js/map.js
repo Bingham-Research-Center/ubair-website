@@ -83,7 +83,7 @@ function setupKioskControl() {
             this.classList.add('active');
             this.setAttribute('aria-checked', 'true');
             if (timerFill) {
-                timerFill.classList.add('running');;
+                timerFill.classList.add('running');
             }
             startKioskMode();
         } else {
