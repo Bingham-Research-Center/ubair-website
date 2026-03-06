@@ -1,5 +1,5 @@
 import { stations } from './config.js';
-import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent } from './mapUtils.js';
+import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent} from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 import { buildStationMeasurements } from './mapShared.js';
 
@@ -35,8 +35,8 @@ let currentStationIndex = 0;
 let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
-const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
 const AUTO_CYCLE_POPUP_DELAY_MS = 220;
+const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
 const AUTO_CYCLE_PAN_DURATION_S = 0.8;
 const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
 let kioskMoveEndHandler = null;
@@ -51,11 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupKioskControl() {
-    // The kiosk control is now part of the HTML structure
+    // Setup for timer-fill
     const kioskSwitch = document.getElementById('kiosk-switch');
-    if (kioskSwitch) {
-        kioskSwitch.addEventListener('click', toggleKiosk);
-    }
+    let timerFill = document.getElementById('timer-fill');
+    timerFill = document.createElement('span');
+    timerFill.id = 'timer-fill';
+    timerFill.className = 'timer-fill';
+    kioskSwitch.addEventListener('click', toggleKiosk);
     
     // Setup temperature toggle
     const tempToggle = document.getElementById('temp-toggle');
@@ -67,13 +69,20 @@ function setupKioskControl() {
 function toggleKiosk() {
     kioskMode = !kioskMode;
     const switchEl = document.getElementById('kiosk-switch');
+    const timerFill = document.getElementById('timer-fill');
 
     if (kioskMode) {
         startKioskMode();
         switchEl.classList.add('active');
+        if (timerFill) {
+            timerFill.classList.add('running');
+        }
     } else {
         stopKioskMode();
         switchEl.classList.remove('active');
+        if (timerFill) {
+            timerFill.classList.remove('running');
+        }
     }
 }
 
@@ -334,13 +343,15 @@ function formatMeasurement(pollutant, value) {
     }
 }
 
+
 function getCardinalDirection(degrees) {
     if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
-    
+
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const index = Math.round(degrees / 22.5) % 16;
     return directions[index];
 }
+
 
 function createTwoColumnPopup(stationName, measurements, timestamp = null, isRoadStation = false) {
     // Priority variables: Air quality + essential meteorology

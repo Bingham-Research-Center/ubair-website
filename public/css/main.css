@@ -49,6 +49,7 @@
 }
 
 .site-logo {
+    display: block;
     width: clamp(180px, 20vw, 300px);
     height: auto;
     flex-shrink: 0;
@@ -58,6 +59,35 @@
     filter: drop-shadow(0 4px 12px rgba(0, 38, 58, 0.15));
     transition: all 0.3s ease;
 }
+.glade {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    border-radius: 8px;
+}
+.glade::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(
+        75deg,
+        white 0%,
+        lightblue 50%,
+        var(--usu-light-blue) 100%
+    );
+    transform: skewX(-20deg);
+    transition: left 0.8s ease;
+    pointer-events: none;
+}
+.glade:hover::before {
+    left: 150%;
+}
+
+
+
 
 .headlines-dashboard {
     flex: 1;
@@ -317,6 +347,7 @@
     min-height: 35px;
     z-index: 1000;
     box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    transition: 0.4s ease-in all;
 }
 .main-footer:hover {
     color: white;
@@ -766,5 +797,30 @@ main.content {
     color: var(--usu-light-blue);
 }
 
+/* Handles the timer-fill effect for the auto-cycle toggle */
+:root {
+    --kiosk-fill-duration: 4s;
+}
+.timer-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, var(--usu-light-blue), var(--usu-blue));
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0.4;
+    pointer-events: none;
+    transform-origin: center center;
+}
+.timer-fill.running {
+    animation: timer-fill var(--kiosk-fill-duration) linear infinite !important;
+}
+@keyframes timer-fill {
+    0% { transform: scale(0); }
+    50% { transform: scale(0.8); }
+    100% { transform: scale(1); }
+}
 
 /* Responsive Design - See mobile.css for comprehensive responsive styles */
