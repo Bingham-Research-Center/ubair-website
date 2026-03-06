@@ -1,5 +1,5 @@
 import { stations } from './config.js';
-import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation} from './mapUtils.js';
+import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent} from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 import { buildStationMeasurements } from './mapShared.js';
 
@@ -35,6 +35,7 @@ let currentStationIndex = 0;
 let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
+const AUTO_CYCLE_POPUP_DELAY_MS = 220;
 const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
 const AUTO_CYCLE_PAN_DURATION_S = 0.8;
 const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
@@ -52,7 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupKioskControl() {
     // Setup for timer-fill
     const kioskSwitch = document.getElementById('kiosk-switch');
-    let timerFill;
+    let timerFill = document.getElementById('timer-fill');
     timerFill = document.createElement('span');
     timerFill.id = 'timer-fill';
     timerFill.className = 'timer-fill';
@@ -341,6 +342,16 @@ function formatMeasurement(pollutant, value) {
             return { displayValue: Math.round(numValue * 10) / 10, unit: '' };
     }
 }
+
+
+function getCardinalDirection(degrees) {
+    if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
+
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const index = Math.round(degrees / 22.5) % 16;
+    return directions[index];
+}
+
 
 function createTwoColumnPopup(stationName, measurements, timestamp = null, isRoadStation = false) {
     // Priority variables: Air quality + essential meteorology
