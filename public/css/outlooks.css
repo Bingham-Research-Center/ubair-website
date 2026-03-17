@@ -84,13 +84,19 @@
     white-space: nowrap;
 }
 
-.risk-no, .risk-low {
+.risk-no {
     background: linear-gradient(135deg, #dcfce7, #bbf7d0);
     color: #15803d;
     border: 1px solid #22c55e;
 }
 
-.risk-moderate {
+.risk-low {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1e40af;
+    border: 1px solid #3b82f6;
+}
+
+.risk-some, .risk-moderate {
     background: linear-gradient(135deg, #fef3c7, #fde68a);
     color: #a16207;
     border: 1px solid #f59e0b;

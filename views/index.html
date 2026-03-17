@@ -267,6 +267,7 @@
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
+<script src="/public/js/outlook-highlight.js"></script>
 
 <script>
     // Store outside click handler reference to enable proper cleanup
@@ -385,16 +386,8 @@
             // Render markdown to HTML
             let renderedHtml = md.render(previewLines.join('\n'));
 
-            // Apply risk word highlighting (same as forecast_outlooks.js)
-            renderedHtml = renderedHtml
-                .replace(/\bNO RISK\b/gi, '<span class="risk-indicator risk-no">NO RISK</span>')
-                .replace(/\bLOW RISK\b/gi, '<span class="risk-indicator risk-low">LOW RISK</span>')
-                .replace(/\b(MODERATE|MEDIUM) RISK\b/gi, '<span class="risk-indicator risk-moderate">MODERATE RISK</span>')
-                .replace(/\bHIGH RISK\b/gi, '<span class="risk-indicator risk-high">HIGH RISK</span>')
-                .replace(/<strong>(NO|NONE)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-no">$1</span>')
-                .replace(/<strong>LOW<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-low">LOW</span>')
-                .replace(/<strong>(MODERATE|MEDIUM)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-moderate">$1</span>')
-                .replace(/<strong>HIGH<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-high">HIGH</span>');
+            // Apply risk word highlighting
+            renderedHtml = highlightRiskWords(renderedHtml);
 
             outlookSummary.innerHTML = `<div class="markdown-content">${renderedHtml}</div>`;
 
