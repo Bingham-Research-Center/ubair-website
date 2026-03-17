@@ -1,5 +1,8 @@
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
+import jpegjs from 'jpeg-js';
+import pngjs from 'pngjs';
+import gifuct from 'gifuct-js';
 import {
     getConfidenceLevel,
     calculateCompositeConfidence,
@@ -9,6 +12,9 @@ import {
 
 // Cache for 5 minutes to avoid excessive processing
 const cache = new NodeCache({ stdTTL: 300, checkperiod: 60 });
+const { PNG } = pngjs;
+const { parseGIF, decompressFrames } = gifuct;
+const MAX_GIF_FRAMES = 8;
 
 class SnowDetectionService {
     constructor() {
@@ -44,10 +50,12 @@ class SnowDetectionService {
      * @param {string} imageUrl - URL of the camera image
      * @param {string} cameraId - Camera identifier
      * @param {Object} weatherData - Optional weather station data for temperature
+     * @param {string|null} analysisKey - Optional key for per-view cache/history isolation
      * @returns {Promise<Object>} Snow detection result
      */
-    async analyzeImageForSnow(imageUrl, cameraId, weatherData = null) {
-        const cacheKey = `snow_detection_${cameraId}`;
+    async analyzeImageForSnow(imageUrl, cameraId, weatherData = null, analysisKey = null) {
+        const historyKey = analysisKey || cameraId;
+        const cacheKey = `snow_detection_${historyKey}`;
         const cached = cache.get(cacheKey);
         if (cached) return cached;
 
@@ -57,6 +65,7 @@ class SnowDetectionService {
             if (temperatureCheck.skipAnalysis) {
                 const result = {
                     cameraId,
+                    analysisKey: historyKey,
                     timestamp: Date.now(),
                     snowDetected: false,
                     snowLevel: 'none',
@@ -65,6 +74,9 @@ class SnowDetectionService {
                     temperatureOverride: true,
                     reason: temperatureCheck.reason,
                     temperature: temperatureCheck.temperature,
+                    contentType: null,
+                    isAnimated: false,
+                    frameAggregation: null,
                     processingTime: 1 // Minimal processing time for temperature override
                 };
                 cache.set(cacheKey, result);
@@ -84,22 +96,35 @@ class SnowDetectionService {
             }
 
             const imageBuffer = await response.buffer();
+            const responseContentType = response.headers.get('content-type');
             
             // Analyze the image for snow
-            const analysisResult = await this.processImageForSnow(imageBuffer, cameraId, temperatureCheck);
+            const analysisResult = await this.processImageForSnow(
+                imageBuffer,
+                historyKey,
+                temperatureCheck,
+                responseContentType
+            );
+            analysisResult.cameraId = cameraId;
+            analysisResult.analysisKey = historyKey;
             
             // Store in history for temporal analysis
-            this.updateDetectionHistory(cameraId, analysisResult);
+            this.updateDetectionHistory(historyKey, analysisResult);
             
             // Apply temporal smoothing
-            const smoothedResult = this.applyTemporalSmoothing(cameraId, analysisResult);
+            const smoothedResult = this.applyTemporalSmoothing(historyKey, analysisResult);
+            smoothedResult.cameraId = cameraId;
+            smoothedResult.analysisKey = historyKey;
             
             cache.set(cacheKey, smoothedResult);
             return smoothedResult;
 
         } catch (error) {
             console.error(`Snow detection error for camera ${cameraId}:`, error.message);
-            return this.getDefaultResult(cameraId, 'error');
+            return {
+                ...this.getDefaultResult(cameraId, 'error'),
+                analysisKey: historyKey
+            };
         }
     }
 
@@ -239,39 +264,64 @@ class SnowDetectionService {
 
     /**
      * Process image buffer to detect snow conditions
-     * This is a simplified implementation - in production, you'd use image processing libraries
      * @param {Buffer} imageBuffer - Image data
      * @param {string} cameraId - Camera identifier
      * @param {Object} temperatureCheck - Temperature analysis result
+     * @param {string|null} responseContentType - HTTP content type header from camera response
      * @returns {Promise<Object>} Analysis result
      */
-    async processImageForSnow(imageBuffer, cameraId, temperatureCheck = null) {
-        // For this implementation, we'll simulate snow detection based on image characteristics
-        // In a real implementation, you'd use libraries like sharp, jimp, or opencv4nodejs
-        
+    async processImageForSnow(imageBuffer, cameraId, temperatureCheck = null, responseContentType = null) {
         const imageSize = imageBuffer.length;
         const timestamp = Date.now();
-        
-        // Simulate white pixel analysis based on image entropy and size
-        let whitePixelPercentage = this.simulateWhitePixelAnalysis(imageBuffer, cameraId);
-        
-        // Apply temperature factor to adjust sensitivity
-        if (temperatureCheck && temperatureCheck.temperatureFactor !== undefined) {
-            whitePixelPercentage *= temperatureCheck.temperatureFactor;
+
+        let whitePixelPercentage = 0;
+        let snowLevel = 'none';
+        let confidence = 0;
+        let contentType = this.detectImageMime(imageBuffer, responseContentType);
+        let isAnimated = false;
+        let frameAggregation = null;
+
+        if (contentType === 'image/gif') {
+            const gifData = this.decodeGifFramesForSampling(imageBuffer, MAX_GIF_FRAMES);
+            const frameResults = gifData.frames.map((frame) => {
+                const frameCameraId = `${cameraId}:frame:${frame.frameIndex}`;
+                return this.analyzeFrameForSnow(frame, frameCameraId, temperatureCheck);
+            });
+            const aggregatedFrames = this.aggregateFrameDetections(frameResults);
+            whitePixelPercentage = aggregatedFrames.whitePixelPercentage;
+            snowLevel = aggregatedFrames.snowLevel;
+            confidence = aggregatedFrames.confidence;
+            isAnimated = gifData.totalFrames > 1;
+            frameAggregation = {
+                framesAvailable: gifData.totalFrames,
+                framesSampled: frameResults.length,
+                policy: 'worst_case_max',
+                confidenceSpread: aggregatedFrames.confidenceSpread
+            };
+        } else if (contentType === 'image/png' || contentType === 'image/jpeg') {
+            const decodedImage = this.decodeStillImageToRgba(imageBuffer, contentType);
+            whitePixelPercentage = this.analyzeRgbaPixelData(decodedImage.data);
+            whitePixelPercentage = this.applyTemperatureFactor(whitePixelPercentage, temperatureCheck);
+            snowLevel = this.determineSnowLevel(whitePixelPercentage);
+            confidence = this.calculateConfidence(
+                whitePixelPercentage,
+                snowLevel,
+                cameraId,
+                temperatureCheck
+            );
+        } else {
+            contentType = 'image/raw-rgb';
+            whitePixelPercentage = this.simulateWhitePixelAnalysis(imageBuffer, cameraId);
+            whitePixelPercentage = this.applyTemperatureFactor(whitePixelPercentage, temperatureCheck);
+            snowLevel = this.determineSnowLevel(whitePixelPercentage);
+            confidence = this.calculateConfidence(
+                whitePixelPercentage,
+                snowLevel,
+                cameraId,
+                temperatureCheck
+            );
         }
-        
-        // Determine snow level
-        const snowLevel = this.determineSnowLevel(whitePixelPercentage);
 
-        // Calculate confidence based on various factors using new taxonomy
-        const confidence = this.calculateConfidence(
-            whitePixelPercentage,
-            snowLevel,
-            cameraId,
-            temperatureCheck
-        );
-
-        // Get semantic confidence level
         const confidenceLevel = getConfidenceLevel(confidence);
 
         return {
@@ -288,41 +338,245 @@ class SnowDetectionService {
                 color: confidenceLevel.color,
                 icon: confidenceLevel.icon
             },
+            contentType,
+            isAnimated,
+            frameAggregation,
             imageSize,
             temperatureInfo: temperatureCheck,
             processingTime: Date.now() - timestamp
         };
     }
 
-    /**
-     * Analyze actual pixel data to detect white pixels (snow)
-     * @param {Buffer} imageBuffer - Image data (RGB format)
-     * @param {string} cameraId - Camera identifier
-     * @returns {number} White pixel percentage
-     */
-    simulateWhitePixelAnalysis(imageBuffer, cameraId) {
-        // Assume buffer is RGB format (3 bytes per pixel)
-        const pixelCount = Math.floor(imageBuffer.length / 3);
+    detectImageMime(imageBuffer, responseContentType = null) {
+        const headerType = typeof responseContentType === 'string'
+            ? responseContentType.toLowerCase()
+            : '';
 
+        if (headerType.includes('image/jpeg') || headerType.includes('image/jpg')) {
+            return 'image/jpeg';
+        }
+        if (headerType.includes('image/png')) {
+            return 'image/png';
+        }
+        if (headerType.includes('image/gif')) {
+            return 'image/gif';
+        }
+
+        if (imageBuffer.length >= 8 &&
+            imageBuffer[0] === 0x89 &&
+            imageBuffer[1] === 0x50 &&
+            imageBuffer[2] === 0x4e &&
+            imageBuffer[3] === 0x47) {
+            return 'image/png';
+        }
+
+        if (imageBuffer.length >= 3 &&
+            imageBuffer[0] === 0xff &&
+            imageBuffer[1] === 0xd8 &&
+            imageBuffer[2] === 0xff) {
+            return 'image/jpeg';
+        }
+
+        if (imageBuffer.length >= 6) {
+            const signature = imageBuffer.slice(0, 6).toString('ascii');
+            if (signature === 'GIF87a' || signature === 'GIF89a') {
+                return 'image/gif';
+            }
+        }
+
+        return 'image/raw-rgb';
+    }
+
+    decodeStillImageToRgba(imageBuffer, mimeType) {
+        if (mimeType === 'image/png') {
+            const pngImage = PNG.sync.read(imageBuffer);
+            return {
+                width: pngImage.width,
+                height: pngImage.height,
+                data: pngImage.data
+            };
+        }
+
+        if (mimeType === 'image/jpeg') {
+            const jpegImage = jpegjs.decode(imageBuffer, { useTArray: true });
+            return {
+                width: jpegImage.width,
+                height: jpegImage.height,
+                data: jpegImage.data
+            };
+        }
+
+        throw new Error(`Unsupported still image type: ${mimeType}`);
+    }
+
+    getGifFrameSampleIndexes(totalFrames, maxFrames = MAX_GIF_FRAMES) {
+        if (totalFrames <= 0) return [];
+        if (totalFrames <= maxFrames) {
+            return Array.from({ length: totalFrames }, (_, i) => i);
+        }
+
+        const indexes = new Set();
+        const step = (totalFrames - 1) / (maxFrames - 1);
+
+        for (let i = 0; i < maxFrames; i++) {
+            indexes.add(Math.round(i * step));
+        }
+
+        const sortedIndexes = Array.from(indexes).sort((a, b) => a - b);
+        if (sortedIndexes.length >= maxFrames) {
+            return sortedIndexes.slice(0, maxFrames);
+        }
+
+        for (let i = 0; i < totalFrames && sortedIndexes.length < maxFrames; i++) {
+            if (!indexes.has(i)) {
+                sortedIndexes.push(i);
+            }
+        }
+
+        return sortedIndexes.sort((a, b) => a - b);
+    }
+
+    decodeGifFramesForSampling(imageBuffer, maxFrames = MAX_GIF_FRAMES) {
+        const gif = parseGIF(imageBuffer);
+        const decompressedFrames = decompressFrames(gif, true);
+        const totalFrames = decompressedFrames.length;
+
+        if (totalFrames === 0) {
+            throw new Error('GIF has no decodable frames');
+        }
+
+        const width = gif?.lsd?.width || decompressedFrames[0]?.dims?.width || 0;
+        const height = gif?.lsd?.height || decompressedFrames[0]?.dims?.height || 0;
+        if (!width || !height) {
+            throw new Error('GIF dimensions unavailable');
+        }
+
+        const sampledIndexes = new Set(this.getGifFrameSampleIndexes(totalFrames, maxFrames));
+        const composited = new Uint8ClampedArray(width * height * 4);
+        const sampledFrames = [];
+
+        decompressedFrames.forEach((frame, frameIndex) => {
+            const { left, top, width: frameWidth, height: frameHeight } = frame.dims;
+            const patch = frame.patch;
+
+            for (let y = 0; y < frameHeight; y++) {
+                for (let x = 0; x < frameWidth; x++) {
+                    const src = (y * frameWidth + x) * 4;
+                    const destX = left + x;
+                    const destY = top + y;
+                    if (destX < 0 || destY < 0 || destX >= width || destY >= height) continue;
+
+                    const dest = (destY * width + destX) * 4;
+                    composited[dest] = patch[src];
+                    composited[dest + 1] = patch[src + 1];
+                    composited[dest + 2] = patch[src + 2];
+                    composited[dest + 3] = patch[src + 3];
+                }
+            }
+
+            if (sampledIndexes.has(frameIndex)) {
+                sampledFrames.push({
+                    frameIndex,
+                    width,
+                    height,
+                    data: new Uint8ClampedArray(composited)
+                });
+            }
+        });
+
+        return {
+            totalFrames,
+            frames: sampledFrames
+        };
+    }
+
+    applyTemperatureFactor(whitePixelPercentage, temperatureCheck = null) {
+        if (!temperatureCheck || temperatureCheck.temperatureFactor === undefined) {
+            return whitePixelPercentage;
+        }
+
+        return whitePixelPercentage * temperatureCheck.temperatureFactor;
+    }
+
+    analyzeFrameForSnow(frame, cameraId, temperatureCheck = null) {
+        let whitePixelPercentage = this.analyzeRgbaPixelData(frame.data);
+        whitePixelPercentage = this.applyTemperatureFactor(whitePixelPercentage, temperatureCheck);
+        const snowLevel = this.determineSnowLevel(whitePixelPercentage);
+        const confidence = this.calculateConfidence(
+            whitePixelPercentage,
+            snowLevel,
+            cameraId,
+            temperatureCheck
+        );
+
+        return {
+            frameIndex: frame.frameIndex,
+            snowLevel,
+            confidence,
+            whitePixelPercentage
+        };
+    }
+
+    aggregateFrameDetections(frameResults = []) {
+        if (!frameResults.length) {
+            return {
+                snowLevel: 'none',
+                confidence: 0,
+                whitePixelPercentage: 0,
+                confidenceSpread: 0
+            };
+        }
+
+        const worstFrame = frameResults.reduce((worst, current) => {
+            const currentRank = this.getSnowSeverityRank(current.snowLevel);
+            const worstRank = this.getSnowSeverityRank(worst.snowLevel);
+
+            if (currentRank > worstRank) {
+                return current;
+            }
+            if (currentRank === worstRank && current.confidence > worst.confidence) {
+                return current;
+            }
+
+            return worst;
+        }, frameResults[0]);
+
+        const confidences = frameResults.map((frame) => frame.confidence);
+        const confidenceSpread = Math.max(...confidences) - Math.min(...confidences);
+
+        return {
+            snowLevel: worstFrame.snowLevel,
+            confidence: Math.max(...confidences),
+            whitePixelPercentage: worstFrame.whitePixelPercentage,
+            confidenceSpread: Math.max(0, confidenceSpread)
+        };
+    }
+
+    analyzeRgbaPixelData(pixelData) {
+        const stride = 4;
+        const pixelCount = Math.floor(pixelData.length / stride);
         if (pixelCount === 0) return 0;
 
         let whitePixelCount = 0;
+        let analyzedPixelCount = 0;
 
-        // Analyze each pixel
-        for (let i = 0; i < imageBuffer.length; i += 3) {
-            const r = imageBuffer[i];
-            const g = imageBuffer[i + 1];
-            const b = imageBuffer[i + 2];
+        for (let i = 0; i < pixelData.length; i += stride) {
+            const r = pixelData[i];
+            const g = pixelData[i + 1];
+            const b = pixelData[i + 2];
+            const alpha = pixelData[i + 3];
 
-            // Calculate brightness (average of RGB)
+            if (alpha !== undefined && alpha < 16) {
+                continue;
+            }
+
+            analyzedPixelCount++;
+
             const brightness = (r + g + b) / 3;
-
-            // Calculate saturation (how colorful vs grey/white)
             const max = Math.max(r, g, b);
             const min = Math.min(r, g, b);
             const saturation = max === 0 ? 0 : ((max - min) / max) * 100;
 
-            // Calculate RGB balance (how close R, G, B are to each other)
             const avgRGB = (r + g + b) / 3;
             const rDiff = Math.abs(r - avgRGB);
             const gDiff = Math.abs(g - avgRGB);
@@ -330,18 +584,57 @@ class SnowDetectionService {
             const maxDiff = Math.max(rDiff, gDiff, bDiff);
             const rgbBalance = avgRGB === 0 ? 0 : 1 - (maxDiff / avgRGB);
 
-            // Detect white pixels (snow) using thresholds
             const isWhite = brightness >= this.colorParams.brightnessThreshold &&
-                           saturation <= this.colorParams.saturationThreshold &&
-                           rgbBalance >= this.colorParams.rgbBalanceThreshold;
+                saturation <= this.colorParams.saturationThreshold &&
+                rgbBalance >= this.colorParams.rgbBalanceThreshold;
 
             if (isWhite) {
                 whitePixelCount++;
             }
         }
 
-        const whitePixelPercentage = (whitePixelCount / pixelCount) * 100;
-        return whitePixelPercentage;
+        if (analyzedPixelCount === 0) return 0;
+        return (whitePixelCount / analyzedPixelCount) * 100;
+    }
+
+    /**
+     * Fallback analyzer for raw synthetic RGB buffers (used in tests)
+     * @param {Buffer} imageBuffer - Image data (RGB format)
+     * @returns {number} White pixel percentage
+     */
+    simulateWhitePixelAnalysis(imageBuffer) {
+        const pixelCount = Math.floor(imageBuffer.length / 3);
+        if (pixelCount === 0) return 0;
+
+        let whitePixelCount = 0;
+
+        for (let i = 0; i < imageBuffer.length; i += 3) {
+            const r = imageBuffer[i];
+            const g = imageBuffer[i + 1];
+            const b = imageBuffer[i + 2];
+
+            const brightness = (r + g + b) / 3;
+            const max = Math.max(r, g, b);
+            const min = Math.min(r, g, b);
+            const saturation = max === 0 ? 0 : ((max - min) / max) * 100;
+
+            const avgRGB = (r + g + b) / 3;
+            const rDiff = Math.abs(r - avgRGB);
+            const gDiff = Math.abs(g - avgRGB);
+            const bDiff = Math.abs(b - avgRGB);
+            const maxDiff = Math.max(rDiff, gDiff, bDiff);
+            const rgbBalance = avgRGB === 0 ? 0 : 1 - (maxDiff / avgRGB);
+
+            const isWhite = brightness >= this.colorParams.brightnessThreshold &&
+                saturation <= this.colorParams.saturationThreshold &&
+                rgbBalance >= this.colorParams.rgbBalanceThreshold;
+
+            if (isWhite) {
+                whitePixelCount++;
+            }
+        }
+
+        return (whitePixelCount / pixelCount) * 100;
     }
 
     /**
@@ -571,6 +864,9 @@ class SnowDetectionService {
             snowLevel: 'unknown',
             whitePixelPercentage: 0,
             confidence: 0,
+            contentType: null,
+            isAnimated: false,
+            frameAggregation: null,
             error: errorType,
             processingTime: 0
         };
@@ -624,6 +920,172 @@ class SnowDetectionService {
     }
 
     /**
+     * Normalize camera view status text
+     * @param {string} status - Raw status string
+     * @returns {string} Normalized status
+     */
+    normalizeViewStatus(status) {
+        if (typeof status !== 'string') return '';
+        return status.trim();
+    }
+
+    /**
+     * Determine if a camera view should be analyzed
+     * @param {Object} view - Camera view object
+     * @returns {boolean} True if view has a usable URL and is not marked offline
+     */
+    isViewAnalyzable(view) {
+        if (!view || typeof view.url !== 'string' || view.url.trim().length === 0) {
+            return false;
+        }
+
+        const status = this.normalizeViewStatus(view.status).toLowerCase();
+        if (!status) return true;
+
+        const offlineTerms = ['offline', 'down', 'no feed', 'unavailable'];
+        return !offlineTerms.some(term => status.includes(term));
+    }
+
+    /**
+     * Severity rank used for worst-case aggregation
+     * @param {string} snowLevel - Snow level label
+     * @returns {number} Severity rank
+     */
+    getSnowSeverityRank(snowLevel) {
+        switch (snowLevel) {
+            case 'heavy': return 3;
+            case 'moderate': return 2;
+            case 'light': return 1;
+            case 'none': return 0;
+            default: return -1;
+        }
+    }
+
+    /**
+     * Map snow level to frontend display state
+     * @param {string} snowLevel - Snow level label
+     * @returns {string} Display state value
+     */
+    mapSnowLevelToDisplayState(snowLevel) {
+        switch (snowLevel) {
+            case 'none': return 'clear';
+            case 'light': return 'light';
+            case 'moderate': return 'moderate';
+            case 'heavy': return 'heavy';
+            default: return 'clear';
+        }
+    }
+
+    /**
+     * Build a default per-view record when the view cannot be analyzed
+     * @param {number} viewIndex - View index
+     * @param {string} description - View description
+     * @param {string} status - View status
+     * @param {string} error - Error code
+     * @returns {Object} View-level detection record
+     */
+    buildDefaultViewDetection(viewIndex, description, status, error) {
+        return {
+            viewIndex,
+            description,
+            status,
+            snowDetected: false,
+            snowLevel: 'unknown',
+            confidence: 0,
+            temperatureOverride: false,
+            temperature: null,
+            contentType: null,
+            isAnimated: false,
+            frameAggregation: null,
+            whitePixelPercentage: 0,
+            timestamp: Date.now(),
+            error
+        };
+    }
+
+    /**
+     * Aggregate per-view detections into one camera-level detection
+     * @param {string} cameraId - Camera identifier
+     * @param {Array} perViewDetections - View-level detections
+     * @param {number} viewsAvailable - Total views reported by camera
+     * @returns {Object} Aggregated camera detection
+     */
+    aggregateCameraViewDetections(cameraId, perViewDetections = [], viewsAvailable = 0) {
+        const validSnowLevels = new Set(['none', 'light', 'moderate', 'heavy']);
+        const successfulViews = perViewDetections.filter(
+            (view) => !view.error && validSnowLevels.has(view.snowLevel)
+        );
+
+        if (successfulViews.length === 0) {
+            return {
+                ...this.getDefaultResult(cameraId, viewsAvailable > 0 ? 'no_valid_views' : 'no_image_url'),
+                perViewDetections,
+                aggregation: {
+                    policy: 'worst_case_max',
+                    mixed: false,
+                    confidenceSpread: 0,
+                    viewsAvailable,
+                    viewsAnalyzed: 0
+                },
+                displayState: 'clear'
+            };
+        }
+
+        const worstCaseView = successfulViews.reduce((worst, current) => {
+            const currentRank = this.getSnowSeverityRank(current.snowLevel);
+            const worstRank = this.getSnowSeverityRank(worst.snowLevel);
+
+            if (currentRank > worstRank) {
+                return current;
+            }
+
+            if (currentRank === worstRank && (current.confidence || 0) > (worst.confidence || 0)) {
+                return current;
+            }
+
+            return worst;
+        }, successfulViews[0]);
+
+        const confidences = successfulViews.map((view) => view.confidence || 0);
+        const maxConfidence = Math.max(...confidences);
+        const minConfidence = Math.min(...confidences);
+        const confidenceSpread = Math.max(0, maxConfidence - minConfidence);
+        const mixed = confidenceSpread >= 0.25;
+        const confidenceLevel = getConfidenceLevel(maxConfidence);
+
+        return {
+            cameraId,
+            timestamp: Date.now(),
+            snowDetected: worstCaseView.snowLevel !== 'none',
+            snowLevel: worstCaseView.snowLevel,
+            whitePixelPercentage: worstCaseView.whitePixelPercentage || 0,
+            confidence: maxConfidence,
+            confidenceLevel: {
+                name: confidenceLevel.name,
+                displayText: confidenceLevel.displayText,
+                badge: confidenceLevel.badge,
+                color: confidenceLevel.color,
+                icon: confidenceLevel.icon
+            },
+            temperatureOverride: successfulViews.every((view) => view.temperatureOverride),
+            temperature: worstCaseView.temperature,
+            temperatureInfo: worstCaseView.temperatureInfo || null,
+            contentType: worstCaseView.contentType || null,
+            isAnimated: successfulViews.some((view) => view.isAnimated === true),
+            frameAggregation: worstCaseView.frameAggregation || null,
+            perViewDetections,
+            aggregation: {
+                policy: 'worst_case_max',
+                mixed,
+                confidenceSpread,
+                viewsAvailable,
+                viewsAnalyzed: successfulViews.length
+            },
+            displayState: mixed ? 'mixed' : this.mapSnowLevelToDisplayState(worstCaseView.snowLevel)
+        };
+    }
+
+    /**
      * Analyze multiple cameras in batch with weather data
      * @param {Array} cameras - Array of camera objects with id and views
      * @param {Array} weatherStations - Array of weather station data
@@ -644,20 +1106,58 @@ class SnowDetectionService {
                 Promise.allSettled(
                     chunk.map(async (camera) => {
                         try {
-                            // Use first view for analysis (could be enhanced to analyze multiple views)
-                            const imageUrl = camera.views && camera.views.length > 0 ? camera.views[0].url : null;
-
-                            if (!imageUrl) {
-                                return this.getDefaultResult(camera.id, 'no_image_url');
-                            }
+                            const cameraId = camera.id.toString();
+                            const views = Array.isArray(camera.views) ? camera.views : [];
 
                             // Find nearest weather station for temperature data
                             const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+                            const perViewDetections = await Promise.all(
+                                views.map(async (view, viewIndex) => {
+                                    const description = view?.description || `View ${viewIndex + 1}`;
+                                    const status = this.normalizeViewStatus(view?.status);
+                                    const imageUrl = typeof view?.url === 'string' ? view.url.trim() : '';
 
-                            const result = await this.analyzeImageForSnow(
-                                imageUrl,
-                                camera.id.toString(),
-                                nearestStation
+                                    if (!this.isViewAnalyzable({ ...view, url: imageUrl })) {
+                                        return this.buildDefaultViewDetection(
+                                            viewIndex,
+                                            description,
+                                            status,
+                                            imageUrl ? 'view_offline' : 'no_image_url'
+                                        );
+                                    }
+
+                                    const analysisKey = `${cameraId}:view:${viewIndex}`;
+                                    const viewResult = await this.analyzeImageForSnow(
+                                        imageUrl,
+                                        cameraId,
+                                        nearestStation,
+                                        analysisKey
+                                    );
+
+                                    return {
+                                        viewIndex,
+                                        description,
+                                        status,
+                                        snowDetected: viewResult.snowDetected,
+                                        snowLevel: viewResult.snowLevel,
+                                        confidence: viewResult.confidence,
+                                        temperatureOverride: viewResult.temperatureOverride || false,
+                                        temperature: viewResult.temperature ?? null,
+                                        temperatureInfo: viewResult.temperatureInfo || null,
+                                        whitePixelPercentage: viewResult.whitePixelPercentage || 0,
+                                        contentType: viewResult.contentType || null,
+                                        isAnimated: viewResult.isAnimated === true,
+                                        frameAggregation: viewResult.frameAggregation || null,
+                                        timestamp: viewResult.timestamp || Date.now(),
+                                        error: viewResult.error || null
+                                    };
+                                })
+                            );
+
+                            const aggregatedResult = this.aggregateCameraViewDetections(
+                                cameraId,
+                                perViewDetections,
+                                views.length
                             );
 
                             const MAX_RWIS_DISTANCE_MI = 10;
@@ -667,7 +1167,7 @@ class SnowDetectionService {
                             const rwisUsable = nearestStation && stationDistance <= MAX_RWIS_DISTANCE_MI;
 
                             return {
-                                ...result,
+                                ...aggregatedResult,
                                 cameraName: camera.name,
                                 cameraLocation: { lat: camera.lat, lng: camera.lng },
                                 nearestStationDistance: stationDistance,
@@ -684,7 +1184,18 @@ class SnowDetectionService {
                             };
                         } catch (error) {
                             console.error(`Error analyzing camera ${camera.id}:`, error.message);
-                            return this.getDefaultResult(camera.id.toString(), 'analysis_error');
+                            return {
+                                ...this.getDefaultResult(camera.id.toString(), 'analysis_error'),
+                                perViewDetections: [],
+                                aggregation: {
+                                    policy: 'worst_case_max',
+                                    mixed: false,
+                                    confidenceSpread: 0,
+                                    viewsAvailable: Array.isArray(camera.views) ? camera.views.length : 0,
+                                    viewsAnalyzed: 0
+                                },
+                                displayState: 'clear'
+                            };
                         }
                     })
                 )
