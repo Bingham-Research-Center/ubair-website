@@ -66,6 +66,12 @@ async function loadSidebar() {
             disclaimer.querySelector('p').textContent = pageDisclaimer;
         }
 
+        // Update the copyright year to current year
+        if (disclaimer) {
+            const currentYear = new Date().getFullYear();
+            disclaimer.querySelector('p').textContent = disclaimer.querySelector('p').textContent.replace(/©\d{4}/g, '©' + currentYear);
+        }
+
         // Load mobile menu script after sidebar is loaded
         if (!document.querySelector('script[src="/public/js/mobile-menu.js"]')) {
             const mobileMenuScript = document.createElement('script');
