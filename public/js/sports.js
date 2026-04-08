@@ -53,8 +53,29 @@ function calculateWindChill() {
     return 0;
 }
 
-function getWindDirection() {
-    return 0;
+async function getWindDirection() {
+    try {
+        const { observations } = await fetchLiveObservations();
+
+        // Get data from a representative station
+        const stations = Object.keys(observations['Wind Direction'] || {});
+        if (stations.length === 0) return "N/A";
+
+        const station = stations[0];
+        const windDirectionDegrees = observations['Wind Direction']?.[station];
+
+        if (windDirectionDegrees === undefined || windDirectionDegrees === null || isNaN(windDirectionDegrees)) {
+            return "N/A";
+        }
+
+        // Convert degrees to cardinal direction
+        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const index = Math.round(windDirectionDegrees / 22.5) % 16;
+        return directions[index];
+    } catch (error) {
+        console.error('Error getting wind direction:', error);
+        return "N/A";
+    }
 }
 
 function getWindInfluence() {
@@ -66,16 +87,16 @@ async function updateSportsDashboard() {
     try {
         const { observations, metadata } = await fetchLiveObservations();
 
-        // Get data from a representative station (e.g., first available)
         const stations = Object.keys(observations.Temperature || {});
         if (stations.length === 0) return;
 
-        const station = stations[0]; // Use first station
+        const station = stations[0];
 
         const feltTemp = await calculateTemperature();
-        document.querySelector('.condition-card:nth-child(1) .current-value').textContent = (typeof feltTemp === 'number' ? feltTemp.toString() + " °F" : feltTemp);
+        const windDir = await getWindDirection();
+        document.querySelector('.condition-card:nth-child(1) .current-value').textContent = feltTemp.toString() + " °F";
         document.querySelector('.condition-card:nth-child(2) .current-value').textContent = "N/A °F";
-        document.querySelector('.condition-card:nth-child(3) .current-value').textContent = "N/A";
+        document.querySelector('.condition-card:nth-child(3) .current-value').textContent = windDir;
         document.querySelector('.condition-card:nth-child(4) .current-value').textContent = "N/A °F";
         document.querySelector('.condition-card:nth-child(5) .current-value').textContent = "N/A";
         document.querySelector('.condition-card:nth-child(6) .current-value').textContent = "N/A";
