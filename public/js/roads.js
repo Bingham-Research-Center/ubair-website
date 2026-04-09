@@ -133,10 +133,15 @@ class RoadWeatherMap {
         this.mountainPassMarkers = new Map();
         this.restAreaMarkers = new Map();
         this.refreshTimer = null;
+
+        this.cameraCycleActive = false;
+        this.cameraCycleInterval = null;
+        this.cameraCycleIndex = 0;
     }
 
     init() {
         this.initMap();
+        this.setupCameraCycleControl();
         this.addLegend();
         this.loadRoadWeatherData();
         this.loadTrafficEvents();
@@ -727,6 +732,70 @@ class RoadWeatherMap {
                 this.map.removeLayer(marker);
             }
         });
+    }
+
+    setupCameraCycleControl() {
+        const control = L.control({ position: 'topleft' });
+
+        control.onAdd = () => {
+            const div = L.DomUtil.create('div', 'camera-cycle-control');
+            div.innerHTML = `
+                <div class="camera-cycle-container">
+                    <label class="camera-cycle-label">Auto-cycle cameras:</label>
+                    <div class="camera-cycle-switch" id="camera-cycle-toggle">
+                        <div class="camera-cycle-slider">
+                            <div class="camera-cycle-timer-fill" id="camera-cycle-timer-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            return div;
+        };
+
+        control.addTo(this.map);
+
+        const toggle = document.getElementById('camera-cycle-toggle');
+        const timerFill = document.getElementById('camera-cycle-timer-fill');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', () => {
+            this.cameraCycleActive = !this.cameraCycleActive;
+            if (this.cameraCycleActive) {
+                toggle.classList.add('active');
+                if (timerFill) timerFill.style.animation = 'camera-cycle-timer 8s linear infinite';
+                this.startCameraCycle();
+            } else {
+                toggle.classList.remove('active');
+                if (timerFill) timerFill.style.animation = 'none';
+                this.stopCameraCycle();
+            }
+        });
+    }
+
+    startCameraCycle() {
+        const visible = Array.from(this.cameraMarkers.values()).filter(m => this.map.hasLayer(m));
+        if (visible.length === 0) return;
+
+        this.cameraCycleIndex = 0;
+        visible[0].openPopup();
+
+        this.cameraCycleInterval = setInterval(() => {
+            const current = Array.from(this.cameraMarkers.values()).filter(m => this.map.hasLayer(m));
+            if (current.length === 0) return;
+            this.map.closePopup();
+            this.cameraCycleIndex = (this.cameraCycleIndex + 1) % current.length;
+            current[this.cameraCycleIndex].openPopup();
+        }, 8000);
+    }
+
+    stopCameraCycle() {
+        if (this.cameraCycleInterval) {
+            clearInterval(this.cameraCycleInterval);
+            this.cameraCycleInterval = null;
+        }
+        this.map.closePopup();
     }
 
     /**
