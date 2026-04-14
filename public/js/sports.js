@@ -1,5 +1,10 @@
 import { fetchLiveObservations } from './api.js';
 
+const baseball_avg_size = 9.2; //Inches
+const baseball_avg_weight = 5; //Ounces
+const football_avg_size = 11; //Length in Inches
+const football_avg_weight = 14.2; //Ounces
+
 // Function to convert degrees to cardinal direction
 function getCardinalDirection(degrees) {
     if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
@@ -44,6 +49,8 @@ async function calculateTemperature() {
 
         let feltTemp;
 
+        /*I don't even know what this does; The little grasp I had when I wrote this
+        * disapeared the second I stepped away. I will better document this soon*/
         if (temp > 80 && humidity !== undefined){
             const T = temp;
             const RH = humidity;
@@ -77,7 +84,7 @@ async function getWindData() {
         const { observations } = await fetchLiveObservations();
 
         const stations = Object.keys(observations['Wind Speed'] || {});
-        if (stations.length === 0) return { speed: null, direction: 'N/A' };
+        if (stations.length === 0) return { speed: null, direction: 'N/A', degrees: null };
 
         const station = stations[0];
         const windSpeed = observations['Wind Speed']?.[station];
@@ -85,11 +92,12 @@ async function getWindData() {
 
         const speed = windSpeed !== undefined ? Math.round(windSpeed) : null;
         const direction = windDirection !== undefined ? getCardinalDirection(windDirection) : 'N/A';
+        const degrees = windDirection !== undefined ? windDirection : null;
 
-        return { speed, direction };
+        return { speed, direction, degrees };
     } catch (error) {
         console.error('Error getting wind data:', error);
-        return { speed: null, direction: 'N/A' };
+        return { speed: null, direction: 'N/A', degrees: null };
     }
 }
 
@@ -98,8 +106,20 @@ async function getWindDirection() {
     return direction;
 }
 
-function getWindInfluence() {
-    return "N/A";
+async function getWindInfluence() {
+    try {
+        const { speed, degrees } = await getWindData();
+        if (speed === null || degrees === null) return "N/A";
+
+        /* Doesn't consider the direction of the wind or the ball really
+        * Just returns the general offset of the ball in inches*/
+        const crosswind = speed * Math.sin(degrees * Math.PI / 180);
+        const offset = Math.abs(crosswind) * 10;
+        return Math.round(offset);
+    } catch (error) {
+        console.error('Error calculating wind influence:', error);
+        return "N/A";
+    }
 }
 
 
@@ -109,6 +129,7 @@ async function updateSportsDashboard() {
         const currentTemp = await getCurrentTemperature();
         const feltTemp = await calculateTemperature();
         const { speed: windSpeed, direction: windDir } = await getWindData();
+        const windInfluence = await getWindInfluence();
 
         // Current Temperature
         const currentTempValue = currentTemp !== null ? currentTemp + " °F" : "--";
@@ -119,13 +140,15 @@ async function updateSportsDashboard() {
         // Wind Speed + Direction
         const windSpeedValue = windSpeed !== null ? windSpeed + " mph " : "-- ";
         document.querySelector('.condition-card:nth-child(3) .current-value').textContent = windSpeedValue + windDir;
+        // Wind Influence on Baseball
+        const windInfluenceValue = windInfluence !== "N/A" ? windInfluence + " in" : "--";
+        document.querySelector('.condition-card:nth-child(8) .current-value').textContent = windInfluenceValue;
 
         //Others
         document.querySelector('.condition-card:nth-child(4) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(5) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(6) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(7) .current-value').textContent = "--";
-        document.querySelector('.condition-card:nth-child(8) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(9) .current-value').textContent = "--";
 
     } catch (error) {
