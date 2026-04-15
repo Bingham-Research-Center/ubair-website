@@ -111,10 +111,10 @@ async function getWindInfluence() {
         const { speed, degrees } = await getWindData();
         if (speed === null || degrees === null) return "N/A";
 
-        /* Doesn't consider the direction of the wind or the ball really
-        * Just returns the general offset of the ball in inches*/
+        /* Now considers wind direction: positive offset means wind pushing ball to the right,
+        * negative means to the left (assuming standard baseball orientation)*/
         const crosswind = speed * Math.sin(degrees * Math.PI / 180);
-        const offset = Math.abs(crosswind) * 10;
+        const offset = crosswind * 10;
         return Math.round(offset);
     } catch (error) {
         console.error('Error calculating wind influence:', error);
@@ -122,6 +122,18 @@ async function getWindInfluence() {
     }
 }
 
+async function getFootballWindInfluence() {
+    try {
+        const { speed, degrees } = await getWindData();
+        if (speed === null || degrees === null) return "N/A";
+        const crosswind = speed * Math.sin(degrees * Math.PI / 180);
+        const offset = crosswind * 5; // Reduced multiplier for heavier football
+        return Math.round(offset);
+    } catch (error) {
+        console.error('Error calculating football wind influence:', error);
+        return "N/A";
+    }
+}
 
 async function updateSportsDashboard() {
     try {
@@ -130,6 +142,7 @@ async function updateSportsDashboard() {
         const feltTemp = await calculateTemperature();
         const { speed: windSpeed, direction: windDir } = await getWindData();
         const windInfluence = await getWindInfluence();
+        const footballWindInfluence = await getFootballWindInfluence();
 
         // Current Temperature
         const currentTempValue = currentTemp !== null ? currentTemp + " °F" : "--";
@@ -143,13 +156,15 @@ async function updateSportsDashboard() {
         // Wind Influence on Baseball
         const windInfluenceValue = windInfluence !== "N/A" ? windInfluence + " in" : "--";
         document.querySelector('.condition-card:nth-child(8) .current-value').textContent = windInfluenceValue;
+        // Wind Influence on Football
+        const footballWindInfluenceValue = footballWindInfluence !== "N/A" ? footballWindInfluence + " in" : "--";
+        document.querySelector('.condition-card:nth-child(9) .current-value').textContent = footballWindInfluenceValue;
 
         //Others
         document.querySelector('.condition-card:nth-child(4) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(5) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(6) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(7) .current-value').textContent = "--";
-        document.querySelector('.condition-card:nth-child(9) .current-value').textContent = "--";
 
     } catch (error) {
         console.error('Error updating sports dashboard:', error);
