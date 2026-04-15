@@ -106,7 +106,7 @@ async function getWindDirection() {
 
 //Calculate the winds influence/drag on a ball for every 6 feet
 async function getWindInfluenceOnBall(weight, ballSpeed) {
-    const segmentDistance = 1.8288;
+    const segmentDistance = 6;
 
     try {
         const { speed, degrees } = await getWindData();
@@ -114,8 +114,8 @@ async function getWindInfluenceOnBall(weight, ballSpeed) {
 
         const crosswind = speed * Math.sin(degrees * Math.PI / 180);
         const time = segmentDistance / ballSpeed;
-        const driftMeters = crosswind * time;
-        const driftInches = driftMeters * 39.3701;
+        const driftFeet = crosswind * time;
+        const driftInches = driftFeet * 39.3701;
         return driftInches;
     } catch (error) {
         console.error('Error calculating wind influence:', error);
