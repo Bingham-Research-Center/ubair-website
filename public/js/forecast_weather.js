@@ -6,29 +6,45 @@ const GEFS_VARIABLES = ['temp', 'wind', 'mslp', 'snow', 'solar'];
 const HRRR_INDEX_FILE = 'forecast_hrrr_surface_layers_index.json';
 const HRRR_RUN_PREFIX = 'forecast_hrrr_surface_layers_';
 
+// Unit conversion helpers. Exporter payload stays in SI; we convert for display only.
+const cToF = c => (c * 9) / 5 + 32;
+const mmToIn = mm => mm / 25.4;
+const msToMph = ms => ms * 2.23694;
+
 const VARIABLE_CONFIG = {
     temperature_2m_c: {
         label: 'Temperature',
-        units: '°C',
-        thresholds: [-15, -8, -2, 4, 10],
+        units: '°F',
+        thresholds: [5, 18, 28, 40, 50],
         colors: ['#2c3e73', '#3f73b9', '#8fc8ff', '#fee08b', '#f46d43', '#c91d2d'],
-        emptyMessage: 'Temperature data unavailable'
+        emptyMessage: 'Temperature data unavailable',
+        displayTransform: cToF,
+        decimals: 1
     },
     rainfall_1h_mm: {
         label: 'Rainfall',
-        units: 'mm/hr',
-        thresholds: [0.1, 0.5, 1.0, 2.5, 5.0],
+        units: 'in/hr',
+        thresholds: [0.01, 0.05, 0.10, 0.25, 0.50],
         colors: ['#f7fbff', '#d9ecff', '#9bc9ff', '#4f97ff', '#2166f3', '#123a97'],
-        emptyMessage: 'Rainfall data unavailable'
+        emptyMessage: 'Rainfall data unavailable',
+        displayTransform: mmToIn,
+        decimals: 2
     },
     snowfall_1h_mm: {
         label: 'Snowfall',
-        units: 'mm/hr',
-        thresholds: [0.1, 1.0, 2.5, 5.0, 10.0],
+        units: 'in/hr',
+        thresholds: [0.1, 0.5, 1.0, 2.0, 4.0],
         colors: ['#f9fbff', '#dbe8ff', '#b7d2ff', '#7da8ff', '#4a74dd', '#283c96'],
-        emptyMessage: 'Snowfall data unavailable'
+        emptyMessage: 'Snowfall data unavailable',
+        displayTransform: mmToIn,
+        decimals: 2
     }
 };
+
+function toDisplay(config, value) {
+    if (!Number.isFinite(value)) return value;
+    return config.displayTransform ? config.displayTransform(value) : value;
+}
 
 let weatherMap;
 let scalarLayerGroup;
@@ -487,14 +503,16 @@ function renderScalarLayer(payload, variableKey, scalarValues) {
                 continue;
             }
 
+            const displayValue = toDisplay(config, value);
+
             const marker = L.circleMarker([lat, lon], {
                 radius: 7,
                 renderer: canvasRenderer,
                 stroke: false,
                 fillOpacity: 0.72,
-                fillColor: colorForValue(config, value)
+                fillColor: colorForValue(config, displayValue)
             });
-            marker.bindTooltip(`${config.label}: ${formatValue(value, config.units)}`);
+            marker.bindTooltip(`${config.label}: ${formatValue(displayValue, config.units, config.decimals)}`);
             scalarLayerGroup.addLayer(marker);
         }
     }
@@ -531,7 +549,7 @@ function renderWindVectors(payload, hourIndex) {
             });
 
             const marker = L.marker([lat, lon], { icon });
-            marker.bindTooltip(`Wind: ${speed.toFixed(1)} m/s`);
+            marker.bindTooltip(`Wind: ${msToMph(speed).toFixed(1)} mph`);
             windLayerGroup.addLayer(marker);
         }
     }
@@ -600,10 +618,12 @@ function updateSummaryPanels(payload, variableKey, scalarValues) {
 
 function updateWeatherSummary(variableKey, scalarValues, payload) {
     const config = VARIABLE_CONFIG[variableKey];
-    const validValues = scalarValues.filter(value => Number.isFinite(value));
-    const average = validValues.reduce((sum, value) => sum + value, 0) / validValues.length;
-    const minimum = Math.min(...validValues);
-    const maximum = Math.max(...validValues);
+    const displayValues = scalarValues
+        .filter(value => Number.isFinite(value))
+        .map(value => toDisplay(config, value));
+    const average = displayValues.reduce((sum, value) => sum + value, 0) / displayValues.length;
+    const minimum = Math.min(...displayValues);
+    const maximum = Math.max(...displayValues);
 
     const summary = document.getElementById('weather-summary');
     if (summary) {
@@ -612,11 +632,11 @@ function updateWeatherSummary(variableKey, scalarValues, payload) {
             <div class="summary-stats">
                 <div class="stat-item">
                     <span class="stat-label">Basin Average:</span>
-                    <span class="stat-value">${formatValue(average, config.units)}</span>
+                    <span class="stat-value">${formatValue(average, config.units, config.decimals)}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Range:</span>
-                    <span class="stat-value">${formatValue(minimum, config.units)} to ${formatValue(maximum, config.units)}</span>
+                    <span class="stat-value">${formatValue(minimum, config.units, config.decimals)} to ${formatValue(maximum, config.units, config.decimals)}</span>
                 </div>
                 <div class="stat-item">
                     <span class="stat-label">Trend:</span>
@@ -629,8 +649,8 @@ function updateWeatherSummary(variableKey, scalarValues, payload) {
     const basinAverage = document.getElementById('basin-average');
     const range = document.getElementById('temperature-range');
     const trend = document.getElementById('trend-indicator');
-    if (basinAverage) basinAverage.textContent = formatValue(average, config.units);
-    if (range) range.textContent = `${formatValue(minimum, config.units)} to ${formatValue(maximum, config.units)}`;
+    if (basinAverage) basinAverage.textContent = formatValue(average, config.units, config.decimals);
+    if (range) range.textContent = `${formatValue(minimum, config.units, config.decimals)} to ${formatValue(maximum, config.units, config.decimals)}`;
     if (trend) trend.textContent = computeTrendText(payload, variableKey, average);
 }
 
@@ -645,7 +665,9 @@ function updateForecastSnapshots(payload, variableKey) {
     timeline.innerHTML = `
         <div class="outlook-timeline">
             ${indices.map(index => {
-                const values = sliceFieldForHour(payload, variableKey, index).filter(value => Number.isFinite(value));
+                const values = sliceFieldForHour(payload, variableKey, index)
+                    .filter(value => Number.isFinite(value))
+                    .map(value => toDisplay(config, value));
                 const average = values.length
                     ? values.reduce((sum, value) => sum + value, 0) / values.length
                     : null;
@@ -653,7 +675,7 @@ function updateForecastSnapshots(payload, variableKey) {
                     <div class="timeline-item">
                         <div class="timeline-time">F${String(payload.forecast_hours[index]).padStart(2, '0')}</div>
                         <div class="timeline-desc">${formatIsoTimestamp(payload.valid_times[index])}</div>
-                        <div class="timeline-temp">${average === null ? '--' : formatValue(average, config.units)}</div>
+                        <div class="timeline-temp">${average === null ? '--' : formatValue(average, config.units, config.decimals)}</div>
                     </div>
                 `;
             }).join('')}
@@ -675,16 +697,16 @@ function updateSpecialConditions(payload, scalarValues) {
 
     const items = [];
     if (freezingFraction >= 0.5) {
-        items.push(renderConditionBlock('alert', 'Freezing Surface Layer', `${Math.round(freezingFraction * 100)}% of sampled grid points are at or below 0°C.`));
+        items.push(renderConditionBlock('alert', 'Freezing Surface Layer', `${Math.round(freezingFraction * 100)}% of sampled grid points are at or below 32°F.`));
     }
     if (maxSnow >= 1.0) {
-        items.push(renderConditionBlock('alert', 'Snowfall Signal', `Peak hourly snowfall in the sampled grid is ${maxSnow.toFixed(1)} mm/hr.`));
+        items.push(renderConditionBlock('alert', 'Snowfall Signal', `Peak hourly snowfall in the sampled grid is ${mmToIn(maxSnow).toFixed(2)} in/hr.`));
     }
     if (maxRain >= 0.5) {
-        items.push(renderConditionBlock('note', 'Rainfall Signal', `Peak hourly rainfall in the sampled grid is ${maxRain.toFixed(1)} mm/hr.`));
+        items.push(renderConditionBlock('note', 'Rainfall Signal', `Peak hourly rainfall in the sampled grid is ${mmToIn(maxRain).toFixed(2)} in/hr.`));
     }
     if (maxWind >= 10.0) {
-        items.push(renderConditionBlock('note', 'Windy Corridor', `Peak 10 m wind speed on the reduced grid is ${maxWind.toFixed(1)} m/s.`));
+        items.push(renderConditionBlock('note', 'Windy Corridor', `Peak 10 m wind speed on the reduced grid is ${msToMph(maxWind).toFixed(1)} mph.`));
     }
 
     if (!items.length) {
@@ -747,17 +769,19 @@ function colorForValue(config, value) {
     return config.colors[config.colors.length - 1];
 }
 
-function formatValue(value, units) {
+function formatValue(value, units, decimals = 1) {
     if (!Number.isFinite(value)) return '--';
-    return `${value.toFixed(1)} ${units}`;
+    return `${value.toFixed(decimals)} ${units}`;
 }
 
 function computeTrendText(payload, variableKey, average) {
     if (surfaceState.hourIndex === 0) {
         return 'Baseline hour';
     }
+    const config = VARIABLE_CONFIG[variableKey];
     const previousValues = sliceFieldForHour(payload, variableKey, surfaceState.hourIndex - 1)
-        .filter(value => Number.isFinite(value));
+        .filter(value => Number.isFinite(value))
+        .map(value => toDisplay(config, value));
     if (!previousValues.length) {
         return 'Unavailable';
     }
