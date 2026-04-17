@@ -245,7 +245,7 @@
       }
     },
     "forecasts": {
-      "description": "Clyfar ozone forecasts - 3 data products (63 JSON files per run) [PLANNED/NOT YET OPERATIONAL]",
+      "description": "Forecast data products for BasinWx, including Clyfar ozone guidance and reduced HRRR weather layers",
       "format": "json",
       "endpoint": "/api/upload/forecasts",
       "schedule": {
@@ -483,15 +483,133 @@
               }
             }
           }
+        },
+        "hrrr_surface_layers": {
+          "description": "Reduced HRRR surface-layer Basin subset for weather-map rendering",
+          "schedule": {
+            "frequency": "0 * * * *",
+            "description": "Automatic - hourly HRRR surface layer export using the latest three runs",
+            "timezone": "UTC"
+          },
+          "filename": {
+            "pattern": "forecast_hrrr_surface_layers_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_hrrr_surface_layers_20260416_1200Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": [
+              "model",
+              "product",
+              "region",
+              "init_time",
+              "forecast_hours",
+              "valid_times",
+              "grid",
+              "field_shape",
+              "variables",
+              "fields"
+            ],
+            "properties": {
+              "model": {
+                "type": "string",
+                "enum": ["hrrr"]
+              },
+              "product": {
+                "type": "string",
+                "enum": ["surface_layers"]
+              },
+              "region": {
+                "type": "string",
+                "enum": ["uinta_basin"]
+              },
+              "init_time": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+              },
+              "generated_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+              },
+              "forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 18
+                }
+              },
+              "valid_times": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                }
+              },
+              "stride": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "bbox": {
+                "type": "object"
+              },
+              "grid": {
+                "type": "object",
+                "required": ["shape", "lats", "lons"],
+                "properties": {
+                  "shape": {
+                    "type": "array",
+                    "items": { "type": "integer", "minimum": 1 },
+                    "minItems": 2,
+                    "maxItems": 2
+                  },
+                  "lats": {
+                    "type": "array",
+                    "items": { "type": "number" }
+                  },
+                  "lons": {
+                    "type": "array",
+                    "items": { "type": "number" }
+                  }
+                }
+              },
+              "field_shape": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 1 },
+                "minItems": 3,
+                "maxItems": 3
+              },
+              "variables": {
+                "type": "object"
+              },
+              "fields": {
+                "type": "object",
+                "required": [
+                  "temperature_2m_c",
+                  "wind_u_10m_ms",
+                  "wind_v_10m_ms",
+                  "rainfall_1h_mm",
+                  "snowfall_1h_mm"
+                ],
+                "properties": {
+                  "temperature_2m_c": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "wind_u_10m_ms": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "wind_v_10m_ms": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "rainfall_1h_mm": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "snowfall_1h_mm": { "type": "array", "items": { "type": ["number", "null"] } }
+                }
+              }
+            }
+          }
         }
       },
       "validation": {
-        "maxFileSize": "2MB",
+        "maxFileSize": "10MB",
         "totalFilesPerRun": 63,
         "filesPerProduct": {
           "possibility_heatmap": 31,
           "exceedance_probabilities": 1,
-          "percentile_scenarios": 31
+          "percentile_scenarios": 31,
+          "hrrr_surface_layers": 4
         }
       },
       "ozoneCategories": {
@@ -520,6 +638,7 @@
         "Forecast products are generated 4× daily after GEFS runs (00Z, 06Z, 12Z, 18Z)",
         "GEFS data has ~3 hour latency, so Clyfar runs at +3.5hr to ensure data availability",
         "Each run produces 63 JSON files (31 possibility + 1 exceedance + 31 percentiles)",
+        "HRRR surface layers provide the latest three runs as reduced-precision Basin subsets for /forecast_weather",
         "Ozone categories use fuzzy inference (Mamdani) with Dubois-Prade possibility theory",
         "Daily maximum values are used (local timezone: America/Denver)",
         "Forecast horizon: ~15-17 days depending on GEFS availability"
@@ -553,7 +672,7 @@
       "timeseries": "Every hour (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
       "images": "Every 30 minutes (automatic)",
-      "forecasts": "[PLANNED] Automatic - Four times daily at 03:30, 09:30, 15:30, 21:30 UTC"
+      "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly"
     },
     "alertThresholds": {
       "missingDataMinutes": 30,
