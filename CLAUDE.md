@@ -71,6 +71,9 @@ Environment variables are used for all API keys and sensitive configuration:
 - **Team sharing**: Use secure password manager (1Password, Bitwarden) for sharing secrets
 - **Production**: Set environment variables directly on server/cloud platform
 
+## Protected Branches
+**Never push directly to `dev`, `ops`, or `main`.**  All changes to these branches must go through a pull request. If you believe a direct push is warranted, ask the user to confirm — then ask a **second time** to be sure before proceeding. This applies to merges, reverts, version bumps, and any other commits.
+
 ## Team Notes
 - 4-person collaborative team
 - CSS-HTML mapping: fire.css ↔ fire.html pattern
