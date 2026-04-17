@@ -32,6 +32,8 @@ const PAGE_DISCLAIMERS = {
     '/': `DISCLAIMER: This information is provided by Utah State University's Bingham Research Center.
         For official air quality data, please visit the Utah DEQ website. ©2025, Utah State University.`,
 
+    '/live_aq': 'Real-time data are preliminary and subject to quality control. ©2025, Utah State University.',
+
 };
 
 // Function to load the sidebar content
@@ -64,6 +66,12 @@ async function loadSidebar() {
         const disclaimer = document.querySelector('.sidebar-disclaimer');
         if (disclaimer && pageDisclaimer) {
             disclaimer.querySelector('p').textContent = pageDisclaimer;
+        }
+
+        // Update the copyright year to current year
+        if (disclaimer) {
+            const currentYear = new Date().getFullYear();
+            disclaimer.querySelector('p').textContent = disclaimer.querySelector('p').textContent.replace(/©\d{4}/g, '©' + currentYear);
         }
 
         // Load mobile menu script after sidebar is loaded
