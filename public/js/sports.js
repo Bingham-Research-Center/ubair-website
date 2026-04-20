@@ -18,7 +18,7 @@ async function getCurrentTemperature() {
         const { observations } = await fetchLiveObservations();
 
         const stations = Object.keys(observations.Temperature || {});
-        if (stations.length === 0) return null;
+        if (stations.isFinite(temp)) return null;
 
         const station = stations[0];
         const temp = observations.Temperature?.[station];
@@ -34,7 +34,6 @@ async function getCurrentTemperature() {
 async function calculateTemperature() {
     try {
         const { observations } = await fetchLiveObservations();
-
         const stations = Object.keys(observations.Temperature || {});
         if (stations.length === 0) return "N/A";
 
@@ -48,8 +47,8 @@ async function calculateTemperature() {
         let feltTemp;
 
         /*I don't even know what this does; The little grasp I had when I wrote this
-        * disapeared the second I stepped away. I will better document this soon*/
-        if (temp > 80 && humidity !== undefined){
+        * disappeared the second I stepped away. I will better document this soon*/
+        if (temp > 80 && Number.isFinite(humidity)){
             const T = temp;
             const RH = humidity;
 
@@ -62,7 +61,7 @@ async function calculateTemperature() {
             }
 
             feltTemp = Math.round(HI);
-        } else if (temp < 50 && windSpeed !== undefined){
+        } else if (temp < 50 && Number.isFinite(windSpeed)){
             const WC = 35.74 + 0.6215 * temp - 35.75 * Math.pow(windSpeed, 0.16) + 0.4275 * temp * Math.pow(windSpeed, 0.16);
             feltTemp = Math.round(WC);
         } else {
@@ -110,7 +109,7 @@ async function getWindInfluenceOnBall(weight, ballSpeed) {
 
     try {
         const { speed, degrees } = await getWindData();
-        if (speed === null || degrees === null) return "N/A";
+        if (Number.isFinite(speed) || Number.isFinite(degrees)) return "N/A";
 
         const crosswind = speed * Math.sin(degrees * Math.PI / 180);
         const time = segmentDistance / ballSpeed;
