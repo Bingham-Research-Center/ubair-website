@@ -2,6 +2,8 @@ import { fetchLiveObservations } from './api.js';
 
 const baseball_avg_weight = 5; //Ounces
 const football_avg_weight = 14.2; //Ounces
+const baseball_avg_speed = 132; // ft/s (90 mph pitch)
+const football_avg_speed = 73.3; // ft/s (50 mph throw)
 
 // Function to convert degrees to cardinal direction
 function getCardinalDirection(degrees) {
@@ -18,7 +20,7 @@ async function getCurrentTemperature() {
         const { observations } = await fetchLiveObservations();
 
         const stations = Object.keys(observations.Temperature || {});
-        if (stations.isFinite(temp)) return null;
+        if (stations.length === 0) return null;
 
         const station = stations[0];
         const temp = observations.Temperature?.[station];
@@ -105,17 +107,24 @@ async function getWindDirection() {
 
 //Calculate the winds influence/drag on a ball for every 6 feet
 async function getWindInfluenceOnBall(weight, ballSpeed) {
-    const segmentDistance = 6;
+    const segmentDistance = 6; // feet
 
     try {
         const { speed, degrees } = await getWindData();
-        if (Number.isFinite(speed) || Number.isFinite(degrees)) return "N/A";
+        if (!Number.isFinite(speed) || !Number.isFinite(degrees)) return "N/A";
 
-        const crosswind = speed * Math.sin(degrees * Math.PI / 180);
+        // Convert wind speed to ft/s (1 mph = 1.46667 ft/s)
+        const windSpeedFps = speed * 1.46667;
+        const crosswindFps = windSpeedFps * Math.sin(degrees * Math.PI / 180);
+
+        // Time to travel 6 feet at ball speed (assuming ballSpeed is in ft/s)
         const time = segmentDistance / ballSpeed;
-        const driftFeet = crosswind * time;
-        const driftInches = driftFeet * 39.3701;
-        return driftInches;
+
+        // Drift in feet, then convert to inches
+        const driftFeet = crosswindFps * time;
+        const driftInches = driftFeet * 12; // 1 foot = 12 inches
+
+        return Math.round(driftInches * 10) / 10; // Round to 1 decimal place
     } catch (error) {
         console.error('Error calculating wind influence:', error);
         return "N/A";
@@ -128,8 +137,8 @@ async function updateSportsDashboard() {
         const currentTemp = await getCurrentTemperature();
         const feltTemp = await calculateTemperature();
         const { speed: windSpeed, direction: windDir } = await getWindData();
-        const baseballWindInfluence = await getWindInfluenceOnBall(baseball_avg_weight);
-        const footballWindInfluence = await getWindInfluenceOnBall(football_avg_weight);
+        const baseballWindInfluence = await getWindInfluenceOnBall(baseball_avg_weight, baseball_avg_speed);
+        const footballWindInfluence = await getWindInfluenceOnBall(football_avg_weight, football_avg_speed);
 
         // Current Temperature
         const currentTempValue = currentTemp !== null ? currentTemp + " °F" : "--";
