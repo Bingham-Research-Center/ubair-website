@@ -10,8 +10,12 @@ Usage:
     python chpc_uploader.py --validate-only --file data.json
 
 Environment Variables:
-    BASINWX_API_KEY    : API key for authentication
-    BASINWX_API_URL    : Base URL (default: https://basinwx.com)
+    BASINWX_API_KEY    : API key for authentication (required)
+    BASINWX_API_URLS   : Comma-separated destination URLs (required, no default).
+                         The first URL is the primary destination — a failure on it fails the job.
+                         Remaining URLs are best-effort mirrors — their failures are logged as
+                         WARN but do not fail the job. Typical CHPC value:
+                             BASINWX_API_URLS="https://basinwx.com,https://basinwx.dev"
     CHPC_HOSTNAME      : Hostname to send in headers
 """
 
@@ -185,10 +189,50 @@ class DataValidator:
         return True
 
 
-class BasinWxUploader:
-    """Handles uploading data to BasinWx API"""
+def parse_api_urls() -> List[str]:
+    """Parse BASINWX_API_URLS into a de-duped, non-empty list of base URLs.
 
-    def __init__(self, api_key: str, api_url: str = "https://basinwx.com"):
+    First entry is treated as the primary destination; remaining entries are
+    best-effort mirrors. Raises SystemExit(2) if unset or empty so misconfigured
+    runs fail loudly instead of silently hitting a default destination.
+    """
+    raw = os.environ.get('BASINWX_API_URLS', '').strip()
+    if not raw:
+        logger.error(
+            "BASINWX_API_URLS is not set. Provide a comma-separated list, e.g. "
+            "BASINWX_API_URLS=\"https://basinwx.com,https://basinwx.dev\". "
+            "There is no default — this prevents accidentally uploading to prod."
+        )
+        sys.exit(2)
+    urls: List[str] = []
+    seen = set()
+    for part in raw.split(','):
+        url = part.strip().rstrip('/')
+        if url and url not in seen:
+            urls.append(url)
+            seen.add(url)
+    if not urls:
+        logger.error("BASINWX_API_URLS parsed to an empty list: %r", raw)
+        sys.exit(2)
+    return urls
+
+
+def _destination_role(index: int) -> str:
+    return 'primary' if index == 0 else 'mirror'
+
+
+def _log_banner(index: int, api_url: str) -> None:
+    role = _destination_role(index)
+    bar = '=' * 60
+    logger.info(bar)
+    logger.info("UPLOADING TO: %s  (%s)", api_url, role.upper())
+    logger.info(bar)
+
+
+class BasinWxUploader:
+    """Handles uploading data to one BasinWx destination."""
+
+    def __init__(self, api_key: str, api_url: str):
         self.api_key = api_key
         self.api_url = api_url.rstrip('/')
         self.session = requests.Session()
@@ -308,15 +352,21 @@ def main():
     # Health check only
     if args.health_check:
         api_key = os.environ.get('BASINWX_API_KEY')
-        api_url = os.environ.get('BASINWX_API_URL', 'https://basinwx.com')
-
         if not api_key:
             logger.error("BASINWX_API_KEY environment variable not set")
             sys.exit(1)
 
-        uploader = BasinWxUploader(api_key, api_url)
-        success = uploader.health_check()
-        sys.exit(0 if success else 1)
+        api_urls = parse_api_urls()
+        primary_ok = True
+        for idx, api_url in enumerate(api_urls):
+            _log_banner(idx, api_url)
+            uploader = BasinWxUploader(api_key, api_url)
+            ok = uploader.health_check()
+            if idx == 0:
+                primary_ok = ok
+            elif not ok:
+                logger.warning("Mirror health check failed for %s (continuing)", api_url)
+        sys.exit(0 if primary_ok else 1)
 
     # Validate arguments
     if not args.file or not args.data_type:
@@ -358,24 +408,41 @@ def main():
         logger.info("Validation complete (no upload performed)")
         sys.exit(0)
 
-    # Upload
+    # Upload — fan out to every destination in BASINWX_API_URLS
     api_key = os.environ.get('BASINWX_API_KEY')
-    api_url = os.environ.get('BASINWX_API_URL', 'https://basinwx.com')
-
     if not api_key:
         logger.error("BASINWX_API_KEY environment variable not set")
         sys.exit(1)
 
-    uploader = BasinWxUploader(api_key, api_url)
+    api_urls = parse_api_urls()
+    primary_ok = False
+    mirror_failures: List[str] = []
 
-    # Health check first
-    if not uploader.health_check():
-        logger.warning("API health check failed, but proceeding with upload...")
+    for idx, api_url in enumerate(api_urls):
+        _log_banner(idx, api_url)
+        uploader = BasinWxUploader(api_key, api_url)
 
-    # Upload file
-    success = uploader.upload_file(args.file, args.data_type)
+        if not uploader.health_check():
+            logger.warning("Health check failed for %s, proceeding with upload attempt anyway",
+                           api_url)
 
-    sys.exit(0 if success else 1)
+        success = uploader.upload_file(args.file, args.data_type)
+        if idx == 0:
+            primary_ok = success
+            if not success:
+                logger.error("Primary upload failed (%s) — job will exit non-zero", api_url)
+        else:
+            if success:
+                logger.info("Mirror upload succeeded: %s", api_url)
+            else:
+                logger.warning("Mirror upload FAILED: %s (job still succeeds if primary did)",
+                               api_url)
+                mirror_failures.append(api_url)
+
+    if mirror_failures:
+        logger.warning("Mirror failures summary: %s", ', '.join(mirror_failures))
+
+    sys.exit(0 if primary_ok else 1)
 
 
 if __name__ == '__main__':

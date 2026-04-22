@@ -3,14 +3,28 @@
 ## Project Overview
 Weather data visualization website showing live air quality observations and forecasts for Uintah Basin region.
 
+## Deployment Topology
+The operational core must be agnostic to which server / branch it runs on.
+
+| Role | Branch | Domain | pm2 app name |
+|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | `basinwx-ops` |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` |
+
+- Both boxes: Linode, repo at `/srv/ubair-website`, pm2 run as the `deploy` user, nginx reverse proxy, Let's Encrypt certs.
+- pm2 app name is derived from `git rev-parse --abbrev-ref HEAD` (see `ecosystem.config.cjs`), so whichever branch is checked out dictates the running app identity.
+- `www.basinwx.dev` receives the same CHPC data as `.com` (fan-out upload) and runs whichever branch is checked out, so merging a PR into `dev` is a real-world dry-run before promotion to `ops`. It is also where stakeholder demos happen.
+- A third developer laptop/VM may also run this repo. It is **not operational**, may have broken paths, and must never be the source of truth.
+- Full bring-up runbook, nginx template, cert renewal, and "did this work?" sanity checklist live in `docs/DEPLOYMENT.md`.
+
 ## Data Pipeline
-**CHPC (compute server)** → **POST /api/upload/:dataType** → **Akamai (web server)**
+**CHPC (compute server)** → **POST /api/upload/:dataType** → **both `www.basinwx.com` and `www.basinwx.dev`**
 
 ### Data Flow
 1. **CHPC**: Python script using `brc-tools` pulls from Synoptic Weather API
 2. **Processing**: Data goes through polars/pandas → JSON format
-3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key
-4. **Display**: Leaflet maps on Node.js website at basinwx.com
+3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key, fanned out to every URL in `BASINWX_API_URLS` (first = primary, rest = best-effort mirrors)
+4. **Display**: Leaflet maps on Node.js website (live on `.com`, rehearsal on `.dev`)
 
 ### Data Types
 - **Live observations**: `map_obs_YYYYMMDD_HHMMZ.json` (geographic weather data)
@@ -46,7 +60,7 @@ Weather data visualization website showing live air quality observations and for
 ## Testing
 - **Development**: `npm run dev` (nodemon)
 - **API testing**: `npm run test-api` (automated script)
-- **Manual API test**: `POST localhost:3000/api/upload/observations`
+- **Manual API test**: `POST localhost:${PORT}/api/upload/observations` (PORT from `.env`; typically 3000 on ops, 3001 on dev)
 - **Example data**: Files in `/public/api/static/`
 
 ## Features

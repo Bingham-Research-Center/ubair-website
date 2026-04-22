@@ -3,7 +3,7 @@
 # Run on both Akamai and CHPC to compare data state
 #
 # Usage (from ubair-website repo on either server):
-#   cd ~/gits/ubair-website  # or wherever the repo is
+#   cd /srv/ubair-website  # or wherever the repo is
 #   bash ubair-diagnostic.sh > diagnostic-$(hostname)-$(date +%Y%m%d-%H%M).txt 2>&1
 #
 # Conda env on CHPC: integration-clyfar-v0.9.5
@@ -17,10 +17,42 @@ echo "User: $(whoami)"
 echo "PWD: $(pwd)"
 echo ""
 
+CURRENT_USER="$(whoami)"
+CURRENT_PWD="$(pwd -P)"
+
+# Default PUBLIC_DOMAIN from the checked-out branch (dev → basinwx.dev, ops → basinwx.com).
+# Override explicitly if running this script from a feature branch or elsewhere:
+#   PUBLIC_DOMAIN=basinwx.dev bash ubair-diagnostic.sh
+if [[ -z "${PUBLIC_DOMAIN:-}" ]]; then
+    DETECTED_BRANCH="$(git -C "$CURRENT_PWD" rev-parse --abbrev-ref HEAD 2>/dev/null || true)"
+    case "$DETECTED_BRANCH" in
+        ops)  PUBLIC_DOMAIN="basinwx.com" ;;
+        dev)  PUBLIC_DOMAIN="basinwx.dev" ;;
+        *)    PUBLIC_DOMAIN=""
+              echo "NOTE: could not auto-detect public domain from branch '$DETECTED_BRANCH'."
+              echo "      Set it explicitly, e.g.:  PUBLIC_DOMAIN=basinwx.dev $0"
+              ;;
+    esac
+fi
+PUBLIC_BASE_URL="${PUBLIC_BASE_URL:-${PUBLIC_DOMAIN:+https://${PUBLIC_DOMAIN}}}"
+PM2_RUNNER="$CURRENT_USER"
+
+if [[ "$PM2_RUNNER" != "deploy" ]] && id deploy >/dev/null 2>&1; then
+    PM2_RUNNER="deploy"
+fi
+
+run_pm2() {
+    if [[ "$PM2_RUNNER" == "$CURRENT_USER" ]]; then
+        pm2 "$@"
+    else
+        runuser -l "$PM2_RUNNER" -c "$(printf 'pm2 %q ' "$@")"
+    fi
+}
+
 # Detect server type
 if [[ $(hostname) == *"chpc"* ]] || [[ $(hostname) == *"notch"* ]] || [[ -d "$HOME/gits/clyfar" ]]; then
     SERVER_TYPE="CHPC"
-elif [[ -d "/var/www" ]] || [[ -d "$HOME/ubair-website" ]]; then
+elif [[ -d "/srv/ubair-website" ]] || [[ -d "/var/www" ]] || [[ -d "$HOME/ubair-website" ]]; then
     SERVER_TYPE="AKAMAI"
 else
     SERVER_TYPE="UNKNOWN"
@@ -34,14 +66,16 @@ echo "========================================"
 
 # Find the website root
 WEBSITE_ROOTS=(
+    "/srv/ubair-website"
     "$HOME/ubair-website"
     "$HOME/gits/ubair-website"
     "/var/www/ubair-website"
     "/var/www/html/ubair-website"
-    "$(pwd)"
+    "$CURRENT_PWD"
 )
 
 WEBSITE_ROOT=""
+LOCAL_PORT="3000"
 for dir in "${WEBSITE_ROOTS[@]}"; do
     if [[ -d "$dir/public/api/static" ]]; then
         WEBSITE_ROOT="$dir"
@@ -54,6 +88,17 @@ if [[ -n "$WEBSITE_ROOT" ]]; then
     echo ""
 
     STATIC_DIR="$WEBSITE_ROOT/public/api/static"
+
+    if [[ -f "$WEBSITE_ROOT/.env" ]]; then
+        ENV_PORT=$(grep -E '^PORT=' "$WEBSITE_ROOT/.env" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'\''[:space:]')
+        if [[ "$ENV_PORT" =~ ^[0-9]+$ ]]; then
+            LOCAL_PORT="$ENV_PORT"
+        fi
+    fi
+
+    echo "Local app port: $LOCAL_PORT"
+    echo "Public base URL: $PUBLIC_BASE_URL"
+    echo ""
 
     echo "--- Directory structure ---"
     ls -la "$STATIC_DIR" 2>/dev/null || echo "Cannot access $STATIC_DIR"
@@ -207,12 +252,15 @@ echo "3. NODE/PM2 STATUS (AKAMAI ONLY)"
 echo "========================================"
 
 if [[ "$SERVER_TYPE" == "AKAMAI" ]] || command -v pm2 &> /dev/null; then
+    echo "PM2 context user: $PM2_RUNNER"
+    echo ""
+
     echo "--- PM2 processes ---"
-    pm2 list 2>/dev/null || echo "PM2 not available or not running"
+    run_pm2 list 2>/dev/null || echo "PM2 not available or not running"
     echo ""
 
     echo "--- PM2 logs (last 30 lines) ---"
-    pm2 logs --lines 30 --nostream 2>/dev/null || echo "Cannot get PM2 logs"
+    run_pm2 logs --lines 30 --nostream 2>/dev/null || echo "Cannot get PM2 logs"
     echo ""
 
     echo "--- Node version ---"
@@ -239,16 +287,20 @@ echo "========================================"
 # Test local API if server is running
 echo "--- Testing localhost API ---"
 for endpoint in "/api/filelist/observations" "/api/filelist/images" "/api/filelist/forecasts"; do
-    echo "GET http://localhost:3000$endpoint"
-    curl -s -o /dev/null -w "HTTP %{http_code}\n" "http://localhost:3000$endpoint" 2>/dev/null || echo "Failed/not running"
+    echo "GET http://127.0.0.1:${LOCAL_PORT}$endpoint"
+    curl -s -o /dev/null -w "HTTP %{http_code}\n" "http://127.0.0.1:${LOCAL_PORT}$endpoint" 2>/dev/null || echo "Failed/not running"
 done
 echo ""
 
 echo "--- Testing production API ---"
-for endpoint in "/api/filelist/observations" "/api/filelist/images" "/api/filelist/forecasts"; do
-    echo "GET https://basinwx.com$endpoint"
-    curl -s -o /dev/null -w "HTTP %{http_code}\n" "https://basinwx.com$endpoint" 2>/dev/null || echo "Failed"
-done
+if [[ -n "$PUBLIC_BASE_URL" ]]; then
+    for endpoint in "/api/filelist/observations" "/api/filelist/images" "/api/filelist/forecasts"; do
+        echo "GET ${PUBLIC_BASE_URL}$endpoint"
+        curl -s -o /dev/null -w "HTTP %{http_code}\n" "${PUBLIC_BASE_URL}$endpoint" 2>/dev/null || echo "Failed"
+    done
+else
+    echo "Skipped (PUBLIC_BASE_URL not set — pass PUBLIC_DOMAIN=... to enable)"
+fi
 echo ""
 
 echo "========================================"
