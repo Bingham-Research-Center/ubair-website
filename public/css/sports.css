@@ -47,26 +47,6 @@ h2
     overflow: hidden;
 }
 
-/* For cards with unique colors */
-.condition-card[data-card-type="current-temperature"] {
-    border-left-color: #A7D8FF;
-}
-.condition-card[data-card-type="felt-temperature"] {
-    border-left-color: #BFF4D2;
-}
-.condition-card[data-card-type="wind-speed-direction"] {
-    border-left-color: #E4F7A1;
-}
-.condition-card[data-card-type="current-temperature"]:hover .card-icon {
-    color: #A7D8FF;
-}
-.condition-card[data-card-type="felt-temperature"]:hover .card-icon {
-    color: #BFF4D2;
-}
-.condition-card[data-card-type="wind-speed-direction"]:hover .card-icon {
-    color: #E4F7A1;
-}
-
 .condition-card::before {
     content: '';
     position: absolute;

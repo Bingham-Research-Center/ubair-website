@@ -19,6 +19,27 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/sports.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <style>
+        .condition-card[data-card-type="current-temperature"] {
+            border-left-color: #A7D8FF;
+        }
+        .condition-card[data-card-type="felt-temperature"] {
+            border-left-color: #BFF4D2;
+        }
+        .condition-card[data-card-type="wind-speed-direction"] {
+            border-left-color: #E4F7A1;
+        }
+        .condition-card[data-card-type="current-temperature"]:hover .card-icon {
+            color: #A7D8FF !important;
+        }
+        .condition-card[data-card-type="felt-temperature"]:hover .card-icon {
+            color: #BFF4D2 !important;
+        }
+        .condition-card[data-card-type="wind-speed-direction"]:hover .card-icon {
+            color: #E4F7A1 !important;
+        }
+    </style>
 </head>
 
 <body data-page-type="sports">
