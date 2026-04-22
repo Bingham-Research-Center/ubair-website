@@ -11,7 +11,11 @@ function currentBranch() {
   }
 }
 
-const branch = currentBranch();
+const rawBranch = currentBranch();
+const branch = rawBranch
+  .replace(/[^A-Za-z0-9_-]/g, '-')
+  .replace(/-+/g, '-')
+  .replace(/^-+|-+$/g, '') || 'unknown';
 
 module.exports = {
   apps: [
