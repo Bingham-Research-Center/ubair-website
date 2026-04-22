@@ -37,7 +37,7 @@ h2
 }
 
 .condition-card {
-    background: #ffefef;
+    background: #ffffff;
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 20px rgba(80, 22, 22, 0.1);
@@ -45,6 +45,26 @@ h2
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+/* For cards with unique colors */
+.condition-card[data-card-type="current-temperature"] {
+    border-left-color: #A7D8FF;
+}
+.condition-card[data-card-type="felt-temperature"] {
+    border-left-color: #BFF4D2;
+}
+.condition-card[data-card-type="wind-speed-direction"] {
+    border-left-color: #E4F7A1;
+}
+.condition-card[data-card-type="current-temperature"]:hover .card-icon {
+    color: #A7D8FF;
+}
+.condition-card[data-card-type="felt-temperature"]:hover .card-icon {
+    color: #BFF4D2;
+}
+.condition-card[data-card-type="wind-speed-direction"]:hover .card-icon {
+    color: #E4F7A1;
 }
 
 .condition-card::before {
@@ -65,7 +85,7 @@ h2
     border-left-color: black;
 
     .card-icon {
-        background-color: black;
+        background-color: black !important;
         color: red;
         transition: 1s;
     }
