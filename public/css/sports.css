@@ -62,7 +62,7 @@ h2
 .condition-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
-    border-left-color: black;
+    border-left-color: black !important;
 
     .card-icon {
         background-color: black !important;
