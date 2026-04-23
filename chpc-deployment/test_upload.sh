@@ -23,7 +23,18 @@ NC='\033[0m'
 BRC_TOOLS_DIR="$HOME/brc-tools"
 TEST_DATA_DIR="$BRC_TOOLS_DIR/test_data"
 UPLOAD_SCRIPT="$BRC_TOOLS_DIR/brc_tools/download/push_data.py"
-MANIFEST_URL="https://basinwx.com/DATA_MANIFEST.json"
+
+# Fan-out destinations (first = primary, rest = best-effort mirrors).
+# No default — the test script must be explicit about which destination(s) it hits
+# so we never accidentally test-upload to production.
+if [ -z "${BASINWX_API_URLS:-}" ]; then
+    echo "ERROR: BASINWX_API_URLS must be set before running this script." >&2
+    echo "  Dev-only:        export BASINWX_API_URLS=https://basinwx.dev" >&2
+    echo "  Full fan-out:    export BASINWX_API_URLS=https://basinwx.com,https://basinwx.dev" >&2
+    exit 1
+fi
+PRIMARY_URL="${BASINWX_API_URLS%%,*}"
+MANIFEST_URL="${PRIMARY_URL}/DATA_MANIFEST.json"
 
 echo ""
 echo "=========================================="
@@ -58,11 +69,14 @@ else
     echo -e "${GREEN}✓ DATA_UPLOAD_API_KEY set${NC} (${DATA_UPLOAD_API_KEY:0:10}...)"
 fi
 
-if [ -z "$BASINWX_API_URL" ]; then
-    echo -e "${YELLOW}⚠ BASINWX_API_URL not set, using default${NC}"
-    export BASINWX_API_URL="https://basinwx.com"
-fi
-echo -e "${GREEN}✓ BASINWX_API_URL${NC}: $BASINWX_API_URL"
+echo -e "${GREEN}✓ BASINWX_API_URLS${NC}: $BASINWX_API_URLS"
+echo "  primary: $PRIMARY_URL"
+IFS=',' read -r -a _URL_ARRAY <<< "$BASINWX_API_URLS"
+for i in "${!_URL_ARRAY[@]}"; do
+    [ "$i" = "0" ] && continue
+    echo "  mirror:  ${_URL_ARRAY[$i]// /}"
+done
+export BASINWX_API_URLS
 
 # Check Python packages
 for package in requests jsonschema; do
@@ -81,14 +95,23 @@ echo ""
 echo -e "${BLUE}Test 2: Network Connectivity${NC}"
 echo "----------------------------------------"
 
-echo "Testing connection to $BASINWX_API_URL..."
-if curl -s --connect-timeout 10 "$BASINWX_API_URL" > /dev/null; then
-    echo -e "${GREEN}✓ Website reachable${NC}"
+echo "Testing connection to $PRIMARY_URL (primary)..."
+if curl -s --connect-timeout 10 "$PRIMARY_URL" > /dev/null; then
+    echo -e "${GREEN}✓ Primary reachable${NC}"
 else
-    echo -e "${RED}✗ Cannot reach website${NC}"
+    echo -e "${RED}✗ Cannot reach primary: $PRIMARY_URL${NC}"
     echo "  Check network/firewall settings"
     exit 1
 fi
+for i in "${!_URL_ARRAY[@]}"; do
+    [ "$i" = "0" ] && continue
+    mirror="${_URL_ARRAY[$i]// /}"
+    if curl -s --connect-timeout 10 "$mirror" > /dev/null; then
+        echo -e "${GREEN}✓ Mirror reachable${NC}: $mirror"
+    else
+        echo -e "${YELLOW}⚠ Mirror not reachable (uploads will log WARN): $mirror${NC}"
+    fi
+done
 
 echo ""
 
@@ -96,13 +119,11 @@ echo ""
 echo -e "${BLUE}Test 3: API Health Check${NC}"
 echo "----------------------------------------"
 
-HEALTH_RESPONSE=$(python3 << 'EOF'
-import os
-import requests
-import json
+HEALTH_RESPONSE=$(PRIMARY_URL="$PRIMARY_URL" python3 << 'EOF'
+import os, requests
+url = os.environ['PRIMARY_URL'] + '/api/health'
 try:
-    api_url = os.environ.get('BASINWX_API_URL', 'https://basinwx.com')
-    response = requests.get(f'{api_url}/api/health', timeout=10)
+    response = requests.get(url, timeout=10)
     print(f"STATUS:{response.status_code}")
     if response.status_code == 200:
         print(f"RESPONSE:{response.text}")
@@ -188,7 +209,7 @@ if [ -n "$SAMPLE_FILES" ]; then
     echo "Using test file: $(basename $TEST_FILE)"
     echo ""
 
-    echo "Running upload test..."
+    echo "Running fan-out upload test..."
     if python3 << EOF
 import os
 import sys
@@ -196,40 +217,58 @@ import requests
 import socket
 
 api_key = os.environ.get('DATA_UPLOAD_API_KEY')
-api_url = os.environ.get('BASINWX_API_URL', 'https://basinwx.com')
+api_urls = [u.strip().rstrip('/') for u in os.environ.get('BASINWX_API_URLS', '').split(',') if u.strip()]
 hostname = socket.gethostname()
 
-headers = {
-    'x-api-key': api_key,
-    'x-client-hostname': hostname
-}
+if not api_urls:
+    print('Error: BASINWX_API_URLS is empty')
+    sys.exit(1)
 
+headers = {'x-api-key': api_key, 'x-client-hostname': hostname}
 test_file = "$TEST_FILE"
+
+primary_ok = False
+mirror_failures = []
 with open(test_file, 'rb') as f:
-    files = {'file': (os.path.basename(test_file), f)}
+    payload_bytes = f.read()
+
+for idx, api_url in enumerate(api_urls):
+    role = 'PRIMARY' if idx == 0 else 'MIRROR'
+    print('=' * 60)
+    print(f'UPLOADING TO: {api_url}  ({role})')
+    print('=' * 60)
     try:
         response = requests.post(
             f'{api_url}/api/upload/observations',
             headers=headers,
-            files=files,
-            timeout=30
+            files={'file': (os.path.basename(test_file), payload_bytes)},
+            timeout=30,
         )
         print(f'Status: {response.status_code}')
         print(f'Response: {response.text}')
-        sys.exit(0 if response.status_code == 200 else 1)
+        ok = response.status_code == 200
     except Exception as e:
         print(f'Error: {e}')
-        sys.exit(1)
+        ok = False
+
+    if idx == 0:
+        primary_ok = ok
+    elif not ok:
+        mirror_failures.append(api_url)
+
+if mirror_failures:
+    print(f'Mirror failures: {", ".join(mirror_failures)}')
+sys.exit(0 if primary_ok else 1)
 EOF
     then
-        echo -e "${GREEN}✓ Test upload successful!${NC}"
+        echo -e "${GREEN}✓ Primary upload succeeded (mirror failures, if any, did not fail the job)${NC}"
     else
-        echo -e "${RED}✗ Test upload failed${NC}"
+        echo -e "${RED}✗ Primary upload failed${NC}"
         echo ""
         echo "Common issues:"
         echo "  1. API key mismatch - check DATA_UPLOAD_API_KEY"
         echo "  2. Origin validation - must run from chpc.utah.edu"
-        echo "  3. Network/firewall blocking HTTPS to basinwx.com"
+        echo "  3. Network/firewall blocking HTTPS to the primary destination"
         exit 1
     fi
 else
@@ -249,5 +288,6 @@ echo ""
 echo "You're ready to:"
 echo "  1. Set up cron jobs for automated uploads"
 echo "  2. Monitor /tmp/basinwx_upload.log"
-echo "  3. Check data freshness at $BASINWX_API_URL/api/monitoring/freshness"
+echo "  3. Check data freshness at $PRIMARY_URL/api/monitoring/freshness"
+echo "     (mirrors: $BASINWX_API_URLS)"
 echo ""

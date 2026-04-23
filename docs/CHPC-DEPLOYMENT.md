@@ -45,7 +45,7 @@ Create a `.env` file or add to your shell profile:
 ```bash
 # ~/.bashrc or ~/.bash_profile
 export BASINWX_API_KEY="your-api-key-here"
-export BASINWX_API_URL="https://basinwx.com"
+export BASINWX_API_URLS="https://basinwx.com"
 export CHPC_HOSTNAME="$(hostname -f)"
 ```
 
@@ -290,7 +290,7 @@ crontab -e
 # Load environment variables
 BASINWX_API_KEY=your-api-key-here
 SYNOPTIC_API_TOKEN=your-synoptic-token-here
-BASINWX_API_URL=https://basinwx.com
+BASINWX_API_URLS=https://basinwx.com
 
 # Observations: Every 10 minutes
 */10 * * * * cd ~/basinwx-pipeline && ./fetch_and_upload.py >> /tmp/basinwx_cron.log 2>&1
