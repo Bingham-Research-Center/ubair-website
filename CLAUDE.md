@@ -3,14 +3,24 @@
 ## Project Overview
 Weather data visualization website showing live air quality observations and forecasts for Uintah Basin region.
 
-## Data Pipeline
-**CHPC (compute server)** → **POST /api/upload/:dataType** → **Akamai (web server)**
+## Infrastructure
 
-### Data Flow
-1. **CHPC**: Python script using `brc-tools` pulls from Synoptic Weather API
-2. **Processing**: Data goes through polars/pandas → JSON format
-3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key
-4. **Display**: Leaflet maps on Node.js website at basinwx.com
+### Servers
+| Server | URL | Branch | Purpose |
+|--------|-----|--------|---------|
+| **CHPC** (University of Utah) | — | — | Runs `brc-tools` Python scripts. Fetches weather data, processes it, POSTs JSON to web servers. |
+| **Staging** (Akamai/Linode) | `basinwx.dev` | `dev` | Testing and staging. Test new features and uploads here first. |
+| **Production** (Akamai/Linode) | `basinwx.com` | `ops` | Live public site. Only receives data once verified on staging. |
+
+### Data Pipeline
+**CHPC** → **POST /api/upload/:dataType** → **basinwx.dev or basinwx.com**
+
+1. **CHPC**: `brc-tools` fetches from Synoptic Weather API / HRRR via herbie-data
+2. **Processing**: polars/pandas → JSON
+3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key + CHPC hostname validation
+4. **Display**: Leaflet maps on Node.js website
+
+Upload target is configured per-server in `~/.config/ubair-website/website_url` on CHPC. Point at `basinwx.dev` for testing, `basinwx.com` for production.
 
 ### Data Types
 - **Live observations**: `map_obs_YYYYMMDD_HHMMZ.json` (geographic weather data)
