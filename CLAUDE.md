@@ -27,9 +27,9 @@ The operational core must be agnostic to which server / branch it runs on.
 **CHPC (compute server)** → **POST /api/upload/:dataType** → **both `www.basinwx.com` and `www.basinwx.dev`**
 
 ### Data Flow
-1. **CHPC**: Python script using `brc-tools` pulls from Synoptic Weather API
-2. **Processing**: Data goes through polars/pandas → JSON format
-3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key, fanned out to every URL in `BASINWX_API_URLS` (first = primary, rest = best-effort mirrors)
+1. **CHPC**: `brc-tools` fetches from Synoptic Weather API / HRRR via herbie-data
+2. **Processing**: polars/pandas → JSON
+3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key + CHPC hostname validation, fanned out to every URL in `BASINWX_API_URLS` (first = primary, rest = best-effort mirrors)
 4. **Display**: Leaflet maps on Node.js website (live on `.com`, rehearsal on `.dev`)
 
 ### Data Types
