@@ -17,6 +17,12 @@ The operational core must be agnostic to which server / branch it runs on.
 - A third developer laptop/VM may also run this repo. It is **not operational**, may have broken paths, and must never be the source of truth.
 - Full bring-up runbook, nginx template, cert renewal, and "did this work?" sanity checklist live in `docs/DEPLOYMENT.md`.
 
+### Bring-up lessons learnt (keep for future re-provisioning)
+- **Linode Cloud Firewall defaults to Drop.** A fresh linode blocks 80/443 until you explicitly accept them. Symptoms: `certbot renew --dry-run` times out on the ACME challenge, site is unreachable externally, but internal `curl -I http://127.0.0.1:${PORT}` works fine. Check each box's firewall rules in the Linode console before assuming nginx or certbot are broken.
+- **Don't use `certbot --manual` for these domains.** Its renewal config writes `authenticator = manual`, which the systemd timer cannot drive non-interactively — the cert silently fails to renew until it expires. Always use `certbot certonly --nginx` (or `--webroot`) so renewal is automated. Verify with `sudo certbot renew --dry-run`.
+- **`.dev` TLDs trip some client networks.** HSTS-preload plus occasional SNI-based filtering on corporate/campus/ISP routers produces "connection reset" errors that look like the server is down. Always phone-tether test (`curl -I https://www.basinwx.dev/` on a mobile hotspot) before blaming the server; if it works on cellular, the site is fine and the user's LAN is the culprit.
+- **`pm2 startup` is not optional.** Without the systemd unit a reboot silently loses the site. Confirm with `systemctl list-unit-files | grep pm2`.
+
 ## Data Pipeline
 **CHPC (compute server)** → **POST /api/upload/:dataType** → **both `www.basinwx.com` and `www.basinwx.dev`**
 
