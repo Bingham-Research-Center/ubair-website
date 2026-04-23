@@ -26,13 +26,13 @@ Real-time weather data visualization and air quality monitoring platform for the
 ## Technical Architecture
 
 ```
-CHPC (Data Processing) → API Upload → Akamai Server → Web Interface
+CHPC (Data Processing) → API Upload (fan-out) → Linode (.com ops + .dev rehearsal) → Web Interface
 ```
 
-- **Backend**: Node.js, Express.js
+- **Backend**: Node.js, Express.js, pm2
 - **Frontend**: Vanilla JavaScript, Leaflet, Plotly.js
 - **Data Pipeline**: Python (brc-tools), Synoptic Weather API
-- **Deployment**: Akamai CDN, SSL/TLS secured
+- **Deployment**: Two Linode boxes (`www.basinwx.com` ops, `www.basinwx.dev` rehearsal mirror), nginx reverse proxy, Let's Encrypt TLS
 
 ## Documentation --- still in flux and requiring review for AI slop
 
@@ -114,8 +114,11 @@ curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
 # How many forecast files?
 curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
 
-# Akamai server logs
-ssh akamai "pm2 logs --lines 50"
+# Server logs (ops box)
+ssh deploy@www.basinwx.com "pm2 logs --lines 50"
+
+# Server logs (dev / rehearsal box)
+ssh deploy@www.basinwx.dev "pm2 logs --lines 50"
 ```
 
 ### Automated Email Report

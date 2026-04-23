@@ -143,7 +143,7 @@ vim ~/.bashrc  # or nano ~/.bashrc
 
 # Find and remove these lines:
 # export DATA_UPLOAD_API_KEY="..."
-# export BASINWX_API_URL="..."
+# export BASINWX_API_URLS="..."
 
 # Save and exit
 
@@ -212,7 +212,7 @@ crontab -l
 vim ~/.bashrc
 # Delete lines:
 #   export DATA_UPLOAD_API_KEY="..."
-#   export BASINWX_API_URL="..."
+#   export BASINWX_API_URLS="..."
 source ~/.bashrc
 
 # Remove config directory
@@ -256,7 +256,7 @@ mv ~/chpc-deployment ~/chpc-deployment.old_$(date +%Y%m%d)
 crontab -l 2>&1 | grep "no crontab"
 
 # No environment variables
-echo $DATA_UPLOAD_API_KEY $BASINWX_API_URL
+echo $DATA_UPLOAD_API_KEY $BASINWX_API_URLS
 # (Both empty)
 
 # No config files

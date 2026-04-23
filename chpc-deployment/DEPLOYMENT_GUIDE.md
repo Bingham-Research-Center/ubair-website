@@ -90,7 +90,7 @@ Verify they're set:
 
 ```bash
 echo $DATA_UPLOAD_API_KEY
-echo $BASINWX_API_URL
+echo $BASINWX_API_URLS
 ```
 
 You should see:
@@ -114,7 +114,7 @@ bash test_upload.sh
 ```
 Test 1: Environment Check
 ✓ DATA_UPLOAD_API_KEY set
-✓ BASINWX_API_URL: https://basinwx.com
+✓ BASINWX_API_URLS: https://basinwx.com
 ✓ Python package: requests
 ✓ Python package: jsonschema
 

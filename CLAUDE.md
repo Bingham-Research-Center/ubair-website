@@ -76,11 +76,9 @@ The operational core must be agnostic to which server / branch it runs on.
 - **Real-time data**: Automatic refresh every 10 minutes
 
 ## Recent Updates
-- Removed all synthetic/demo data generation
-- Added comprehensive mobile responsiveness
+- **PR #178 (2026-04-22)**: operational-agnosticism pass — branch-derived pm2 app name, fan-out CHPC uploader (`BASINWX_API_URLS`), `docs/DEPLOYMENT.md` runbook, host-aware sidebar brand
 - Implemented 90s mode toggle with holographic background
 - Created data schema documentation (DATA_SCHEMA.md)
-- Added API testing script and SSL setup guide
 - Moved unused images to `/public/images/unused/`
 
 ## Secret Management
@@ -95,7 +93,6 @@ Environment variables are used for all API keys and sensitive configuration:
 **Never push directly to `dev`, `ops`, or `main`.**  All changes to these branches must go through a pull request. If you believe a direct push is warranted, ask the user to confirm — then ask a **second time** to be sure before proceeding. This applies to merges, reverts, version bumps, and any other commits.
 
 ## Team Notes
-- 4-person collaborative team
+- Small collaborative team (lead + RAs — see README for current roster)
 - CSS-HTML mapping: fire.css ↔ fire.html pattern
-- Clean codebase with minimal redundancy
 - 20-item improvement list available (IMPROVEMENTS.md)

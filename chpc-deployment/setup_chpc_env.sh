@@ -22,9 +22,10 @@ echo ""
 # IMPORTANT: Use DATA_UPLOAD_API_KEY to match brc-tools code.
 # BASINWX_API_URLS is a comma-separated fan-out list. The first URL is the
 # primary destination (its failure fails the job); remaining URLs are
-# best-effort mirrors.
+# best-effort mirrors. No default — an operator must opt in explicitly so we
+# never silently upload to production.
 : "${DATA_UPLOAD_API_KEY:=}"
-: "${BASINWX_API_URLS:=https://basinwx.com,https://basinwx.dev}"
+: "${BASINWX_API_URLS:=}"
 
 if [ -z "$DATA_UPLOAD_API_KEY" ]; then
     read -r -s -p "DATA_UPLOAD_API_KEY (input hidden): " DATA_UPLOAD_API_KEY
@@ -32,6 +33,21 @@ if [ -z "$DATA_UPLOAD_API_KEY" ]; then
 fi
 if [ -z "$DATA_UPLOAD_API_KEY" ]; then
     echo "ERROR: DATA_UPLOAD_API_KEY must be set. Aborting." >&2
+    exit 1
+fi
+
+if [ -z "$BASINWX_API_URLS" ]; then
+    echo ""
+    echo "BASINWX_API_URLS is a comma-separated fan-out list."
+    echo "  First URL = primary (failure fails the job)."
+    echo "  Remaining URLs = best-effort mirrors."
+    echo "Examples:"
+    echo "  https://basinwx.dev                           (dev only, safe)"
+    echo "  https://basinwx.com,https://basinwx.dev       (full production fan-out)"
+    read -r -p "BASINWX_API_URLS: " BASINWX_API_URLS
+fi
+if [ -z "$BASINWX_API_URLS" ]; then
+    echo "ERROR: BASINWX_API_URLS must be set. Aborting." >&2
     exit 1
 fi
 
@@ -77,18 +93,27 @@ echo ""
 
 echo "Step 4: Setting up environment variables..."
 
-# Create/update .bashrc entry
+# Create/update .bashrc entries. Each export is checked independently so a
+# partially-migrated .bashrc (e.g. has DATA_UPLOAD_API_KEY from the old script
+# but not BASINWX_API_URLS) gets fully updated on re-run.
 BASHRC="$HOME/.bashrc"
-if ! grep -q "DATA_UPLOAD_API_KEY" "$BASHRC" 2>/dev/null; then
+add_bashrc_export() {
+    local var="$1" value="$2"
+    if ! grep -q "^export ${var}=" "$BASHRC" 2>/dev/null; then
+        echo "export ${var}=\"${value}\"" >> "$BASHRC"
+        echo "  + added export $var to $BASHRC"
+    else
+        echo "  ✓ export $var already present in $BASHRC"
+    fi
+}
+
+if ! grep -q "# BasinWx Data Pipeline Configuration" "$BASHRC" 2>/dev/null; then
     echo "" >> "$BASHRC"
     echo "# BasinWx Data Pipeline Configuration" >> "$BASHRC"
-    echo "export DATA_UPLOAD_API_KEY=\"$DATA_UPLOAD_API_KEY\"" >> "$BASHRC"
-    echo "export BASINWX_API_KEY=\"\$DATA_UPLOAD_API_KEY\"" >> "$BASHRC"
-    echo "export BASINWX_API_URLS=\"$BASINWX_API_URLS\"" >> "$BASHRC"
-    echo "✓ Added to $BASHRC"
-else
-    echo "✓ Already exists in $BASHRC (verify BASINWX_API_URLS is set there too)"
 fi
+add_bashrc_export DATA_UPLOAD_API_KEY "$DATA_UPLOAD_API_KEY"
+add_bashrc_export BASINWX_API_KEY "\$DATA_UPLOAD_API_KEY"
+add_bashrc_export BASINWX_API_URLS "$BASINWX_API_URLS"
 
 # Export for current session
 export DATA_UPLOAD_API_KEY="$DATA_UPLOAD_API_KEY"
@@ -97,9 +122,15 @@ export BASINWX_API_URLS="$BASINWX_API_URLS"
 echo "✓ Exported for current session"
 echo ""
 
-echo "Step 5: Creating website URL config file..."
+echo "Step 5: Creating website URL config files..."
 echo "$BASINWX_API_URLS" > "$CONFIG_DIR/website_urls"
 echo "✓ Created: $CONFIG_DIR/website_urls"
+# Back-compat: legacy brc-tools helpers read ~/.config/ubair-website/website_url
+# (singular). Write the primary URL there so old callers keep working until
+# they're migrated.
+PRIMARY_URL_FOR_FILE="${BASINWX_API_URLS%%,*}"
+echo "$PRIMARY_URL_FOR_FILE" > "$CONFIG_DIR/website_url"
+echo "✓ Created: $CONFIG_DIR/website_url (legacy single-URL file, primary only)"
 echo ""
 
 echo "Step 6: Creating log directory..."

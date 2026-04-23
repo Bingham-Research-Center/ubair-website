@@ -116,7 +116,11 @@ sudo -u deploy bash -lc '
   git fetch --all &&
   git checkout <feature-branch> &&
   npm ci &&
-  pm2 delete all &&                          # app name is branch-derived, clean slate avoids orphans
+  # Delete only our own branch-derived pm2 apps. Never "pm2 delete all" — it
+  # nukes unrelated apps running under the same deploy user.
+  for app in $(pm2 jlist | python3 -c "import json,sys; print(\"\\n\".join(a[\"name\"] for a in json.load(sys.stdin) if a[\"name\"].startswith(\"basinwx-\")))"); do
+    pm2 delete "$app"
+  done &&
   pm2 start ecosystem.config.cjs &&
   pm2 save
 '

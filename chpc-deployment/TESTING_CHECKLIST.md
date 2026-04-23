@@ -19,10 +19,10 @@
 ### 1.1 Environment Variables
 ```bash
 echo $DATA_UPLOAD_API_KEY
-echo $BASINWX_API_URL
+echo $BASINWX_API_URLS
 ```
 - [ ] `DATA_UPLOAD_API_KEY` shows `48cd2f722c19af756e7443230efe9fcc`
-- [ ] `BASINWX_API_URL` shows `https://basinwx.com`
+- [ ] `BASINWX_API_URLS` shows `https://basinwx.com`
 
 ### 1.2 Configuration Files
 ```bash
@@ -189,7 +189,7 @@ echo $DATA_UPLOAD_API_KEY  # Verify it's correct again
 
 ### 5.2 Test with Unreachable Server
 ```bash
-export BASINWX_API_URL="https://invalid-server-for-testing.com"
+export BASINWX_API_URLS="https://invalid-server-for-testing.com"
 cd ~/brc-tools
 python3 brc_tools/download/get_map_obs.py 2>&1 | tail -20
 ```

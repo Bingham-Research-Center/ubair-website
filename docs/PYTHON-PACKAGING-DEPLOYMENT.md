@@ -177,7 +177,7 @@ DATA_UPLOAD_API_KEY=abc123xyz789
 SYNOPTIC_API_TOKEN=my-token-here
 
 # Configuration (non-secrets)
-BASINWX_API_URL=https://basinwx.com
+BASINWX_API_URLS=https://basinwx.com
 LOG_LEVEL=INFO
 ```
 
@@ -201,14 +201,14 @@ DATA_UPLOAD_API_KEY=your-key-here
 SYNOPTIC_API_TOKEN=your-token-here
 
 # Optional: Custom website URL
-BASINWX_API_URL=https://basinwx.com
+BASINWX_API_URLS=https://basinwx.com
 ```
 
 **`.env` (NOT in git, each user creates their own):**
 ```bash
 DATA_UPLOAD_API_KEY=sk_live_abc123xyz789
 SYNOPTIC_API_TOKEN=f7a3b9c1d2e4
-BASINWX_API_URL=https://staging.basinwx.com  # Testing on staging
+BASINWX_API_URLS=https://staging.basinwx.com  # Testing on staging
 ```
 
 ### Using .env in Python
@@ -448,7 +448,7 @@ cat > ~/.bashrc_basinwx <<'EOF'
 # BasinWx Secrets
 export DATA_UPLOAD_API_KEY="your-production-key-here"
 export SYNOPTIC_API_TOKEN="your-synoptic-token"
-export BASINWX_API_URL="https://basinwx.com"
+export BASINWX_API_URLS="https://basinwx.com"
 EOF
 
 chmod 600 ~/.bashrc_basinwx  # Protect secrets

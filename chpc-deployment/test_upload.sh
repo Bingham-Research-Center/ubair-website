@@ -25,7 +25,14 @@ TEST_DATA_DIR="$BRC_TOOLS_DIR/test_data"
 UPLOAD_SCRIPT="$BRC_TOOLS_DIR/brc_tools/download/push_data.py"
 
 # Fan-out destinations (first = primary, rest = best-effort mirrors).
-: "${BASINWX_API_URLS:=https://basinwx.com,https://basinwx.dev}"
+# No default — the test script must be explicit about which destination(s) it hits
+# so we never accidentally test-upload to production.
+if [ -z "${BASINWX_API_URLS:-}" ]; then
+    echo "ERROR: BASINWX_API_URLS must be set before running this script." >&2
+    echo "  Dev-only:        export BASINWX_API_URLS=https://basinwx.dev" >&2
+    echo "  Full fan-out:    export BASINWX_API_URLS=https://basinwx.com,https://basinwx.dev" >&2
+    exit 1
+fi
 PRIMARY_URL="${BASINWX_API_URLS%%,*}"
 MANIFEST_URL="${PRIMARY_URL}/DATA_MANIFEST.json"
 
@@ -112,10 +119,11 @@ echo ""
 echo -e "${BLUE}Test 3: API Health Check${NC}"
 echo "----------------------------------------"
 
-HEALTH_RESPONSE=$(python3 << EOF
-import requests
+HEALTH_RESPONSE=$(PRIMARY_URL="$PRIMARY_URL" python3 << 'EOF'
+import os, requests
+url = os.environ['PRIMARY_URL'] + '/api/health'
 try:
-    response = requests.get('${PRIMARY_URL}/api/health', timeout=10)
+    response = requests.get(url, timeout=10)
     print(f"STATUS:{response.status_code}")
     if response.status_code == 200:
         print(f"RESPONSE:{response.text}")

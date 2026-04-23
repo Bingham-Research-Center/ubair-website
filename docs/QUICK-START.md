@@ -50,7 +50,7 @@ chmod +x chpc_uploader.py
 cat >> ~/.bashrc << 'EOF'
 # BasinWx Data Pipeline
 export BASINWX_API_KEY="your-api-key-here"
-export BASINWX_API_URL="https://basinwx.com"
+export BASINWX_API_URLS="https://basinwx.com"
 EOF
 
 # Reload
@@ -179,7 +179,7 @@ Add these lines:
 ```cron
 # Environment
 BASINWX_API_KEY=your-api-key-here
-BASINWX_API_URL=https://basinwx.com
+BASINWX_API_URLS=https://basinwx.com
 
 # Send observations every 10 minutes
 */10 * * * * cd ~/basinwx-pipeline && ./send_observations.py >> /tmp/basinwx.log 2>&1
