@@ -202,3 +202,54 @@ To temporarily stop mirroring to dev (e.g., during dev-side maintenance), drop `
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
+
+## 9. Per-user branch previews
+
+Preview apps let a developer's feature branch run live on its own subdomain (`<subdomain>.basinwx.dev`) without disturbing the main `dev` deployment. Configuration is in `preview-apps.json` at the repo root.
+
+### Managing previews (as `deploy` user on the dev box)
+
+```bash
+# Start Quinten's sports preview on port 3002 at sports.basinwx.dev
+scripts/manage-previews.sh up quinten
+
+# Get the nginx vhost config
+scripts/manage-previews.sh nginx quinten | sudo tee /etc/nginx/sites-available/sports.basinwx.dev
+sudo ln -s /etc/nginx/sites-available/sports.basinwx.dev /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# Obtain TLS cert (must succeed before HTTPS will work)
+sudo certbot certonly --nginx -d sports.basinwx.dev
+sudo systemctl reload nginx
+
+# Pull latest commits from the feature branch
+scripts/manage-previews.sh update quinten
+
+# Tear down when no longer needed
+scripts/manage-previews.sh down quinten
+
+# List all configured previews + pm2 status
+scripts/manage-previews.sh status
+```
+
+### How it works
+
+1. `up` creates a `git worktree` of the feature branch at `/srv/ubair-website-preview-<user>` (sibling to the main repo).
+2. The worktree's `public/api/static` is symlinked to the main dev repo's so the preview shows live CHPC data.
+3. A `.env` is created with `PORT=<preview port>` and `PREVIEW_MODE=true` (disables background refresh and report emails).
+4. `npm ci` installs dependencies, then `pm2 start ecosystem.config.cjs` launches the app.
+5. The pm2 app name is derived from the branch name by `ecosystem.config.cjs` — e.g. `basinwx-feature-braxton-sports`.
+
+### Adding a new user / preview
+
+Add an entry to `preview-apps.json` (choose a port not used by any other process — ops=3000, dev=3001, existing previews listed there), then open a PR.
+
+```json
+{ "user": "julianna", "branch": "feature/julianna-aviation", "port": 3003, "subdomain": "aviation" }
+```
+
+### Notes
+
+- Preview apps do **not** receive CHPC uploads — they read static data from the dev server's shared directory. Do not add a preview URL to `BASINWX_API_URLS`.
+- The feature branch must include the `PREVIEW_MODE` gate (merged from `dev`) for background jobs to be suppressed. Run `scripts/manage-previews.sh update <user>` after the branch syncs with dev.
+- Ports are hardcoded in `preview-apps.json`; update the file and the nginx vhost if you need to change a port.

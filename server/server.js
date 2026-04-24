@@ -193,9 +193,13 @@ server.listen(PORT, () => {
     console.log('Data upload API available at /api/data/upload/:dataType');
     console.log('');
 
-    // Start background UDOT API refresh
-    backgroundRefresh.start();
-    reportEmailService.start();
+    // Skip background jobs for preview instances (feature-branch worktrees)
+    if (process.env.PREVIEW_MODE === 'true') {
+        console.log('PREVIEW_MODE=true — background refresh and report emails disabled.');
+    } else {
+        backgroundRefresh.start();
+        reportEmailService.start();
+    }
 });
 
 let isShuttingDown = false;
