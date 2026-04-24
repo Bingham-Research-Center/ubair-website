@@ -16,6 +16,8 @@ The operational core must be agnostic to which server / branch it runs on.
 - `www.basinwx.dev` receives the same CHPC data as `.com` (fan-out upload) and runs whichever branch is checked out, so merging a PR into `dev` is a real-world dry-run before promotion to `ops`. It is also where stakeholder demos happen.
 - A third developer laptop/VM may also run this repo. It is **not operational**, may have broken paths, and must never be the source of truth.
 - Full bring-up runbook, nginx template, cert renewal, and "did this work?" sanity checklist live in `docs/DEPLOYMENT.md`.
+- **DNS is at Namecheap, not Linode.** Nameservers: `dns1/dns2.registrar-servers.com`. A wildcard A record (`*` → dev-box IP) covers every `<name>.basinwx.dev` subdomain, so new feature-branch previews need no DNS work — only nginx vhost + cert.
+- **Feature-branch previews** live at `<name>.basinwx.dev`, managed by `scripts/manage-previews.sh` + `preview-apps.json`. Runbook: `docs/DEPLOYMENT.md` §9. Background jobs (refresh, report emails) are gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas.
 
 ### Bring-up lessons learnt (keep for future re-provisioning)
 - **Linode Cloud Firewall defaults to Drop.** A fresh linode blocks 80/443 until you explicitly accept them. Symptoms: `certbot renew --dry-run` times out on the ACME challenge, site is unreachable externally, but internal `curl -I http://127.0.0.1:${PORT}` works fine. Check each box's firewall rules in the Linode console before assuming nginx or certbot are broken.
@@ -38,6 +40,7 @@ The operational core must be agnostic to which server / branch it runs on.
 - **Time series**: Ozone concentration data
 - **Markdown outlooks**: Weather forecast text
 - **Images**: PNG files for visualization
+- **Forecasts**: Clyfar ensembles (`forecast_possibility_heatmap_*`, `forecast_exceedance_probabilities_*`, `forecast_percentile_scenarios_*`) and reduced HRRR surface layers (`forecast_hrrr_surface_layers_*`). Endpoint: `/api/upload/forecasts`. Full JSON schemas in `DATA_MANIFEST.json` §forecasts (~L247–L629). Server accepts any valid JSON; schema is not enforced server-side, so brc-tools is the contract-holder.
 
 ## API Endpoints
 - **Upload**: `POST /api/upload/:dataType` (CHPC only, API key required)
