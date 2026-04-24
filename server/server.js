@@ -125,14 +125,11 @@ app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });
 
-app.get('/api/filelist.json', async (req, res) => {
-    try {
-        const data = await fs.readFile('./public/api/static/filelist.json');
-        res.json(JSON.parse(data));
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch file list' });
-    }
-});
+// NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
+// served a deploy-time fossil (./public/api/static/filelist.json) that
+// nothing ever regenerated, so it pinned operators to stale snapshots
+// during diagnostics. Use /api/filelist/:dataType below (dynamic
+// fs.readdir on the per-type directory) instead.
 
 app.get('/api/filelist/:dataType', async (req, res) => {
     try {
