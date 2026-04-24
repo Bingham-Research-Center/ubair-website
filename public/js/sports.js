@@ -105,6 +105,24 @@ async function getWindDirection() {
     return direction;
 }
 
+// Calculate Dew Point based on live data
+async function getDewPoint() {
+    try {
+        const { observations } = await fetchLiveObservations();
+
+        const stations = Object.keys(observations['Dew Point'] || {});
+        if (stations.length === 0) return null;
+
+        const station = stations[0];
+        const dewPoint = observations['Dew Point']?.[station];
+
+        return dewPoint !== undefined ? Math.round(dewPoint) : null;
+    } catch (error) {
+        console.error('Error getting dew point:', error);
+        return null;
+    }
+}
+
 //Calculate the winds influence/drag on a ball for every 6 feet
 async function getWindInfluenceOnBall(weight, ballSpeed) {
     const segmentDistance = 6; // feet
@@ -137,6 +155,7 @@ async function updateSportsDashboard() {
         const currentTemp = await getCurrentTemperature();
         const feltTemp = await calculateTemperature();
         const { speed: windSpeed, direction: windDir } = await getWindData();
+        const dewPoint = await getDewPoint();
         const baseballWindInfluence = await getWindInfluenceOnBall(baseball_avg_weight, baseball_avg_speed);
         const footballWindInfluence = await getWindInfluenceOnBall(football_avg_weight, football_avg_speed);
 
@@ -149,6 +168,9 @@ async function updateSportsDashboard() {
         // Wind Speed + Direction
         const windSpeedValue = windSpeed !== null ? windSpeed + " mph " : "-- ";
         document.querySelector('.condition-card:nth-child(3) .current-value').textContent = windSpeedValue + windDir;
+        // Dew Point
+        const dewPointValue = dewPoint !== null ? dewPoint + " °F" : "--";
+        document.querySelector('.condition-card:nth-child(4) .current-value').textContent = dewPointValue;
         // Wind Influence on Baseball
         const windInfluenceValue = baseballWindInfluence !== "N/A" ? baseballWindInfluence + " in" : "--";
         document.querySelector('.condition-card:nth-child(8) .current-value').textContent = windInfluenceValue;
@@ -157,7 +179,6 @@ async function updateSportsDashboard() {
         document.querySelector('.condition-card:nth-child(9) .current-value').textContent = footballWindInfluenceValue;
 
         //Others
-        document.querySelector('.condition-card:nth-child(4) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(5) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(6) .current-value').textContent = "--";
         document.querySelector('.condition-card:nth-child(7) .current-value').textContent = "--";
