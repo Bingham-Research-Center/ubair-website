@@ -251,5 +251,6 @@ Add an entry to `preview-apps.json` (choose a port not used by any other process
 ### Notes
 
 - Preview apps do **not** receive CHPC uploads — they read static data from the dev server's shared directory. Do not add a preview URL to `BASINWX_API_URLS`.
-- The feature branch must include the `PREVIEW_MODE` gate (merged from `dev`) for background jobs to be suppressed. Run `scripts/manage-previews.sh update <user>` after the branch syncs with dev.
+- **PREVIEW_MODE must be in the branch code, not just the `.env`.** The gate is a guard inside `server/server.js` that checks `process.env.PREVIEW_MODE`. Setting `PREVIEW_MODE=true` in a preview's `.env` only works if the feature branch already contains the gate (merged from `dev`). Until the branch syncs, the preview will still run `backgroundRefresh` + `reportEmailService` and double-poll UDoT / duplicate report emails.
+  - **Workaround when the branch is not yet synced with dev:** before running `up`, or immediately after, edit `/srv/ubair-website-preview-<user>/.env` and blank the relevant keys — e.g. `UDOT_API_KEY=` and `REPORT_EMAIL_ENABLED=false` — then `scripts/manage-previews.sh update <user>` (or `pm2 restart <pm2_name>`) to pick them up. Restore them after the branch has synced and `PREVIEW_MODE` is doing its job.
 - Ports are hardcoded in `preview-apps.json`; update the file and the nginx vhost if you need to change a port.

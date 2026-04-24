@@ -63,10 +63,12 @@ cmd_up() {
   local user="$1"
   require_deploy_user
 
-  local branch port worktree_dir
+  local branch port subdomain worktree_dir
   branch=$(get_field "$user" branch)
   port=$(get_field "$user" port)
+  subdomain=$(get_field "$user" subdomain)
   worktree_dir=$(worktree_dir_for "$user")
+  local domain="${subdomain}.basinwx.dev"
 
   # Port sanity check
   if ss -tlnp 2>/dev/null | grep -q ":$port " || \
@@ -120,9 +122,11 @@ cmd_up() {
   echo "Installing npm dependencies..."
   npm ci --prefix "$worktree_dir" --silent
 
-  # Start pm2
+  # Start pm2 and persist the dump so the preview survives a reboot
+  # (the pm2 systemd unit only restores apps captured by the last `pm2 save`)
   echo "Starting pm2 app..."
   pm2 start "$worktree_dir/ecosystem.config.cjs"
+  pm2 save
 
   local pm2_name
   pm2_name=$(pm2_name_for_branch "$branch")
@@ -133,9 +137,9 @@ cmd_up() {
   echo "  worktree: $worktree_dir"
   echo ""
   echo "Next steps:"
-  echo "  1. Add nginx vhost:    $0 nginx $user | sudo tee /etc/nginx/sites-available/sports.basinwx.dev"
-  echo "  2. Enable + reload:    sudo ln -s /etc/nginx/sites-available/sports.basinwx.dev /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx"
-  echo "  3. Obtain TLS cert:    sudo certbot certonly --nginx -d sports.basinwx.dev"
+  echo "  1. Add nginx vhost:    $0 nginx $user | sudo tee /etc/nginx/sites-available/$domain"
+  echo "  2. Enable + reload:    sudo ln -s /etc/nginx/sites-available/$domain /etc/nginx/sites-enabled/ && sudo nginx -t && sudo systemctl reload nginx"
+  echo "  3. Obtain TLS cert:    sudo certbot certonly --nginx -d $domain"
   echo "  4. Reload nginx again: sudo systemctl reload nginx"
 }
 
@@ -150,6 +154,8 @@ cmd_down() {
 
   echo "Stopping pm2 app: $pm2_name..."
   pm2 delete "$pm2_name" 2>/dev/null || echo "  (app not found in pm2 — already stopped?)"
+  # Refresh the saved dump so the deleted app isn't resurrected on reboot
+  pm2 save
 
   if [ -d "$worktree_dir" ]; then
     echo "Removing worktree: $worktree_dir..."
