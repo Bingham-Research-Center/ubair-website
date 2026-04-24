@@ -76,6 +76,7 @@ The operational core must be agnostic to which server / branch it runs on.
 - **Real-time data**: Automatic refresh every 10 minutes
 
 ## Recent Updates
+- **PR #182 (2026-04-24)**: per-user branch preview apps on subdomains — `preview-apps.json`, `scripts/manage-previews.sh`, `PREVIEW_MODE` gate in `server.js`, `docs/DEPLOYMENT.md` §9; also fixed `routes/trafficEvents.js` to use shared `TrafficEventsService` instance via injection (eliminating separate rate-limiter and cold-start double-poll against UDoT)
 - **PR #178 (2026-04-22)**: operational-agnosticism pass — branch-derived pm2 app name, fan-out CHPC uploader (`BASINWX_API_URLS`), `docs/DEPLOYMENT.md` runbook, host-aware sidebar brand
 - Implemented 90s mode toggle with holographic background
 - Created data schema documentation (DATA_SCHEMA.md)
