@@ -8,7 +8,7 @@ import { createServer } from 'http';
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes, { setRoadWeatherService } from './routes/roadWeather.js';
-import trafficEventsRoutes from './routes/trafficEvents.js';
+import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
@@ -29,9 +29,10 @@ const reportEmailService = new ReportEmailService({
     getCameraStats: () => backgroundRefresh.cameraAnalysisScheduler.getStats()
 });
 
-// Share the roadWeatherService instance with routes
-// This ensures all routes use the same instance with camera analysis scheduler
+// Share service instances with routes so they use the background refresh's
+// shared cache and rate limiter, rather than creating their own.
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
+setTrafficEventsService(backgroundRefresh.trafficEventsService);
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads)
 app.use(express.json({ type: 'application/json' }));
@@ -190,9 +191,13 @@ server.listen(PORT, () => {
     console.log('Data upload API available at /api/data/upload/:dataType');
     console.log('');
 
-    // Start background UDOT API refresh
-    backgroundRefresh.start();
-    reportEmailService.start();
+    // Skip background jobs for preview instances (feature-branch worktrees)
+    if (process.env.PREVIEW_MODE === 'true') {
+        console.log('PREVIEW_MODE=true — background refresh and report emails disabled.');
+    } else {
+        backgroundRefresh.start();
+        reportEmailService.start();
+    }
 });
 
 let isShuttingDown = false;

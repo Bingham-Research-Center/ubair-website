@@ -31,8 +31,9 @@ CHPC (Data Processing) → API Upload (fan-out) → Linode (.com ops + .dev rehe
 
 - **Backend**: Node.js, Express.js, pm2
 - **Frontend**: Vanilla JavaScript, Leaflet, Plotly.js
-- **Data Pipeline**: Python (brc-tools), Synoptic Weather API
-- **Deployment**: Two Linode boxes (`www.basinwx.com` ops, `www.basinwx.dev` rehearsal mirror), nginx reverse proxy, Let's Encrypt TLS
+- **Data Pipeline**: Python (brc-tools), Synoptic Weather API; forecast products (Clyfar ensembles, reduced HRRR surface layers) POST to `/api/upload/forecasts` — schema in `DATA_MANIFEST.json`
+- **Deployment**: Two Linode boxes (`www.basinwx.com` ops, `www.basinwx.dev` rehearsal mirror), nginx reverse proxy, Let's Encrypt TLS. DNS for `basinwx.dev` is at **Namecheap** with a wildcard A record (`*` → dev-box IP)
+- **Feature-branch previews**: any in-progress branch can be spun up at `<name>.basinwx.dev` via a git worktree + pm2 pair managed by `scripts/manage-previews.sh`. New previews need no DNS work thanks to the wildcard. See `docs/DEPLOYMENT.md` §9
 
 ## Documentation --- still in flux and requiring review for AI slop
 
