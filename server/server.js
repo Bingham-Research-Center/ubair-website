@@ -8,7 +8,7 @@ import { createServer } from 'http';
 // JRL - this is the data route
 import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes, { setRoadWeatherService } from './routes/roadWeather.js';
-import trafficEventsRoutes from './routes/trafficEvents.js';
+import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
@@ -29,9 +29,10 @@ const reportEmailService = new ReportEmailService({
     getCameraStats: () => backgroundRefresh.cameraAnalysisScheduler.getStats()
 });
 
-// Share the roadWeatherService instance with routes
-// This ensures all routes use the same instance with camera analysis scheduler
+// Share service instances with routes so they use the background refresh's
+// shared cache and rate limiter, rather than creating their own.
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
+setTrafficEventsService(backgroundRefresh.trafficEventsService);
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads)
 app.use(express.json({ type: 'application/json' }));
@@ -125,14 +126,11 @@ app.get('/about/:page', (req, res) => {
     res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
 });
 
-app.get('/api/filelist.json', async (req, res) => {
-    try {
-        const data = await fs.readFile('./public/api/static/filelist.json');
-        res.json(JSON.parse(data));
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch file list' });
-    }
-});
+// NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
+// served a deploy-time fossil (./public/api/static/filelist.json) that
+// nothing ever regenerated, so it pinned operators to stale snapshots
+// during diagnostics. Use /api/filelist/:dataType below (dynamic
+// fs.readdir on the per-type directory) instead.
 
 app.get('/api/filelist/:dataType', async (req, res) => {
     try {
@@ -193,9 +191,13 @@ server.listen(PORT, () => {
     console.log('Data upload API available at /api/data/upload/:dataType');
     console.log('');
 
-    // Start background UDOT API refresh
-    backgroundRefresh.start();
-    reportEmailService.start();
+    // Skip background jobs for preview instances (feature-branch worktrees)
+    if (process.env.PREVIEW_MODE === 'true') {
+        console.log('PREVIEW_MODE=true — background refresh and report emails disabled.');
+    } else {
+        backgroundRefresh.start();
+        reportEmailService.start();
+    }
 });
 
 let isShuttingDown = false;

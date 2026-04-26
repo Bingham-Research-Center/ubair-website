@@ -179,7 +179,7 @@ Cron Job (every 10 min)            Website displays on live map
 ```bash
 # Required
 export DATA_UPLOAD_API_KEY="48cd2f722c19af756e7443230efe9fcc"
-export BASINWX_API_URL="https://basinwx.com"
+export BASINWX_API_URLS="https://basinwx.com"
 ```
 
 **⚠️ Note:** Use `DATA_UPLOAD_API_KEY` (not `BASINWX_API_KEY`) to match brc-tools code.

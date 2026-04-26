@@ -60,7 +60,11 @@ Data flows from CHPC (brc-tools Python repo) → Akamai (ubair-website Node.js r
 ## API Endpoints
 - **Upload:** `POST /api/upload/:dataType` (CHPC only)
 - **Fetch data:** `GET /api/static/{filename}`
-- **File list:** `GET /api/filelist.json`
+- **File list:** `GET /api/filelist/:dataType` (dynamic listing of the per-data-type directory)
+
+> The older `/api/filelist.json` route was removed in 2026-04 because it
+> served a static fossil that never updated and misled operators during
+> diagnostics. Use `/api/filelist/:dataType` instead.
 
 ## Testing Workflow
 

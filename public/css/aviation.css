@@ -599,3 +599,28 @@ body[data-page-type="aviation"] h1::after {
     border-radius: 4px;
     font-size: 0.9rem;
 }
+/* HRRR crosswind preview table (brc-tools feed) */
+.crosswind-preview .init-time {
+    font-size: 0.85rem;
+    color: var(--aviation-secondary);
+    margin: 0 0 0.75rem 0;
+}
+.crosswind-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+.crosswind-table th,
+.crosswind-table td {
+    padding: 0.4rem 0.6rem;
+    text-align: right;
+    border-bottom: 1px solid rgba(30, 64, 175, 0.1);
+}
+.crosswind-table th:first-child,
+.crosswind-table td:first-child {
+    text-align: left;
+    font-family: 'Courier New', monospace;
+}
+.crosswind-table thead {
+    background: rgba(30, 64, 175, 0.06);
+}

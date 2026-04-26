@@ -52,6 +52,12 @@ async function loadSidebar() {
         const content = await response.text();
         sidebarContainer.innerHTML = content;
 
+        const host = window.location.host.replace(/^www\./, '') || 'basinwx.com';
+        const brandEl = sidebarContainer.querySelector('.sidebar-logo-title');
+        if (brandEl) brandEl.textContent = host;
+        const brandLink = sidebarContainer.querySelector('.sidebar-logo a');
+        if (brandLink) brandLink.title = `${host} - Home`;
+
         const currentPath = window.location.pathname;
         const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
         if (currentPageLink) {

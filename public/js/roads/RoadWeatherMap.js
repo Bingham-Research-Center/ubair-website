@@ -30,10 +30,15 @@ class RoadWeatherMap {
         this.refreshTimer = null;
         this.weatherStationsVisible = false;
         this.experimentalRoadMode = false;
+
+        this.cameraCycleActive = false;
+        this.cameraCycleInterval = null;
+        this.cameraCycleIndex = 0;
     }
 
     init() {
         this.initMap();
+        this.setupCameraCycleControl();
         this.addLegend();
         this.loadRoadWeatherData();
         this.loadTrafficEvents();
@@ -352,7 +357,8 @@ class RoadWeatherMap {
         // Format temperature and wind values using units system
         const airTemp = station.airTemperature ? unitsSystem.formatTemperature(station.airTemperature) : '--';
         const surfaceTemp = station.surfaceTemp ? unitsSystem.formatTemperature(station.surfaceTemp) : '--';
-        const humidity = station.relativeHumidity ? `${station.relativeHumidity}%` : '--';
+        const humidityValue = Number.isFinite(Number(station.relativeHumidity)) ? Math.round(Number(station.relativeHumidity)) : null;
+        const humidity = humidityValue !== null ? `${humidityValue}%` : '--';
         const windSpeed = station.windSpeedAvg ? unitsSystem.formatWindSpeed(station.windSpeedAvg) : '--';
         const windDir = station.windDirection || '--';
         const windGust = station.windSpeedGust ? unitsSystem.formatWindSpeed(station.windSpeedGust) : '--';
@@ -738,6 +744,70 @@ class RoadWeatherMap {
             95: 'Thunderstorm', 96: 'Thunderstorm with Light Hail', 99: 'Thunderstorm with Heavy Hail'
         };
         return weatherCodes[code] || 'Unknown';
+    }
+
+    setupCameraCycleControl() {
+        const control = L.control({ position: 'topleft' });
+
+        control.onAdd = () => {
+            const div = L.DomUtil.create('div', 'camera-cycle-control');
+            div.innerHTML = `
+                <div class="camera-cycle-container">
+                    <label class="camera-cycle-label">Auto-cycle cameras:</label>
+                    <div class="camera-cycle-switch" id="camera-cycle-toggle">
+                        <div class="camera-cycle-slider">
+                            <div class="camera-cycle-timer-fill" id="camera-cycle-timer-fill"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            L.DomEvent.disableClickPropagation(div);
+            L.DomEvent.disableScrollPropagation(div);
+            return div;
+        };
+
+        control.addTo(this.map);
+
+        const toggle = document.getElementById('camera-cycle-toggle');
+        const timerFill = document.getElementById('camera-cycle-timer-fill');
+        if (!toggle) return;
+
+        toggle.addEventListener('click', () => {
+            this.cameraCycleActive = !this.cameraCycleActive;
+            if (this.cameraCycleActive) {
+                toggle.classList.add('active');
+                if (timerFill) timerFill.style.animation = 'camera-cycle-timer 8s linear infinite';
+                this.startCameraCycle();
+            } else {
+                toggle.classList.remove('active');
+                if (timerFill) timerFill.style.animation = 'none';
+                this.stopCameraCycle();
+            }
+        });
+    }
+
+    startCameraCycle() {
+        const visible = Array.from(this.cameraMarkers.values()).filter(m => this.map.hasLayer(m));
+        if (visible.length === 0) return;
+
+        this.cameraCycleIndex = 0;
+        visible[0].openPopup();
+
+        this.cameraCycleInterval = setInterval(() => {
+            const current = Array.from(this.cameraMarkers.values()).filter(m => this.map.hasLayer(m));
+            if (current.length === 0) return;
+            this.map.closePopup();
+            this.cameraCycleIndex = (this.cameraCycleIndex + 1) % current.length;
+            current[this.cameraCycleIndex].openPopup();
+        }, 8000);
+    }
+
+    stopCameraCycle() {
+        if (this.cameraCycleInterval) {
+            clearInterval(this.cameraCycleInterval);
+            this.cameraCycleInterval = null;
+        }
+        this.map.closePopup();
     }
 
     addLegend() {
@@ -1348,7 +1418,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
 
             routeLine.bindPopup(`
                 <div style="font-size: 12px;">
-                    <strong>🚜 Plow ${plow.fleetId} Route</strong><br>
+                    <strong>🚜 Plow ${safeFleetId} Route</strong><br>
                     Recent path traveled
                 </div>
             `);
@@ -1417,6 +1487,8 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 statusEmoji = '✅';
                 statusText = 'OPEN';
         }
+        const safeStatusEmoji = escapeHtml(statusEmoji);
+        const safeStatusText = escapeHtml(statusText);
 
         // Create mountain pass icon with elevation badge
         const iconHtml = `
@@ -1507,7 +1579,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                         color: ${iconColor};
                         font-weight: bold;
                         font-size: 12px;
-                    ">${statusEmoji} ${statusText}</span>
+                    ">${safeStatusEmoji} ${safeStatusText}</span>
                     <span style="font-size: 12px; color: #666;">
                         Elev: ${safeElevation}
                     </span>
@@ -1561,6 +1633,10 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const safeLocation = escapeHtml(restArea.location || 'Unknown');
         const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
         const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
+        const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
+        const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
+        const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
+        const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
         // Create rest area icon with stall count indicator
         const iconHtml = `
             <div style="position: relative;">
@@ -1576,7 +1652,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     border: 2px solid white;
                     font-size: 18px;
                 ">🅿️</div>
-                ${restArea.totalStalls > 0 ? `
+                ${safeTotalStalls > 0 ? `
                     <div style="
                         position: absolute;
                         bottom: -3px;
@@ -1590,7 +1666,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                         min-width: 16px;
                         text-align: center;
                         box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-                    ">${restArea.totalStalls}</div>
+                    ">${safeTotalStalls}</div>
                 ` : ''}
             </div>
         `;
@@ -1607,13 +1683,13 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
 
         // Build detailed popup content
         let facilitiesInfo = '';
-        if (restArea.carStalls > 0 || restArea.truckStalls > 0) {
+        if (safeCarStalls > 0 || safeTruckStalls > 0) {
             facilitiesInfo = `
                 <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Parking Facilities</h5>
-                    ${restArea.carStalls > 0 ? `<div><strong>Car Stalls:</strong> ${restArea.carStalls}</div>` : ''}
-                    ${restArea.truckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${restArea.truckStalls}</div>` : ''}
-                    <div><strong>Total:</strong> ${restArea.totalStalls} stalls</div>
+                    ${safeCarStalls > 0 ? `<div><strong>Car Stalls:</strong> ${safeCarStalls}</div>` : ''}
+                    ${safeTruckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${safeTruckStalls}</div>` : ''}
+                    <div><strong>Total:</strong> ${safeTotalStalls} stalls</div>
                 </div>
             `;
         }
@@ -1642,9 +1718,9 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                 <div style="margin-bottom: 8px;">
                     <strong>Location:</strong> ${safeLocation}
                 </div>
-                ${restArea.yearBuilt ? `
+                ${safeYearBuilt ? `
                     <div style="margin-bottom: 8px;">
-                        <strong>Year Built:</strong> ${restArea.yearBuilt}
+                        <strong>Year Built:</strong> ${safeYearBuilt}
                     </div>
                 ` : ''}
                 ${facilitiesInfo}
