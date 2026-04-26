@@ -65,6 +65,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize units toggle
     initializeUnitsToggle();
+
+    // Initialize experimental road AI toggle
+    initializeExperimentalRoadToggle();
 });
 
 /**
@@ -101,12 +104,7 @@ function refreshUnitsDisplays() {
     // Refresh condition cards on the map
     updateConditionCards();
 
-    // Update default unit labels in HTML
-    const roadTempCard = document.querySelector('.condition-card-compact.road-temp .value');
-    if (roadTempCard && roadTempCard.textContent.includes('--')) {
-        roadTempCard.textContent = `--${unitsSystem.getTempUnit()}`;
-    }
-
+    // Update default unit labels in HTML when showing placeholders
     const windCard = document.querySelector('.condition-card-compact.wind .value');
     if (windCard && windCard.textContent.includes('--')) {
         windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
@@ -279,4 +277,42 @@ function refreshStationPopups() {
             }
         });
     }
+}
+
+const EXPERIMENTAL_ROAD_MODE_KEY = 'roadsExperimentalMode';
+
+/**
+ * Initialize the experimental road AI toggle
+ * Enables per-view camera breakdown in camera popups
+ */
+function initializeExperimentalRoadToggle() {
+    const experimentalToggle = document.getElementById('experimental-road-toggle');
+    const experimentalStatus = document.getElementById('experimental-road-status');
+
+    if (!experimentalToggle) return;
+
+    const isEnabled = localStorage.getItem(EXPERIMENTAL_ROAD_MODE_KEY) === 'true';
+    experimentalToggle.checked = isEnabled;
+
+    if (experimentalStatus) {
+        experimentalStatus.textContent = isEnabled ? 'Enabled' : 'Disabled';
+    }
+
+    if (window.roadWeatherMap) {
+        window.roadWeatherMap.experimentalRoadMode = isEnabled;
+    }
+
+    experimentalToggle.addEventListener('change', function() {
+        const enabled = this.checked;
+        localStorage.setItem(EXPERIMENTAL_ROAD_MODE_KEY, enabled ? 'true' : 'false');
+
+        if (experimentalStatus) {
+            experimentalStatus.textContent = enabled ? 'Enabled' : 'Disabled';
+        }
+
+        if (window.roadWeatherMap) {
+            window.roadWeatherMap.experimentalRoadMode = enabled;
+            window.roadWeatherMap.loadRoadWeatherData();
+        }
+    });
 }

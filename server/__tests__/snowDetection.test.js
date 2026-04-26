@@ -9,7 +9,7 @@
  */
 
 import SnowDetectionService from '../snowDetectionService.js';
-import { describe, it, expect, beforeEach } from '@jest/globals';
+import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 
 describe('SnowDetectionService - Synthetic Data Tests', () => {
     let service;
@@ -162,16 +162,16 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
     });
 
     describe('Temperature Override Tests', () => {
-        it('should skip analysis when temperature is above 40°F', async () => {
-            const tempCheck = service.checkTemperatureConditions({ airTemperature: 45 });
+        it('should skip analysis when temperature is above 36°F', async () => {
+            const tempCheck = service.checkTemperatureConditions({ airTemperature: 37 });
 
             expect(tempCheck.skipAnalysis).toBe(true);
             expect(tempCheck.confidence).toBeGreaterThan(0.9);
             expect(tempCheck.reason).toContain('Too warm');
         });
 
-        it('should analyze with low confidence in marginal temps (35-40°F)', async () => {
-            const tempCheck = service.checkTemperatureConditions({ airTemperature: 37 });
+        it('should analyze with low confidence in marginal temps (35-36°F)', async () => {
+            const tempCheck = service.checkTemperatureConditions({ airTemperature: 36 });
 
             expect(tempCheck.skipAnalysis).toBe(false);
             expect(tempCheck.confidence).toBeLessThan(0.5);
@@ -258,6 +258,207 @@ describe('SnowDetectionService - Synthetic Data Tests', () => {
             console.log('Detailed Results:', results.method1_current);
 
             expect(accuracy).toBeGreaterThan(0); // Basic sanity check
+        });
+    });
+
+    describe('Multi-view Camera Aggregation', () => {
+        it('analyzes all views and aggregates with worst-case severity', async () => {
+            const analyzeSpy = jest.spyOn(service, 'analyzeImageForSnow')
+                .mockImplementation(async (imageUrl, cameraId, weatherData, analysisKey) => {
+                    if (imageUrl.includes('view-a')) {
+                        return {
+                            cameraId,
+                            analysisKey,
+                            timestamp: Date.now(),
+                            snowDetected: false,
+                            snowLevel: 'none',
+                            confidence: 0.4,
+                            whitePixelPercentage: 2,
+                            temperatureOverride: false
+                        };
+                    }
+                    if (imageUrl.includes('view-b')) {
+                        return {
+                            cameraId,
+                            analysisKey,
+                            timestamp: Date.now(),
+                            snowDetected: true,
+                            snowLevel: 'heavy',
+                            confidence: 0.85,
+                            whitePixelPercentage: 42,
+                            temperatureOverride: false
+                        };
+                    }
+
+                    return {
+                        cameraId,
+                        analysisKey,
+                        timestamp: Date.now(),
+                        snowDetected: false,
+                        snowLevel: 'none',
+                        confidence: 0.35,
+                        whitePixelPercentage: 1,
+                        temperatureOverride: false
+                    };
+                });
+
+            const cameras = [{
+                id: 101,
+                name: 'Test Camera',
+                lat: 40.2,
+                lng: -110.1,
+                views: [
+                    { url: 'https://example.com/view-a.jpg', status: 'Operational', description: 'North' },
+                    { url: 'https://example.com/view-b.jpg', status: 'Operational', description: 'South' },
+                    { url: 'https://example.com/view-c.jpg', status: 'Operational', description: 'East' }
+                ]
+            }];
+
+            const results = await service.analyzeCamerasBatch(cameras, []);
+            const cameraResult = results[0];
+
+            expect(analyzeSpy).toHaveBeenCalledTimes(3);
+            expect(cameraResult.snowLevel).toBe('heavy');
+            expect(cameraResult.confidence).toBe(0.85);
+            expect(cameraResult.aggregation.policy).toBe('worst_case_max');
+            expect(cameraResult.aggregation.viewsAvailable).toBe(3);
+            expect(cameraResult.aggregation.viewsAnalyzed).toBe(3);
+            expect(cameraResult.perViewDetections).toHaveLength(3);
+            expect(cameraResult.perViewDetections.map(view => view.viewIndex)).toEqual([0, 1, 2]);
+
+            const analysisKeys = analyzeSpy.mock.calls.map(call => call[3]);
+            expect(new Set(analysisKeys).size).toBe(3);
+            expect(analysisKeys).toContain('101:view:0');
+            expect(analysisKeys).toContain('101:view:1');
+            expect(analysisKeys).toContain('101:view:2');
+        });
+
+        it('marks mixed state when confidence spread is >= 0.25', () => {
+            const aggregated = service.aggregateCameraViewDetections('202', [
+                {
+                    viewIndex: 0,
+                    snowLevel: 'none',
+                    confidence: 0.25,
+                    temperatureOverride: false,
+                    whitePixelPercentage: 1
+                },
+                {
+                    viewIndex: 1,
+                    snowLevel: 'light',
+                    confidence: 0.5,
+                    temperatureOverride: false,
+                    whitePixelPercentage: 12
+                }
+            ], 2);
+
+            expect(aggregated.aggregation.mixed).toBe(true);
+            expect(aggregated.aggregation.confidenceSpread).toBeCloseTo(0.25, 5);
+            expect(aggregated.displayState).toBe('mixed');
+        });
+
+        it('keeps non-analyzable views in metadata while aggregating successful views', async () => {
+            const analyzeSpy = jest.spyOn(service, 'analyzeImageForSnow')
+                .mockResolvedValue({
+                    cameraId: '303',
+                    analysisKey: '303:view:1',
+                    timestamp: Date.now(),
+                    snowDetected: false,
+                    snowLevel: 'none',
+                    confidence: 0.6,
+                    whitePixelPercentage: 3,
+                    temperatureOverride: false
+                });
+
+            const cameras = [{
+                id: 303,
+                name: 'Mixed Availability Camera',
+                lat: 40.1,
+                lng: -109.9,
+                views: [
+                    { url: '', status: 'Operational', description: 'Missing URL' },
+                    { url: 'https://example.com/view-ok.jpg', status: 'Operational', description: 'Working View' },
+                    { url: 'https://example.com/view-offline.jpg', status: 'Offline', description: 'Offline View' }
+                ]
+            }];
+
+            const [result] = await service.analyzeCamerasBatch(cameras, []);
+
+            expect(analyzeSpy).toHaveBeenCalledTimes(1);
+            expect(result.aggregation.viewsAvailable).toBe(3);
+            expect(result.aggregation.viewsAnalyzed).toBe(1);
+            expect(result.perViewDetections).toHaveLength(3);
+            expect(result.perViewDetections.filter(v => v.error).length).toBe(2);
+            expect(result.perViewDetections[0].error).toBe('no_image_url');
+            expect(result.perViewDetections[2].error).toBe('view_offline');
+            expect(result.snowLevel).toBe('none');
+        });
+    });
+
+    describe('Image Format Decoding and GIF Sampling', () => {
+        it('detects mime type from header and signature bytes', () => {
+            const pngHeader = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+            const jpgHeader = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46]);
+            const gifHeader = Buffer.from('GIF89a');
+            const rawRgb = Buffer.from([20, 20, 20, 220, 220, 220]);
+
+            expect(service.detectImageMime(pngHeader, null)).toBe('image/png');
+            expect(service.detectImageMime(jpgHeader, null)).toBe('image/jpeg');
+            expect(service.detectImageMime(gifHeader, null)).toBe('image/gif');
+            expect(service.detectImageMime(rawRgb, null)).toBe('image/raw-rgb');
+            expect(service.detectImageMime(rawRgb, 'image/jpeg; charset=binary')).toBe('image/jpeg');
+        });
+
+        it('aggregates GIF frames with worst-case policy and frame metadata', async () => {
+            const frameBlack = new Uint8ClampedArray([0, 0, 0, 255]); // 0% white
+            const frameWhite = new Uint8ClampedArray([255, 255, 255, 255]); // 100% white
+
+            jest.spyOn(service, 'decodeGifFramesForSampling').mockReturnValue({
+                totalFrames: 12,
+                frames: [
+                    { frameIndex: 0, width: 1, height: 1, data: frameBlack },
+                    { frameIndex: 4, width: 1, height: 1, data: frameWhite }
+                ]
+            });
+
+            const result = await service.processImageForSnow(
+                Buffer.from('GIF89a'),
+                'gif-cam-1',
+                null,
+                'image/gif'
+            );
+
+            expect(result.contentType).toBe('image/gif');
+            expect(result.isAnimated).toBe(true);
+            expect(result.frameAggregation).toBeDefined();
+            expect(result.frameAggregation.framesAvailable).toBe(12);
+            expect(result.frameAggregation.framesSampled).toBe(2);
+            expect(result.snowLevel).toBe('heavy');
+            expect(result.confidence).toBeGreaterThan(0.5);
+        });
+
+        it('uses still-image decode path for PNG/JPEG content types', async () => {
+            const rgba = new Uint8ClampedArray([
+                255, 255, 255, 255,
+                0, 0, 0, 255
+            ]);
+
+            jest.spyOn(service, 'decodeStillImageToRgba').mockReturnValue({
+                width: 2,
+                height: 1,
+                data: rgba
+            });
+
+            const result = await service.processImageForSnow(
+                Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+                'png-cam-1',
+                null,
+                'image/png'
+            );
+
+            expect(result.contentType).toBe('image/png');
+            expect(result.isAnimated).toBe(false);
+            expect(result.frameAggregation).toBeNull();
+            expect(result.snowLevel).toBe('heavy');
         });
     });
 

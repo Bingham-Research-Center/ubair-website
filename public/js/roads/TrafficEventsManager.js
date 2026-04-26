@@ -126,15 +126,16 @@ class TrafficEventsManager {
         }
 
         const descriptionText = typeof event.description === 'string' ? event.description : '';
-        const titleText = escapeHtml(event.name || (descriptionText ? descriptionText.substring(0, 60) : 'Traffic Event'));
+        const titleText = event.name || (descriptionText ? descriptionText.substring(0, 60) : 'Traffic Event');
+        const safeDisplayColor = sanitizeHexColor(event.displayColor, '#6c757d');
+        const safeDisplayIcon = escapeHtml(event.displayIcon || '🚧');
+        const safeTitleText = escapeHtml(titleText);
         const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown roadway');
-        const safeDescription = escapeHtml(descriptionText || 'No description available.');
+        const safeDescriptionText = escapeHtml(descriptionText || 'No description available.');
         const safeEventType = escapeHtml((event.eventType || 'Unknown').replace(/([A-Z])/g, ' $1').trim());
         const safeSeverity = escapeHtml(event.severity || 'Unknown');
-        const safePriority = Number.isFinite(Number(event.priority)) ? Number(event.priority) : 0;
-        const safeColor = sanitizeHexColor(event.displayColor, '#1f2937');
-        const safeIcon = escapeHtml(event.displayIcon || '🚧');
         const safeComment = escapeHtml(event.comment || '');
+        const safePriority = Number.isFinite(Number(event.priority)) ? Number(event.priority) : 0;
 
         return `
             <div class="event-card" style="
@@ -147,8 +148,8 @@ class TrafficEventsManager {
             ">
                 <div class="event-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div class="event-title" style="flex: 1;">
-                        <h4 style="margin: 0 0 4px 0; color: ${safeColor}; display: flex; align-items: center; gap: 8px;">
-                            ${safeIcon} ${titleText}
+                        <h4 style="margin: 0 0 4px 0; color: ${safeDisplayColor}; display: flex; align-items: center; gap: 8px;">
+                            ${safeDisplayIcon} ${safeTitleText}
                             ${event.isFullClosure ? '<span style="background: #dc2626; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">CLOSURE</span>' : ''}
                         </h4>
                         <p style="margin: 0; color: #666; font-size: 14px;">${safeRoadwayName}</p>
@@ -167,7 +168,7 @@ class TrafficEventsManager {
                 </div>
 
                 <div class="event-description" style="margin-bottom: 12px;">
-                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${safeDescription}</p>
+                    <p style="margin: 0; font-size: 14px; line-height: 1.4;">${safeDescriptionText}</p>
                 </div>
 
                 <div class="event-details" style="
@@ -270,7 +271,7 @@ class TrafficEventsManager {
     createAlertCard(alert) {
         const startDate = new Date(alert.startTime);
         const endDate = alert.endTime ? new Date(alert.endTime) : null;
-        const severityToken = sanitizeClassToken(alert.severity || 'unknown') || 'unknown';
+        const severityToken = sanitizeClassToken(alert.severity || 'unknown');
         const safeSeverity = escapeHtml(alert.severity || 'unknown');
         const safeMessage = escapeHtml(alert.message || '');
         const safeNotes = escapeHtml(alert.notes || '');

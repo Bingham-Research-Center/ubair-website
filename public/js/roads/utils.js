@@ -20,24 +20,13 @@ function escapeHtml(value) {
 }
 
 /**
- * Restrict dynamic CSS colors to hex values only
- * @param {*} value - Candidate color string
- * @param {string} fallback - Fallback color when value is invalid
- * @returns {string} Sanitized color
- */
-function sanitizeHexColor(value, fallback = '#6c757d') {
-    if (typeof value !== 'string') return fallback;
-    return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/.test(value) ? value : fallback;
-}
-
-/**
  * Restrict dynamic class token values
  * @param {*} value - Candidate token value
  * @param {string} fallback - Fallback token when value is invalid
  * @returns {string} Sanitized class token
  */
 function sanitizeClassToken(value, fallback = 'unknown') {
-    const token = String(value || '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
+    const token = String(value ?? '').toLowerCase().replace(/[^a-z0-9_-]/g, '');
     return token || fallback;
 }
 
@@ -48,8 +37,21 @@ function sanitizeClassToken(value, fallback = 'unknown') {
  * @returns {string} Sanitized identifier
  */
 function sanitizeIdentifier(value, fallback = '') {
-    const identifier = String(value || '').replace(/[^A-Za-z0-9_-]/g, '');
+    const identifier = String(value ?? '').replace(/[^A-Za-z0-9_-]/g, '');
     return identifier || fallback;
+}
+
+/**
+ * Validate and sanitize hex color strings
+ * @param {*} value - Candidate color string
+ * @param {string} fallback - Fallback color when value is invalid
+ * @returns {string} Sanitized hex color or fallback
+ */
+function sanitizeHexColor(value, fallback = '#6c757d') {
+    if (typeof value !== 'string') return fallback;
+    const trimmed = value.trim();
+    if (/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(trimmed)) return trimmed;
+    return fallback;
 }
 
 /**

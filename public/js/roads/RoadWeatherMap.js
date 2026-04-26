@@ -20,6 +20,7 @@ class RoadWeatherMap {
         this.roadLayers = new Map();
         this.stationMarkers = new Map();
         this.cameraMarkers = new Map();
+        this.cameraClusterGroup = null;
         this.trafficEventMarkers = new Map();
         this.closureOverlays = new Map();
         this.snowPlowMarkers = new Map();
@@ -27,6 +28,8 @@ class RoadWeatherMap {
         this.mountainPassMarkers = new Map();
         this.restAreaMarkers = new Map();
         this.refreshTimer = null;
+        this.weatherStationsVisible = false;
+        this.experimentalRoadMode = false;
     }
 
     init() {
@@ -89,11 +92,6 @@ class RoadWeatherMap {
         this.map.createPane('closurePane');
         this.map.getPane('closurePane').style.zIndex = 10000;
         this.map.getPane('closurePane').style.pointerEvents = 'auto';
-
-        // Add zoom event listener for camera clustering
-        this.map.on('zoomend', () => {
-            this.updateCameraVisibility();
-        });
     }
 
     async loadRoadWeatherData() {
@@ -303,7 +301,10 @@ class RoadWeatherMap {
                     if (weatherData && weatherData.current) {
                         locationData.windSpeed = weatherData.current.windSpeed;
                         locationData.precipitation = weatherData.current.precipitation;
-                        locationData.visibility = weatherData.current.visibility ? weatherData.current.visibility / 1000 : null;
+                        if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
+                            locationData.visibility = weatherData.current.visibility;
+                            locationData.visibilityUnit = 'm';
+                        }
                         locationData.temperature = weatherData.current.temperature;
                     }
                 }
@@ -421,13 +422,30 @@ class RoadWeatherMap {
             updateConditionCardsWithLocation(locationData);
         });
 
-        marker.addTo(this.map);
+        if (this.weatherStationsVisible) {
+            marker.addTo(this.map);
+        }
         this.stationMarkers.set(station.id, marker);
     }
 
 
     renderTrafficCameras(cameras, cameraDetections = []) {
         if (!cameras || cameras.length === 0) return;
+
+        // Recreate camera cluster layer on each render to avoid stale markers
+        if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
+            this.map.removeLayer(this.cameraClusterGroup);
+        }
+        if (typeof L.markerClusterGroup === 'function') {
+            this.cameraClusterGroup = L.markerClusterGroup({
+                showCoverageOnHover: false,
+                chunkedLoading: true
+            });
+        } else {
+            console.warn('Leaflet.markercluster is not available; skipping traffic camera rendering to avoid performance issues.');
+            this.cameraClusterGroup = null;
+            return;
+        }
 
         // Store camera data for click events
         this.cameraData = cameras;
@@ -535,11 +553,38 @@ class RoadWeatherMap {
                 const confidencePercent = Number.isFinite(Number(detection.confidence)) ? Math.round(Number(detection.confidence) * 100) : 0;
                 const safeSnowLevel = escapeHtml(detection.snowLevel || 'Unknown');
                 const safeConditionText = escapeHtml(conditionText);
+
+                // RWIS station context line
+                const rwisLine = detection.rwisData
+                    ? (detection.rwisData.tooDistant
+                        ? `<p class="rwis-info" style="font-size: 0.85em; color: #999; margin-top: 4px;">
+                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi) — too distant
+                           </p>`
+                        : `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
+                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
+                               <strong>Surface:</strong> ${escapeHtml(detection.rwisData.surfaceStatus || 'N/A')}
+                               ${detection.rwisData.surfaceTemp != null ? ` | <strong>Road Temp:</strong> ${Math.round(detection.rwisData.surfaceTemp)}\u00B0F` : ''}
+                           </p>`)
+                    : '';
+
+                // Experimental per-view breakdown
+                const experimentalMode = this.experimentalRoadMode === true;
+                const isMixed = detection.displayState === 'mixed' || detection.aggregation?.mixed === true;
+                const mixedBadge = (experimentalMode && isMixed)
+                    ? `<p><span class="confidence-badge confidence-likely mixed-indicator">~ Mixed Views</span></p>`
+                    : '';
+                const experimentalDetails = experimentalMode
+                    ? this._buildExperimentalDetails(detection)
+                    : '';
+
                 analysisInfo = `
                     <div class="analysis-section">
+                        ${mixedBadge}
                         <p><strong>Condition:</strong> ${safeConditionText}</p>
                         <p><strong>Confidence:</strong> ${confidencePercent}%</p>
                         ${!detection.temperatureOverride ? `<p><strong>Snow Level:</strong> ${safeSnowLevel}</p>` : ''}
+                        ${rwisLine}
+                        ${experimentalDetails}
                     </div>`;
             }
 
@@ -564,7 +609,10 @@ class RoadWeatherMap {
                             locationData.windSpeed = weatherData.current.windSpeed;
                             locationData.windGust = weatherData.current.windGust;
                             locationData.precipitation = weatherData.current.precipitation;
-                            locationData.visibility = weatherData.current.visibility ? weatherData.current.visibility / 1000 : null; // Convert m to km
+                            if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
+                                locationData.visibility = weatherData.current.visibility;
+                                locationData.visibilityUnit = 'm';
+                            }
                             locationData.airTemp = weatherData.current.temperature;
                         }
                     }
@@ -629,133 +677,19 @@ class RoadWeatherMap {
             });
 
 
-            // Add marker to map (no separate ring needed)
-            marker.addTo(this.map);
-
-            // Store camera reference with marker for density calculation
-            marker.camera = camera;
+            // Add marker to cluster group instead of directly to map
+            if (this.cameraClusterGroup) {
+                this.cameraClusterGroup.addLayer(marker);
+            } else {
+                marker.addTo(this.map);
+            }
 
             this.cameraMarkers.set(camera.id, marker);
         });
 
-        // Initial visibility update based on current zoom
-        this.updateCameraVisibility();
-    }
-
-    /**
-     * Update camera visibility based on current zoom level
-     * Called on zoomend event and after rendering cameras
-     */
-    updateCameraVisibility() {
-        if (!this.map || this.cameraMarkers.size === 0) return;
-
-        const zoom = this.map.getZoom();
-        const cameras = Array.from(this.cameraMarkers.values());
-
-        cameras.forEach(marker => {
-            const shouldShow = this.shouldShowCamera(marker.camera, zoom);
-
-            if (shouldShow && !this.map.hasLayer(marker)) {
-                marker.addTo(this.map);
-            } else if (!shouldShow && this.map.hasLayer(marker)) {
-                this.map.removeLayer(marker);
-            }
-        });
-    }
-
-    /**
-     * Determine if a camera should be visible at the current zoom level
-     * @param {Object} camera - Camera object with lat/lng
-     * @param {number} zoom - Current map zoom level
-     * @returns {boolean} - True if camera should be visible
-     */
-    shouldShowCamera(camera, zoom) {
-        // Always show all cameras when fully zoomed in
-        if (zoom >= 12) return true;
-
-        // Calculate density if not already cached
-        if (camera._density === undefined) {
-            const allCameras = Array.from(this.cameraMarkers.values())
-                .map(m => m.camera);
-            camera._density = this.calculateCameraDensity(camera, allCameras);
+        if (this.cameraClusterGroup) {
+            this.cameraClusterGroup.addTo(this.map);
         }
-
-        // High zoom (11): Show most cameras
-        if (zoom >= 11) {
-            if (camera._density < 3) return true;
-            if (camera._density < 6) return Math.random() < 0.7;
-            return Math.random() < 0.5;
-        }
-
-        // Medium zoom (10): Show ~40% - more aggressive filtering
-        if (zoom >= 10) {
-            // Show isolated cameras only
-            if (camera._density < 2) return true;
-            // Show 30% of low-density clusters
-            if (camera._density < 4) return Math.random() < 0.3;
-            // Show 15% of high-density clusters
-            return Math.random() < 0.15;
-        }
-
-        // Default zoom (9): Show ~25% - very aggressive
-        if (zoom >= 9) {
-            // Only show isolated cameras
-            if (camera._density < 2) return true;
-            // Show 20% of any clusters
-            return Math.random() < 0.2;
-        }
-
-        // Low zoom (<9): Show cluster representatives only (~15%)
-        // Show only very isolated cameras
-        if (camera._density < 1) return true;
-        // Show 10% of anything else
-        return Math.random() < 0.1;
-    }
-
-    /**
-     * Calculate camera density (number of nearby cameras within radius)
-     * @param {Object} camera - Camera object with lat/lng
-     * @param {Array} allCameras - Array of all camera objects
-     * @param {number} radiusKm - Search radius in kilometers (default: 5km)
-     * @returns {number} - Count of nearby cameras
-     */
-    calculateCameraDensity(camera, allCameras, radiusKm = 5) {
-        let nearbyCount = 0;
-
-        for (const other of allCameras) {
-            if (camera.id === other.id) continue;
-
-            const distance = this.haversineDistance(
-                { lat: camera.lat, lng: camera.lng },
-                { lat: other.lat, lng: other.lng }
-            );
-
-            if (distance < radiusKm) {
-                nearbyCount++;
-            }
-        }
-
-        return nearbyCount;
-    }
-
-    /**
-     * Calculate distance between two coordinates using Haversine formula
-     * @param {Object} coord1 - First coordinate {lat, lng}
-     * @param {Object} coord2 - Second coordinate {lat, lng}
-     * @returns {number} - Distance in kilometers
-     */
-    haversineDistance(coord1, coord2) {
-        const R = 6371; // Earth radius in kilometers
-        const dLat = (coord2.lat - coord1.lat) * Math.PI / 180;
-        const dLng = (coord2.lng - coord1.lng) * Math.PI / 180;
-
-        const a = Math.sin(dLat / 2) ** 2 +
-                  Math.cos(coord1.lat * Math.PI / 180) *
-                  Math.cos(coord2.lat * Math.PI / 180) *
-                  Math.sin(dLng / 2) ** 2;
-
-        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
     }
 
     determineStationCondition(station) {
@@ -855,6 +789,14 @@ class RoadWeatherMap {
                             </div>
                         </div>
                     </div>
+                        <div class="legend-section">
+                            <h5>Layer Toggles</h5>
+                            <label class="legend-toggle-item">
+                                <input type="checkbox" id="toggle-weather-stations">
+                                <span>🌡️ Weather Stations</span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -875,6 +817,13 @@ class RoadWeatherMap {
                         arrow.classList.add('rotated');
                     }
                 });
+
+                const stationToggle = document.getElementById('toggle-weather-stations');
+                if (stationToggle) {
+                    stationToggle.addEventListener('change', (e) => {
+                        this.toggleWeatherStations(e.target.checked);
+                    });
+                }
             }, 100);
 
             return div;
@@ -883,10 +832,26 @@ class RoadWeatherMap {
         legend.addTo(this.map);
     }
 
+    toggleWeatherStations(visible) {
+        this.weatherStationsVisible = visible;
+        this.stationMarkers.forEach(marker => {
+            if (visible) {
+                marker.addTo(this.map);
+            } else {
+                this.map.removeLayer(marker);
+            }
+        });
+    }
+
     clearLayers() {
         this.roadLayers.forEach(layer => this.map.removeLayer(layer));
         this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
-        this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
+        if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
+            this.map.removeLayer(this.cameraClusterGroup);
+            this.cameraClusterGroup = null;
+        } else {
+            this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
+        }
         this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
         this.roadLayers.clear();
         this.stationMarkers.clear();
@@ -910,6 +875,45 @@ class RoadWeatherMap {
             this.map.remove();
             this.map = null;
         }
+    }
+
+    _formatSnowLevelLabel(snowLevel) {
+        const labels = { none: 'Clear', light: 'Light Snow', moderate: 'Moderate Snow', heavy: 'Heavy Snow', unknown: 'Unknown' };
+        return labels[snowLevel] || snowLevel || 'Unknown';
+    }
+
+    _buildExperimentalDetails(detection) {
+        const spreadPercent = typeof detection.aggregation?.confidenceSpread === 'number'
+            ? `${Math.round(detection.aggregation.confidenceSpread * 100)}%` : '--';
+        const viewsAnalyzed = detection.aggregation?.viewsAnalyzed ?? '--';
+        const viewsAvailable = detection.aggregation?.viewsAvailable ?? '--';
+        const perViewHtml = this._getPerViewBreakdownHtml(detection);
+
+        return `
+            <p class="experimental-note"><strong>Mode:</strong> Experimental (opt-in)</p>
+            <p><strong>View Spread:</strong> ${spreadPercent}</p>
+            <p><strong>Views:</strong> ${viewsAnalyzed}/${viewsAvailable} analyzed</p>
+            ${perViewHtml}`;
+    }
+
+    _getPerViewBreakdownHtml(detection) {
+        if (!Array.isArray(detection?.perViewDetections) || detection.perViewDetections.length === 0) {
+            return '<p class="experimental-note"><strong>Per-view:</strong> Not available.</p>';
+        }
+
+        const rows = detection.perViewDetections.map((view) => {
+            const confidence = typeof view.confidence === 'number' ? `${Math.round(view.confidence * 100)}%` : '--';
+            const level = this._formatSnowLevelLabel(view.snowLevel);
+            const viewName = escapeHtml(view.description || `View ${view.viewIndex + 1}`);
+            const suffix = view.error ? ` (${escapeHtml(view.error)})` : '';
+
+            return `<div class="per-view-row">
+                <span class="per-view-name">${viewName}</span>
+                <span class="per-view-values">${level} · ${confidence}${suffix}</span>
+            </div>`;
+        }).join('');
+
+        return `<div class="per-view-breakdown"><h5>Per-view breakdown</h5>${rows}</div>`;
     }
 }
 
@@ -1379,6 +1383,12 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
     this.mountainPassMarkers.clear();
 
     passes.forEach(pass => {
+        const safePassName = escapeHtml(pass.name || 'Mountain Pass');
+        const safeRoadway = escapeHtml(pass.roadway || 'Unknown');
+        const safeStationName = escapeHtml(pass.stationName || '');
+        const safeElevation = escapeHtml(pass.elevation || 'Unknown');
+        const safeSurfaceStatus = escapeHtml(pass.surfaceStatus || 'Unknown');
+        const safeWindDirection = escapeHtml(pass.windDirection || '');
         // Determine icon and color based on pass status
         let iconColor, statusEmoji, statusText;
 
@@ -1408,15 +1418,8 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 statusEmoji = '✅';
                 statusText = 'OPEN';
         }
-        const safePassName = escapeHtml(pass.name || 'Mountain Pass');
-        const safeElevation = escapeHtml(pass.elevation || 'Unknown');
-        const safeRoadway = escapeHtml(pass.roadway || 'Unknown');
         const safeStatusEmoji = escapeHtml(statusEmoji);
         const safeStatusText = escapeHtml(statusText);
-        const safeSurfaceStatus = escapeHtml(pass.surfaceStatus || 'Unknown');
-        const safeWindDirection = escapeHtml(pass.windDirection || '');
-        const safeVisibility = escapeHtml(pass.visibility || '');
-        const safeStationName = escapeHtml(pass.stationName || '');
 
         // Create mountain pass icon with elevation badge
         const iconHtml = `
@@ -1468,10 +1471,10 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Current Conditions</h5>
                     ${pass.airTemperature ? `<div><strong>Air Temp:</strong> ${unitsSystem.formatTemperature(pass.airTemperature)}</div>` : ''}
                     ${pass.surfaceTemp ? `<div><strong>Surface:</strong> ${unitsSystem.formatTemperature(pass.surfaceTemp)}</div>` : ''}
-                    ${pass.surfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${safeSurfaceStatus}</div>` : ''}
+                    ${safeSurfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${safeSurfaceStatus}</div>` : ''}
                     ${pass.windSpeed ? `<div><strong>Wind:</strong> ${unitsSystem.formatWindSpeed(pass.windSpeed)} ${safeWindDirection}</div>` : ''}
                     ${pass.windGust ? `<div><strong>Gusts:</strong> ${unitsSystem.formatWindSpeed(pass.windGust)}</div>` : ''}
-                    ${pass.visibility ? `<div><strong>Visibility:</strong> ${safeVisibility}</div>` : ''}
+                    ${pass.visibility != null ? `<div><strong>Visibility:</strong> ${unitsSystem.formatVisibility(pass.visibility)}</div>` : ''}
                 </div>
             `;
         }
@@ -1479,7 +1482,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         let seasonalInfo = '';
         if (pass.seasonalInfo && pass.seasonalInfo.length > 0) {
             const info = pass.seasonalInfo[0];
-            const safeSeasonalStatus = escapeHtml(info.status || 'Unknown');
+            const safeSeasonalStatus = escapeHtml(info.status || '');
             const safeSeasonalDescription = escapeHtml(info.description || '');
             seasonalInfo = `
                 <div style="margin: 10px 0; padding: 10px; background: ${info.isClosed ? '#fee2e2' : '#dcfce7'}; border-radius: 4px;">
@@ -1557,15 +1560,14 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
     this.restAreaMarkers.clear();
 
     restAreas.forEach(restArea => {
-        const safeName = escapeHtml(restArea.name || 'Rest Area');
+        const safeRestAreaName = escapeHtml(restArea.name || 'Rest Area');
         const safeLocation = escapeHtml(restArea.location || 'Unknown');
+        const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
         const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
         const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
         const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
         const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
         const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
-        const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
-
         // Create rest area icon with stall count indicator
         const iconHtml = `
             <div style="position: relative;">
@@ -1628,10 +1630,13 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
             imageSection = `
                 <div class="rest-area-image" style="margin: 10px 0;">
                     <img src="${safeImageUrl}"
-                         alt="${safeName}"
+                         alt="${safeRestAreaName}"
                          style="max-width: 280px; width: 100%; height: auto; border-radius: 4px; cursor: pointer;"
-                         onclick="window.open('${safeImageUrl}', '_blank')"
-                         onerror="this.style.display='none'">
+                         onclick="window.open(this.src, '_blank', 'noopener,noreferrer')"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <div style="display: none; padding: 10px; background: #f3f4f6; border-radius: 4px; text-align: center; font-size: 12px; color: #6b7280;">
+                        Rest area image unavailable
+                    </div>
                 </div>
             `;
         }
@@ -1639,7 +1644,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const popupContent = `
             <div class="rest-area-popup" style="min-width: 250px; max-width: 300px;">
                 <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                    🅿️ ${safeName}
+                    🅿️ ${safeRestAreaName}
                 </h4>
                 <div style="margin-bottom: 8px;">
                     <strong>Location:</strong> ${safeLocation}
@@ -1781,7 +1786,6 @@ RoadWeatherMap.prototype.interpolateLatLng = function(targetMp, knownPoints, coo
 // Removed duplicate clearLayers method - using instance method instead
 
 // TrafficEventsManager class moved to /public/js/roads/TrafficEventsManager.js
-// Digital road signs functionality removed - not needed
 
 let trafficEventsManager;
 

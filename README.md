@@ -26,13 +26,14 @@ Real-time weather data visualization and air quality monitoring platform for the
 ## Technical Architecture
 
 ```
-CHPC (Data Processing) → API Upload → Akamai Server → Web Interface
+CHPC (Data Processing) → API Upload (fan-out) → Linode (.com ops + .dev rehearsal) → Web Interface
 ```
 
-- **Backend**: Node.js, Express.js
+- **Backend**: Node.js, Express.js, pm2
 - **Frontend**: Vanilla JavaScript, Leaflet, Plotly.js
-- **Data Pipeline**: Python (brc-tools), Synoptic Weather API
-- **Deployment**: Akamai CDN, SSL/TLS secured
+- **Data Pipeline**: Python (brc-tools), Synoptic Weather API; forecast products (Clyfar ensembles, reduced HRRR surface layers) POST to `/api/upload/forecasts` — schema in `DATA_MANIFEST.json`
+- **Deployment**: Two Linode boxes (`www.basinwx.com` ops, `www.basinwx.dev` rehearsal mirror), nginx reverse proxy, Let's Encrypt TLS. DNS for `basinwx.dev` is at **Namecheap** with a wildcard A record (`*` → dev-box IP)
+- **Feature-branch previews**: any in-progress branch can be spun up at `<name>.basinwx.dev` via a git worktree + pm2 pair managed by `scripts/manage-previews.sh`. New previews need no DNS work thanks to the wildcard. See `docs/DEPLOYMENT.md` §9
 
 ## Documentation --- still in flux and requiring review for AI slop
 
@@ -114,9 +115,47 @@ curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
 # How many forecast files?
 curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
 
-# Akamai server logs
-ssh akamai "pm2 logs --lines 50"
+# Server logs (ops box)
+ssh deploy@www.basinwx.com "pm2 logs --lines 50"
+
+# Server logs (dev / rehearsal box)
+ssh deploy@www.basinwx.dev "pm2 logs --lines 50"
 ```
+
+### Automated Email Report
+The server can send a scheduled monitoring report email (pipeline status + camera scheduler stats).
+
+Set these environment variables on the server:
+```bash
+REPORT_EMAIL_ENABLED=true
+REPORT_EMAIL_TO=you@example.com
+REPORT_EMAIL_FROM=basinwx@example.com
+REPORT_EMAIL_SMTP_HOST=smtp.example.com
+REPORT_EMAIL_SMTP_PORT=587
+REPORT_EMAIL_SMTP_SECURE=false
+REPORT_EMAIL_SMTP_USER=your-smtp-user
+REPORT_EMAIL_SMTP_PASS=your-smtp-password
+REPORT_EMAIL_SCHEDULE_ENABLED=false
+REPORT_EMAIL_CRON="0 8 * * *"
+REPORT_EMAIL_TIMEZONE=America/Denver
+REPORT_EMAIL_NOTIFY_ON_STARTUP=true
+REPORT_EMAIL_NOTIFY_ON_SHUTDOWN=true
+REPORT_EMAIL_SUBJECT_PREFIX="BasinWx Status Report"
+```
+
+Notes:
+- `REPORT_EMAIL_CRON` uses standard 5-field cron format.
+- Lifecycle reports are controlled by `REPORT_EMAIL_NOTIFY_ON_STARTUP` and `REPORT_EMAIL_NOTIFY_ON_SHUTDOWN`.
+- Scheduled reports are optional and require `REPORT_EMAIL_SCHEDULE_ENABLED=true`.
+- Service is disabled unless `REPORT_EMAIL_ENABLED=true`.
+
+Warm-restore metric endpoint:
+```bash
+curl -s https://basinwx.com/api/road-weather/camera-scheduler-status | jq '.warmRestore'
+```
+Returns startup restore diagnostics including:
+- `restoredDetectionsCount`
+- `restoredSnapshotAgeMinutes`
 
 ### Storage Triage
 ```bash
@@ -143,6 +182,19 @@ fi
 EOF
 chmod +x .git/hooks/post-merge
 ```
+
+### "Is the site actually down?" — triage in order
+Before escalating, rule out the easy causes. The server has been guilty only ~half the time during bring-up.
+
+```bash
+# From your laptop
+curl -I https://www.basinwx.dev/          # expect HTTP/2 200
+curl -I https://www.basinwx.com/          # expect HTTP/2 200
+```
+
+If either RSTs or times out, tether your laptop to your phone's hotspot and retry the same curl. Cellular working but wifi not = your current network (campus/office/ISP) is SNI-filtering `.dev` (HSTS-preloaded, new-TLD-suspicious) or has a stale resolver cache. The server is fine; clear your browser's HSTS+DNS cache or work from a different network.
+
+If cellular also fails, it's the server. SSH in and walk the "did this work?" checklist in `docs/DEPLOYMENT.md` §6 (branch, pm2, systemd unit, `.env` perms, internal curl, nginx config, 80/443 listening, cert expiry, external curl, pm2 logs). Known landmines picked up during first-time bring-up: **Linode Cloud Firewall defaults to Drop** (80/443 must be explicitly accepted per box); **`certbot --manual` breaks auto-renewal** — use `--nginx` or `--webroot`.
 
 ### Data Troubleshooting
 ```bash
@@ -194,4 +246,3 @@ Other than JRL's [email address](mailto:john.lawson@usu.edu), further informatio
 - Ozone Alert program for receiving email outlooks when there is a elevated risk of **high wintertime ozone** in the Uinta Basin.
 - GitHub Issues: [Report bugs or request features (more for the tech-minded)](https://github.com/bingham-research-center/ubair-website/issues)
 ---
-

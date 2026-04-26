@@ -1,6 +1,7 @@
 import { stations } from './config.js';
-import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent } from './mapUtils.js';
+import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent} from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
+import { buildStationMeasurements } from './mapShared.js';
 
 // Initialize map with proper center and zoom for dashboard view
 const map = L.map('map', {
@@ -29,10 +30,16 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 let kioskMode = false;
 let kioskInterval;
+let kioskPopupTimeout = null;
 let currentStationIndex = 0;
 let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
+const AUTO_CYCLE_POPUP_DELAY_MS = 220;
+const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
+const AUTO_CYCLE_PAN_DURATION_S = 0.8;
+const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
+let kioskMoveEndHandler = null;
 
 // Wait for DOM to load before setting up
 document.addEventListener('DOMContentLoaded', () => {
@@ -44,11 +51,13 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupKioskControl() {
-    // The kiosk control is now part of the HTML structure
+    // Setup for timer-fill
     const kioskSwitch = document.getElementById('kiosk-switch');
-    if (kioskSwitch) {
-        kioskSwitch.addEventListener('click', toggleKiosk);
-    }
+    let timerFill = document.getElementById('timer-fill');
+    timerFill = document.createElement('span');
+    timerFill.id = 'timer-fill';
+    timerFill.className = 'timer-fill';
+    kioskSwitch.addEventListener('click', toggleKiosk);
     
     // Setup temperature toggle
     const tempToggle = document.getElementById('temp-toggle');
@@ -60,18 +69,72 @@ function setupKioskControl() {
 function toggleKiosk() {
     kioskMode = !kioskMode;
     const switchEl = document.getElementById('kiosk-switch');
+    const timerFill = document.getElementById('timer-fill');
 
     if (kioskMode) {
         startKioskMode();
         switchEl.classList.add('active');
+        if (timerFill) {
+            timerFill.classList.add('running');
+        }
     } else {
         stopKioskMode();
         switchEl.classList.remove('active');
+        if (timerFill) {
+            timerFill.classList.remove('running');
+        }
     }
+}
+
+function clearKioskPopupTimeout() {
+    if (kioskPopupTimeout) {
+        clearTimeout(kioskPopupTimeout);
+        kioskPopupTimeout = null;
+    }
+}
+
+function getAutoCyclePanTarget(markerLatLng) {
+    const markerPoint = map.latLngToContainerPoint(markerLatLng);
+    const targetCenterPoint = L.point(
+        markerPoint.x - AUTO_CYCLE_PAN_OFFSET_PX.x,
+        markerPoint.y - AUTO_CYCLE_PAN_OFFSET_PX.y
+    );
+    return map.containerPointToLatLng(targetCenterPoint);
+}
+
+function focusMarkerForAutocycle(marker) {
+    if (!kioskMode || !marker || !map.hasLayer(marker)) {
+        return;
+    }
+
+    clearKioskPopupTimeout();
+    if (kioskMoveEndHandler) {
+        map.off('moveend', kioskMoveEndHandler);
+        kioskMoveEndHandler = null;
+    }
+
+    const openPopupIfValid = () => {
+        if (kioskMoveEndHandler) {
+            map.off('moveend', kioskMoveEndHandler);
+            kioskMoveEndHandler = null;
+        }
+        clearKioskPopupTimeout();
+        if (!kioskMode || !marker || !map.hasLayer(marker)) return;
+        marker.openPopup();
+    };
+
+    kioskMoveEndHandler = openPopupIfValid;
+    map.on('moveend', kioskMoveEndHandler);
+    kioskPopupTimeout = setTimeout(openPopupIfValid, AUTO_CYCLE_MOVEEND_FALLBACK_MS);
+
+    const targetCenter = getAutoCyclePanTarget(marker.getLatLng());
+    map.panTo(targetCenter, { animate: true, duration: AUTO_CYCLE_PAN_DURATION_S });
 }
 
 function startKioskMode() {
     if (markers.length === 0) return;
+    clearInterval(kioskInterval);
+    clearKioskPopupTimeout();
 
     // Generate random order for cycling (preserved until page leave)
     // Always start with Castle Peak
@@ -99,23 +162,24 @@ function startKioskMode() {
 
     // Start immediately with Castle Peak
     map.closePopup();
-    if (markers[kioskOrder[currentStationIndex]]) {
-        markers[kioskOrder[currentStationIndex]].openPopup();
-    }
+    focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
     currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
 
     // Then continue with interval
     kioskInterval = setInterval(() => {
         map.closePopup();
-        if (markers[kioskOrder[currentStationIndex]]) {
-            markers[kioskOrder[currentStationIndex]].openPopup();
+        if (kioskOrder.length === 0) {
+            return;
         }
+        focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
         currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
     }, 4000); // 4 second intervals
 }
 
 function stopKioskMode() {
     clearInterval(kioskInterval);
+    kioskInterval = null;
+    clearKioskPopupTimeout();
     map.closePopup();
 }
 
@@ -168,19 +232,7 @@ async function updateMiniMap() {
 
         // Add markers for each station
         for (const [stationName, coordinates] of Object.entries(stations)) {
-            const measurements = {
-                'Ozone': data['Ozone']?.[stationName] ?? null,
-                'PM2.5': data['PM2.5']?.[stationName] ?? null,
-                'NOx': data['NOx']?.[stationName] ?? null,
-                'NO': data['NO']?.[stationName] ?? null,
-                'NO2': data['NO2']?.[stationName] ?? null,
-                'Temperature': data['Temperature']?.[stationName] ?? null,
-                'Wind Speed': data['Wind Speed']?.[stationName] ?? null,
-                'Wind Direction': data['Wind Direction']?.[stationName] ?? null,
-                'Pressure': data['Pressure']?.[stationName] ?? null,
-                'Humidity': data['Humidity']?.[stationName] ?? null,
-                'Snow Depth': data['Snow Depth']?.[stationName] ?? null
-            };
+            const measurements = buildStationMeasurements(data, stationName);
 
             const stationTimestamp = data._timestamps?.[stationName] ?? null;
             // Check if this is a road weather station by type from config
@@ -291,13 +343,15 @@ function formatMeasurement(pollutant, value) {
     }
 }
 
+
 function getCardinalDirection(degrees) {
     if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
-    
+
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const index = Math.round(degrees / 22.5) % 16;
     return directions[index];
 }
+
 
 function createTwoColumnPopup(stationName, measurements, timestamp = null, isRoadStation = false) {
     // Priority variables: Air quality + essential meteorology

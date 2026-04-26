@@ -1144,6 +1144,12 @@ body[data-page-type="forecast_air_quality"] h1::after {
     gap: 1rem;
 }
 
+.heatmap-shortcuts-hint {
+    font-size: 0.85rem;
+    color: #4b5563;
+    margin-top: -0.25rem;
+}
+
 .dropdown-row {
     display: flex;
     align-items: center;

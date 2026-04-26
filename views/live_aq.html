@@ -17,13 +17,24 @@
 <!-- Map Container -->
 <div id="map"></div>
 
-<!-- Unit Toggle Control -->
-<div class="unit-toggle-control">
-    <label>°C</label>
-    <div class="unit-toggle-switch active" id="unit-toggle" title="Toggle °C / °F">
-        <div class="unit-switch-slider"></div>
+<!-- Map Controls (stacked below zoom buttons) -->
+<div class="map-controls-stack">
+    <div class="unit-toggle-control">
+        <span>°C</span>
+        <button type="button" role="switch" aria-checked="false" class="unit-toggle-switch active" id="unit-toggle" title="Toggle °C / °F" aria-label="Toggle temperature units">
+            <span class="unit-switch-slider"></span>
+        </button>
+        <span>°F</span>
     </div>
-    <label>°F</label>
+
+    <div class="autocycle-toggle-control">
+        <span class="autocycle-label">Auto-cycle</span>
+        <button type="button" role="switch" aria-checked="false" class="kiosk-switch-map" id="map-kiosk-toggle" title="Auto-cycle stations" aria-label="Toggle station auto-cycle">
+            <span class="switch-slider-map">
+                <span class="timer-fill" id="timer-fill"></span>
+            </span>
+        </button>
+    </div>
 </div>
 
 <!-- USU Logo -->
@@ -49,14 +60,15 @@
 <!-- Footer -->
 <footer class="main-footer">
     <div class="footer-content">
-        <p>&copy; 2024 Bingham Research Center. Experimental use only. All rights reserved.</p>
+        <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Experimental use only. All rights reserved.</p>
     </div>
 </footer>
 
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/public/js/loadSidebar.js"></script>
+<script src="/public/js/loadFooter.js"></script>
 <script type="module" src="/public/js/map.js"></script>
-<script type="module" src="/public/js/loadSidebar.js"></script>
 <script src="/public/js/nineties-mode.js"></script>
 
 <!--JRL: below is an example of looking up pretty variable names-->
@@ -76,7 +88,6 @@
 <!--        });-->
 <!--    })();-->
 <!--</script>-->
-
 
 </body>
 </html>

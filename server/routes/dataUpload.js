@@ -155,7 +155,8 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 
     // Skip content validation for binary files (images, PDFs)
     if (!binaryExts.includes(ext)) {
-      const content = fs.readFileSync(req.file.path, 'utf8');
+      const contentBuffer = fs.readFileSync(req.file.path);
+      const content = contentBuffer.toString('utf8');
 
       if (ext === '.json') {
         // JSON validation
@@ -166,8 +167,8 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
           return res.status(400).json({ success: false, message: 'Invalid JSON file' });
         }
       } else {
-        // Plain-text validation (ASCII only)
-        if (!/^[\x00-\x7F]*$/.test(content)) {
+        // Text validation: accept UTF-8 markdown/plain text, reject binary-like payloads.
+        if (content.includes('\u0000')) {
           fs.unlinkSync(req.file.path);
           return res.status(400).json({ success: false, message: 'Invalid text file' });
         }

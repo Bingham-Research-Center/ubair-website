@@ -253,7 +253,7 @@ python chpc_uploader.py --validate-only --file test_data.json --data-type observ
 
 ```bash
 # Test with real endpoint (use staging if available)
-BASINWX_API_URL="https://staging.basinwx.com" \
+BASINWX_API_URLS="https://staging.basinwx.com" \
 python chpc_uploader.py --file test_data.json --data-type observations
 ```
 

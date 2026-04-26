@@ -2,7 +2,11 @@ import express from 'express';
 import TrafficEventsService from '../trafficEventsService.js';
 
 const router = express.Router();
-const trafficEventsService = new TrafficEventsService();
+let trafficEventsService = new TrafficEventsService();
+
+export function setTrafficEventsService(service) {
+    trafficEventsService = service;
+}
 
 // Get all traffic events for Uintah Basin
 router.get('/traffic-events', async (req, res) => {

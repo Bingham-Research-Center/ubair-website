@@ -24,6 +24,38 @@ router.get('/road-weather', async (req, res) => {
     }
 });
 
+router.get('/road-weather/camera-scheduler-status', (req, res) => {
+    try {
+        const scheduler = roadWeatherService.cameraAnalysisScheduler;
+        if (!scheduler) {
+            return res.status(503).json({
+                success: false,
+                error: 'Camera analysis scheduler is not available'
+            });
+        }
+
+        const stats = scheduler.getStats();
+
+        res.json({
+            success: true,
+            timestamp: new Date().toISOString(),
+            warmRestore: {
+                restoredDetectionsCount: stats.warmRestore?.restoredDetectionsCount ?? 0,
+                restoredSnapshotAgeMinutes: stats.warmRestore?.restoredSnapshotAgeMinutes ?? null,
+                restoredFromDisk: stats.warmRestore?.restoredFromDisk ?? false
+            },
+            scheduler: stats
+        });
+    } catch (error) {
+        console.error('Error fetching camera scheduler status:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Failed to fetch camera scheduler status',
+            message: error.message
+        });
+    }
+});
+
 // Removed unused /road-weather/conditions endpoint
 
 // Removed unused /road-weather/nws/:lat/:lon endpoint
@@ -113,31 +145,6 @@ router.get('/road-weather/rest-areas', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Failed to fetch rest areas data',
-            message: error.message
-        });
-    }
-});
-
-router.get('/road-weather/digital-signs', async (req, res) => {
-    try {
-        const signs = await roadWeatherService.fetchUDOTDigitalSigns();
-        res.json({
-            success: true,
-            timestamp: new Date().toISOString(),
-            totalSigns: signs.length,
-            constructionSigns: signs.filter(s => s.category === 'construction').length,
-            incidentSigns: signs.filter(s => s.category === 'incident').length,
-            weatherSigns: signs.filter(s => s.category === 'weather').length,
-            closureSigns: signs.filter(s => s.category === 'closure').length,
-            trafficSigns: signs.filter(s => s.category === 'traffic').length,
-            advisorySigns: signs.filter(s => s.category === 'advisory').length,
-            signs: signs
-        });
-    } catch (error) {
-        console.error('Error fetching digital signs:', error);
-        res.status(500).json({
-            success: false,
-            error: 'Failed to fetch digital signs data',
             message: error.message
         });
     }
