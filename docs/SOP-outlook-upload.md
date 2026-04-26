@@ -1,63 +1,92 @@
-# SOP: Uploading Forecast Outlooks
+# SOP: Forecast Outlooks
 
-> **Note**: This is a temporary SOP document. In future, SOPs and "getting started" guides will live in the project Wiki. See GitHub Wiki for the canonical source once established.
+## Quick reference
 
-## Overview
+```bash
+# On the web server (as jrlawson or root):
+cd /var/www/ubair-website
 
-Forecast outlooks are markdown files uploaded from CHPC to the BasinWx website. They appear at [basinwx.com/forecast_outlooks](https://www.basinwx.com/forecast_outlooks) within 5 minutes of upload.
+node scripts/new-outlook.cjs                   # draft for right now
+node scripts/new-outlook.cjs 20260306 1300     # draft for specific time
+nano public/api/static/outlooks/draft_*.md     # edit your draft
+node scripts/new-outlook.cjs --validate draft_20260306_1300.md
+node scripts/new-outlook.cjs --publish  draft_20260306_1300.md
+```
 
 ## Workflow
 
-### 1. Copy the template
+### 1. Generate a draft
 
 ```bash
-cd ~/outlooks  # or wherever you store drafts
-cp /path/to/template-2025-2026.md outlook_$(date +%Y%m%d_%H%M).md
+node scripts/new-outlook.cjs [YYYYMMDD] [HHMM]
 ```
 
-Filename **must** match pattern: `outlook_YYYYMMDD_HHMM.md`
+Creates `draft_YYYYMMDD_HHMM.md` in the outlooks folder with dates auto-filled.
+The `draft_` prefix keeps it **off the website** — only `outlook_` files appear.
 
-### 2. Edit the outlook
+### 2. Edit the draft
 
-Replace all `[bracketed]` placeholders:
-- `[H.MMam/pm]` → e.g., `11.30am`
-- `[D Month YYYY]` → e.g., `1 December 2025`
-- `[Day D Mon]` → e.g., `Mon 1 Dec`
-- Risk level → one of: `NO`, `LOW`, `MODERATE`, `HIGH`
-- Confidence → one of: `LOW`, `MODERATE`, `HIGH`
+Replace every `[BRACKETED]` placeholder. The validator will catch any you miss.
 
-**Important for color-coding**: Risk and confidence lines must contain exact phrases:
+**Risk line** — pick one (exact text, all caps, on its own line):
 - `NO RISK OF ELEVATED OZONE` (renders green)
 - `LOW RISK OF ELEVATED OZONE` (renders blue)
+- `SOME RISK OF ELEVATED OZONE` (renders orange)
 - `MODERATE RISK OF ELEVATED OZONE` (renders orange)
 - `HIGH RISK OF ELEVATED OZONE` (renders red)
-- `HIGH CONFIDENCE` / `MODERATE CONFIDENCE` / `LOW CONFIDENCE`
 
-### 3. Upload from CHPC
+**Confidence line** — pick one (exact text, all caps, on its own line):
+- `HIGH CONFIDENCE` (renders green — reassuring)
+- `MEDIUM CONFIDENCE` (renders orange)
+- `MODERATE CONFIDENCE` (renders orange)
+- `LOW CONFIDENCE` (renders red — uncertain)
+
+### 3. Validate
 
 ```bash
-# Ensure brc-tools is installed and configured
+node scripts/new-outlook.cjs --validate draft_20260306_1300.md
+```
+
+Checks: required sections, valid risk/confidence phrases, no leftover placeholders.
+
+### 4. Publish
+
+```bash
+node scripts/new-outlook.cjs --publish draft_20260306_1300.md
+```
+
+Runs validation, then renames `draft_` → `outlook_`. The server picks it up within 5 minutes.
+
+### 5. Upload from CHPC (alternative)
+
+If uploading from CHPC instead of editing on the server:
+
+```bash
 python -m brc_tools.download.push_outlook outlook_YYYYMMDD_HHMM.md
 ```
 
-Requirements:
-- `DATA_UPLOAD_API_KEY` environment variable set
-- `~/.config/ubair-website/website_url` file with server URL
+Requires `DATA_UPLOAD_API_KEY` env var and `~/.config/ubair-website/website_url`.
 
-### 4. Verify
+## Server access for non-root users
 
-Check [basinwx.com/forecast_outlooks](https://www.basinwx.com/forecast_outlooks) within 5 minutes.
+To let `jrlawson` (or other users) run the script without root:
 
-The `outlooks_list.json` auto-regenerates every 5 minutes on the server.
+```bash
+# One-time setup (run as root):
+sudo usermod -aG www-data jrlawson
+sudo chmod g+w /var/www/ubair-website/public/api/static/outlooks/
+# jrlawson must log out and back in for group change to take effect.
+```
+
+Then as `jrlawson`:
+```bash
+cd /var/www/ubair-website
+node scripts/new-outlook.cjs 20260306 1300
+```
 
 ## Troubleshooting
 
-- **Upload fails**: Check API key and hostname validation
-- **Colors not showing**: Ensure exact phrasing (e.g., `HIGH RISK` not `High Risk`)
-- **Not appearing in list**: Filename must match `outlook_YYYYMMDD_HHMM.md` pattern
-
-## Future Plans
-
-- Wiki-based SOP documentation
-- Validation script for markdown structure
-- Integration with email distribution list
+- **Colors not showing**: Risk/confidence must be exact phrases, all caps, own line
+- **Not in list**: Filename must be `outlook_YYYYMMDD_HHMM.md` (not `draft_`)
+- **Permission denied**: Ensure you're in the `www-data` group (see above)
+- **Upload fails from CHPC**: Check API key and hostname validation
