@@ -81,6 +81,10 @@ app.get('/forecast_weather', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_weather.html'));
 });
 
+app.get('/sports', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/sports.html'));
+});
+
 app.get('/agriculture', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/agriculture.html'));
 });
