@@ -1,130 +1,70 @@
-# AI Agent Quick Reference - ubair-website
+# Agent Index — ubair-website
 
-**Current Task:** Dec 1 launch prep - CHPC/Akamai sync verification
-**Status:** Code deployed to ops, awaiting CHPC cron verification
-**Last Session:** 2025-11-27
-**Branch:** `integration-clyfar-v0.9.5`
+Entry point for AI agents working in this repo. **Last refreshed:** 2026-04-27.
 
----
+This file lists what's in `docs/` so you can pick the right reference without grepping the
+whole tree (~13k lines). Read on demand; do not auto-load.
 
-## Quick Start
+## Always-on context (already in your prompt)
+- `CLAUDE.md` (repo root) — topology, pipeline, dataTypes, protected branches, secrets policy, naming convention
+- `MEMORY.md` (per-user, if present) — durable user-specific facts
 
-**Resume after compact:**
-```
-Read: SESSION-27NOV2025.md (latest session - MOST IMPORTANT)
-Read: CRON-SETUP-27NOV2025.md (CHPC crontab setup)
-Verify: CHPC cron running, data flowing to basinwx.com
-```
+## Read first when…
+| Goal | File |
+|---|---|
+| Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
+| Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
+| Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
+| Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
+| Onboard a new RA | `docs/QUICK-START.md` then `docs/howto/quinten-handoff.md` |
+| Plumb new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` (root, temporary) |
+| Add or change a frontend page | `docs/FRONTEND-ARCHITECTURE.md` + `docs/JAVASCRIPT-PATTERNS.md` |
+| Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
+| Fix a road weather bug | `docs/ROADS_AUDIT.md` + `docs/ROAD_WEATHER_IMPROVEMENTS.md` |
 
-**Key Documentation:**
-1. `SESSION-27NOV2025.md` - Latest session summary (27 Nov)
-2. `CRON-SETUP-27NOV2025.md` - CHPC crontab and paths
-3. `CHPC-IMPLEMENTATION.md` - Deployment master guide
-4. `SESSION-SUMMARY-2025-11-23.md` - Earlier session
-5. `COMPACT-RESUME-POINT.md` - Original context
+## Reference docs (cite, don't reread)
+| Topic | File | Notes |
+|---|---|---|
+| Forecast JSON schemas | `DATA_MANIFEST.json` | canonical contract; brc-tools is contract-holder |
+| Manifest evolution | `docs/MANIFEST-CHANGELOG.md` + `docs/MANIFEST-GUIDE.md` | append-only changelog + how-to |
+| API key + auth | `docs/API-KEY-SETUP.md` | upload route's `x-api-key` |
+| Secret sharing | `docs/SECRET-SHARING-GUIDE.md` | password-manager workflow |
+| SSL / TLS | `docs/SSL-SETUP.md` | Let's Encrypt setup; renewal lives in `DEPLOYMENT.md` |
+| Branching | `docs/BRANCHING-WORKFLOW.md` | (overlaps `BRANCHING-STRATEGY-IMPLEMENTATION.md` — see review) |
+| PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with the `/ultrareview` flow |
+| Test data | `docs/TEST-DATA.md` + `docs/TESTING-PLAN.md` | seed JSON for local dev |
+| Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | for context on why the site exists |
+| Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
+| CHPC/Python side | `docs/python-side-CLAUDE.md` | meant to be **copied** to brc-tools repo as its `CLAUDE.md` |
+| CHPC deployment | `docs/CHPC-DEPLOYMENT.md` + `docs/CHPC-IMPLEMENTATION.md` | (overlapping pair — see review) |
+| Python packaging | `docs/PYTHON-PACKAGING-DEPLOYMENT.md` | brc-tools install/upgrade flow |
 
----
+## Outstanding-work indices (don't trust dates blindly — verify each item)
+- `docs/IMPROVEMENTS.md` — top-level "20 low-hanging fruit" list (refreshed 2026-04-27)
+- `docs/TODO-DEFERRED.md` — Clyfar-integration carry-over from Nov 2025
+- `docs/WISHLIST-TODOS.md` — long-tail aspirations
+- `docs/DEPLOYMENT-SPECS-TODO.md` — deployment-specific
+- `docs/PYTHON-DEVELOPER-TODO.md` — brc-tools-side gaps
+- `docs/ROAD_WEATHER_IMPROVEMENTS.md` — feature-area-specific (older, partly done)
+- `REVIEW-DOCS-apr27.md` (root, temporary) — meta-doc consolidating which of the above to merge
 
-## Critical Context
+## Howto/ subdir
+| File | When |
+|---|---|
+| `docs/howto/preview-a-branch.md` | spinning up `<name>.basinwx.dev` |
+| `docs/howto/avoiding-dev-domain-block.md` | when `.dev` is SNI-filtered on a network |
+| `docs/howto/quinten-handoff.md` | RA onboarding pattern |
 
-### Data Architecture
-- **3 data products:** Possibility (31 files) + Exceedance (1 file) + Percentiles (31 files)
-- **4 categories:** background, moderate, elevated, extreme (NOT 5!)
-- **Schedule:** 4× daily (00:30, 06:30, 12:30, 18:30 UTC)
-- **Total files:** 63 JSON files per forecast run
+## Archive/
+`docs/archive/` holds session handoffs and superseded plans from Nov–Dec 2025. Do not read
+unless tracing decision history.
 
-### Repository Coordination
-1. **ubair-website** (this repo) - Node.js website, receives data
-2. **brc-tools** - Python data tools, shared package
-3. **clyfar** - Ozone prediction model
-4. **preprint-clyfar-v0p9** - LaTeX tech report (4th repo!)
+## Doc-naming convention (also in `CLAUDE.md`)
+- LLM-produced markdown: ALL-CAPS, 3–4 hyphen-separated words.
+- Temporary/handoff docs: append `-mmmDD` before the extension (e.g. `-apr27`).
+- Markdown only — Python and other code follow the language's convention.
 
-### What's Complete (27 Nov Session)
-- ✅ Homepage launch message (Dec 1 announcement)
-- ✅ Coming Soon overlays on all unfinished pages
-- ✅ Server filelist.json path bug fixed
-- ✅ UBAIR ozone stations added to brc-tools
-- ✅ Clyfar script paths corrected
-- ✅ Code merged to dev and ops branches
-- ✅ CHPC crontab documented
-
-### What's Next
-- ⏳ Verify CHPC cron is running (check ~/logs/obs.log)
-- ⏳ Verify data appearing on basinwx.com
-- ⏳ Test Clyfar manual run on CHPC
-- ⏳ Upload outlook markdown via API
-
----
-
-## Common Tasks
-
-**Update schema:**
-```
-File: DATA_MANIFEST.json
-Status: v1.1.0 started but incomplete
-Action: Complete forecast schema with 4 categories
-```
-
-**Test integration:**
-```bash
-cd /Users/johnlawson/PycharmProjects/clyfar
-conda activate clyfar-2025
-python test_integration.py
-```
-
-**Check package install:**
-```bash
-conda activate clyfar-2025
-python -c "from brc_tools.download.push_data import send_json_to_server; print('OK')"
-```
-
----
-
-## Avoid Common Pitfalls
-
-❌ Don't use 5 categories (old assumption)
-❌ Don't aggregate across members (wrong approach)
-❌ Don't assume twice daily (it's 4× now)
-❌ Don't hardcode paths (deployment-ready code)
-❌ Don't re-read files unnecessarily (token waste)
-
-✅ Use 4 categories from fis/v0p9.py
-✅ Export per-member data (63 files)
-✅ Schedule at 4× daily
-✅ Use environment variables and configs
-✅ Reference docs, use Task agents
-
----
-
-## File Locations
-
-**Implementation guides:**
-- Deployment: `CHPC-IMPLEMENTATION.md`
-- Packaging: `PYTHON-PACKAGING-DEPLOYMENT.md`
-- Integration: `../clyfar/INTEGRATION_GUIDE.md`
-
-**Schema:**
-- Data manifest: `DATA_MANIFEST.json` (v1.1.0 in progress)
-- Tech report: `/Users/johnlawson/Documents/GitHub/preprint-clyfar-v0p9`
-
-**Code:**
-- Upload module: `../clyfar/export/to_basinwx.py` (needs rewrite)
-- Test suite: `../clyfar/test_integration.py`
-- Website API: `server/routes/dataUpload.js`
-
----
-
-## Cross-Repo Coordination
-
-**When changing Clyfar config:**
-1. Check Python code (source of truth)
-2. Check tech report (methodology)
-3. Update markdown docs (deployment)
-4. Create CONTRADICTIONS-REPORT.md if mismatches found
-
-**Sync workflow:** See CROSS-REPO-SYNC.md (to be created Phase 2)
-
----
-
-**Last Updated:** 2025-11-23 (pre-compact)
-**Next Review:** After Phase 1 completion
+## Known gaps (as of 2026-04-27)
+- `docs/AGENT-INDEX.md` was 5 months stale before this refresh; treat the rest of `docs/` with
+  the same caution and verify dates before trusting content.
+- See `REVIEW-DOCS-apr27.md` for the consolidation backlog.
