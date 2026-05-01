@@ -47,6 +47,7 @@ h2
     overflow: hidden;
 }
 
+/* Inactive "thumbprint" effect of cards */
 .condition-card::before {
     content: '';
     position: absolute;
@@ -56,7 +57,7 @@ h2
     height: 60px;
     background: linear-gradient(135deg, rgb(125, 0, 0), transparent);
     border-radius: 0 12px 0 100%;
-    opacity: 0.1;
+    opacity: 0;
 }
 
 .condition-card:hover {
