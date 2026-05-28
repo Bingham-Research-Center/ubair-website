@@ -22,6 +22,12 @@ const PAGE_DISCLAIMERS = {
         Always check current conditions and weather warnings before water activities.
         ©2025, Utah State University.`,
 
+    '/fire': `DISCLAIMER: Fire-weather products are experimental research outputs and informational only.
+        They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
+        Satellite hotspot detections (NASA FIRMS) can lag by ~3 hours and may include false positives.
+        For active wildfires and operational guidance, consult Utah Fire Info and the National Weather Service.
+        ©2026, Utah State University.`,
+
     '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
         Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
 

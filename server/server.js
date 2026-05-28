@@ -10,6 +10,8 @@ import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes, { setRoadWeatherService } from './routes/roadWeather.js';
 import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
+import fireWeatherRoutes from './routes/fireWeather.js';
+import fireRestrictionsRoutes from './routes/fireRestrictions.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
@@ -45,6 +47,8 @@ app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
+app.use('/api', fireWeatherRoutes);
+app.use('/api', fireRestrictionsRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Analytics stats endpoint (protected by environment check)
