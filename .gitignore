@@ -10,6 +10,10 @@ package-lock.json
 .env.local
 .env.*.local
 
+# API key material (never commit raw key files)
+server/keys/
+*.key
+
 # IDE specific files
 .idea/
 .vscode/

@@ -305,3 +305,679 @@ body[data-page-type="fire"] h1::after {
     outline: 2px solid var(--fire-accent);
     outline-offset: 2px;
 }
+
+/* ===========================================================
+   Fire Weather v1 additions (below the original placeholder
+   styles). Hero, HDW badge, Red Flag banner, map + hotspots,
+   forecast strip, preparedness, resources, loading.
+   =========================================================== */
+
+/* Red Flag banner */
+.red-flag-banner {
+    background: linear-gradient(135deg, #7d0000, var(--fire-warning));
+    color: white;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 20px rgba(125, 0, 0, 0.3);
+    animation: pulse-red-strong 2s ease-in-out infinite;
+}
+.red-flag-banner.is-hidden,
+.red-flag-banner[hidden] { display: none; }
+.red-flag-card { background: rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
+.red-flag-card:last-child { margin-bottom: 0; }
+.red-flag-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.red-flag-card-head strong { font-size: 1.05rem; }
+.red-flag-area { flex: 1 1 auto; font-size: 0.9rem; opacity: 0.95; }
+.red-flag-expires { font-size: 0.85rem; opacity: 0.85; }
+.red-flag-card details summary { cursor: pointer; padding: 0.4rem 0; font-weight: 500; }
+.red-flag-instruction { background: rgba(0, 0, 0, 0.18); padding: 0.5rem 0.75rem; border-radius: 4px; margin-top: 0.5rem; }
+
+@keyframes pulse-red-strong {
+    0%, 100% { box-shadow: 0 6px 20px rgba(125, 0, 0, 0.3); }
+    50%      { box-shadow: 0 6px 32px rgba(255, 0, 0, 0.55); }
+}
+
+/* Hero */
+.fire-hero {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(135deg, white, #fff8f0);
+    border-radius: 16px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
+    border-left: 6px solid var(--fire-primary);
+}
+.hero-hdw { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+.hdw-label { font-size: 0.8rem; text-transform: uppercase; color: var(--fire-smoke); letter-spacing: 0.05em; }
+.hdw-level-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    padding: 0.5rem 1.1rem;
+    border-radius: 10px;
+    font-weight: 700;
+    color: white;
+    background: var(--fire-smoke);
+    transition: background 0.4s ease;
+}
+.hdw-level-badge[data-level="loading"] { background: #888; }
+.hdw-level-badge[data-level="low"]       { background: #2d6b3a; }
+.hdw-level-badge[data-level="moderate"]  { background: #b08600; }
+.hdw-level-badge[data-level="high"]      { background: #b85a00; }
+.hdw-level-badge[data-level="very_high"] { background: #a82632; }
+.hdw-level-badge[data-level="extreme"]   { background: #5a0000; box-shadow: 0 0 12px rgba(255, 0, 0, 0.35); }
+.hdw-value { font-size: 2.2rem; line-height: 1; }
+.hdw-level-name { font-size: 1.05rem; opacity: 0.95; }
+.hdw-source { font-size: 0.78rem; color: var(--fire-smoke); font-style: italic; }
+.hero-side { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6rem; flex: 1; }
+.hero-snapshot { color: #444; font-size: 1rem; text-align: right; margin: 0; }
+.hotspot-count-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    background: #fff0e0;
+    color: var(--fire-primary);
+    border: 1px solid var(--fire-accent);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.hotspot-count-chip i { color: var(--fire-warning); }
+.hotspot-count-chip.is-hidden,
+.hotspot-count-chip[hidden] { display: none; }
+
+/* Map section */
+.map-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
+    border: 1px solid rgba(178, 34, 34, 0.1);
+}
+.map-section h2 {
+    color: var(--fire-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.map-section h2 i { color: var(--fire-secondary); }
+.station-map {
+    width: 100%;
+    height: 480px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(178, 34, 34, 0.12);
+}
+.map-legend-text {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 0.75rem;
+}
+
+/* Map markers */
+.fire-station-marker { background: transparent; border: none; }
+.fire-station-pin {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    border: 2px solid white;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+.fire-hotspot-marker { animation: hotspot-pulse 2.2s ease-in-out infinite; }
+@keyframes hotspot-pulse {
+    0%, 100% { stroke-opacity: 0.9; }
+    50%      { stroke-opacity: 0.45; }
+}
+
+/* Leaflet legend */
+.fire-map-legend {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 0.6rem 0.75rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: #333;
+}
+.fire-map-legend strong { display: block; margin-bottom: 0.3rem; color: var(--fire-primary); }
+.fire-map-legend .legend-row { display: flex; align-items: center; gap: 0.45rem; margin: 2px 0; }
+.fire-map-legend .legend-swatch {
+    flex: 0 0 14px;
+    width: 14px;
+    height: 14px;
+    min-width: 14px;
+    min-height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    box-sizing: border-box;
+    display: inline-block;
+}
+.fire-map-legend .legend-firms-swatch {
+    background: #cc0000;
+    border-color: #660000;
+}
+.fire-map-legend .legend-row-firms { margin-top: 0.35rem; padding-top: 0.35rem; border-top: 1px solid rgba(0, 0, 0, 0.08); }
+
+/* Map popups */
+.fire-popup h4 {
+    margin: 0 0 0.3rem;
+    color: var(--fire-primary);
+    font-size: 1rem;
+}
+.fire-popup .popup-meta { color: #777; font-size: 0.8rem; margin: 0 0 0.4rem; }
+.fire-popup .popup-row { margin: 0.2rem 0; font-size: 0.9rem; color: #333; }
+.popup-badge {
+    display: inline-block;
+    padding: 1px 8px;
+    border-radius: 999px;
+    color: white;
+    font-size: 0.75rem;
+    margin-left: 0.4rem;
+}
+
+/* Forecast strip */
+.forecast-strip {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 0.75rem;
+}
+.forecast-day-card {
+    background: linear-gradient(135deg, white, #fff8f0);
+    padding: 1rem 0.75rem;
+    border-radius: 10px;
+    text-align: center;
+    border-top: 3px solid var(--fire-accent);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.forecast-day-card h3 {
+    font-size: 0.95rem;
+    color: var(--fire-primary);
+    margin: 0 0 0.4rem;
+}
+.forecast-temp {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--fire-secondary);
+    margin: 0.2rem 0;
+}
+.forecast-wind, .forecast-short {
+    font-size: 0.82rem;
+    color: #555;
+    margin: 0.2rem 0;
+}
+
+/* Meteogram */
+.meteogram-chart {
+    width: 100%;
+    height: 420px;
+    background: #fff8f0;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* Preparedness */
+.preparedness-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
+    border-left: 4px solid var(--fire-accent);
+}
+.preparedness-section h2 {
+    color: var(--fire-primary);
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.preparedness-section h2 i { color: var(--fire-secondary); }
+.preparedness-grid {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.preparedness-grid li {
+    background: #fff8f0;
+    padding: 1rem 1.1rem;
+    border-radius: 10px;
+    border-left: 3px solid var(--fire-secondary);
+    color: #333;
+    line-height: 1.5;
+}
+.preparedness-grid li strong { color: var(--fire-primary); }
+
+/* Resources */
+.resources-section {
+    margin-bottom: 2rem;
+}
+.resources-section h2 {
+    color: var(--fire-primary);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.resources-section h2 i { color: var(--fire-secondary); }
+.resources-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+.resource-card {
+    display: block;
+    background: white;
+    padding: 1.25rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: inherit;
+    border-left: 4px solid var(--fire-primary);
+    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.resource-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
+}
+.resource-card h3 { color: var(--fire-primary); margin: 0 0 0.3rem; font-size: 1.05rem; }
+.resource-card p { color: #555; font-size: 0.9rem; margin: 0; }
+
+/* Loading spinner */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: center;
+    padding: 2rem;
+    color: var(--fire-smoke);
+    font-size: 0.95rem;
+}
+.loading-spinner i { color: var(--fire-secondary); font-size: 1.2rem; }
+
+/* Active Fire Restrictions */
+.restrictions-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
+    border-left: 4px solid var(--fire-primary);
+    position: relative;
+}
+.restrictions-section[hidden] { display: none; }
+.restrictions-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--fire-primary), var(--fire-secondary), var(--fire-accent));
+    border-radius: 16px 16px 0 0;
+}
+.restrictions-section h2 {
+    color: var(--fire-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.restrictions-section h2 i { color: var(--fire-secondary); }
+.restrictions-intro {
+    color: var(--fire-smoke);
+    font-size: 0.85rem;
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+}
+.restrictions-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.restriction-card {
+    background: linear-gradient(135deg, white, #fff8f0);
+    padding: 1.1rem 1.2rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--fire-primary);
+    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+.restriction-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
+}
+.restriction-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.restriction-agency {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+    color: var(--fire-primary);
+}
+.restriction-type-pill {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: white;
+    background: var(--fire-smoke);
+    white-space: nowrap;
+}
+.restriction-type-pill[data-type^="stage-1"] { background: var(--fire-accent); }
+.restriction-type-pill[data-type^="stage-2"] { background: var(--fire-secondary); }
+.restriction-type-pill[data-type^="stage-3"] { background: var(--fire-warning); }
+.restriction-type-pill[data-type^="prevention"]  { background: var(--fire-primary); }
+.restriction-type-pill[data-type^="special"]     { background: var(--fire-smoke); }
+.restriction-type-pill[data-type^="ordinance"]   { background: var(--fire-smoke); }
+.restriction-area {
+    margin: 0;
+    color: #333;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    font-weight: 500;
+}
+.restriction-meta {
+    margin: 0;
+    color: #666;
+    font-size: 0.8rem;
+}
+.restriction-summary-heading {
+    margin: 0.35rem 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--fire-primary);
+}
+.restriction-summary {
+    margin: 0;
+    color: #333;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    padding-left: 0.75rem;
+    border-left: 2px solid var(--fire-secondary);
+}
+.restriction-highlights {
+    margin: 0.4rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: #333;
+    font-size: 0.85rem;
+    line-height: 1.45;
+}
+.restriction-highlights li {
+    position: relative;
+    padding-left: 1.2em;
+    margin: 0.2rem 0;
+}
+.restriction-highlights li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--fire-accent);
+    font-weight: 700;
+}
+.restriction-empty {
+    margin: 0.35rem 0;
+    color: var(--fire-smoke);
+    font-size: 0.85rem;
+    font-style: italic;
+    line-height: 1.5;
+}
+.restriction-foot {
+    margin: 0.5rem 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.restriction-order {
+    font-size: 0.72rem;
+    color: var(--fire-smoke);
+    font-variant-numeric: tabular-nums;
+}
+.restriction-link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    background: var(--fire-primary);
+    color: white;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(178, 34, 34, 0.2);
+    transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+.restriction-link:hover {
+    background: var(--fire-secondary);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(255, 69, 0, 0.3);
+}
+.restriction-no-link {
+    font-size: 0.8rem;
+    color: var(--fire-smoke);
+    font-style: italic;
+}
+
+/* Detected Fires (auto-clustered FIRMS) */
+.fire-list-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
+    border-left: 4px solid var(--fire-primary);
+    position: relative;
+}
+.fire-list-section[hidden] { display: none; }
+.fire-list-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--fire-primary), var(--fire-warning), var(--fire-accent));
+    border-radius: 16px 16px 0 0;
+}
+.fire-list-section h2 {
+    color: var(--fire-primary);
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.fire-list-section h2 i { color: var(--fire-secondary); }
+.fire-list-intro {
+    color: var(--fire-smoke);
+    font-size: 0.85rem;
+    margin: 0 0 1.25rem;
+    line-height: 1.5;
+}
+.fire-list-intro strong { color: var(--fire-primary); }
+.fire-list-group { margin-bottom: 1.25rem; }
+.fire-list-group:last-child { margin-bottom: 0; }
+.fire-list-group[hidden] { display: none; }
+.fire-list-group h3 {
+    color: var(--fire-primary);
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin: 0 0 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.fire-list-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.6em;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(178, 34, 34, 0.08);
+    color: var(--fire-primary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.fire-list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+.fire-card {
+    background: linear-gradient(135deg, white, #fff8f0);
+    padding: 1.1rem 1.2rem;
+    border-radius: 12px;
+    border-left: 4px solid var(--fire-primary);
+    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.fire-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
+}
+.fire-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+.fire-card-title {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--fire-primary);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.fire-status-pill {
+    display: inline-block;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: white;
+    background: var(--fire-smoke);
+    white-space: nowrap;
+}
+.fire-status-pill[data-status="active"] {
+    background: var(--fire-warning);
+    box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.15), 0 0 10px rgba(255, 0, 0, 0.25);
+    animation: fire-pulse 2.4s ease-in-out infinite;
+}
+.fire-status-pill[data-status="recent"] {
+    background: var(--fire-smoke);
+}
+@keyframes fire-pulse {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.15), 0 0 10px rgba(255, 0, 0, 0.25); }
+    50%      { box-shadow: 0 0 0 1px rgba(255, 0, 0, 0.25), 0 0 18px rgba(255, 0, 0, 0.45); }
+}
+.fire-card-meta {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 0.85rem;
+    row-gap: 0.25rem;
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+.fire-card-meta dt {
+    color: var(--fire-smoke);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.7rem;
+    font-weight: 600;
+    align-self: center;
+}
+.fire-card-meta dd {
+    margin: 0;
+    color: #333;
+    font-variant-numeric: tabular-nums;
+}
+.fire-card-abs {
+    color: var(--fire-smoke);
+    font-size: 0.72rem;
+    font-style: italic;
+    margin-left: 0.25rem;
+}
+.fire-card-foot {
+    margin: 0.15rem 0 0;
+}
+.fire-card-link {
+    color: var(--fire-primary);
+    font-weight: 600;
+    font-size: 0.82rem;
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.fire-card-link:hover { color: var(--fire-secondary); }
+
+/* Leaflet cluster circle subtle pulse for active fires */
+.fire-cluster-circle {
+    animation: fire-cluster-pulse 3.2s ease-in-out infinite;
+}
+@keyframes fire-cluster-pulse {
+    0%, 100% { stroke-opacity: 0.9; fill-opacity: 0.18; }
+    50%      { stroke-opacity: 0.55; fill-opacity: 0.10; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .fire-hero {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 1.2rem 1.25rem;
+    }
+    .hero-side { align-items: flex-start; }
+    .hero-snapshot { text-align: left; }
+    .station-map { height: 360px; }
+    .meteogram-chart { height: 340px; }
+    .restrictions-section { padding: 1.5rem 1.25rem; }
+    .restrictions-list { grid-template-columns: 1fr; }
+    .restriction-foot { flex-direction: column-reverse; align-items: stretch; }
+    .restriction-link { justify-content: center; }
+    .fire-list-section { padding: 1.5rem 1.25rem; }
+    .fire-list-grid { grid-template-columns: 1fr; }
+}

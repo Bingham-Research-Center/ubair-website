@@ -3,6 +3,7 @@ import path from 'path';
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
 import SnowDetectionService from './snowDetectionService.js';
+import { fetchNWSGridpointForecast } from './nwsHelpers.js';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
@@ -165,41 +166,8 @@ class RoadWeatherService {
         if (cached) return cached;
 
         try {
-            const pointsUrl = `https://api.weather.gov/points/${lat},${lon}`;
-            const pointsResponse = await fetch(pointsUrl, {
-                headers: {
-                    'User-Agent': this.nwsUserAgent,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!pointsResponse.ok) {
-                throw new Error(`NWS API error: ${pointsResponse.status}`);
-            }
-
-            const pointsData = await pointsResponse.json();
-            const forecastUrl = pointsData.properties.forecast;
-
-            const forecastResponse = await fetch(forecastUrl, {
-                headers: {
-                    'User-Agent': this.nwsUserAgent,
-                    'Accept': 'application/json'
-                }
-            });
-
-            if (!forecastResponse.ok) {
-                throw new Error(`NWS Forecast error: ${forecastResponse.status}`);
-            }
-
-            const forecastData = await forecastResponse.json();
-            const periods = forecastData.properties.periods;
-
-            const processedForecast = {
-                current: periods[0],
-                upcoming: periods.slice(1, 5),
-                warnings: []
-            };
-
+            const { current, upcoming } = await fetchNWSGridpointForecast(lat, lon);
+            const processedForecast = { current, upcoming, warnings: [] };
             cache.set(cacheKey, processedForecast);
             return processedForecast;
         } catch (error) {
