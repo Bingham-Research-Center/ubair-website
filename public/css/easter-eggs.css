@@ -139,6 +139,90 @@
 }
 
 /* ========================================
+   Sports page coin flip
+   ======================================== */
+
+.coin-egg {
+    top: 80px;
+    left: 280px;
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+}
+
+.coin-btn {
+    background: linear-gradient(135deg, #960505 0%, #b91010 100%);
+    color: darkred;
+    width: 100%;
+
+}
+
+.coin-btn:hover {
+    background: linear-gradient(135deg, #780404 0%, #960505 100%);
+}
+
+.coin-filter-btn {
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    color: black;
+    width: 100%;
+}
+
+.coin-filter-btn:hover {
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+    color: red;
+}
+.rainbow-txt {
+    font-weight: 800;
+    background-image: linear-gradient(to left, violet, indigo, blue, green, goldenrod, orange, red);
+    background-clip: text;
+    color: transparent;
+}
+.game-slider {
+    -webkit-appearance: none;
+    accent-color: darkred;
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    width: 100%;
+    height: 25px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.game-slider:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    height: 35px;
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+
+}
+.game-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+}
+.game-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+    transition: all 0.2s;
+}
+.game-slider::-moz-range-thumb:hover {
+    width: 16px;
+    height: 16px;
+}
+.rule-entry {
+    transition: all 0.2s;
+    font-size: 10px;
+}
+.rule-entry:hover {
+    font-size: 14px;
+}
+
+/* ========================================
    Dutch John Easter Egg (Homepage)
    ======================================== */
 
