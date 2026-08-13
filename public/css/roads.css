@@ -2155,3 +2155,83 @@ body[data-page-type="roads"] .leaflet-drag-target {
         padding: 2px 8px;
     }
 }
+
+/* Auto-cycle cameras toggle (roads map) */
+.camera-cycle-control {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    border: 2px solid var(--roads-primary);
+    margin-top: 10px;
+    margin-left: 10px;
+}
+
+.camera-cycle-container {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.camera-cycle-label {
+    color: var(--roads-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.camera-cycle-switch {
+    width: 60px;
+    height: 30px;
+    background: #ddd;
+    border-radius: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    border: 2px solid var(--roads-primary);
+}
+
+.camera-cycle-switch:hover {
+    background: #bbb;
+}
+
+.camera-cycle-switch.active {
+    background: var(--roads-primary);
+}
+
+.camera-cycle-slider {
+    width: 24px;
+    height: 24px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    transition: transform 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.camera-cycle-switch.active .camera-cycle-slider {
+    transform: translateX(30px);
+}
+
+.camera-cycle-timer-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, #ff4444, #cc0000);
+    border-radius: 50%;
+    transform: scale(0);
+    opacity: 0.7;
+}
+
+@keyframes camera-cycle-timer {
+    0% { transform: scale(0); }
+    50% { transform: scale(0.8); }
+    100% { transform: scale(1); }
+}

@@ -1,231 +1,91 @@
 # Uintah Basin Air Quality Website
 
-## Overview
+Real-time weather and air-quality visualisation for the Uintah Basin, built for residents,
+researchers, and policymakers.
 
-Real-time weather data visualization and air quality monitoring platform for the Uintah Basin region of Utah, driven by needs of residents, researchers, and policymakers. The project is still developmental, is not yet purged of AI slop, and should be treated with caution. **The use of AI like Claude and Codex CLI agents is/must always be documented transparently** via `git` authorships etc. We are all still learning, and we ask you do not judge too harshly our codebase whilst in flux. The team lead John Lawson oversees all website updates and [welcomes feedback](mailto:john.lawson@usu.edu). All products on BasinWx are currently experimental: do not use them for critical decision-making.
+> **Live site:** [basinwx.com](https://basinwx.com) (mirror: [basinwx.dev](https://www.basinwx.dev))
+>
+> The project is still developmental and not yet purged of AI slop — treat with caution. All
+> products are experimental; do not use them for critical decisions. Feedback to
+> [john.lawson@usu.edu](mailto:john.lawson@usu.edu).
 
-**Live Site:** [basinwx.com](https://basinwx.com)
-
-## Features (_gradual introduction in November 2025_)
-
-- **Real-time Observations**: live weather and air-quality data year-round
-- **Ozone Alert outlooks**: human-written forecasts of wintertime ozone.
-- **Clyfar**: Our in-house model, Welsh for "wise", provides guidance for outlooks
-- **AQ and Wx Forecasts**: Weather-model forecasts and air-quality predictions
-- **Road Conditions**: using UDot data
-- **AI-generated overviews**: we are testing plain-language risk communication
-- **Mobile Responsive**: Optimized for devices large and small.
+## What's here
+- **Real-time observations** — live weather + air-quality, year-round
+- **Ozone Alert outlooks** — human-written wintertime ozone forecasts
+- **Clyfar** — in-house ensemble model (Welsh "wise") providing outlook guidance
+- **Forecasts** — weather-model outputs and air-quality predictions
+- **Road conditions** — UDoT data, advisory only (go to [udottraffic.utah.gov](https://udottraffic.utah.gov) for real decisions)
+- **AI overviews** — experimental plain-language risk communication
+- **Mobile responsive**
 
 ## Human-to-human warnings
-- This codebase moves fast, and repo bloat is a problem. Ideally,
-  - We encourage low verbosity
-  - We prune outdated content and combine overlapping files
-  - We embrace transparent, ethical use of AI during development
-  - This means always co-authoring `git commit`s to own your code!
+This codebase moves fast. Repo bloat is a known problem.
+- Low verbosity preferred; prune outdated content; merge overlapping files
+- AI-assisted development is welcome and **must** be transparent — co-author every `git commit`
 
-## Technical Architecture
+## Architecture (one paragraph)
+CHPC compute (`brc-tools`, Python) fetches Synoptic + HRRR data, processes via polars/pandas,
+POSTs JSON to `/api/upload/:dataType` on **two Linode boxes** (`www.basinwx.com` ops and
+`www.basinwx.dev` rehearsal mirror — fan-out from CHPC, not pull). The Node/Express + Leaflet/Plotly
+frontend reads from `/api/static/*`. DNS for `.dev` is at Namecheap with a wildcard A record so
+feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins them up at
+`<name>.basinwx.dev`. Forecast schemas are pinned in `DATA_MANIFEST.json`.
 
-```
-CHPC (Data Processing) → API Upload → Akamai Server → Web Interface
-```
+## Documentation
+| Audience | Start here |
+|---|---|
+| **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
+| **Human devs** | `docs/README.md` → `docs/QUICK-START.md` |
+| **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
+| **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
+| **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
-- **Backend**: Node.js, Express.js
-- **Frontend**: Vanilla JavaScript, Leaflet, Plotly.js
-- **Data Pipeline**: Python (brc-tools), Synoptic Weather API
-- **Deployment**: Akamai CDN, SSL/TLS secured
+A current docs triage with consolidation TODOs is in `REVIEW-DOCS-apr27.md` (root).
 
-## Documentation --- still in flux and requiring review for AI slop
-
-- [API Key Setup](docs/API-KEY-SETUP.md)
-- [Data Schema](docs/DATA-SCHEMA.md)
-- [Frontend Architecture](docs/FRONTEND-ARCHITECTURE.md)
-- [Python Developer Guide](docs/PYTHON-DEVELOPER-GUIDE.md)
-- [Winter Ozone Science](docs/WINTER-OZONE-SCIENCE.md)
-
-## Research & Publications
-
-### Scientific Papers
-- *Techical report*: Clyfar (air-quality forecasting) design for 2025/2026
-- *In Preparation*: _Preprint articles for extreme nerds, and plain-language pieces for easier reading!_
-- *Publication goals in 2026**: Clyfar evaluation and comprehensive description
-
-### Blog Posts & long-form articles
-- TBC: straightforward summaries of our research
-- TBC: team activities, especially those of our students
-- TBC: showcase of posts re: complex elements of Ozone Alert outlooks not discussed in emails
-
-## Roadmap & To-Dos
-
-### Near-term (2025)
-- [ ] Forecast evaluation
-- [ ] LLM-powered data interpretation
-- [ ] Stability testing as `beta` becomes `ops`.
-- [ ] Consistently pleasing mobile interface
-
-### Mid-term (2026)
-- [ ] Review of feedback
-- [ ] Improvements to forecast models
-- [ ] Further road-weather, aviation, and recreation focus
-
-### Next year's winter (2026/2027)
-- [ ] Interactive Q&A chatbot for weather queries
-- [ ] Experimental data and models
-- [ ] Educational, interactive data visualizations
-- [ ] Regional expansion where warranted (e.g. Wyoming; Wasatch Front)
 ## Contributing
+Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
+and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
+audience-appropriate. PRs welcome. Use GitHub Issues for bugs.
 
-We welcome contributions. Guidelines:
+- **Style:** low verbosity; prune bloat
+- **Tests:** TDD where practical (`npm test`)
+- **AI authorship:** every commit involving AI assistance must list the agent as a co-author
+- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md`
 
-- **Code style standards**: Low verbosity, prune bloat, transparent AI use
-- **Testing requirements**: Test-driven workflow to catch regressions early (see #91)
-- **Pull-request process**: Co-author git commits, review before merge
-- **Bug reporting**: Use GitHub Issues with clear reproduction steps
-- **Working with AI agents**: Document all AI contributions via git authorship
-
-### Documentation Philosophy
-We maintain docs for three audiences:
-1. **Human developers** - Technical architecture, setup guides, contribution workflow
-2. **Typical users** - Plain-language explainers, feature guides, contact info  
-3. **AI agents** - Context files (CLAUDE.md), data schemas, system architecture
-
-Keep docs terse, current, and audience-appropriate. Prune outdated content aggressively.
-
-## Cool Commands (CHPC / Ops)
-
-A collection of useful commands for monitoring and debugging. **PRs welcome** to add your own!
-
-### Job Monitoring
+## Quick health checks
 ```bash
-# Watch all recent SLURM jobs (live updating)
-watch -n 5 "sacct --starttime=now-24hours --format=JobID,JobName,State,Start,Elapsed | sort -k4 -r"
-
-# Tail the newest Clyfar log automatically
-tail -f $(ls -t ~/logs/basinwx/clyfar_*.out | head -1)
-
-# Check resource usage after job completes
-sacct -j JOBID --format=JobID,JobName,MaxRSS,MaxVMSize,CPUTime,Elapsed,State,ExitCode
-```
-
-### Quick Health Checks
-```bash
-# Are observations flowing?
 curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
-
-# How many forecast files?
 curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
-
-# Akamai server logs
-ssh akamai "pm2 logs --lines 50"
+ssh deploy@www.basinwx.com "pm2 logs --lines 50"
+ssh deploy@www.basinwx.dev "pm2 logs --lines 50"
 ```
 
-### Automated Email Report
-The server can send a scheduled monitoring report email (pipeline status + camera scheduler stats).
+If the site appears down: check from a phone hotspot first. `.dev` TLDs trip some campus/ISP
+networks (HSTS-preload + SNI filtering); cellular working but wifi not = not the server. Full
+triage in `docs/DEPLOYMENT.md`.
 
-Set these environment variables on the server:
-```bash
-REPORT_EMAIL_ENABLED=true
-REPORT_EMAIL_TO=you@example.com
-REPORT_EMAIL_FROM=basinwx@example.com
-REPORT_EMAIL_SMTP_HOST=smtp.example.com
-REPORT_EMAIL_SMTP_PORT=587
-REPORT_EMAIL_SMTP_SECURE=false
-REPORT_EMAIL_SMTP_USER=your-smtp-user
-REPORT_EMAIL_SMTP_PASS=your-smtp-password
-REPORT_EMAIL_SCHEDULE_ENABLED=false
-REPORT_EMAIL_CRON="0 8 * * *"
-REPORT_EMAIL_TIMEZONE=America/Denver
-REPORT_EMAIL_NOTIFY_ON_STARTUP=true
-REPORT_EMAIL_NOTIFY_ON_SHUTDOWN=true
-REPORT_EMAIL_SUBJECT_PREFIX="BasinWx Status Report"
-```
-
-Notes:
-- `REPORT_EMAIL_CRON` uses standard 5-field cron format.
-- Lifecycle reports are controlled by `REPORT_EMAIL_NOTIFY_ON_STARTUP` and `REPORT_EMAIL_NOTIFY_ON_SHUTDOWN`.
-- Scheduled reports are optional and require `REPORT_EMAIL_SCHEDULE_ENABLED=true`.
-- Service is disabled unless `REPORT_EMAIL_ENABLED=true`.
-
-Warm-restore metric endpoint:
-```bash
-curl -s https://basinwx.com/api/road-weather/camera-scheduler-status | jq '.warmRestore'
-```
-Returns startup restore diagnostics including:
-- `restoredDetectionsCount`
-- `restoredSnapshotAgeMinutes`
-
-### Storage Triage
-```bash
-# Find GEFS cache hogs
-find ~ -name "*.grib2" -type f 2>/dev/null | head -20
-
-# Quick quota check
-df -h ~
-```
-
-See `STORAGE-TRIAGE-URGENT.md` for full storage management guide.
-
-### Git Hooks
-
-Git hooks are scripts that run automatically on certain git events. Useful for reminders and automation.
-
-**Post-merge hook** (reminds to npm install after pull):
-```bash
-cat > .git/hooks/post-merge << 'EOF'
-#!/bin/bash
-if git diff-tree -r --name-only --no-commit-id ORIG_HEAD HEAD | grep -q "package.json"; then
-    echo "⚠️  package.json changed - run: npm install"
-fi
-EOF
-chmod +x .git/hooks/post-merge
-```
-
-### Data Troubleshooting
-```bash
-# Clyfar's Herbie cache (not default ~/.cache/herbie)
-CACHE=~/gits/clyfar/data/herbie_cache
-
-# After crash: find/delete corrupted downloads (zero or tiny files)
-find $CACHE -size 0 -name "*.grib2" -delete
-find $CACHE -size -1k -name "*.grib2" -delete
-
-# Nuclear option: clear today's cache and re-run
-rm -rf $CACHE/gefs/$(date +%Y%m%d)/
-```
-
----
-
-## Data Sources
-
-- **Synoptic Data**: Real-time meteorological observations compiling multiple sources (e.g., EPA, DAQ, Union Pacific, etc)
-- **UBAIR Sensors**: Research-grade monitoring equipment maintained by Trevor O'Neil and Seth Lyman here at the Bingham Research Center
-- **NOAA weather models**: The Federal data are [freely available](https://www.nco.ncep.noaa.gov/pmb/products/gens/) and _crucial_ drivers of most weather and air-quality information shown on BasinWx.
-- **Utah Department of Transportion**: Road conditions are provided under fair-use limits for advisory use only: for critical decision, go to [UDoT](https://udottraffic.utah.gov) for vetted, expanded information.
-- (TBC: Ouray vertically-pointing radar)
-- (TBC: Satellite imagery)
+## Data sources
+- **Synoptic** — real-time meteorological observations (EPA, DAQ, Union Pacific, etc.)
+- **UBAIR sensors** — research-grade monitoring maintained by Trevor O'Neil and Seth Lyman at the Bingham Research Center
+- **NOAA models** — federal data freely available at the [NCEP product portal](https://www.nco.ncep.noaa.gov/pmb/products/gens/)
+- **UDoT** — road conditions under fair-use limits (advisory only)
 
 ## Team
-
-Find more information at [our team site](https://jrl.ac/team), but our primary developers are:
+[Team page](https://jrl.ac/team). Primary developers:
 - Dr. John R. Lawson (lead)
 - Michael Davies (undergraduate RA)
+- Quinten Baldwin, Braxton Wilcken-Pond (sports & viz contributors)
+- Luke Neilson (high-school RA, onboarding)
 - Elspeth Montague (former high-school RA)
-- Luke Neilson (currently onboarding; high-school RA)
-- TBC 1 - high-school RA
-- TBC 2 - high-school RA
-- TBC 3 - high-school RA
 
 ## Acknowledgments
-
-- Research funding for air-quality projects provided by **Uintah County Special Service District 1** and the **Utah Legislature**
-- University of Utah CHPC for computational resources
-- Synoptic Weather for kindly permitting access to archived and live data
-- Brian Blaylock, Alex Jacques, John Horel, and many more academics who assisted with development
-- You! The user and Uintah Basin community! Thanks for coming!
+- Funding: **Uintah County Special Service District 1** and the **Utah Legislature**
+- University of Utah CHPC (compute)
+- Synoptic Weather (data access)
+- Brian Blaylock, Alex Jacques, John Horel, and many other academic collaborators
 
 ## Contact
-
-Other than JRL's [email address](mailto:john.lawson@usu.edu), further information or feedback can be found here:
-- Team "Spotlight" posts [for plain-language team blog posts](https://jrl.ac/blog).
-- Ozone Alert program for receiving email outlooks when there is a elevated risk of **high wintertime ozone** in the Uinta Basin.
-- GitHub Issues: [Report bugs or request features (more for the tech-minded)](https://github.com/bingham-research-center/ubair-website/issues)
----
+- [john.lawson@usu.edu](mailto:john.lawson@usu.edu) — JRL direct
+- [Team blog](https://jrl.ac/blog) — plain-language posts
+- [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues) — bugs and feature requests
+- Ozone Alert subscription — email outlooks during elevated risk periods

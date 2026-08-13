@@ -1,5 +1,30 @@
 # Data Manifest Change Log
 
+## Version 1.2.0 (2026-08-13)
+
+### Type: Minor - Additive
+
+**Summary:** Documented the `llm_outlooks` dataType, which the upload route has accepted
+since launch and which is live on basinwx.com (462 PDFs), but which the manifest never
+declared.
+
+### Changes Made
+
+- **Added:** `dataTypes.llm_outlooks` — endpoint `/api/upload/llm_outlooks`, format `pdf`,
+  filename pattern `LLM-OUTLOOK-YYYYMMDD_HHMMZ.pdf`, ad-hoc schedule.
+- **Effect:** `scripts/chpc_uploader.py` can now push this dataType (it validates
+  `--data-type` against the manifest), and `server/monitoring/dataMonitor.js` now reports
+  its freshness.
+
+**Backwards compatible.** No existing dataType changed; no producer needs updating.
+
+### Not logged at the time
+
+`1.1.0` added `dataTypes["road-forecast"]` (PR #190, 2026-04-28) without a changelog entry.
+Recorded here for the audit trail.
+
+---
+
 ## Version 1.0.1 (2025-11-04)
 
 ### Type: Patch - Production Alignment

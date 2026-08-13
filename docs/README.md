@@ -4,7 +4,10 @@ This folder contains operational documentation for the BasinWx project.
 
 ## Current Documents
 
-- **SOP-outlook-upload.md** - Standard operating procedure for uploading forecast outlooks
+- **AGENT-INDEX.md** — map of everything in this folder; start there
+- **SOP-outlook-upload.md** — standard operating procedure for uploading forecast outlooks
+
+Superseded docs live in `archive/` (pending wiki migration — see `archive/README.md`).
 
 ## Future Plans
 

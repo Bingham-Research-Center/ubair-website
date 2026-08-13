@@ -213,7 +213,7 @@ python chpc_uploader.py --health-check
 2. **Set environment variables:**
    ```bash
    export DATA_UPLOAD_API_KEY="your-key-here"
-   export BASINWX_API_URL="https://basinwx.com"
+   export BASINWX_API_URLS="https://basinwx.com"
    ```
 
 3. **Test connection:**
@@ -387,7 +387,7 @@ npm run test-api
 python chpc_uploader.py --validate-only --file test.json --data-type observations
 
 # Test upload to staging
-BASINWX_API_URL="https://staging.basinwx.com" python chpc_uploader.py --data-type observations --file test.json
+BASINWX_API_URLS="https://staging.basinwx.com" python chpc_uploader.py --data-type observations --file test.json
 
 # Health check
 python chpc_uploader.py --health-check
@@ -413,7 +413,7 @@ python chpc_uploader.py --health-check
 ### CHPC
 ```bash
 DATA_UPLOAD_API_KEY     # API key for authentication
-BASINWX_API_URL         # Base URL (default: https://basinwx.com)
+BASINWX_API_URLS         # Base URL (default: https://basinwx.com)
 SYNOPTIC_API_TOKEN      # Synoptic Weather API token
 ```
 

@@ -22,6 +22,12 @@ const PAGE_DISCLAIMERS = {
         Always check current conditions and weather warnings before water activities.
         ©2025, Utah State University.`,
 
+    '/fire': `DISCLAIMER: Fire-weather products are experimental research outputs and informational only.
+        They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
+        Satellite hotspot detections (NASA FIRMS) can lag by ~3 hours and may include false positives.
+        For active wildfires and operational guidance, consult Utah Fire Info and the National Weather Service.
+        ©2026, Utah State University.`,
+
     '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
         Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
 
@@ -31,6 +37,8 @@ const PAGE_DISCLAIMERS = {
 
     '/': `DISCLAIMER: This information is provided by Utah State University's Bingham Research Center.
         For official air quality data, please visit the Utah DEQ website. ©2025, Utah State University.`,
+
+    '/live_aq': 'Real-time data are preliminary and subject to quality control. ©2025, Utah State University.',
 
 };
 
@@ -50,6 +58,12 @@ async function loadSidebar() {
         const content = await response.text();
         sidebarContainer.innerHTML = content;
 
+        const host = window.location.host.replace(/^www\./, '') || 'basinwx.com';
+        const brandEl = sidebarContainer.querySelector('.sidebar-logo-title');
+        if (brandEl) brandEl.textContent = host;
+        const brandLink = sidebarContainer.querySelector('.sidebar-logo a');
+        if (brandLink) brandLink.title = `${host} - Home`;
+
         const currentPath = window.location.pathname;
         const currentPageLink = document.querySelector(`.sidebar a[href="${currentPath}"]`);
         if (currentPageLink) {
@@ -64,6 +78,12 @@ async function loadSidebar() {
         const disclaimer = document.querySelector('.sidebar-disclaimer');
         if (disclaimer && pageDisclaimer) {
             disclaimer.querySelector('p').textContent = pageDisclaimer;
+        }
+
+        // Update the copyright year to current year
+        if (disclaimer) {
+            const currentYear = new Date().getFullYear();
+            disclaimer.querySelector('p').textContent = disclaimer.querySelector('p').textContent.replace(/©\d{4}/g, '©' + currentYear);
         }
 
         // Load mobile menu script after sidebar is loaded

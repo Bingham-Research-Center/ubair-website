@@ -1,78 +1,94 @@
-# Uintah Basin Air Quality Website - Claude Context
+# Uintah Basin Air Quality Website — Claude Context
 
-## Project Overview
-Weather data visualization website showing live air quality observations and forecasts for Uintah Basin region.
+Live air-quality observations and forecasts for the Uintah Basin. Node/Express +
+Leaflet/Plotly, vanilla JS frontend.
 
-## Data Pipeline
-**CHPC (compute server)** → **POST /api/upload/:dataType** → **Akamai (web server)**
+## Topology
+| Role | Branch | Domain | pm2 app | Repo path | User |
+|---|---|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* |
 
-### Data Flow
-1. **CHPC**: Python script using `brc-tools` pulls from Synoptic Weather API
-2. **Processing**: Data goes through polars/pandas → JSON format
-3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key
-4. **Display**: Leaflet maps on Node.js website at basinwx.com
+Production row verified on linode-prod 2026-08-13. **The dev box has not been inspected** —
+verify before trusting it. `docs/DEPLOYMENT.md` §1b describes a *target* layout
+(`/srv/ubair-website` as `deploy`, pm2 `basinwx-ops` from `ecosystem.config.cjs`) that
+production has **not** been migrated to; §1a records what is actually deployed. Don't quote the
+target as fact.
 
-### Data Types
-- **Live observations**: `map_obs_YYYYMMDD_HHMMZ.json` (geographic weather data)
-- **Station metadata**: `map_obs_meta_YYYYMMDD_HHMMZ.json` (station info)
-- **Time series**: Ozone concentration data
-- **Markdown outlooks**: Weather forecast text
-- **Images**: PNG files for visualization
+`.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
+merging into `dev` is a real-world dry-run before promoting to `ops`.
 
-## API Endpoints
-- **Upload**: `POST /api/upload/:dataType` (CHPC only, API key required)
-- **Fetch data**: `GET /api/static/{filename}`
-- **File listing**: `GET /api/filelist.json`
-- **Live observations**: `GET /api/live-observations`
+**The app serves `public/` off the working tree**, so `git checkout` changes what live traffic
+sees immediately, before any pm2 restart. Never check out a branch in a live repo to inspect or
+stage it — use `git worktree add /tmp/staging <branch>`.
 
-## Security
-- API key authentication via `x-api-key` header
-- CHPC hostname validation (chpc.utah.edu)
-- File type validation (JSON/MD/TXT only)
-- 10MB file size limit
+Feature-branch previews live at `<name>.basinwx.dev` (Namecheap wildcard A record),
+managed via `scripts/manage-previews.sh` + `preview-apps.json`. Background jobs are
+gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas.
 
-## Tech Stack
-- **Backend**: Node.js, Express, Multer
-- **Frontend**: Leaflet, Plotly.js, vanilla JavaScript
-- **Data**: JSON files, Markdown content
+A third dev laptop/VM may also run this repo: **not operational, never the source of truth.**
 
-## Known Issues & Redundancy
-1. **Multiple CSS files** with similar styles (13 files)
-2. **Console.log statements** throughout codebase
-3. **TODO comments** for unfinished features
-4. **Unused code** in many files
-5. **Images folder** has many unused files
+Bring-up runbook, nginx template, cert renewal, and chronic gotchas (Linode firewall
+default-Drop, certbot `--manual` trap, `.dev` TLD SNI filtering, pm2 systemd unit) are
+in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
+
+## Data pipeline
+CHPC `brc-tools` (Synoptic + HRRR/herbie via polars/pandas) → POST `/api/upload/:dataType`
+with `x-api-key` + CHPC-hostname validation → fanned out to every URL in
+`BASINWX_API_URLS` (first = primary, rest = best-effort mirrors) → served at
+`/api/static/*` and `/api/filelist/:dataType`.
+
+Accepted dataTypes (`server/routes/dataUpload.js`):
+`observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast`.
+
+Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
+the contract-holder for new dataTypes — server doesn't enforce schema).
+`GET /api/health` reports `version` + `manifestVersion` so producers can
+compatibility-check before uploading.
+
+On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
+notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
+public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
+are independent. If uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
+
+## Protected branches
+**Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
+direct push seems warranted, confirm with the user — then ask a **second time** before
+proceeding. Applies to merges, reverts, version bumps, every commit.
+
+GitHub rulesets on all three branches require one approving review; self-approval is
+impossible, so every merge is `gh pr merge <N> --admin` — a **human** action (Claude's
+permission layer blocks `--admin`). Stage the PRs, then hand JRL the merge one-liners.
+
+## Versioning & release train
+`dev` always carries the next version as `X.Y.Z-dev`; `ops` ships clean `X.Y.Z` with a
+lightweight `vX.Y.Z` tag on its tip, so the two boxes never report the same version.
+Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `ops`, merge
+commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.Y.Z release`
+→ reopen `dev` at the next `-dev`. Rationale + ceremony: `docs/DEPLOYMENT.md` §7a.
+
+## Secrets
+Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
+`SYNOPTIC_API_TOKEN`. Never commit, never echo values to logs or chat. Share via
+password manager.
+
+## Doc naming (LLM-produced markdown)
+- ALL-CAPS, **3–4 hyphen-separated words** (e.g. `DEPLOYMENT-RUNBOOK.md`,
+  `WEBSITE-BRCTOOLS-HANDOFF.md`). Avoid sentences-as-filenames.
+- Temporary/handoff docs: append `-mmmDD` before the extension (e.g.
+  `WEBSITE-BRCTOOLS-HANDOFF-apr27.md`) so future agents can spot expiry.
+- Markdown only. Python and other code files follow the language's convention
+  (lowercase, snake_case where applicable).
+
+## Reference docs (read on demand, not by default)
+- `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
+- `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
+- `docs/IMPROVEMENTS.md` — outstanding work (flagged stale by JRL; renew before reuse)
+- `DATA_MANIFEST.json` — forecast schemas
+- `git log --oneline -30` — recent merges; do not duplicate here
 
 ## Testing
-- **Development**: `npm run dev` (nodemon)
-- **API testing**: `npm run test-api` (automated script)
-- **Manual API test**: `POST localhost:3000/api/upload/observations`
-- **Example data**: Files in `/public/api/static/`
-
-## Features
-- **Responsive design**: Mobile/tablet friendly with percentage-based layouts
-- **90s Mode toggle**: Iridescent background with sparkle animations
-- **Secure uploads**: API key + hostname validation
-- **Real-time data**: Automatic refresh every 10 minutes
-
-## Recent Updates
-- Removed all synthetic/demo data generation
-- Added comprehensive mobile responsiveness
-- Implemented 90s mode toggle with holographic background
-- Created data schema documentation (DATA_SCHEMA.md)
-- Added API testing script and SSL setup guide
-- Moved unused images to `/public/images/unused/`
-
-## Secret Management
-Environment variables are used for all API keys and sensitive configuration:
-- **Copy setup**: `cp .env.example .env` and fill in your values
-- **Required keys**: DATA_UPLOAD_API_KEY, UDOT_API_KEY, SYNOPTIC_API_TOKEN
-- **Never commit**: .env files are gitignored automatically
-- **Team sharing**: Use secure password manager (1Password, Bitwarden) for sharing secrets
-- **Production**: Set environment variables directly on server/cloud platform
-
-## Team Notes
-- 4-person collaborative team
-- CSS-HTML mapping: fire.css ↔ fire.html pattern
-- Clean codebase with minimal redundancy
-- 20-item improvement list available (IMPROVEMENTS.md)
+- `npm run dev` — nodemon server
+- `npm test` — Jest (known baseline: 4 failures in `cameraAnalysisScheduler.test.js`;
+  anything else failing is new breakage)
+- `npm run test-api` — loopback POST against the upload route

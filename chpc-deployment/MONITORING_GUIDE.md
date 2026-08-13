@@ -172,7 +172,7 @@ Open: https://basinwx.com/live_aq
 
 **Check available files:**
 ```bash
-curl -s https://basinwx.com/api/filelist.json
+curl -s https://basinwx.com/api/filelist/observations
 ```
 
 **Expected:** Array of 20-50 filenames
