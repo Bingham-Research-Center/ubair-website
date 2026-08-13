@@ -4,6 +4,51 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 
 ## 1. Topology
 
+### 1a. As deployed today (verified 2026-08-13)
+
+| Role | Branch | Domain | pm2 app name | Port | Repo path | Runs as |
+|---|---|---|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | **`ubair-site`** | `3000` | **`/var/www/ubair-website`** | **`root`** |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* | *unverified* |
+
+Production values confirmed by direct inspection of linode-prod on 2026-08-13 (`pm2 describe`,
+`git rev-parse`, matching on-disk data-file counts). **The dev box was not inspected** — do not
+assume it matches either row until someone verifies it and updates this table. See
+`WEBSITE-DEVBOX-HANDOFF-aug13.md`.
+
+Divergences from the target layout (§1b), on production:
+
+- pm2 app is a **hand-started process named `ubair-site`**, not `basinwx-ops`.
+  `ecosystem.config.cjs` is **not in use** on that box. Renaming a live pm2 app is a deliberate
+  migration, not a side effect of a deploy — see §1c.
+- Repo lives at `/var/www/ubair-website`, owned and run by `root`, not `deploy` under `/srv`.
+
+nginx **is** configured and matches §4's intent, just under different vhost filenames:
+
+| Vhost (`sites-enabled/`) | `server_name` | Notes |
+|---|---|---|
+| `ubair` | `www.basinwx.com basinwx.com` + `_` (`default_server`) | certbot cert at `/etc/letsencrypt/live/basinwx.com/` |
+| `172-234-249-49.ip.linodeusercontent.com` | the Linode rDNS host | separate certbot cert |
+
+Both proxy to `upstream ubair_app { server 127.0.0.1:3000; }`. Verified end to end:
+`https://www.basinwx.com/api/health` → 200.
+
+**CHPC uploads arrive over SSH, not from the public internet.** Upload log lines read
+`Access attempt from IP: ::ffff:127.0.0.1, Hostname: notchpeak1.int.chpc.utah.edu` — the source
+is loopback, so the producer reaches port 3000 through an SSH session/tunnel from CHPC rather
+than POSTing to `https://www.basinwx.com`. Consequence: **`/api/health` can be perfectly green
+from the outside while ingest is dead**, because the two paths are unrelated. When uploads stop,
+check the SSH path before touching nginx or the app.
+
+> **Serving caveat — applies to both boxes.** The app serves `public/` straight off the working
+> tree, so `git checkout` changes what live traffic sees **immediately**, before any pm2
+> restart. Never check out another branch in a live repo to inspect or stage it. Use
+> `git worktree add /tmp/staging <branch>` instead, which leaves the deployed tree untouched.
+
+### 1b. Target topology
+
+The layout the rest of this runbook assumes. Production has **not** been migrated to it.
+
 | Role | Branch | Domain | pm2 app name | Typical port | Repo path |
 |---|---|---|---|---|---|
 | Production | `ops` | `www.basinwx.com` | `basinwx-ops` | `3000` | `/srv/ubair-website` |
@@ -11,8 +56,17 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 
 - Runtime: Node.js under pm2, started as the `deploy` user.
 - TLS: nginx reverse proxy, Let's Encrypt certs under `/etc/letsencrypt/live/<domain>/`.
-- pm2 app name is **derived from the checked-out branch** (`git rev-parse --abbrev-ref HEAD`). See `ecosystem.config.cjs`.
+- pm2 app name is **derived from the checked-out branch** (`git rev-parse --abbrev-ref HEAD`), overridable via `PM2_APP_NAME`. See `ecosystem.config.cjs`.
 - `www.basinwx.dev` is a **rehearsal mirror** of production: it receives the same CHPC data via fan-out upload, but runs whichever branch is checked out. Merging a PR into `dev` is the dry-run before promoting to `ops`.
+
+### 1c. Migrating production to the target layout
+
+Not part of a routine deploy, and never while pipeline testing is in flight. The `PM2_APP_NAME`
+override exists so `ecosystem.config.cjs` can be adopted *before* committing to a rename —
+`PM2_APP_NAME=ubair-site pm2 start ecosystem.config.cjs` reproduces today's app identity from
+the config file. Renaming afterwards is `pm2 delete` + `pm2 start` + `pm2 save`, which means
+brief downtime and a re-run of `pm2 startup`; verify the app survives a reboot before walking
+away.
 
 ## 2. Deploy vs sudo — user boundary
 
@@ -25,6 +79,9 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 | read `.env` | `chmod`/`chown` under `/etc` |
 
 Keep both boxes consistent with this split. `deploy` must own `/srv/ubair-website` recursively.
+
+**Production does not currently follow this split** — it runs as `root` out of
+`/var/www/ubair-website` (§1a). This section describes the target, not today.
 
 ## 3. Fresh-box bring-up
 
@@ -311,3 +368,44 @@ Add an entry to `preview-apps.json` (choose a port not used by any other process
 - **PREVIEW_MODE must be in the branch code, not just the `.env`.** The gate is a guard inside `server/server.js` that checks `process.env.PREVIEW_MODE`. Setting `PREVIEW_MODE=true` in a preview's `.env` only works if the feature branch already contains the gate (merged from `dev`). Until the branch syncs, the preview will still run `backgroundRefresh` + `reportEmailService` and double-poll UDoT / duplicate report emails.
   - **Workaround when the branch is not yet synced with dev:** before running `up`, or immediately after, edit `/srv/ubair-website-preview-<user>/.env` and blank the relevant keys — e.g. `UDOT_API_KEY=` and `REPORT_EMAIL_ENABLED=false` — then `scripts/manage-previews.sh update <user>` (or `pm2 restart <pm2_name>`) to pick them up. Restore them after the branch has synced and `PREVIEW_MODE` is doing its job.
 - Ports are hardcoded in `preview-apps.json`; update the file and the nginx vhost if you need to change a port.
+
+## 10. Gotcha — SSH pubkey auth rejects `ssh-rsa` (observed 2026-08-13)
+
+`/var/log/auth.log` on linode-prod shows, on an hourly `:24` schedule:
+
+```
+sshd[...]: userauth_pubkey: signature algorithm ssh-rsa not in PubkeyAcceptedAlgorithms [preauth]
+```
+
+OpenSSH 8.8+ disables the SHA-1 `ssh-rsa` signature algorithm by default. Any producer or cron
+still offering an RSA key with a SHA-1 signature will fail authentication **silently from the
+client's perspective** — it just looks like the job stopped working.
+
+This matters here because CHPC delivers uploads over SSH (§1a). Check this before blaming the
+app, nginx, or the API key.
+
+Fixes, in order of preference:
+
+1. **Re-key the client to Ed25519** — `ssh-keygen -t ed25519` on the producer, install the
+   public key in the target's `authorized_keys`. Best long-term answer.
+2. **Have the client offer SHA-2 with the existing RSA key** — modern clients negotiate
+   `rsa-sha2-256`/`rsa-sha2-512` automatically; an old client may need upgrading.
+3. **Re-enable SHA-1 on the server (last resort, weakens auth):** add to `/etc/ssh/sshd_config`
+   and reload sshd:
+   ```
+   PubkeyAcceptedAlgorithms +ssh-rsa
+   HostkeyAlgorithms +ssh-rsa
+   ```
+
+Confirm which key the failing job uses before changing anything — `sshd -T | grep -i pubkey`
+shows the server's current accepted list.
+
+## 11. Gotcha — the box is exposed to SSH brute force
+
+`/var/log/auth.log` shows continuous credential stuffing against `root` and common usernames
+from many IPs (dozens of failures per hour). All observed attempts failed, but password auth on
+`root` over the public internet is a standing risk on a box that also holds the pipeline API key.
+
+Worth doing, independent of any deploy: set `PermitRootLogin prohibit-password` and
+`PasswordAuthentication no` in `/etc/ssh/sshd_config` (confirm key-based access works first),
+and consider fail2ban plus a Linode firewall rule restricting port 22 to known ranges.
