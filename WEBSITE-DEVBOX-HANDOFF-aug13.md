@@ -3,7 +3,15 @@
 # From: linode-prod (www.basinwx.com), branch `ops` @ v1.5.0
 # To:   linode-dev (www.basinwx.dev)
 # Compiled: 2026-08-13
-# Prereq: apply only after the v1.5.0 release train (#193, #195, #198, #196, #197) has merged.
+# Prereq: SATISFIED — the v1.5.0 release train (#193, #195, #198, #200, #196, #201, #197)
+#         merged 2026-08-13 ~20:2xZ. This handoff is ready to action now.
+#
+# State at time of writing (all verified, not assumed):
+#   dev  = 1.5.1-dev   c9cf2d0
+#   ops  = 1.5.0       40d6241   tag v1.5.0
+#   main = 1.5.0       a9b3eb6
+#   linode-prod deployed and restarted; /api/health reports 1.5.0 / manifest 1.2.0;
+#   /api/monitoring/{status,freshness,uploads,alerts} all 200; all pages 200.
 
 Compiled **from prod**. The dev box was never inspected — every path, port, and app name below
 is a question, not an instruction. Verify, don't assume.
@@ -36,10 +44,10 @@ git merge --ff-only origin/dev
 `dev` tip carries: pipeline unblockers (#193), v1.5.0 bump (#195), housekeeping (#198 — 25 docs
 archived, dead files pruned), and topology corrections.
 
-**Expected version: `1.5.1-dev`**, once the release train completes (#197 reopens `dev` at the
-next `-dev` after `ops` is tagged `v1.5.0`). If you catch the box mid-train it may read `1.5.0`.
-Per `CLAUDE.md`, `dev` always carries `X.Y.Z-dev` and `ops` ships clean `X.Y.Z`, so the two
-boxes never report the same version — that is how you tell them apart at a glance.
+**Expected version: `1.5.1-dev`.** `ops` is pinned at the clean `1.5.0`. Per `CLAUDE.md`, `dev`
+always carries `X.Y.Z-dev` and `ops` ships clean `X.Y.Z`, so the two boxes never report the
+same version — that is how you tell them apart at a glance. If dev reports `1.5.0`, the
+`git pull` didn't take.
 
 **No `npm ci`.** No dependency changed between the old and new state; `package-lock.json` is
 untracked in this repo.
@@ -120,6 +128,22 @@ Also dark on both boxes, awaiting producers — website side is already complete
 Separately: `forecasts` / `images` / `llm_outlooks` all stop at exactly `2026-03-30 0600Z` on
 prod. That is the **expected** winter-ozone season wind-down, confirmed by JRL 2026-08-13 — not
 a bug, and not something to chase.
+
+## 7a. Two prod findings to check for on dev
+
+Both were found on linode-prod on 2026-08-13; neither has been checked on dev.
+
+**SSH pubkey auth rejects `ssh-rsa`.** `/var/log/auth.log` on prod shows, hourly at `:24`:
+`userauth_pubkey: signature algorithm ssh-rsa not in PubkeyAcceptedAlgorithms [preauth]`.
+OpenSSH 8.8+ disables SHA-1 RSA by default, so any producer or cron still offering such a key
+fails auth — and from the client's side it just looks like the job silently stopped. This
+matters because CHPC delivers uploads over SSH (§0). Fix by re-keying the client to Ed25519;
+see `docs/DEPLOYMENT.md` §10 for the alternatives.
+
+**SSH brute force.** Prod takes continuous credential stuffing against `root` from many IPs.
+All observed attempts failed, but password auth on `root` over the open internet is a standing
+risk on a box that holds the pipeline API key. `docs/DEPLOYMENT.md` §11 has the hardening steps.
+Check whether dev is exposed the same way.
 
 ## 8. Report back
 
