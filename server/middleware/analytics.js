@@ -80,13 +80,16 @@ function getSessionInfo(visitorID, pagePath) {
     return { page_number: session.pageCount, entry_page: session.entryPage };
 }
 
-// Evict stale sessions every 10 minutes
-setInterval(() => {
+// Evict stale sessions every 10 minutes. unref() so this timer alone never keeps the event
+// loop alive — otherwise merely importing this module stops a script (or a test runner) from
+// exiting on its own.
+const sessionSweep = setInterval(() => {
     const cutoff = Date.now() - SESSION_TTL_MS;
     for (const [id, s] of activeSessions) {
         if (s.lastSeen < cutoff) activeSessions.delete(id);
     }
 }, 10 * 60 * 1000);
+sessionSweep.unref();
 
 // ── Referrer parsing ───────────────────────────────────────────────────
 
@@ -214,20 +217,80 @@ function emptySummary(date) {
     };
 }
 
+// The daily summary is a read-modify-write against a single file, driven concurrently by
+// every request. Two hazards, both of which silently destroyed a day's counters in
+// production:
+//   1. fs.writeFile is not atomic, so a concurrent reader can observe a truncated file,
+//      JSON.parse throws, and the old `catch {}` returned a *fresh* summary — zeroing the day.
+//   2. Even with valid reads, interleaved read-modify-write loses whichever update lands first.
+// Serialising the whole cycle through one promise chain fixes both. Writes also go via
+// temp-file + rename so a reader never sees a partial file.
+let summaryQueue = Promise.resolve();
+
+function withSummaryLock(fn) {
+    const run = summaryQueue.then(fn, fn);
+    // Keep the chain alive regardless of outcome; callers handle their own errors.
+    summaryQueue = run.then(() => undefined, () => undefined);
+    return run;
+}
+
+/**
+ * Reconcile a summary read off disk with the shape the current build expects.
+ *
+ * A summary written by an older build is missing whatever counters that build didn't have
+ * (botPaths, referrerSources, hourlyDistribution, ...), and every call site does
+ * `summary.<counter>[key]++` — so a missing key is a TypeError, not a zero. That crashed
+ * production on 2026-08-13. A key that is present but null or wrong-typed is equally fatal,
+ * so anything whose shape doesn't match the template falls back to the template's container.
+ *
+ * Exported for testing; not part of the module's runtime API.
+ */
+export function normalizeDailySummary(existing, today) {
+    const base = emptySummary(today);
+    if (!existing || typeof existing !== 'object' || Array.isArray(existing)) return base;
+
+    const merged = { ...base, ...existing };
+    for (const [key, template] of Object.entries(base)) {
+        const value = merged[key];
+        if (Array.isArray(template)) {
+            // NB: typeof [] === 'object', so arrays must be handled before the plain-object
+            // branch — otherwise they get rewritten into {} and every
+            // `new Set(summary.uniqueVisitors)` throws "object is not iterable".
+            if (!Array.isArray(value)) merged[key] = [...template];
+        } else if (template !== null && typeof template === 'object') {
+            if (value === null || typeof value !== 'object' || Array.isArray(value)) {
+                merged[key] = { ...template };
+            }
+        } else if (typeof template === 'number' && typeof value !== 'number') {
+            merged[key] = template;
+        }
+    }
+    merged.date = today;
+    return merged;
+}
+
 async function loadDailySummary(today) {
     try {
         const data = await fs.readFile(DAILY_SUMMARY_FILE, 'utf-8');
         const existing = JSON.parse(data);
         if (existing.date === today) {
-            existing.uniqueVisitors = existing.uniqueVisitors || [];
-            existing._sessionPageCounts = existing._sessionPageCounts || [];
-            return existing;
+            return normalizeDailySummary(existing, today);
         }
-    } catch { /* file missing or corrupt — start fresh */ }
+    } catch (err) {
+        // ENOENT on the first request of the day is expected. Anything else means we are
+        // about to discard real counters, so make that visible rather than silent.
+        if (err.code !== 'ENOENT') {
+            console.error('[Analytics] daily summary unreadable, starting fresh:', err.message);
+        }
+    }
     return emptySummary(today);
 }
 
-async function updateDailySummary(entry) {
+function updateDailySummary(entry) {
+    return withSummaryLock(() => updateDailySummaryLocked(entry));
+}
+
+async function updateDailySummaryLocked(entry) {
     const today = new Date().toISOString().split('T')[0];
     const summary = await loadDailySummary(today);
 
@@ -278,32 +341,73 @@ async function updateDailySummary(entry) {
 
     const toSave = { ...summary, uniqueVisitorCount: summary.uniqueVisitors.length };
 
+    // Temp-file + rename: rename is atomic within a filesystem, so a concurrent reader
+    // sees either the old file or the new one, never a half-written one.
+    const tmp = `${DAILY_SUMMARY_FILE}.tmp`;
     try {
-        await fs.writeFile(DAILY_SUMMARY_FILE, JSON.stringify(toSave, null, 2));
+        await fs.writeFile(tmp, JSON.stringify(toSave, null, 2));
+        await fs.rename(tmp, DAILY_SUMMARY_FILE);
     } catch (err) {
-        console.error('[Analytics] Failed to update summary:', err);
+        console.error('[Analytics] Failed to update summary:', err.message);
+        await fs.unlink(tmp).catch(() => {});
     }
 }
 
 // ── Engagement beacon endpoint ─────────────────────────────────────────
 
+// This endpoint is unauthenticated by necessity — it is called by every visitor's browser —
+// and it appends to disk, so it is the one piece of analytics an outsider can drive directly.
+// Everything below exists to bound what a hostile caller can write: per-IP rate limit,
+// length caps on every field, and a whitelist on the shape of `path`.
+const BEACON_RATE = { windowMs: 60_000, maxPerWindow: 30 };
+const beaconHits = new Map(); // ip -> { count, windowStart }
+
+function beaconRateLimited(ip) {
+    const now = Date.now();
+    const rec = beaconHits.get(ip);
+    if (!rec || now - rec.windowStart > BEACON_RATE.windowMs) {
+        beaconHits.set(ip, { count: 1, windowStart: now });
+        // Opportunistic sweep so the map can't grow without bound.
+        if (beaconHits.size > 5000) {
+            for (const [k, v] of beaconHits) {
+                if (now - v.windowStart > BEACON_RATE.windowMs) beaconHits.delete(k);
+            }
+        }
+        return false;
+    }
+    rec.count++;
+    return rec.count > BEACON_RATE.maxPerWindow;
+}
+
 export async function handleEngagementBeacon(req, res) {
     try {
+        const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+        if (beaconRateLimited(ip)) return res.status(429).end();
+
         const { path: pagePath, duration_s, visitor_id } = req.body || {};
-        if (!pagePath || !duration_s) {
+        if (typeof pagePath !== 'string' || !pagePath || duration_s == null) {
             return res.status(400).json({ error: 'Missing path or duration_s' });
         }
+        // Same-origin page paths only — no absolute URLs, no traversal, no log injection.
+        if (!/^\/[\w\-./]{0,200}$/.test(pagePath) || pagePath.includes('..')) {
+            return res.status(400).json({ error: 'Invalid path' });
+        }
+        const duration = Number(duration_s);
+        if (!Number.isFinite(duration) || duration < 0) {
+            return res.status(400).json({ error: 'Invalid duration_s' });
+        }
+
         const entry = {
             timestamp: new Date().toISOString(),
             type: 'engagement',
-            visitor_id: visitor_id || 'unknown',
+            visitor_id: String(visitor_id || 'unknown').slice(0, 64),
             path: pagePath,
-            duration_s: Math.min(Number(duration_s) || 0, 3600),
+            duration_s: Math.min(duration, 3600),
         };
         await writeLog(entry);
         res.status(204).end();
     } catch (err) {
-        console.error('[Analytics] Beacon error:', err);
+        console.error('[Analytics] Beacon error:', err.message);
         res.status(500).end();
     }
 }
@@ -366,8 +470,13 @@ export default function analyticsMiddleware(req, res, next) {
             entry.session = getSessionInfo(visitorID, req.path);
         }
 
-        writeLog(entry);
-        updateDailySummary(entry);
+        // Fire-and-forget, but never unhandled: an async throw here becomes an
+        // unhandledRejection, which terminates the process under Node 15+. Analytics
+        // must never be able to take the site down.
+        writeLog(entry).catch(err =>
+            console.error('[Analytics] writeLog failed:', err.message));
+        updateDailySummary(entry).catch(err =>
+            console.error('[Analytics] updateDailySummary failed:', err.message));
     });
 
     next();

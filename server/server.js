@@ -58,7 +58,10 @@ app.use('/api/static', express.static(path.join(__dirname, '../public/api/static
 // Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
 app.get('/api/analytics/pipeline', getPipelineStats);
-app.post('/api/analytics/engagement', express.json(), handleEngagementBeacon);
+// Unauthenticated by necessity (called from every visitor's browser). Cap the body hard —
+// the handler rate-limits per IP and validates every field, but there is no reason to parse
+// more than a few hundred bytes here.
+app.post('/api/analytics/engagement', express.json({ limit: '2kb' }), handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {

@@ -16,7 +16,10 @@ const LOG_DIR = path.join(__dirname, '../../logs/analytics');
 const PIPELINE_LOG = path.join(LOG_DIR, 'pipeline.log');
 const PIPELINE_SUMMARY = path.join(LOG_DIR, 'pipeline_summary.json');
 
-await fs.mkdir(LOG_DIR, { recursive: true });
+// Top-level await: an unguarded throw here fails the module import and takes the whole
+// server down at startup. Log-directory creation is not worth that.
+await fs.mkdir(LOG_DIR, { recursive: true }).catch(err =>
+    console.error('[Pipeline] Could not create log dir:', err.message));
 
 async function rotateIfNeeded(filepath) {
     try {
@@ -30,12 +33,46 @@ async function rotateIfNeeded(filepath) {
     } catch { /* file doesn't exist yet */ }
 }
 
+// Same read-modify-write hazard as page analytics: concurrent uploads can interleave, and a
+// non-atomic write can be read half-finished, which silently resets the day's counters.
+// Serialise the cycle and write via temp-file + rename.
+let summaryQueue = Promise.resolve();
+
+function withSummaryLock(fn) {
+    const run = summaryQueue.then(fn, fn);
+    summaryQueue = run.then(() => undefined, () => undefined);
+    return run;
+}
+
 async function loadSummary(today) {
     try {
         const data = await fs.readFile(PIPELINE_SUMMARY, 'utf-8');
         const existing = JSON.parse(data);
-        if (existing.date === today) return existing;
-    } catch { /* missing or corrupt */ }
+        if (existing.date === today) {
+            // Never trust the on-disk shape — a summary written by an older build is missing
+            // whatever counters that build lacked, and every call site increments nested
+            // fields. Same failure mode that crashed page analytics on 2026-08-13.
+            const base = emptyPipelineSummary(today);
+            return {
+                ...base,
+                ...existing,
+                uploads: { ...base.uploads, ...(existing.uploads || {}) },
+                byType: (existing.byType && typeof existing.byType === 'object' &&
+                         !Array.isArray(existing.byType)) ? existing.byType : {},
+                errors: Array.isArray(existing.errors) ? existing.errors : [],
+                totalBytes: typeof existing.totalBytes === 'number' ? existing.totalBytes : 0,
+                date: today,
+            };
+        }
+    } catch (err) {
+        if (err.code !== 'ENOENT') {
+            console.error('[Pipeline] summary unreadable, starting fresh:', err.message);
+        }
+    }
+    return emptyPipelineSummary(today);
+}
+
+function emptyPipelineSummary(today) {
     return {
         date: today,
         uploads: { total: 0, success: 0, failed: 0 },
@@ -49,7 +86,18 @@ async function loadSummary(today) {
 /**
  * Log a data pipeline event (call after upload completes).
  */
-export async function logPipelineEvent({ dataType, filename, size, success, error }) {
+// Called from the upload route. It must never throw and never reject: a rejection here is an
+// unhandledRejection on the CHPC ingest path, which would terminate the process on every
+// upload. Observability is strictly less important than staying up.
+export async function logPipelineEvent(event) {
+    try {
+        await withSummaryLock(() => recordPipelineEvent(event));
+    } catch (err) {
+        console.error('[Pipeline] logPipelineEvent failed:', err.message);
+    }
+}
+
+async function recordPipelineEvent({ dataType, filename, size, success, error }) {
     const now = new Date();
     const entry = {
         timestamp: now.toISOString(),
@@ -93,10 +141,13 @@ export async function logPipelineEvent({ dataType, filename, size, success, erro
     summary.totalBytes += entry.size_bytes;
     summary.lastUpload = entry.timestamp;
 
+    const tmp = `${PIPELINE_SUMMARY}.tmp`;
     try {
-        await fs.writeFile(PIPELINE_SUMMARY, JSON.stringify(summary, null, 2));
+        await fs.writeFile(tmp, JSON.stringify(summary, null, 2));
+        await fs.rename(tmp, PIPELINE_SUMMARY);
     } catch (err) {
-        console.error('[Pipeline] Failed to update summary:', err);
+        console.error('[Pipeline] Failed to update summary:', err.message);
+        await fs.unlink(tmp).catch(() => {});
     }
 }
 
