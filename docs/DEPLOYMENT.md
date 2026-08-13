@@ -540,9 +540,18 @@ server offers with:
 ssh -o BatchMode=yes <user>@127.0.0.1 true   # want: "Permission denied (publickey)."
 ```
 
-Still unmeasured on dev (needs `sudo`; `deploy` is in `sudo` but not `adm`, so `auth.log` is
-unreadable to it):
+#### Scale of the traffic this was stopping
 
-```bash
-sudo grep -c 'Failed password for root' /var/log/auth.log   # scale of brute-force traffic
+Measured on dev 2026-08-13, before hardening:
+
 ```
+$ sudo grep -c 'Failed password for root' /var/log/auth.log
+12980
+```
+
+**~13 000 failed root password attempts in a single log rotation.** That is the volume that was
+hitting an unrated-limited box with `PermitRootLogin yes` and a live `DATA_UPLOAD_API_KEY` on
+disk. Not background noise — sustained credential stuffing.
+
+Assume prod is seeing the same order of magnitude; it is still in that state. Re-run the same
+command there to get its number before deciding how urgent §11 feels.
