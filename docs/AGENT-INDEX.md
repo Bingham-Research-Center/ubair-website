@@ -1,12 +1,12 @@
 # Agent Index — ubair-website
 
-Entry point for AI agents working in this repo. **Last refreshed:** 2026-04-27.
+Entry point for AI agents working in this repo. **Last refreshed:** 2026-08-13.
 
 This file lists what's in `docs/` so you can pick the right reference without grepping the
-whole tree (~13k lines). Read on demand; do not auto-load.
+whole tree. Read on demand; do not auto-load.
 
 ## Always-on context (already in your prompt)
-- `CLAUDE.md` (repo root) — topology, pipeline, dataTypes, protected branches, secrets policy, naming convention
+- `CLAUDE.md` (repo root) — topology, pipeline, dataTypes, protected branches + release train, secrets policy, naming convention
 - `MEMORY.md` (per-user, if present) — durable user-specific facts
 
 ## Read first when…
@@ -14,39 +14,32 @@ whole tree (~13k lines). Read on demand; do not auto-load.
 |---|---|
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
+| Work the CHPC/producer side | `chpc-deployment/README.md` (+ `DEPLOYMENT_GUIDE.md`, `MONITORING_GUIDE.md` there) |
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
-| Onboard a new RA | `docs/QUICK-START.md` then `docs/howto/quinten-handoff.md` |
-| Plumb new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` (root, temporary) |
-| Add or change a frontend page | `docs/FRONTEND-ARCHITECTURE.md` + `docs/JAVASCRIPT-PATTERNS.md` |
+| Onboard a new RA | `chpc-deployment/README.md` then `docs/howto/quinten-handoff.md` |
+| Plumb a new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (root, temporary) |
+| Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
-| Fix a road weather bug | `docs/ROADS_AUDIT.md` + `docs/ROAD_WEATHER_IMPROVEMENTS.md` |
+| Fix a road weather bug | `docs/ROADS_AUDIT.md` + `docs/HOW_IT_WORKS.md` |
 
 ## Reference docs (cite, don't reread)
 | Topic | File | Notes |
 |---|---|---|
 | Forecast JSON schemas | `DATA_MANIFEST.json` | canonical contract; brc-tools is contract-holder |
 | Manifest evolution | `docs/MANIFEST-CHANGELOG.md` + `docs/MANIFEST-GUIDE.md` | append-only changelog + how-to |
-| API key + auth | `docs/API-KEY-SETUP.md` | upload route's `x-api-key` |
+| On-the-wire JSON formats | `docs/DATA-SCHEMA.md` | |
+| API rate budget | `docs/API_RATE_CALCULATIONS_HYBRID.md` | matches the shipped staggered schedule |
+| API key + auth | `docs/API-KEY-SETUP.md` | sole doc for `scripts/generate-api-key.js`; systemd-era paths partially stale — refresh at next key rotation |
 | Secret sharing | `docs/SECRET-SHARING-GUIDE.md` | password-manager workflow |
-| SSL / TLS | `docs/SSL-SETUP.md` | Let's Encrypt setup; renewal lives in `DEPLOYMENT.md` |
-| Branching | `docs/BRANCHING-WORKFLOW.md` | (overlaps `BRANCHING-STRATEGY-IMPLEMENTATION.md` — see review) |
-| PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with the `/ultrareview` flow |
-| Test data | `docs/TEST-DATA.md` + `docs/TESTING-PLAN.md` | seed JSON for local dev |
-| Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | for context on why the site exists |
+| Branching (day-to-day) | `docs/BRANCHING-WORKFLOW.md` | the release train itself: `CLAUDE.md` + `DEPLOYMENT.md` §7a |
+| PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with `/code-review` |
+| Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | why the site exists |
 | Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
-| CHPC/Python side | `docs/python-side-CLAUDE.md` | meant to be **copied** to brc-tools repo as its `CLAUDE.md` |
-| CHPC deployment | `docs/CHPC-DEPLOYMENT.md` + `docs/CHPC-IMPLEMENTATION.md` | (overlapping pair — see review) |
-| Python packaging | `docs/PYTHON-PACKAGING-DEPLOYMENT.md` | brc-tools install/upgrade flow |
 
-## Outstanding-work indices (don't trust dates blindly — verify each item)
-- `docs/IMPROVEMENTS.md` — top-level "20 low-hanging fruit" list (refreshed 2026-04-27)
-- `docs/TODO-DEFERRED.md` — Clyfar-integration carry-over from Nov 2025
-- `docs/WISHLIST-TODOS.md` — long-tail aspirations
-- `docs/DEPLOYMENT-SPECS-TODO.md` — deployment-specific
-- `docs/PYTHON-DEVELOPER-TODO.md` — brc-tools-side gaps
-- `docs/ROAD_WEATHER_IMPROVEMENTS.md` — feature-area-specific (older, partly done)
-- `REVIEW-DOCS-apr27.md` (root, temporary) — meta-doc consolidating which of the above to merge
+## Outstanding-work indices
+- `docs/IMPROVEMENTS.md` — top-level list (last verified 2026-04-27 — check items before trusting)
+- `docs/ROADS_AUDIT.md` — road-weather findings, some still open
 
 ## Howto/ subdir
 | File | When |
@@ -56,15 +49,20 @@ whole tree (~13k lines). Read on demand; do not auto-load.
 | `docs/howto/quinten-handoff.md` | RA onboarding pattern |
 
 ## Archive/
-`docs/archive/` holds session handoffs and superseded plans from Nov–Dec 2025. Do not read
-unless tracing decision history.
+`docs/archive/` holds superseded plans, dated snapshots, and session handoffs, pending
+migration to the brc-sop wiki (see its README). 25 docs moved there in the 2026-08-13
+housekeeping sweep — all pre-launch pipeline/testing plans, the Python-side developer docs
+(owned by the brc-tools repo now), and older generations of the cron/API-rate/CHPC
+deployment analyses. Do not read unless tracing decision history.
 
 ## Doc-naming convention (also in `CLAUDE.md`)
 - LLM-produced markdown: ALL-CAPS, 3–4 hyphen-separated words.
-- Temporary/handoff docs: append `-mmmDD` before the extension (e.g. `-apr27`).
+- Temporary/handoff docs: append `-mmmDD` before the extension (e.g. `-aug13`).
 - Markdown only — Python and other code follow the language's convention.
 
-## Known gaps (as of 2026-04-27)
-- `docs/AGENT-INDEX.md` was 5 months stale before this refresh; treat the rest of `docs/` with
-  the same caution and verify dates before trusting content.
-- See `REVIEW-DOCS-apr27.md` for the consolidation backlog.
+## Known gaps (as of 2026-08-13)
+- `docs/API-KEY-SETUP.md` predates pm2 (systemd drop-in bits stale); refresh when the key rotates.
+- `public/api/static/metadata/map_obs_meta_20250731_0228Z.json` is the de-facto local-dev
+  metadata seed — `api.js`/`fireWeatherService.js` prefix-match `map_obs_meta_`, so it cannot
+  take a `test_*` name without widening that match.
+- `/test-viz` (route in `server.js` + `views/test-viz.html` + 51 KB JS) ships to prod, unlinked from nav.

@@ -36,11 +36,24 @@ Accepted dataTypes (`server/routes/dataUpload.js`):
 
 Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
 the contract-holder for new dataTypes — server doesn't enforce schema).
+`GET /api/health` reports `version` + `manifestVersion` so producers can
+compatibility-check before uploading.
 
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
 direct push seems warranted, confirm with the user — then ask a **second time** before
 proceeding. Applies to merges, reverts, version bumps, every commit.
+
+GitHub rulesets on all three branches require one approving review; self-approval is
+impossible, so every merge is `gh pr merge <N> --admin` — a **human** action (Claude's
+permission layer blocks `--admin`). Stage the PRs, then hand JRL the merge one-liners.
+
+## Versioning & release train
+`dev` always carries the next version as `X.Y.Z-dev`; `ops` ships clean `X.Y.Z` with a
+lightweight `vX.Y.Z` tag on its tip, so the two boxes never report the same version.
+Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `ops`, merge
+commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.Y.Z release`
+→ reopen `dev` at the next `-dev`. Rationale + ceremony: `docs/DEPLOYMENT.md` §7a.
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
@@ -56,6 +69,7 @@ password manager.
   (lowercase, snake_case where applicable).
 
 ## Reference docs (read on demand, not by default)
+- `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
 - `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
 - `docs/IMPROVEMENTS.md` — outstanding work (flagged stale by JRL; renew before reuse)
 - `DATA_MANIFEST.json` — forecast schemas
@@ -63,5 +77,6 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest (currently has known failures in `cameraAnalysisScheduler.test.js`)
+- `npm test` — Jest (known baseline: 4 failures in `cameraAnalysisScheduler.test.js`;
+  anything else failing is new breakage)
 - `npm run test-api` — loopback POST against the upload route
