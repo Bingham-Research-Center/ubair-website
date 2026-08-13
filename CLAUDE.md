@@ -57,8 +57,10 @@ direct push seems warranted, confirm with the user — then ask a **second time*
 proceeding. Applies to merges, reverts, version bumps, every commit.
 
 GitHub rulesets on all three branches require one approving review; self-approval is
-impossible, so every merge is `gh pr merge <N> --admin` — a **human** action (Claude's
-permission layer blocks `--admin`). Stage the PRs, then hand JRL the merge one-liners.
+impossible, so every merge is `gh pr merge <N> --admin`. Claude **may** run these, but only
+with JRL confirming **each merge individually** before it happens — never as a batch, and
+never inferred from earlier approval. Absent that, stage the PRs and hand over the one-liners.
+Merge commits should carry both of us as `Co-Authored-By` trailers.
 
 ## Versioning & release train
 `dev` always carries the next version as `X.Y.Z-dev`; `ops` ships clean `X.Y.Z` with a
@@ -66,6 +68,15 @@ lightweight `vX.Y.Z` tag on its tip, so the two boxes never report the same vers
 Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `ops`, merge
 commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.Y.Z release`
 → reopen `dev` at the next `-dev`. Rationale + ceremony: `docs/DEPLOYMENT.md` §7a.
+
+**Squash-merge trap.** Chore PRs land into `dev` as *squashes*, so their original commits never
+become ancestors of `dev`. Any branch stacked on another chore branch will therefore conflict
+the moment the one below it merges — this bit `chore/bump-v1.5.0` and `chore/open-v1.5.1-dev`
+during the v1.5.0 train. Branch from `dev`, not from another PR's head. If a branch is already
+stacked, rebase it: `git checkout -B <branch> origin/dev && git cherry-pick <sha>` then
+force-push. Check a branch really is clean with `git merge-tree --write-tree HEAD origin/dev`
+(use its exit code — grepping for `<<<<<<<` false-positives on docs containing conflict-marker
+examples).
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
