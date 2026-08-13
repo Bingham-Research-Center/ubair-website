@@ -22,8 +22,11 @@ the pages light up on their own.
 
 | Box | Domain | Branch | pm2 app |
 |---|---|---|---|
-| linode-prod | www.basinwx.com | `ops` | `basinwx-ops` |
-| linode-dev | www.basinwx.dev | `dev` | `basinwx-dev` |
+| linode-prod | www.basinwx.com | `ops` | `ubair-site` (verified 2026-08-13) |
+| linode-dev | www.basinwx.dev | `dev` | unverified |
+
+pm2 app names are irrelevant to brc-tools — you only ever touch the HTTP endpoint — but the
+earlier `basinwx-ops` / `basinwx-dev` values were aspirational, not deployed. Ignore them.
 
 Both accept identical uploads at `POST /api/upload/:dataType`. Only the checked-out branch
 differs. brc-tools is the single source of truth; both websites are downstream receivers.
