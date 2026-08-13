@@ -9,12 +9,16 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 | Role | Branch | Domain | pm2 app name | Port | Repo path | Runs as |
 |---|---|---|---|---|---|---|
 | Production | `ops` | `www.basinwx.com` | **`ubair-site`** | `3000` | **`/var/www/ubair-website`** | **`root`** |
-| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* | *unverified* |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` | `3001` | `/srv/ubair-website` | `deploy` |
 
-Production values confirmed by direct inspection of linode-prod on 2026-08-13 (`pm2 describe`,
-`git rev-parse`, matching on-disk data-file counts). **The dev box was not inspected** — do not
-assume it matches either row until someone verifies it and updates this table. See
-`WEBSITE-DEVBOX-HANDOFF-aug13.md`.
+Both rows confirmed by direct inspection on 2026-08-13 (`pm2 describe`, `ss -ltnp`, `git
+rev-parse`, matching on-disk data-file counts). Production was inspected first; the dev box was
+inspected later the same day, retiring the temporary `WEBSITE-DEVBOX-HANDOFF-aug13.md` (deleted
+in the same change — its findings are folded into §1a, §7, §8, §10 and §11a here).
+
+**The two boxes are not laid out the same way.** Production is the divergent one: dev already
+matches the target layout in §1b, production does not. Don't generalise a fact from one box to
+the other — every difference below was a real surprise.
 
 Divergences from the target layout (§1b), on production:
 
@@ -33,12 +37,41 @@ nginx **is** configured and matches §4's intent, just under different vhost fil
 Both proxy to `upstream ubair_app { server 127.0.0.1:3000; }`. Verified end to end:
 `https://www.basinwx.com/api/health` → 200.
 
-**CHPC uploads arrive over SSH, not from the public internet.** Upload log lines read
-`Access attempt from IP: ::ffff:127.0.0.1, Hostname: notchpeak1.int.chpc.utah.edu` — the source
-is loopback, so the producer reaches port 3000 through an SSH session/tunnel from CHPC rather
-than POSTing to `https://www.basinwx.com`. Consequence: **`/api/health` can be perfectly green
-from the outside while ingest is dead**, because the two paths are unrelated. When uploads stop,
-check the SSH path before touching nginx or the app.
+**The two boxes ingest over completely different paths.** This is the single most misleading
+difference between them — verified on both, 2026-08-13, by reading the upload log lines each box
+writes (`Access attempt from IP: <ip>, Hostname: <host>`):
+
+| Box | Logged source IP | What it means |
+|---|---|---|
+| linode-prod | `::ffff:127.0.0.1` | loopback — CHPC reaches port 3000 through an **SSH session/tunnel**, *not* by POSTing to `https://www.basinwx.com` |
+| linode-dev | `155.101.26.78` | notchpeak1's **real public IP** — CHPC POSTs straight to `https://www.basinwx.dev`, in through nginx → 3001 |
+
+Both are accepted by the same rule: `server/routes/dataUpload.js` grants access when
+`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`), so
+the transport underneath never had to match.
+
+Consequences, and they point in opposite directions:
+
+- **On prod, a green public `/api/health` proves nothing about ingest** — the two paths are
+  unrelated. When uploads stop there, check the SSH path before touching nginx or the app.
+- **On dev, the public path *is* the ingest path.** If `https://www.basinwx.dev` is unreachable
+  from the outside — expired cert, nginx down, firewall — ingest stops with it. Dev has no SSH
+  ingest to fall back on: the `deploy` user has no `authorized_keys` at all, so nothing from
+  CHPC is logging in.
+
+Don't "fix" dev to match prod, or vice versa, without asking why. Ozone-season fan-out currently
+depends on dev's public path staying up.
+
+nginx on dev **is** populated (unlike prod, where `sites-enabled/` is empty and how traffic
+reaches port 3000 is still undocumented):
+
+| Vhost (`sites-enabled/`) | `server_name` | Proxies to |
+|---|---|---|
+| `basinwx.dev` | `basinwx.dev www.basinwx.dev` | `127.0.0.1:3001` |
+| `regtest.basinwx.dev` | preview app (see §9) | — |
+
+Cert `CN=basinwx.dev` valid to **2026-09-20**; `pm2-deploy.service` is `enabled`, so dev's pm2
+resurrect survives reboot.
 
 > **Serving caveat — applies to both boxes.** The app serves `public/` straight off the working
 > tree, so `git checkout` changes what live traffic sees **immediately**, before any pm2
@@ -47,7 +80,9 @@ check the SSH path before touching nginx or the app.
 
 ### 1b. Target topology
 
-The layout the rest of this runbook assumes. Production has **not** been migrated to it.
+The layout the rest of this runbook assumes. **linode-dev already matches this table** (verified
+2026-08-13 — the dev row here and in §1a are the same values). Production has **not** been
+migrated to it.
 
 | Role | Branch | Domain | pm2 app name | Typical port | Repo path |
 |---|---|---|---|---|---|
@@ -246,7 +281,9 @@ CHPC runs `scripts/chpc_uploader.py` and the shell helpers in `chpc-deployment/`
 Recommended CHPC env:
 
 ```bash
-export BASINWX_API_KEY="..."                            # matches DATA_UPLOAD_API_KEY on the servers
+export BASINWX_API_KEY="..."   # must equal DATA_UPLOAD_API_KEY in the target box's .env.
+                               # NB: on the servers' own .env files these two keys do NOT
+                               # match each other — see §8. Only the value CHPC sends matters.
 export BASINWX_API_URLS="https://basinwx.com,https://basinwx.dev"
 ```
 
@@ -254,11 +291,43 @@ To temporarily stop mirroring to dev (e.g., during dev-side maintenance), drop `
 
 > **Two upload code paths exist on CHPC, and only one fans out.**
 > `load_config_urls()` in `brc-tools/brc_tools/download/push_data.py` honours the
-> list above — that is what observations and metadata use, which is why they are
-> the only dataTypes reaching both boxes. `load_config()` returns *only the first
-> URL*, and `clyfar/export/to_basinwx.py` reads the **singular** `BASINWX_API_URL`.
+> list above. `load_config()` returns *only the first URL*, and
+> `clyfar/export/to_basinwx.py` reads the **singular** `BASINWX_API_URL`.
 > Anything on those paths silently reaches `.com` alone. If a dataType is missing
 > from `.dev`, check which loader its producer calls before suspecting the network.
+
+**Fan-out coverage as measured on linode-dev, 2026-08-13** (counted from upload-log lines, not
+inferred). Earlier docs said observations + metadata were the *only* dataTypes reaching `.dev`;
+that is no longer true — `forecasts` and `road-forecast` began arriving on 2026-08-13. Re-measure
+before repeating any version of this claim:
+
+| dataType | Arriving on `.dev`? | Uploads, all-time | Uploads, last 24h |
+|---|---|---|---|
+| `metadata` | yes | 31 773 | 525 |
+| `observations` | yes | 31 553 | 520 |
+| `road-forecast` | yes — **new 2026-08-13** | 2 | 2 |
+| `forecasts` | yes — **new 2026-08-13** | 2 | 1 |
+| `outlooks` | **no — never uploaded** (see trap below) | 0 | 0 |
+| `images` | **no — never uploaded** | 0 | 0 |
+| `llm_outlooks` | **no — never uploaded** | 0 | 0 |
+| `timeseries` | **no — never uploaded** | 0 | 0 |
+
+`images` / `llm_outlooks` are the ones still stuck on a non-fanning loader; `timeseries` has no
+producer yet. Reproduce with:
+
+```bash
+grep -a 'File uploaded' ~/.pm2/logs/basinwx-dev-out.log \
+  | grep -ao 'Type: [a-z-]*' | sort | uniq -c | sort -rn
+```
+
+> **Trap: `/api/monitoring/freshness` reports `outlooks` as `"fresh"` with `ageMinutes: 0` on a
+> box that has never received a single `outlooks` upload.** Freshness is computed from the
+> newest file in the dataType's directory, and `outlooks_list.json` is an **index the server
+> regenerates itself** every few minutes — so its mtime is always ~now regardless of whether any
+> producer is feeding the directory. On dev the actual content behind that green status is
+> sample/template files dated 2026-04-17. Any dataType whose directory holds a
+> server-regenerated index can mask a dead producer this way; confirm against the upload log
+> (`Type: <dataType>`) before trusting a `fresh` verdict.
 
 ## 7a. Reading the dev/ops split
 
@@ -269,8 +338,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.0"
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.0-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.0"     (tag v1.5.0)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.1-dev"
 ```
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
@@ -303,8 +372,8 @@ production". Keep them in step: a wrapper still pinned after its consumer reache
 `ops` is merely stale, but an *unpinned* wrapper whose consumer is dev-only will
 400 against `.com` every cycle.
 
-**After merging into `dev`**, on the dev box: `git pull && npm ci && pm2 restart
-basinwx-dev`, then re-check `/api/health` for the expected version and
+**After merging into `dev`**, on the dev box: `git pull && pm2 restart basinwx-dev`
+(as `deploy`, in `/srv/ubair-website`), then re-check `/api/health` for the expected version and
 `/api/monitoring/freshness` for per-dataType staleness. `PREVIEW_MODE=true` gates
 background refresh and report emails, so preview apps don't double-burn upstream
 quotas — see §9.
@@ -316,6 +385,7 @@ quotas — see §9.
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
+- **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). The `.env` comment claiming they match is wrong on both. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
 
 ## 9. Per-user branch previews
 
@@ -400,6 +470,21 @@ Fixes, in order of preference:
 Confirm which key the failing job uses before changing anything — `sshd -T | grep -i pubkey`
 shows the server's current accepted list.
 
+**On linode-dev (checked 2026-08-13): same server-side policy, but it cannot break dev's
+pipeline.** dev runs OpenSSH 9.6p1; `/etc/ssh/sshd_config` sets no `PubkeyAcceptedAlgorithms`
+and `/etc/ssh/sshd_config.d/` is empty, so the SHA-1-disabled default applies exactly as on
+prod. The difference is that **dev has no SSH ingest to break** — `deploy` has no
+`authorized_keys` file at all and CHPC POSTs to dev over public HTTPS (§1a). So an `ssh-rsa`
+rejection on dev would affect a human operator's login, never the data feed.
+
+Not yet confirmed on dev: whether `/var/log/auth.log` actually carries the hourly rejection
+line. Reading it needs `sudo` (the `deploy` user is in the `sudo` group but has no passwordless
+rule, and is not in `adm`), so it was left for an operator:
+
+```bash
+sudo grep 'not in PubkeyAcceptedAlgorithms' /var/log/auth.log | tail
+```
+
 ## 11. Gotcha — the box is exposed to SSH brute force
 
 `/var/log/auth.log` shows continuous credential stuffing against `root` and common usernames
@@ -409,3 +494,30 @@ from many IPs (dozens of failures per hour). All observed attempts failed, but p
 Worth doing, independent of any deploy: set `PermitRootLogin prohibit-password` and
 `PasswordAuthentication no` in `/etc/ssh/sshd_config` (confirm key-based access works first),
 and consider fail2ban plus a Linode firewall rule restricting port 22 to known ranges.
+
+### 11a. linode-dev is exposed the same way — and has no fail2ban (checked 2026-08-13)
+
+Measured on dev, from config rather than logs (`auth.log` needs `sudo`, see §10):
+
+| Setting | linode-dev value | Wanted |
+|---|---|---|
+| `PermitRootLogin` | **`yes`** | `prohibit-password` |
+| `PasswordAuthentication` | **`yes`** | `no` |
+| `fail2ban` | **`inactive`** | active |
+| sshd listening | `0.0.0.0:22` + `[::]:22`, open | port 22 restricted to known ranges |
+
+`/etc/ssh/sshd_config.d/` is empty, so `/etc/ssh/sshd_config` is authoritative — those values
+are what sshd is really running, not a shadowed default. Root password login over the open
+internet is therefore permitted on dev, with no rate-limiting in front of it.
+
+This is **not** lower-stakes than prod just because it is "the dev box": dev holds a live
+`DATA_UPLOAD_API_KEY` in `/srv/ubair-website/.env` and serves stakeholder demos. Hardening it
+needs a `sudo` session and a confirmed key-based login for `deploy` first — note `deploy`'s
+`~/.ssh/` currently holds only `known_hosts`, so **verify how you will still get in before
+setting `PasswordAuthentication no`.** Locking yourself out of dev is an easy mistake here.
+
+Still to measure on dev once someone has `sudo`:
+
+```bash
+sudo grep -c 'Failed password for root' /var/log/auth.log   # scale of the brute-force traffic
+```

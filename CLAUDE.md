@@ -7,13 +7,17 @@ Leaflet/Plotly, vanilla JS frontend.
 | Role | Branch | Domain | pm2 app | Repo path | User |
 |---|---|---|---|---|---|
 | Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
-| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` (port 3001) | `/srv/ubair-website` | `deploy` |
 
-Production row verified on linode-prod 2026-08-13. **The dev box has not been inspected** —
-verify before trusting it. `docs/DEPLOYMENT.md` §1b describes a *target* layout
-(`/srv/ubair-website` as `deploy`, pm2 `basinwx-ops` from `ecosystem.config.cjs`) that
-production has **not** been migrated to; §1a records what is actually deployed. Don't quote the
-target as fact.
+Both rows verified by direct inspection 2026-08-13 (prod first, dev later the same day).
+`docs/DEPLOYMENT.md` §1b describes a *target* layout that **dev already matches** but
+production does **not**; §1a records what is actually deployed on each. Don't assume a fact
+from one box holds on the other — they differ in app name, port, path, user, and ingest path.
+
+**Ingest reaches the two boxes differently.** Prod's uploads arrive on loopback over an SSH
+tunnel; **dev's arrive as ordinary public HTTPS** from notchpeak1's real IP (`155.101.26.78`)
+through nginx → 3001. So on prod a green public `/api/health` says nothing about ingest, while
+on dev the public path *is* the ingest path — if `.dev` is unreachable, ingest is down with it.
 
 `.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
 merging into `dev` is a real-world dry-run before promoting to `ops`.
