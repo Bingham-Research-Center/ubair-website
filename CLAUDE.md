@@ -44,6 +44,11 @@ Accepted dataTypes (`server/routes/dataUpload.js`):
 Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
 the contract-holder for new dataTypes — server doesn't enforce schema).
 
+On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
+notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
+public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
+are independent. If uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
+
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
 direct push seems warranted, confirm with the user — then ask a **second time** before
