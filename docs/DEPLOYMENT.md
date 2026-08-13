@@ -4,6 +4,36 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 
 ## 1. Topology
 
+### 1a. As deployed today (verified 2026-08-13)
+
+| Role | Branch | Domain | pm2 app name | Port | Repo path | Runs as |
+|---|---|---|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | **`ubair-site`** | `3000` | **`/var/www/ubair-website`** | **`root`** |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* | *unverified* |
+
+Production values confirmed by direct inspection of linode-prod on 2026-08-13 (`pm2 describe`,
+`git rev-parse`, matching on-disk data-file counts). **The dev box was not inspected** — do not
+assume it matches either row until someone verifies it and updates this table. See
+`WEBSITE-DEVBOX-HANDOFF-aug13.md`.
+
+Divergences from the target layout (§1b), on production:
+
+- pm2 app is a **hand-started process named `ubair-site`**, not `basinwx-ops`.
+  `ecosystem.config.cjs` is **not in use** on that box. Renaming a live pm2 app is a deliberate
+  migration, not a side effect of a deploy — see §1c.
+- Repo lives at `/var/www/ubair-website`, owned and run by `root`, not `deploy` under `/srv`.
+- `/etc/nginx/sites-enabled/` is **empty**, so TLS/proxy termination is not set up the way §4
+  describes. Establish how traffic actually reaches port 3000 before touching nginx.
+
+> **Serving caveat — applies to both boxes.** The app serves `public/` straight off the working
+> tree, so `git checkout` changes what live traffic sees **immediately**, before any pm2
+> restart. Never check out another branch in a live repo to inspect or stage it. Use
+> `git worktree add /tmp/staging <branch>` instead, which leaves the deployed tree untouched.
+
+### 1b. Target topology
+
+The layout the rest of this runbook assumes. Production has **not** been migrated to it.
+
 | Role | Branch | Domain | pm2 app name | Typical port | Repo path |
 |---|---|---|---|---|---|
 | Production | `ops` | `www.basinwx.com` | `basinwx-ops` | `3000` | `/srv/ubair-website` |
@@ -11,8 +41,17 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 
 - Runtime: Node.js under pm2, started as the `deploy` user.
 - TLS: nginx reverse proxy, Let's Encrypt certs under `/etc/letsencrypt/live/<domain>/`.
-- pm2 app name is **derived from the checked-out branch** (`git rev-parse --abbrev-ref HEAD`). See `ecosystem.config.cjs`.
+- pm2 app name is **derived from the checked-out branch** (`git rev-parse --abbrev-ref HEAD`), overridable via `PM2_APP_NAME`. See `ecosystem.config.cjs`.
 - `www.basinwx.dev` is a **rehearsal mirror** of production: it receives the same CHPC data via fan-out upload, but runs whichever branch is checked out. Merging a PR into `dev` is the dry-run before promoting to `ops`.
+
+### 1c. Migrating production to the target layout
+
+Not part of a routine deploy, and never while pipeline testing is in flight. The `PM2_APP_NAME`
+override exists so `ecosystem.config.cjs` can be adopted *before* committing to a rename —
+`PM2_APP_NAME=ubair-site pm2 start ecosystem.config.cjs` reproduces today's app identity from
+the config file. Renaming afterwards is `pm2 delete` + `pm2 start` + `pm2 save`, which means
+brief downtime and a re-run of `pm2 startup`; verify the app survives a reboot before walking
+away.
 
 ## 2. Deploy vs sudo — user boundary
 
@@ -25,6 +64,9 @@ Canonical runbook for bringing up, operating, and troubleshooting `ubair-website
 | read `.env` | `chmod`/`chown` under `/etc` |
 
 Keep both boxes consistent with this split. `deploy` must own `/srv/ubair-website` recursively.
+
+**Production does not currently follow this split** — it runs as `root` out of
+`/var/www/ubair-website` (§1a). This section describes the target, not today.
 
 ## 3. Fresh-box bring-up
 

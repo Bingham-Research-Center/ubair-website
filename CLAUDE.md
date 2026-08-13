@@ -4,16 +4,23 @@ Live air-quality observations and forecasts for the Uintah Basin. Node/Express +
 Leaflet/Plotly, vanilla JS frontend.
 
 ## Topology
-| Role | Branch | Domain | pm2 app |
-|---|---|---|---|
-| Production | `ops` | `www.basinwx.com` | `basinwx-ops` |
-| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` |
+| Role | Branch | Domain | pm2 app | Repo path | User |
+|---|---|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | *unverified* | *unverified* | *unverified* |
 
-Both: Linode, repo at `/srv/ubair-website` as `deploy`, nginx + Let's Encrypt.
-The pm2 app name is derived from the checked-out branch (`ecosystem.config.cjs`),
-so the branch on disk dictates the running app identity. `.dev` receives the same
-CHPC fan-out as `.com` and is where stakeholder demos happen — merging into `dev` is
-a real-world dry-run before promoting to `ops`.
+Production row verified on linode-prod 2026-08-13. **The dev box has not been inspected** —
+verify before trusting it. `docs/DEPLOYMENT.md` §1b describes a *target* layout
+(`/srv/ubair-website` as `deploy`, pm2 `basinwx-ops` from `ecosystem.config.cjs`) that
+production has **not** been migrated to; §1a records what is actually deployed. Don't quote the
+target as fact.
+
+`.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
+merging into `dev` is a real-world dry-run before promoting to `ops`.
+
+**The app serves `public/` off the working tree**, so `git checkout` changes what live traffic
+sees immediately, before any pm2 restart. Never check out a branch in a live repo to inspect or
+stage it — use `git worktree add /tmp/staging <branch>`.
 
 Feature-branch previews live at `<name>.basinwx.dev` (Namecheap wildcard A record),
 managed via `scripts/manage-previews.sh` + `preview-apps.json`. Background jobs are
