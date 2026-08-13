@@ -385,7 +385,7 @@ quotas — see §9.
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
-- **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). The `.env` comment claiming they match is wrong on both. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
+- **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
 
 ## 9. Per-user branch previews
 
@@ -495,29 +495,54 @@ Worth doing, independent of any deploy: set `PermitRootLogin prohibit-password` 
 `PasswordAuthentication no` in `/etc/ssh/sshd_config` (confirm key-based access works first),
 and consider fail2ban plus a Linode firewall rule restricting port 22 to known ranges.
 
-### 11a. linode-dev is exposed the same way — and has no fail2ban (checked 2026-08-13)
+### 11a. linode-dev — hardened 2026-08-13. **linode-prod still is not.**
 
-Measured on dev, from config rather than logs (`auth.log` needs `sudo`, see §10):
+Dev was found in the same exposed state as prod and fixed the same day:
 
-| Setting | linode-dev value | Wanted |
-|---|---|---|
-| `PermitRootLogin` | **`yes`** | `prohibit-password` |
-| `PasswordAuthentication` | **`yes`** | `no` |
-| `fail2ban` | **`inactive`** | active |
-| sshd listening | `0.0.0.0:22` + `[::]:22`, open | port 22 restricted to known ranges |
+| Setting | dev, before | dev, now | prod |
+|---|---|---|---|
+| `PermitRootLogin` | `yes` | **`prohibit-password`** | `yes` — still to do |
+| `PasswordAuthentication` | `yes` | **`no`** | `yes` — still to do |
+| `fail2ban` | inactive | **active + enabled** | still to do |
 
-`/etc/ssh/sshd_config.d/` is empty, so `/etc/ssh/sshd_config` is authoritative — those values
-are what sshd is really running, not a shadowed default. Root password login over the open
-internet is therefore permitted on dev, with no rate-limiting in front of it.
+Verified after the change: sshd offers `Permission denied (publickey)` only — password auth is
+genuinely off, not just edited in the file. `deploy` authenticates with an ed25519 key; root has
+no password path in. `/etc/ssh/sshd_config.d/` is empty, so `/etc/ssh/sshd_config` is
+authoritative on this box.
 
-This is **not** lower-stakes than prod just because it is "the dev box": dev holds a live
-`DATA_UPLOAD_API_KEY` in `/srv/ubair-website/.env` and serves stakeholder demos. Hardening it
-needs a `sudo` session and a confirmed key-based login for `deploy` first — note `deploy`'s
-`~/.ssh/` currently holds only `known_hosts`, so **verify how you will still get in before
-setting `PasswordAuthentication no`.** Locking yourself out of dev is an easy mistake here.
+**Prod is now the weaker of the two.** It still permits root password login from the open
+internet while holding the live pipeline key. Apply §11 there next.
 
-Still to measure on dev once someone has `sudo`:
+#### Two traps if you repeat this on prod
+
+1. **The unit is `ssh`, not `sshd`.** `sudo systemctl reload sshd` fails with `Unit
+   sshd.service not found` — and it fails *after* you have already edited the config, so it is
+   easy to believe nothing happened when in fact the change is staged and live-on-next-restart.
+2. **Install the key first, and prove it works, before reloading.** On dev the config was edited
+   while `deploy` had no `authorized_keys` at all; only the failed reload (trap 1) kept password
+   auth alive long enough to fix it. A reboot alone would have applied the config and locked
+   everyone out — `ssh.socket` is enabled at boot, so new connections read the config fresh.
+
+Correct order, from the **client**, while password auth still works:
 
 ```bash
-sudo grep -c 'Failed password for root' /var/log/auth.log   # scale of the brute-force traffic
+ssh-keygen -t ed25519                 # only if you have no key yet
+ssh-copy-id <user>@<host>
+ssh <user>@<host>                     # MUST succeed with no password prompt
+# only now, on the server:
+sudo systemctl reload ssh             # 'ssh', not 'sshd'
+```
+
+Keep the original session open until a *new* one authenticates. Confirm which methods the
+server offers with:
+
+```bash
+ssh -o BatchMode=yes <user>@127.0.0.1 true   # want: "Permission denied (publickey)."
+```
+
+Still unmeasured on dev (needs `sudo`; `deploy` is in `sudo` but not `adm`, so `auth.log` is
+unreadable to it):
+
+```bash
+sudo grep -c 'Failed password for root' /var/log/auth.log   # scale of brute-force traffic
 ```
