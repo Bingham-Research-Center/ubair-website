@@ -14,7 +14,8 @@ import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
-import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
+import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from './middleware/analytics.js';
+import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
 
@@ -54,8 +55,10 @@ app.use('/api', fireRestrictionsRoutes);
 app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
-// Analytics stats endpoint (protected by environment check)
+// Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
+app.get('/api/analytics/pipeline', getPipelineStats);
+app.post('/api/analytics/engagement', express.json(), handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
