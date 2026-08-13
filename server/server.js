@@ -12,6 +12,7 @@ import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEv
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
+import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
@@ -49,6 +50,8 @@ app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api', fireWeatherRoutes);
 app.use('/api', fireRestrictionsRoutes);
+// Pipeline freshness/health for CHPC operators verifying their cron jobs.
+app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
 // Analytics stats endpoint (protected by environment check)

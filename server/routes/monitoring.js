@@ -6,6 +6,7 @@
 
 import express from 'express';
 import { getMonitor } from '../monitoring/dataMonitor.js';
+import { validateApiKey } from './dataUpload.js';
 
 const router = express.Router();
 
@@ -87,9 +88,10 @@ router.get('/monitoring/alerts', (req, res) => {
 
 /**
  * POST /api/monitoring/alerts/clear
- * Clear all alerts
+ * Clear all alerts. Mutates server state, so it requires the upload API key —
+ * the GET endpoints above stay public for operators checking freshness.
  */
-router.post('/monitoring/alerts/clear', (req, res) => {
+router.post('/monitoring/alerts/clear', validateApiKey, (req, res) => {
     try {
         const monitor = getMonitor();
         monitor.clearAlerts();

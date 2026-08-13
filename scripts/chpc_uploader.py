@@ -331,9 +331,11 @@ def main():
     parser = argparse.ArgumentParser(
         description='Upload weather data to BasinWx with manifest validation'
     )
+    # Valid values are whatever DATA_MANIFEST.json declares — validated after the
+    # manifest loads below, since argparse evaluates `choices` before we can read it.
+    # A hardcoded list here previously blocked forecasts/road-forecast/llm_outlooks.
     parser.add_argument('--data-type',
-                        choices=['observations', 'metadata', 'timeseries', 'outlooks', 'images'],
-                        help='Type of data to upload')
+                        help='Type of data to upload (must be a dataType in DATA_MANIFEST.json)')
     parser.add_argument('--file', type=str, help='Path to file to upload')
     parser.add_argument('--validate-only', action='store_true',
                         help='Only validate, do not upload')
@@ -372,6 +374,13 @@ def main():
     if not args.file or not args.data_type:
         parser.error("--file and --data-type are required")
 
+    valid_types = manifest.get_all_data_types()
+    if args.data_type not in valid_types:
+        parser.error(
+            f"unknown --data-type {args.data_type!r}; "
+            f"DATA_MANIFEST.json declares: {', '.join(sorted(valid_types))}"
+        )
+
     if not os.path.exists(args.file):
         logger.error(f"File not found: {args.file}")
         sys.exit(1)
@@ -383,8 +392,10 @@ def main():
     if not validator.validate_file_size(args.file, args.data_type):
         sys.exit(1)
 
-    # Load and validate JSON (if applicable)
-    if args.data_type in ['observations', 'metadata', 'timeseries']:
+    # Load and validate JSON (if applicable). validate_json_structure no-ops with a
+    # warning when the manifest pins no schema, so listing a dataType here is safe
+    # even before its schema exists.
+    if args.data_type in ['observations', 'metadata', 'timeseries', 'forecasts', 'road-forecast']:
         try:
             with open(args.file, 'r') as f:
                 data = json.load(f)

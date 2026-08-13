@@ -60,8 +60,10 @@ const upload = multer({
     }
 });
 
-// Middleware to validate API key
-function validateApiKey(req, res, next) {
+// Middleware to validate API key.
+// Exported so other routers can reuse it for state-mutating endpoints
+// (e.g. POST /api/monitoring/alerts/clear).
+export function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 

@@ -172,7 +172,7 @@ Uploading map_obs_YYYYMMDD_HHMMZ.json...
 
 **Verify on Website:**
 ```bash
-curl https://basinwx.com/api/filelist.json
+curl https://basinwx.com/api/filelist/observations
 ```
 
 You should see your uploaded file listed.
@@ -256,7 +256,7 @@ Expected output shows data age < 10 minutes for observations.
 ### View Latest Data
 
 ```bash
-curl https://basinwx.com/api/filelist.json
+curl https://basinwx.com/api/filelist/observations
 curl https://basinwx.com/api/static/observations/map_obs_YYYYMMDD_HHMMZ.json | head -50
 ```
 
@@ -292,7 +292,7 @@ If manual works but cron doesn't:
 # Check key is set
 echo $DATA_UPLOAD_API_KEY
 
-# Should be: 48cd2f722c19af756e7443230efe9fcc
+# Should be a non-empty 32-char hex string. Never paste the value into a file — see docs/SECRET-SHARING-GUIDE.md
 
 # If wrong, edit ~/.bashrc and reload
 vim ~/.bashrc
@@ -400,7 +400,7 @@ After deployment, verify:
 - [ ] Manual upload works (`python3 brc_tools/download/get_map_obs.py`)
 - [ ] Cron jobs installed (`crontab -l`)
 - [ ] Logs being written (`ls -lh ~/logs/basinwx/`)
-- [ ] Data appearing on website (`curl https://basinwx.com/api/filelist.json`)
+- [ ] Data appearing on website (`curl https://basinwx.com/api/filelist/observations`)
 - [ ] Data is recent (< 10 min old)
 - [ ] No errors in logs (`grep ERROR ~/logs/basinwx/*.log`)
 

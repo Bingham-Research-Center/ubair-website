@@ -33,7 +33,7 @@ api_key = os.environ.get('BASINWX_API_KEY') or os.environ.get('DATA_UPLOAD_API_K
 **Option B: Update CHPC environment (no code changes)**
 ```bash
 # In setup_chpc_env.sh, use DATA_UPLOAD_API_KEY instead of BASINWX_API_KEY
-export DATA_UPLOAD_API_KEY="48cd2f722c19af756e7443230efe9fcc"
+export DATA_UPLOAD_API_KEY="<paste from password manager>"
 ```
 
 **Recommendation:** Use Option B for now (simpler, no code changes needed)
@@ -186,7 +186,7 @@ For `brc-tools` to work on CHPC, the following must be configured:
 ### Environment Variables
 ```bash
 # Use DATA_UPLOAD_API_KEY (not BASINWX_API_KEY) to match current code
-export DATA_UPLOAD_API_KEY="48cd2f722c19af756e7443230efe9fcc"
+export DATA_UPLOAD_API_KEY="<paste from password manager>"
 ```
 
 ### Configuration Files
