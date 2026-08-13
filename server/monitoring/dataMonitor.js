@@ -44,12 +44,15 @@ class DataMonitor {
         const now = Date.now();
 
         for (const [dataType, spec] of Object.entries(this.manifest.dataTypes || {})) {
-            const dataDir = path.join(this.staticDir, spec.endpoint.split('/').pop());
+            const subDir = spec.endpoint.split('/').pop();
+            const dataDir = path.join(this.staticDir, subDir);
 
             if (!fs.existsSync(dataDir)) {
+                // Report the public-relative path — these results are served over
+                // /api/monitoring/*, so don't leak the server's absolute filesystem layout.
                 results[dataType] = {
                     status: 'missing',
-                    message: `Directory not found: ${dataDir}`
+                    message: `No uploads received yet (public/api/static/${subDir} does not exist)`
                 };
                 continue;
             }

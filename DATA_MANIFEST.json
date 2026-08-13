@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2025-11-23",
+  "lastUpdated": "2026-08-13",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -218,6 +218,29 @@
         "encoding": "UTF-8"
       },
       "template": "# Uintah Basin Air Quality Outlook\n## Valid: {date}\n\n{content}"
+    },
+    "llm_outlooks": {
+      "description": "LLM-generated air quality outlook PDFs. Accepted by the upload route since launch and live on basinwx.com, but previously undocumented here. Consumed by public/js/forecast_air_quality.js, which lists /api/filelist/llm_outlooks, filters for .pdf, and links the newest as a download.",
+      "format": "pdf",
+      "endpoint": "/api/upload/llm_outlooks",
+      "schedule": {
+        "frequency": "ad-hoc",
+        "description": "Produced alongside the Clyfar forecast cycle during ozone season; dormant out of season (last run 2026-03-30 0600Z).",
+        "timezone": "UTC",
+        "automation": "automatic"
+      },
+      "filename": {
+        "pattern": "LLM-OUTLOOK-YYYYMMDD_HHMMZ.pdf",
+        "example": "LLM-OUTLOOK-20260330_0600Z.pdf"
+      },
+      "validation": {
+        "maxFileSize": "10MB",
+        "allowedExtensions": [".pdf"]
+      },
+      "notes": [
+        "Binary payload — no JSON schema applies, so chpc_uploader.py performs size/extension checks only.",
+        "The consumer sorts filenames lexically and takes the last, so the YYYYMMDD_HHMMZ stamp must stay zero-padded and fixed-width."
+      ]
     },
     "images": {
       "description": "Visualization images (maps, charts, satellite)",

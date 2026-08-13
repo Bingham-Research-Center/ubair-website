@@ -195,6 +195,63 @@ export BASINWX_API_URLS="https://basinwx.com,https://basinwx.dev"
 
 To temporarily stop mirroring to dev (e.g., during dev-side maintenance), drop `basinwx.dev` from the list. To upload **only** to dev (e.g., testing a pipeline change), set `BASINWX_API_URLS="https://basinwx.dev"` alone.
 
+> **Two upload code paths exist on CHPC, and only one fans out.**
+> `load_config_urls()` in `brc-tools/brc_tools/download/push_data.py` honours the
+> list above — that is what observations and metadata use, which is why they are
+> the only dataTypes reaching both boxes. `load_config()` returns *only the first
+> URL*, and `clyfar/export/to_basinwx.py` reads the **singular** `BASINWX_API_URL`.
+> Anything on those paths silently reaches `.com` alone. If a dataType is missing
+> from `.dev`, check which loader its producer calls before suspecting the network.
+
+## 7a. Reading the dev/ops split
+
+`.dev` is not a staging toy — it takes the same CHPC fan-out as `.com` and is
+where stakeholder demos happen. The two boxes deliberately run different branches,
+so the first question in any investigation is *which box am I actually looking at*.
+
+**Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
+
+```bash
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.0"
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.0-dev"
+```
+
+`dev` always carries the *next* version with a `-dev` suffix. The dev→ops
+promotion PR strips the suffix, `ops` gets tagged `v<version>`, and `dev`
+immediately bumps to the next `-dev`. The two boxes therefore never report the
+same string. `manifestVersion` is `DATA_MANIFEST.json`'s version — the one number
+brc-tools and this repo both agree on, bumped MINOR for additive dataTypes and
+MAJOR when a field or unit changes (which requires a matching brc-tools release
+*before* promotion).
+
+**A dataType can exist on `dev` and not on `ops`.** `server/routes/dataUpload.js`
+lists accepted dataTypes per branch, so a producer pushing something `ops` has
+never heard of gets a 400 from `.com` while `.dev` accepts it happily. That is
+the intended behaviour, not a bug — it stops half-built features reaching
+production. The corresponding CHPC-side convention lives in
+`brc-tools/docs/WEBSITE-INTEGRATION.md`: a cron wrapper pins
+`BASINWX_API_URLS="https://basinwx.dev"` **if and only if** its consumer is on
+`dev` but not yet on `ops`, and is unpinned in the brc-tools PR that follows the
+promotion.
+
+So the steady state is a loop, not a resting point:
+
+1. Feature lands on `dev`; its producer's wrapper is pinned to `.dev`.
+2. Rehearse on `.dev` with real data and no production risk.
+3. Promote `dev`→`ops`, tag, unpin the wrapper.
+4. Bump `dev` to the next `-dev`.
+
+The pin and the `-dev` suffix are the two visible markers of "ahead of
+production". Keep them in step: a wrapper still pinned after its consumer reached
+`ops` is merely stale, but an *unpinned* wrapper whose consumer is dev-only will
+400 against `.com` every cycle.
+
+**After merging into `dev`**, on the dev box: `git pull && npm ci && pm2 restart
+basinwx-dev`, then re-check `/api/health` for the expected version and
+`/api/monitoring/freshness` for per-dataType staleness. `PREVIEW_MODE=true` gates
+background refresh and report emails, so preview apps don't double-burn upstream
+quotas — see §9.
+
 ## 8. Known gotchas
 
 - **`.dev` TLDs are HSTS-preloaded.** Browsers refuse plain HTTP. The nginx template above returns 301 → HTTPS which is required, not a nice-to-have.

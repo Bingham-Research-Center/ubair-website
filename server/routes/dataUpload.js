@@ -4,8 +4,27 @@ import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
 import dns from 'dns';
+import { fileURLToPath } from 'url';
 
 const reverseLookup = promisify(dns.reverse);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Read once at module load. Neither file changes at runtime, and CHPC producers
+// call /health before every single upload, so this must not hit disk per request.
+function readJsonField(relPath, field) {
+    try {
+        const content = fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+        return JSON.parse(content)[field] ?? null;
+    } catch (error) {
+        console.error(`Failed to read "${field}" from ${relPath}:`, error.message);
+        return null;
+    }
+}
+
+const SERVER_VERSION = readJsonField('../../package.json', 'version');
+const MANIFEST_VERSION = readJsonField('../../DATA_MANIFEST.json', 'version');
 
 // Add this helper at the top (after imports)
 function updateFileList(uploadDir) {
@@ -60,8 +79,10 @@ const upload = multer({
     }
 });
 
-// Middleware to validate API key
-function validateApiKey(req, res, next) {
+// Middleware to validate API key.
+// Exported so other routers can reuse it for state-mutating endpoints
+// (e.g. POST /api/monitoring/alerts/clear).
+export function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
@@ -205,11 +226,17 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
   }
 });
 
-// Health check route for this API
+// Health check route for this API.
+// version + manifestVersion ride along on the call producers already make before
+// every upload, so brc-tools can check contract compatibility for free, and
+// "which box am I talking to?" is answerable with one curl — dev carries a -dev
+// suffix, ops does not.
 router.get('/health', (req, res) => {
     res.status(200).json({
         success: true,
         message: 'Data upload API is running',
+        version: SERVER_VERSION,
+        manifestVersion: MANIFEST_VERSION,
         timestamp: new Date().toISOString()
     });
 });
