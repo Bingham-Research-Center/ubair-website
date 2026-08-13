@@ -5,6 +5,28 @@
 
 ---
 
+> ## ⚠️ SUPERSEDED — 2026-08-13
+>
+> This directory is a 2025-11 snapshot and is **no longer authoritative**. It has drifted
+> from the running system in ways that will mislead you:
+>
+> - It claimed "only observations and Clyfar are currently implemented". The upload route
+>   accepts **eight** dataTypes today (`server/routes/dataUpload.js:30-40`).
+> - It documented a `/api/filelist.json` endpoint that was **removed** in `d05ef52`. The
+>   live route is `/api/filelist/:dataType` (repointed throughout this directory).
+> - It contained the **live API key in plaintext**, in a public repo. Scrubbed 2026-08-13;
+>   the value still exists in git history, so treat that key as compromised until rotated.
+>
+> **Read these instead:**
+> - `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (repo root) — current CHPC-side work, verified
+>   against both live hosts
+> - `DATA_MANIFEST.json` — canonical schemas, the actual contract
+> - `docs/DEPLOYMENT.md` — bring-up runbook and chronic gotchas
+>
+> The cron templates and shell scripts here still have reference value. The prose does not.
+
+---
+
 ## Package Contents
 
 ```
@@ -103,7 +125,7 @@ Cron Job (every 10 min)            Website displays on live map
 - Manifest file `DATA_MANIFEST.json` (v1.0.1+) in place
 
 **Credentials:**
-- API key: `48cd2f722c19af756e7443230efe9fcc`
+- API key: stored in the password manager — see `docs/SECRET-SHARING-GUIDE.md`
 - Website URL: `https://basinwx.com`
 
 ---
@@ -178,8 +200,8 @@ Cron Job (every 10 min)            Website displays on live map
 
 ```bash
 # Required
-export DATA_UPLOAD_API_KEY="48cd2f722c19af756e7443230efe9fcc"
-export BASINWX_API_URL="https://basinwx.com"
+export DATA_UPLOAD_API_KEY="<paste from password manager>"
+export BASINWX_API_URLS="https://basinwx.com"
 ```
 
 **⚠️ Note:** Use `DATA_UPLOAD_API_KEY` (not `BASINWX_API_KEY`) to match brc-tools code.
@@ -215,7 +237,7 @@ python3 brc_tools/download/get_map_obs.py
 
 ### 2. Data Appears on Website
 ```bash
-curl https://basinwx.com/api/filelist.json
+curl https://basinwx.com/api/filelist/observations
 # Should list recent files
 ```
 

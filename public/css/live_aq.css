@@ -69,23 +69,6 @@ body[data-page-type="live_aq"] .overlay-container {
     border-radius: 4px;
 }
 
-/* Study area toggle button */
-.study-area-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1001;
-    padding: 8px 16px;
-    background-color: var(--usu-blue);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    transition: all 0.3s ease;
-}
-
 .study-area-toggle:hover {
     background-color: var(--usu-light-blue);
     transform: translateY(-2px);

@@ -19,10 +19,10 @@
 ### 1.1 Environment Variables
 ```bash
 echo $DATA_UPLOAD_API_KEY
-echo $BASINWX_API_URL
+echo $BASINWX_API_URLS
 ```
-- [ ] `DATA_UPLOAD_API_KEY` shows `48cd2f722c19af756e7443230efe9fcc`
-- [ ] `BASINWX_API_URL` shows `https://basinwx.com`
+- [ ] `DATA_UPLOAD_API_KEY` is set and matches the value in the password manager
+- [ ] `BASINWX_API_URLS` shows `https://basinwx.com`
 
 ### 1.2 Configuration Files
 ```bash
@@ -89,7 +89,7 @@ python3 -c "from brc_tools.download.push_data import load_config; print(load_con
 
 ### 3.1 Check File List
 ```bash
-curl -s https://basinwx.com/api/filelist.json | python3 -m json.tool
+curl -s https://basinwx.com/api/filelist/observations | python3 -m json.tool
 ```
 - [ ] Returns JSON array
 - [ ] Contains recently uploaded filename
@@ -151,7 +151,7 @@ tail -f ~/logs/basinwx/test_observations.log
 
 ### 4.4 Verify Upload Occurred
 ```bash
-curl -s https://basinwx.com/api/filelist.json | grep $(date +%Y%m%d)
+curl -s https://basinwx.com/api/filelist/observations | grep $(date +%Y%m%d)
 ```
 - [ ] New file with today's date appears
 - [ ] Timestamp within last 10 minutes
@@ -189,7 +189,7 @@ echo $DATA_UPLOAD_API_KEY  # Verify it's correct again
 
 ### 5.2 Test with Unreachable Server
 ```bash
-export BASINWX_API_URL="https://invalid-server-for-testing.com"
+export BASINWX_API_URLS="https://invalid-server-for-testing.com"
 cd ~/brc-tools
 python3 brc_tools/download/get_map_obs.py 2>&1 | tail -20
 ```
@@ -209,7 +209,7 @@ source ~/.bashrc
 
 ### 6.1 Download Recent Upload
 ```bash
-LATEST_FILE=$(curl -s https://basinwx.com/api/filelist.json | python3 -c "import sys, json; print(sorted(json.load(sys.stdin))[-1])")
+LATEST_FILE=$(curl -s https://basinwx.com/api/filelist/observations | python3 -c "import sys, json; print(sorted(json.load(sys.stdin))[-1])")
 curl -s "https://basinwx.com/api/static/${LATEST_FILE}" > /tmp/test_obs.json
 ```
 

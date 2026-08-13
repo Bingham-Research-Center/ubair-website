@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Fire Weather: Uintah Basin">
-    <title>BasinWx</title>
+    <title>BasinWx — Fire Weather</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-b2.ico">
 
     <!-- Google Fonts -->
@@ -16,6 +16,12 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
+    <!-- Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+
+    <!-- Plotly -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/fire.css">
@@ -24,8 +30,7 @@
 <body data-page-type="fire">
 
 <!-- Colored Bar -->
-<div class="colored-bar">
-</div>
+<div class="colored-bar"></div>
 
 <!-- Sidebar Container -->
 <div class="sidebar_container">
@@ -33,45 +38,176 @@
 </div>
 
 <!-- Main Content -->
-<main class="content">
-    <!-- Coming Soon Overlay -->
-    <div class="coming-soon-overlay">
-        <h2>Coming Soon</h2>
-        <p>Fire weather forecasts launching December 2025</p>
-    </div>
+<main class="content" role="main">
+    <h1>Fire Weather</h1>
 
-    <h1>Fire Forecasts</h1>
+    <!-- Red Flag banner (populated by JS) -->
+    <section id="red-flag-banner" class="red-flag-banner is-hidden" aria-live="polite" aria-atomic="true" hidden></section>
 
-<!-- Forecast Sections -->
-<div class="forecast-container">
-    <!--  -->
-    <section class="forecast-section">
-        <h2><i class="fas fa-fire"></i> Hazard level, Uinta Basin</h2>
+    <!-- Active fire restrictions (populated by JS; hidden when none in effect) -->
+    <section id="fire-restrictions-panel" class="restrictions-section" aria-label="Active fire restrictions intersecting the Uinta Basin" hidden>
+        <h2><i class="fas fa-ban" aria-hidden="true"></i> Active Fire Restrictions</h2>
+        <p class="restrictions-intro">Orders currently in effect that overlap the Uinta Basin. Source: Utah Fire Info / DNR Fire Restrictions.</p>
+        <div id="fire-restrictions-list" class="restrictions-list"></div>
+    </section>
 
-        <div class="forecast-content">
-            <div class="placeholder-content">
-                <p>Some kind of fire product.</p>
-                <div class="chart-placeholder">
-                    <i class="fas fa-chart-line fa-3x"></i>
-                    <p>Fire weather chart</p>
-                </div>
-            </div>
+    <!-- Hero: basin-wide HDW + snapshot -->
+    <section class="fire-hero" aria-label="Current basin fire-weather summary">
+        <div class="hero-hdw">
+            <span class="hdw-label">Hot-Dry-Windy Index</span>
+            <span class="hdw-level-badge" id="basin-hdw-badge" data-level="loading">
+                <span class="hdw-value" id="basin-hdw-value">--</span>
+                <span class="hdw-level-name" id="basin-hdw-level-name">Loading</span>
+            </span>
+            <span class="hdw-source" id="basin-hdw-source"></span>
+        </div>
+        <div class="hero-side">
+            <p class="hero-snapshot" id="hero-snapshot">Loading current basin conditions…</p>
+            <span id="hotspot-count-chip" class="hotspot-count-chip is-hidden" hidden>
+                <i class="fas fa-fire-flame-curved" aria-hidden="true"></i>
+                <span id="hotspot-count-value">0</span> active satellite detections, 24h
+            </span>
         </div>
     </section>
-</div>
+
+    <!-- Live conditions grid -->
+    <section class="weather-summary" aria-label="Live basin conditions">
+        <div class="summary-grid">
+            <article class="condition-card">
+                <div class="card-icon"><i class="fas fa-temperature-high" aria-hidden="true"></i></div>
+                <div class="card-content">
+                    <h3>Temperature</h3>
+                    <p class="current-value" id="card-temp">--</p>
+                    <p class="trend" id="card-temp-trend">basin centroid</p>
+                </div>
+            </article>
+            <article class="condition-card">
+                <div class="card-icon"><i class="fas fa-tint" aria-hidden="true"></i></div>
+                <div class="card-content">
+                    <h3>Relative Humidity</h3>
+                    <p class="current-value" id="card-rh">--</p>
+                    <p class="trend" id="card-rh-trend">basin centroid</p>
+                </div>
+            </article>
+            <article class="condition-card">
+                <div class="card-icon"><i class="fas fa-wind" aria-hidden="true"></i></div>
+                <div class="card-content">
+                    <h3>Wind &amp; Gusts</h3>
+                    <p class="current-value" id="card-wind">--</p>
+                    <p class="trend" id="card-wind-trend">gust --</p>
+                </div>
+            </article>
+            <article class="condition-card">
+                <div class="card-icon"><i class="fas fa-fire" aria-hidden="true"></i></div>
+                <div class="card-content">
+                    <h3>HDW (max station)</h3>
+                    <p class="current-value" id="card-hdw">--</p>
+                    <p class="trend" id="card-hdw-station">--</p>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Map -->
+    <section class="map-section" aria-label="Fire-weather station map and active satellite detections">
+        <h2><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Station Map &amp; Active Detections</h2>
+        <div id="fire-map" class="station-map" role="application" aria-label="Leaflet map of fire-weather stations and FIRMS hotspot detections in the Uinta Basin"></div>
+        <p class="map-legend-text">
+            Station pins colored by HDW class (low → extreme). Red circles are NASA FIRMS VIIRS satellite hotspot detections from the last 24&nbsp;hours; size scales with fire-radiative-power.
+        </p>
+    </section>
+
+    <!-- Detected fires (populated by JS; hidden when none) -->
+    <section id="fire-list-panel" class="fire-list-section" aria-label="Fires detected by NASA FIRMS in the Uinta Basin" hidden>
+        <h2><i class="fas fa-fire" aria-hidden="true"></i> Detected Fires</h2>
+        <p class="fire-list-intro">
+            Clusters of NASA FIRMS satellite hotspot detections in the Uinta Basin.
+            <strong>Active</strong> = detected within the last 12&nbsp;hours;
+            <strong>Recent</strong> = within 72&nbsp;hours.
+            Single low-confidence detections are filtered out as likely noise.
+        </p>
+        <article class="fire-list-group" id="active-fires-group">
+            <h3>Active <span class="fire-list-count" id="active-fires-count">0</span></h3>
+            <div id="active-fires-list" class="fire-list-grid"></div>
+        </article>
+        <article class="fire-list-group" id="recent-fires-group">
+            <h3>Recent <span class="fire-list-count" id="recent-fires-count">0</span></h3>
+            <div id="recent-fires-list" class="fire-list-grid"></div>
+        </article>
+    </section>
+
+    <!-- NWS forecast strip -->
+    <section class="forecast-section" aria-label="National Weather Service basin forecast">
+        <h2><i class="fas fa-cloud-sun" aria-hidden="true"></i> NWS Forecast (Basin Centroid)</h2>
+        <div id="forecast-strip" class="forecast-strip">
+            <div class="loading-spinner"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Loading forecast…</span></div>
+        </div>
+    </section>
+
+    <!-- Meteogram -->
+    <section class="forecast-section" aria-label="48-hour meteogram">
+        <h2><i class="fas fa-chart-area" aria-hidden="true"></i> 48-Hour Meteogram</h2>
+        <div id="meteogram" class="meteogram-chart"></div>
+    </section>
+
+    <!-- Preparedness -->
+    <section class="preparedness-section" aria-labelledby="prep-heading">
+        <h2 id="prep-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i> Wildfire Preparedness</h2>
+        <ul class="preparedness-grid">
+            <li><strong>Defensible space.</strong> Maintain at least 30&nbsp;ft of cleared, well-watered vegetation around structures; 100&nbsp;ft on slopes.</li>
+            <li><strong>Burn restrictions.</strong> Any currently-in-effect orders for the basin are listed at the top of this page. Check <a href="https://utahfireinfo.gov/" target="_blank" rel="noopener noreferrer">Utah Fire Info</a> for the full statewide picture. Restrictions tighten on Red Flag days.</li>
+            <li><strong>Evacuation plan.</strong> Know two escape routes from your area, and a rendezvous point off the canyon.</li>
+            <li><strong>Go-bag.</strong> 72&nbsp;hours of water, meds, documents, N95s, and pet supplies near the door during Red Flag periods.</li>
+            <li><strong>Report new fires.</strong> Call 911 immediately. Note the location, smoke color, and any visible flames.</li>
+        </ul>
+    </section>
+
+    <!-- Resources -->
+    <section class="resources-section" aria-label="External fire-weather resources">
+        <h2><i class="fas fa-external-link-alt" aria-hidden="true"></i> Resources</h2>
+        <div class="resources-grid">
+            <a class="resource-card" href="https://utahfireinfo.gov/" target="_blank" rel="noopener noreferrer">
+                <h3>Utah Fire Info</h3>
+                <p>Statewide restrictions, active incidents, prevention.</p>
+            </a>
+            <a class="resource-card" href="https://www.weather.gov/fire/" target="_blank" rel="noopener noreferrer">
+                <h3>NWS Fire Weather</h3>
+                <p>Official forecasts, watches, and Red Flag warnings.</p>
+            </a>
+            <a class="resource-card" href="https://inciweb.wildfire.gov/" target="_blank" rel="noopener noreferrer">
+                <h3>InciWeb</h3>
+                <p>National incident information system.</p>
+            </a>
+            <a class="resource-card" href="https://firms.modaps.eosdis.nasa.gov/map/" target="_blank" rel="noopener noreferrer">
+                <h3>NASA FIRMS</h3>
+                <p>Source of the satellite hotspots on our map.</p>
+            </a>
+        </div>
+    </section>
 </main>
 
 <!-- Footer -->
 <footer class="main-footer">
     <div class="footer-content">
-        <p>&copy; 2025 Bingham Research Center. Fire weather products are strictly experimental; obtain
-            official information. All rights reserved.</p>
+        <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Experimental use only. All rights reserved.</p>
     </div>
 </footer>
 
 <!-- Scripts -->
-<script type="module" src="/public/js/fire.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script type="module" src="/public/js/loadSidebar.js"></script>
+<script type="module" src="/public/js/loadFooter.js"></script>
+<script src="/public/js/fire/HDWClassifier.js"></script>
+<script src="/public/js/fire/FireDataCache.js"></script>
+<script src="/public/js/fire/FireWeatherMap.js"></script>
+<script src="/public/js/fire/HotspotLayer.js"></script>
+<script src="/public/js/fire/AlertsBanner.js"></script>
+<script src="/public/js/fire/Meteogram.js"></script>
+<script src="/public/js/fire/RestrictionsPanel.js"></script>
+<script src="/public/js/fire/FireListPanel.js"></script>
+<script src="/public/js/fire/initialization.js"></script>
+<link rel="stylesheet" href="/public/css/easter-eggs.css">
+<script src="/public/js/easter-eggs.js"></script>
 
 </body>
 </html>

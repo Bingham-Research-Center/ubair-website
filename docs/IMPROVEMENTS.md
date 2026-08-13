@@ -1,92 +1,84 @@
-# 20 Low-Hanging Fruit Improvements
-# NOTE THIS HAS BEEN HALF DONE AND I NEED TO RENEW IT! - JRL
-## Quick Fixes (Can implement immediately)
+# Improvements & Outstanding Work
 
-### 1. Remove duplicate weather file
-**Issue:** `forecast_weather_old.js` is unused
-**Fix:** `rm public/js/forecast_weather_old.js`
+**Last refreshed:** 2026-04-27 (was flagged "half done — JRL needs to renew" — full reset).
+**Source:** ground-truth grep against `dev` HEAD a14fd93 + this session's review.
 
-### 2. Add missing error boundaries
-**Issue:** API failures crash pages
-**Fix:** Add try/catch blocks around fetch calls
+This list is for medium-leverage cleanups and low-risk improvements. For larger product
+work, use GitHub Issues. For temporary handoffs, use a dated `*-apr27.md` doc.
 
-### 3. Standardize console logging
-**Issue:** Mix of console.log/console.error
-**Fix:** Use consistent logging levels
+Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decision blocked)
 
-### 4. Add loading states
-**Issue:** Maps show blank while loading data
-**Fix:** Add "Loading..." indicators
+---
 
-### 5. Fix favicon missing error
-**Issue:** Browser shows 404 for favicon
-**Fix:** Add favicon.ico to public folder
+## Operational health (highest priority)
 
-### 6. Optimize image loading
-**Issue:** Large images load slowly
-**Fix:** Add lazy loading and WebP versions
+| ✓ | Item | Notes |
+|---|---|---|
+| 🔜 | **Promote `dev` → `ops`** to land 21 commits on `.com` | PRs #142, #178–#188 plus 7 fixes; needs a deliberate `dev→ops` PR + `pm2 restart basinwx-ops` |
+| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` |
+| 🔜 | **Fan-out gap for `forecasts/` to `.dev`** | `.com` has 100s of clustering files, `.dev` has zero. brc-tools uploader inconsistency. |
+| 🔜 | **Operational health page** (`/admin/health`) | per-dataType last-upload time + expected cadence + pm2 uptime + git HEAD; tier-3 of the apr26 plan |
+| 🔜 | **Upload-freshness alarm** | cron walks `public/api/static/`, emails via `reportEmailService` if any dataType exceeds expected cadence |
 
-### 7. Add metadata to HTML pages
-**Issue:** Missing SEO meta tags
-**Fix:** Add description, keywords, OpenGraph tags
+## Code quality
 
-### 8. Fix hardcoded localhost URLs
-**Issue:** Won't work on production
-**Fix:** Use relative URLs or environment variables
+| ✓ | Item | Notes |
+|---|---|---|
+| 🔜 | **Fix 4 failing tests** in `server/__tests__/cameraAnalysisScheduler.test.js` | Test drift after scheduler default changes (expected 25, got 30; expected 432, got 360). Don't add features on top of red tests. |
+| 🔜 | **Security deps PR** | `nodemailer ^6→^7` (advisory `<7.0.7`), `node-cron ^3→^4` (transitively fixes uuid), `@github/copilot` to current. 5 GH-reported vulns. |
+| 🔜 | **Pick a logger and burn down 178 `console.log`s** | Recommend `pino`. One file at a time, lowest-risk first (`scripts/`, then `server/`). |
+| 🔜 | **Standardise error boundaries on fetch calls** | API failures still cascade in places. Try/catch + user-visible loading/error state. |
+| 🔜 | **Data validation on incoming JSON** | server doesn't enforce `DATA_MANIFEST.json` schemas; malformed brc-tools uploads can crash visualisations. Tier 3 contract test would catch this. |
 
-### 9. Add ARIA accessibility labels
-**Issue:** Screen readers can't navigate maps
-**Fix:** Add proper ARIA labels to interactive elements
+## Frontend
 
-### 10. Standardize button styling
-**Issue:** Inconsistent button appearance
-**Fix:** Create unified button classes in main.css
+| ✓ | Item | Notes |
+|---|---|---|
+| 🔜 | **CSS consolidation** | 30 files (was 13 when this list was first written). Aim for `core/` (variables, base, layout) + `pages/` ≤12 files total. The `fire.css↔fire.html` 1:1 mapping is fine for page-specific styles. |
+| 🔜 | **Favicon** | `/favicon.ico` at root still missing → browser 404 on every load. Multiple files exist in `/public/images/favicons/`; pick one and copy to root. |
+| 🔜 | **ARIA labels on map controls** | screen readers can't navigate the Leaflet maps |
+| 🔜 | **Loading states on every map** | "Loading…" indicator while initial fetch runs |
+| 🔜 | **Print-friendly styles** | `@media print` rules; low priority |
+| ✅ | **Last-updated timestamps in UI** | partly done — visible in `DataCache.js`, `uiManager.js`, road weather panels. Audit other pages for parity. |
+| ✅ | **Remove `forecast_weather_old.js`** | no longer present in `public/js/` |
+| ✅ | **Hardcoded localhost** | only remaining instance is the server boot log message (`server.js:194`), which is correct for stdout |
 
-## Medium Priority Improvements
+## Data pipeline & schema
 
-### 11. Add data refresh timestamps
-**Issue:** Users don't know how old data is
-**Fix:** Display "Last updated: X minutes ago"
+| ✓ | Item | Notes |
+|---|---|---|
+| 🔜 | **Add `road-forecast` schema to `DATA_MANIFEST.json`** | currently undocumented dataType; brc-tools is the contract-holder but website-side manifest is where consumers look |
+| 🔜 | **Add `forecast_hrrr_kvel_crosswind_*` schema to `DATA_MANIFEST.json`** | extracted in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` §DATATYPE 2; copy-pin |
+| 🔜 | **CHPC↔website contract test** | small CI/cron job that POSTs synthetic JSON for every dataType, verifies it lands; would have caught the dark-dataTypes regression |
 
-### 12. Implement error retry logic
-**Issue:** Single API failure breaks functionality
-**Fix:** Add automatic retry with exponential backoff
+## Documentation hygiene (see `REVIEW-DOCS-apr27.md`)
 
-### 13. Add keyboard navigation
-**Issue:** Can't use tab/enter on map controls
-**Fix:** Add proper keyboard event handlers
+| ✓ | Item | Notes |
+|---|---|---|
+| 🔜 | **Merge `BRANCHING-WORKFLOW.md` + `BRANCHING-STRATEGY-IMPLEMENTATION.md`** | confirmed overlap; pick one |
+| 🔜 | **Merge `CHPC-DEPLOYMENT.md` + `CHPC-IMPLEMENTATION.md`** | confirmed overlap |
+| 🔜 | **Resolve `API_RATE_CALCULATIONS*.md` pair** | one is "current", one is "proposed hybrid"; archive the one that's not reality |
+| 🔜 | **Collapse 5 TODO docs into one** | `IMPROVEMENTS.md` (this file) + `TODO-DEFERRED.md` + `WISHLIST-TODOS.md` + `DEPLOYMENT-SPECS-TODO.md` + `PYTHON-DEVELOPER-TODO.md` |
+| 🔜 | **Bulk-rename underscored filenames to hyphens** | per the new naming convention; cosmetic chore PR |
+| 🔜 | **Move `CRON-SETUP-27NOV2025.md` to `archive/`** | date-stamped, superseded |
+| 🔜 | **Expand `docs/README.md`** | currently a 17-line stub; should be the human-side counterpart of `docs/AGENT-INDEX.md` |
+| ✅ | **Refresh `docs/AGENT-INDEX.md`** | was 5 months stale; rewritten 2026-04-27 |
+| ✅ | **Trim `CLAUDE.md` for AI-context efficiency** | 101 → 67 lines; this PR |
+| ✅ | **Trim `README.md` for human reader** | 248 → ~110 lines; this PR |
 
-### 14. Optimize bundle size
-**Issue:** Loading multiple large libraries
-**Fix:** Use tree-shaking, load libraries conditionally
+## Deferred / decision-blocked
 
-### 15. Add data validation
-**Issue:** Malformed data crashes visualizations
-**Fix:** Validate JSON schema before processing
+| ✓ | Item | Notes |
+|---|---|---|
+| ⏸️ | **Service worker for offline viewing** | nice-to-have; not blocking anything; defer until product priorities clearer |
+| ⏸️ | **Bundle-size optimisation / tree-shaking** | vanilla JS, mostly fine; revisit if a perf complaint surfaces |
+| ⏸️ | **API retry with exponential backoff** | UX-mediocre on flaky networks but no incident yet; defer |
+| ⏸️ | **Migration of SOPs to GitHub Wiki** | per `docs/README.md`'s standing TODO; revisit when team size justifies |
 
-### 16. Implement caching
-**Issue:** Repeated API calls slow performance
-**Fix:** Add client-side caching with TTL
+---
 
-### 17. Add unit labels consistency
-**Issue:** Some values show units, others don't
-**Fix:** Ensure all measurements display units
-
-### 18. Fix map marker clustering
-**Issue:** Overlapping stations hard to click
-**Fix:** Group nearby stations when zoomed out
-
-## Future Enhancements
-
-### 19. Add print-friendly styles
-**Issue:** Pages don't print well
-**Fix:** Add @media print CSS rules
-
-### 20. Implement offline functionality
-**Issue:** No internet = broken site
-**Fix:** Add service worker for basic offline viewing
-
-## Implementation Priority
-1. **Do first:** Items 1, 5, 8, 10 (5 minutes each)
-2. **Do next:** Items 2, 4, 7, 11 (15 minutes each)
-3. **Do later:** Items 6, 12, 14, 18 (30+ minutes each)
+## How to use this list
+- Pick an item. Verify it's still real (run the probe in the notes column or grep). Open a PR.
+- When done, change 🔜 to ✅ and commit the status update with the work.
+- If you find an item is no longer relevant, change to ✅ with a one-line note ("not reproducible 2026-mm-dd") and move on.
+- Don't grow this list past ~30 active items — past that, file GitHub Issues.

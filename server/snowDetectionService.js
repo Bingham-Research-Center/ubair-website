@@ -1086,12 +1086,42 @@ class SnowDetectionService {
     }
 
     /**
+     * Get HRRR temperature for a camera location as fallback when no weather station nearby
+     * @param {number} lat - Camera latitude
+     * @param {number} lng - Camera longitude
+     * @param {Object} hrrrForecast - HRRR forecast data with points array
+     * @returns {number|null} Temperature in °C, or null if unavailable
+     */
+    _getHRRRTemperatureForCamera(lat, lng, hrrrForecast) {
+        if (!hrrrForecast || !hrrrForecast.points || hrrrForecast.points.length === 0) {
+            return null;
+        }
+
+        let nearest = null;
+        let minDist = Infinity;
+        for (const pt of hrrrForecast.points) {
+            const dlat = pt.lat - lat;
+            const dlon = pt.lon - lng;
+            const dist = dlat * dlat + dlon * dlon;
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = pt;
+            }
+        }
+
+        if (!nearest) return null;
+        const fc = nearest.forecasts?.[0] || nearest;
+        return fc.temp_2m ?? null;
+    }
+
+    /**
      * Analyze multiple cameras in batch with weather data
      * @param {Array} cameras - Array of camera objects with id and views
      * @param {Array} weatherStations - Array of weather station data
+     * @param {Object} hrrrForecast - Optional HRRR forecast for temperature fallback
      * @returns {Promise<Array>} Array of detection results
      */
-    async analyzeCamerasBatch(cameras, weatherStations = []) {
+    async analyzeCamerasBatch(cameras, weatherStations = [], hrrrForecast = null) {
         // Process cameras in parallel with concurrency limit
         const concurrencyLimit = 5;
         const chunks = [];
@@ -1110,7 +1140,15 @@ class SnowDetectionService {
                             const views = Array.isArray(camera.views) ? camera.views : [];
 
                             // Find nearest weather station for temperature data
-                            const nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+                            let nearestStation = this.findNearestWeatherStation(camera, weatherStations);
+
+                            // Fall back to HRRR temperature if no weather station nearby
+                            if (!nearestStation && hrrrForecast) {
+                                const hrrrTemp = this._getHRRRTemperatureForCamera(camera.lat, camera.lng, hrrrForecast);
+                                if (hrrrTemp !== null) {
+                                    nearestStation = { airTemperature: (hrrrTemp * 9/5) + 32, source: 'hrrr' };
+                                }
+                            }
                             const perViewDetections = await Promise.all(
                                 views.map(async (view, viewIndex) => {
                                     const description = view?.description || `View ${viewIndex + 1}`;
@@ -1209,223 +1247,6 @@ class SnowDetectionService {
             .map(result => result.value);
 
         return results;
-    }
-
-    /**
-     * Generate road segment coordinates from camera location
-     * @param {Object} camera - Camera with lat/lng and name
-     * @returns {Array} Array of coordinate pairs representing road segment
-     */
-    generateRoadSegmentFromCamera_DEPRECATED(camera) {
-        const lat = camera.lat;
-        const lng = camera.lng;
-        const name = camera.name.toLowerCase();
-        
-        // Generate road segments that follow actual road geometry based on specific camera locations
-        let segmentCoords = [];
-        
-        // US-40 corridor - main east-west highway through basin
-        if (name.includes('us-40') || name.includes('us 40')) {
-            if (lng < -110.5) {
-                // Western section near Duchesne - curves slightly north
-                segmentCoords = [
-                    [lat - 0.003, lng - 0.012],
-                    [lat - 0.001, lng - 0.006],
-                    [lat, lng],
-                    [lat + 0.002, lng + 0.008],
-                    [lat + 0.003, lng + 0.015]
-                ];
-            } else if (lng < -110.0) {
-                // Central section Roosevelt area - straighter east-west
-                segmentCoords = [
-                    [lat - 0.002, lng - 0.015],
-                    [lat, lng - 0.008],
-                    [lat, lng],
-                    [lat + 0.001, lng + 0.008],
-                    [lat + 0.002, lng + 0.015]
-                ];
-            } else if (lng < -109.6) {
-                // Eastern section toward Vernal - slight southeast curve
-                segmentCoords = [
-                    [lat + 0.003, lng - 0.015],
-                    [lat + 0.002, lng - 0.008],
-                    [lat, lng],
-                    [lat - 0.002, lng + 0.008],
-                    [lat - 0.004, lng + 0.015]
-                ];
-            } else {
-                // Far eastern section toward Colorado - more southeast
-                segmentCoords = [
-                    [lat + 0.005, lng - 0.012],
-                    [lat + 0.003, lng - 0.006],
-                    [lat, lng],
-                    [lat - 0.003, lng + 0.008],
-                    [lat - 0.006, lng + 0.015]
-                ];
-            }
-        }
-        // US-191 corridor - north-south through eastern basin
-        else if (name.includes('us-191') || name.includes('us 191')) {
-            if (lat > 40.6) {
-                // Northern section - curves northeast toward Flaming Gorge
-                segmentCoords = [
-                    [lat - 0.015, lng - 0.005],
-                    [lat - 0.008, lng - 0.002],
-                    [lat, lng],
-                    [lat + 0.008, lng + 0.003],
-                    [lat + 0.015, lng + 0.008]
-                ];
-            } else if (lat > 40.4) {
-                // Vernal area - more north-south
-                segmentCoords = [
-                    [lat - 0.012, lng - 0.002],
-                    [lat - 0.006, lng - 0.001],
-                    [lat, lng],
-                    [lat + 0.008, lng + 0.001],
-                    [lat + 0.015, lng + 0.002]
-                ];
-            } else {
-                // Southern section toward Duchesne - curves southwest
-                segmentCoords = [
-                    [lat - 0.015, lng + 0.008],
-                    [lat - 0.008, lng + 0.003],
-                    [lat, lng],
-                    [lat + 0.008, lng - 0.002],
-                    [lat + 0.015, lng - 0.005]
-                ];
-            }
-        }
-        // SR-121 - Roosevelt to Manila route
-        else if (name.includes('sr-121') || name.includes('sr 121')) {
-            if (lng < -109.8) {
-                // Western section from Roosevelt - northeast toward Manila
-                segmentCoords = [
-                    [lat - 0.008, lng - 0.010],
-                    [lat - 0.004, lng - 0.005],
-                    [lat, lng],
-                    [lat + 0.006, lng + 0.008],
-                    [lat + 0.012, lng + 0.015]
-                ];
-            } else {
-                // Eastern section approaching Manila - more northeast
-                segmentCoords = [
-                    [lat - 0.010, lng - 0.015],
-                    [lat - 0.005, lng - 0.008],
-                    [lat, lng],
-                    [lat + 0.008, lng + 0.010],
-                    [lat + 0.015, lng + 0.018]
-                ];
-            }
-        }
-        // SR-87 - Duchesne to Roosevelt connector
-        else if (name.includes('sr-87') || name.includes('sr 87')) {
-            // Generally east-west with slight curves
-            segmentCoords = [
-                [lat + 0.002, lng - 0.012],
-                [lat + 0.001, lng - 0.006],
-                [lat, lng],
-                [lat - 0.001, lng + 0.006],
-                [lat - 0.003, lng + 0.012]
-            ];
-        }
-        // SR-45 - connects to Rangely
-        else if (name.includes('sr-45') || name.includes('sr 45')) {
-            // North-south route
-            segmentCoords = [
-                [lat - 0.010, lng + 0.002],
-                [lat - 0.005, lng + 0.001],
-                [lat, lng],
-                [lat + 0.005, lng - 0.001],
-                [lat + 0.010, lng - 0.003]
-            ];
-        }
-        // SR-208 - local connector
-        else if (name.includes('sr-208') || name.includes('sr 208')) {
-            // East-west local road
-            segmentCoords = [
-                [lat + 0.001, lng - 0.008],
-                [lat, lng - 0.004],
-                [lat, lng],
-                [lat - 0.001, lng + 0.004],
-                [lat - 0.002, lng + 0.008]
-            ];
-        }
-        // SR-88 - Pelican Lake area
-        else if (name.includes('sr-88') || name.includes('sr 88')) {
-            // Local road with curves
-            segmentCoords = [
-                [lat - 0.006, lng + 0.003],
-                [lat - 0.003, lng + 0.001],
-                [lat, lng],
-                [lat + 0.003, lng - 0.002],
-                [lat + 0.006, lng - 0.005]
-            ];
-        }
-        // Main Street or local roads in towns
-        else if (name.includes('main st') || name.includes('main street')) {
-            if (name.includes('vernal')) {
-                // Vernal Main St - east-west through town
-                segmentCoords = [
-                    [lat, lng - 0.006],
-                    [lat, lng - 0.003],
-                    [lat, lng],
-                    [lat, lng + 0.003],
-                    [lat, lng + 0.006]
-                ];
-            } else if (name.includes('roosevelt')) {
-                // Roosevelt area - east-west
-                segmentCoords = [
-                    [lat + 0.001, lng - 0.005],
-                    [lat, lng - 0.002],
-                    [lat, lng],
-                    [lat - 0.001, lng + 0.003],
-                    [lat - 0.002, lng + 0.006]
-                ];
-            } else {
-                // Generic main street
-                segmentCoords = [
-                    [lat, lng - 0.004],
-                    [lat, lng - 0.002],
-                    [lat, lng],
-                    [lat, lng + 0.002],
-                    [lat, lng + 0.004]
-                ];
-            }
-        }
-        // Default for unknown roads - try to infer from location
-        else {
-            // Use location to guess road orientation
-            if (Math.abs(lat - 40.45) < 0.1 && Math.abs(lng + 109.53) < 0.1) {
-                // Near Vernal - likely east-west
-                segmentCoords = [
-                    [lat + 0.001, lng - 0.005],
-                    [lat, lng - 0.002],
-                    [lat, lng],
-                    [lat - 0.001, lng + 0.003],
-                    [lat - 0.002, lng + 0.006]
-                ];
-            } else if (Math.abs(lat - 40.30) < 0.1 && Math.abs(lng + 109.99) < 0.1) {
-                // Near Roosevelt - likely east-west
-                segmentCoords = [
-                    [lat, lng - 0.006],
-                    [lat, lng - 0.003],
-                    [lat, lng],
-                    [lat, lng + 0.003],
-                    [lat, lng + 0.006]
-                ];
-            } else {
-                // Generic segment - slight curve
-                segmentCoords = [
-                    [lat + 0.002, lng - 0.005],
-                    [lat + 0.001, lng - 0.002],
-                    [lat, lng],
-                    [lat - 0.001, lng + 0.003],
-                    [lat - 0.003, lng + 0.006]
-                ];
-            }
-        }
-        
-        return segmentCoords;
     }
 
     /**
