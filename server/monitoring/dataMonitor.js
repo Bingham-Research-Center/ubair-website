@@ -12,6 +12,22 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+/**
+ * Index files the *server* regenerates, not files a producer uploads.
+ *
+ * `filelist.json` is rewritten by `updateFileList()` on every observations/metadata
+ * upload; `outlooks_list.json` is rewritten by `generateOutlooksList`. Their mtime is
+ * therefore always ~now, which makes freshness report a dataType as "fresh" even when no
+ * producer has ever uploaded to it — exactly what `outlooks` did on linode-dev (status
+ * "fresh", ageMinutes 0, on a directory holding nothing but 2026-04 sample files).
+ *
+ * Freshness must be judged on producer-written files only.
+ */
+export const GENERATED_INDEX_FILES = new Set([
+    'filelist.json',
+    'outlooks_list.json',
+]);
+
 class DataMonitor {
     constructor() {
         this.manifestPath = path.join(__dirname, '../../DATA_MANIFEST.json');
@@ -60,6 +76,9 @@ class DataMonitor {
             try {
                 const files = fs.readdirSync(dataDir)
                     .filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'))
+                    // Server-regenerated indexes would otherwise pin ageMinutes to ~0 forever
+                    // and mask a dead producer. See GENERATED_INDEX_FILES.
+                    .filter(f => !GENERATED_INDEX_FILES.has(f))
                     .map(f => ({
                         name: f,
                         path: path.join(dataDir, f),
@@ -70,7 +89,7 @@ class DataMonitor {
                 if (files.length === 0) {
                     results[dataType] = {
                         status: 'no_data',
-                        message: 'No data files found'
+                        message: 'No data files found (directory holds only server-generated indexes)'
                     };
                     continue;
                 }
