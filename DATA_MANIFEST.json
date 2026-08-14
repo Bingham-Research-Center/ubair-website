@@ -1,7 +1,7 @@
 {
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2026-08-13",
+  "lastUpdated": "2026-08-14",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -623,16 +623,109 @@
               }
             }
           }
+        },
+        "hrrr_kvel_crosswind": {
+          "description": "HRRR sub-hourly runway head/crosswind forecast for KVEL (Vernal Regional). Runways 17/35 per FAA redesignation (true headings 179/359).",
+          "schedule": {
+            "frequency": "55 * * * *",
+            "description": "Automatic - hourly export of the latest HRRR subh run (cron pending install on CHPC)",
+            "timezone": "UTC"
+          },
+          "filename": {
+            "pattern": "forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_hrrr_kvel_crosswind_20260813_1800Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": [
+              "model",
+              "product",
+              "airport",
+              "runway_headings_deg",
+              "init_time",
+              "valid_times",
+              "series"
+            ],
+            "properties": {
+              "model": {
+                "type": "string",
+                "enum": ["hrrr_subh", "hrrr"]
+              },
+              "product": {
+                "type": "string",
+                "enum": ["aviation_crosswind"]
+              },
+              "airport": {
+                "type": "string",
+                "enum": ["KVEL"]
+              },
+              "name": { "type": "string" },
+              "lat": { "type": "number" },
+              "lon": { "type": "number" },
+              "elevation_m": { "type": "number" },
+              "runway_headings_deg": {
+                "type": "array",
+                "description": "Degrees TRUE, top-level. Drives every column pair; series keys are derived from these values.",
+                "items": { "type": "integer", "minimum": 0, "maximum": 360 },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              "init_time": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+              },
+              "generated_at": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+              },
+              "valid_times": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                }
+              },
+              "forecast_minutes": {
+                "type": "array",
+                "items": { "type": "integer", "minimum": 0 }
+              },
+              "variables": {
+                "type": "object",
+                "description": "Per-series label/units/precision metadata (unread by aviation.js today)"
+              },
+              "series": {
+                "type": "object",
+                "description": "Every array MUST be index-aligned with valid_times; short arrays render as em-dashes, not errors. Per-runway keys are 'headwind_kt_' / 'crosswind_kt_' + String(heading).padStart(3,'0') for each heading in runway_headings_deg — currently _179 and _359.",
+                "required": [
+                  "wind_speed_kt",
+                  "wind_dir_deg",
+                  "headwind_kt_179",
+                  "crosswind_kt_179",
+                  "headwind_kt_359",
+                  "crosswind_kt_359"
+                ],
+                "properties": {
+                  "wind_speed_kt": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "wind_dir_deg": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "gust_kt": { "type": "array", "items": { "type": ["number", "null"] } }
+                },
+                "patternProperties": {
+                  "^(headwind|crosswind)_kt_\\d{3}$": { "type": "array", "items": { "type": ["number", "null"] } }
+                }
+              }
+            }
+          }
         }
       },
       "validation": {
         "maxFileSize": "10MB",
-        "totalFilesPerRun": 63,
+        "totalFilesPerRun": 64,
         "filesPerProduct": {
           "possibility_heatmap": 31,
           "exceedance_probabilities": 1,
           "percentile_scenarios": 31,
-          "hrrr_surface_layers": 4
+          "hrrr_surface_layers": 4,
+          "hrrr_kvel_crosswind": 1
         }
       },
       "ozoneCategories": {

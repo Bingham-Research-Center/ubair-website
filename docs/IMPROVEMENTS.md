@@ -15,7 +15,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Promote `dev` → `ops`** to land 21 commits on `.com` | PRs #142, #178–#188 plus 7 fixes; needs a deliberate `dev→ops` PR + `pm2 restart basinwx-ops` |
-| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` |
+| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (apr27 doc deleted) |
 | 🔜 | **Fan-out gap for `forecasts/` to `.dev`** | `.com` has 100s of clustering files, `.dev` has zero. brc-tools uploader inconsistency. |
 | 🔜 | **Operational health page** (`/admin/health`) | per-dataType last-upload time + expected cadence + pm2 uptime + git HEAD; tier-3 of the apr26 plan |
 | 🔜 | **Upload-freshness alarm** | cron walks `public/api/static/`, emails via `reportEmailService` if any dataType exceeds expected cadence |
@@ -48,7 +48,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Add `road-forecast` schema to `DATA_MANIFEST.json`** | currently undocumented dataType; brc-tools is the contract-holder but website-side manifest is where consumers look |
-| 🔜 | **Add `forecast_hrrr_kvel_crosswind_*` schema to `DATA_MANIFEST.json`** | extracted in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` §DATATYPE 2; copy-pin |
+| ✅ | **Add `forecast_hrrr_kvel_crosswind_*` schema to `DATA_MANIFEST.json`** | done in manifest 2.0.0 (2026-08-14), KVEL 17/35 contract. Do **not** copy-pin the deleted apr27 §DATATYPE 2 schema — its `crosswind_kt_rwy16`-style keys were wrong and render an empty table |
 | 🔜 | **CHPC↔website contract test** | small CI/cron job that POSTs synthetic JSON for every dataType, verifies it lands; would have caught the dark-dataTypes regression |
 
 ## Documentation hygiene (see `REVIEW-DOCS-apr27.md`)
