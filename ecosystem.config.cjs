@@ -20,7 +20,10 @@ const branch = rawBranch
 module.exports = {
   apps: [
     {
-      name: `basinwx-${branch}`,
+      // Branch-derived by default. PM2_APP_NAME overrides it so a box whose pm2 app
+      // predates this file (linode-prod runs `ubair-site`) can adopt the config without
+      // a rename — renaming a live app means downtime and a pm2 startup re-run.
+      name: process.env.PM2_APP_NAME || `basinwx-${branch}`,
       script: 'server/server.js',
       cwd: __dirname,
       env: {

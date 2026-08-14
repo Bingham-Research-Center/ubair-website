@@ -1,102 +1,109 @@
-# Uintah Basin Air Quality Website - Claude Context
+# Uintah Basin Air Quality Website — Claude Context
 
-## Project Overview
-Weather data visualization website showing live air quality observations and forecasts for Uintah Basin region.
+Live air-quality observations and forecasts for the Uintah Basin. Node/Express +
+Leaflet/Plotly, vanilla JS frontend.
 
-## Deployment Topology
-The operational core must be agnostic to which server / branch it runs on.
+## Topology
+| Role | Branch | Domain | pm2 app | Repo path | User |
+|---|---|---|---|---|---|
+| Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
+| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` (port 3001) | `/srv/ubair-website` | `deploy` |
 
-| Role | Branch | Domain | pm2 app name |
-|---|---|---|---|
-| Production | `ops` | `www.basinwx.com` | `basinwx-ops` |
-| Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` |
+Both rows verified by direct inspection 2026-08-13 (prod first, dev later the same day).
+`docs/DEPLOYMENT.md` §1b describes a *target* layout that **dev already matches** but
+production does **not**; §1a records what is actually deployed on each. Don't assume a fact
+from one box holds on the other — they differ in app name, port, path, user, and ingest path.
 
-- Both boxes: Linode, repo at `/srv/ubair-website`, pm2 run as the `deploy` user, nginx reverse proxy, Let's Encrypt certs.
-- pm2 app name is derived from `git rev-parse --abbrev-ref HEAD` (see `ecosystem.config.cjs`), so whichever branch is checked out dictates the running app identity.
-- `www.basinwx.dev` receives the same CHPC data as `.com` (fan-out upload) and runs whichever branch is checked out, so merging a PR into `dev` is a real-world dry-run before promotion to `ops`. It is also where stakeholder demos happen.
-- A third developer laptop/VM may also run this repo. It is **not operational**, may have broken paths, and must never be the source of truth.
-- Full bring-up runbook, nginx template, cert renewal, and "did this work?" sanity checklist live in `docs/DEPLOYMENT.md`.
-- **DNS is at Namecheap, not Linode.** Nameservers: `dns1/dns2.registrar-servers.com`. A wildcard A record (`*` → dev-box IP) covers every `<name>.basinwx.dev` subdomain, so new feature-branch previews need no DNS work — only nginx vhost + cert.
-- **Feature-branch previews** live at `<name>.basinwx.dev`, managed by `scripts/manage-previews.sh` + `preview-apps.json`. Runbook: `docs/DEPLOYMENT.md` §9. Background jobs (refresh, report emails) are gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas.
+**Ingest reaches the two boxes differently.** Prod's uploads arrive on loopback over an SSH
+tunnel; **dev's arrive as ordinary public HTTPS** from notchpeak1's real IP (`155.101.26.78`)
+through nginx → 3001. So on prod a green public `/api/health` says nothing about ingest, while
+on dev the public path *is* the ingest path — if `.dev` is unreachable, ingest is down with it.
 
-### Bring-up lessons learnt (keep for future re-provisioning)
-- **Linode Cloud Firewall defaults to Drop.** A fresh linode blocks 80/443 until you explicitly accept them. Symptoms: `certbot renew --dry-run` times out on the ACME challenge, site is unreachable externally, but internal `curl -I http://127.0.0.1:${PORT}` works fine. Check each box's firewall rules in the Linode console before assuming nginx or certbot are broken.
-- **Don't use `certbot --manual` for these domains.** Its renewal config writes `authenticator = manual`, which the systemd timer cannot drive non-interactively — the cert silently fails to renew until it expires. Always use `certbot certonly --nginx` (or `--webroot`) so renewal is automated. Verify with `sudo certbot renew --dry-run`.
-- **`.dev` TLDs trip some client networks.** HSTS-preload plus occasional SNI-based filtering on corporate/campus/ISP routers produces "connection reset" errors that look like the server is down. Always phone-tether test (`curl -I https://www.basinwx.dev/` on a mobile hotspot) before blaming the server; if it works on cellular, the site is fine and the user's LAN is the culprit.
-- **`pm2 startup` is not optional.** Without the systemd unit a reboot silently loses the site. Confirm with `systemctl list-unit-files | grep pm2`.
+`.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
+merging into `dev` is a real-world dry-run before promoting to `ops`.
 
-## Data Pipeline
-**CHPC (compute server)** → **POST /api/upload/:dataType** → **both `www.basinwx.com` and `www.basinwx.dev`**
+**The app serves `public/` off the working tree**, so `git checkout` changes what live traffic
+sees immediately, before any pm2 restart. Never check out a branch in a live repo to inspect or
+stage it — use `git worktree add /tmp/staging <branch>`.
 
-### Data Flow
-1. **CHPC**: `brc-tools` fetches from Synoptic Weather API / HRRR via herbie-data
-2. **Processing**: polars/pandas → JSON
-3. **Transfer**: Secure POST to `/api/upload/:dataType` with API key + CHPC hostname validation, fanned out to every URL in `BASINWX_API_URLS` (first = primary, rest = best-effort mirrors)
-4. **Display**: Leaflet maps on Node.js website (live on `.com`, rehearsal on `.dev`)
+Feature-branch previews live at `<name>.basinwx.dev` (Namecheap wildcard A record),
+managed via `scripts/manage-previews.sh` + `preview-apps.json`. Background jobs are
+gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas.
 
-### Data Types
-- **Live observations**: `map_obs_YYYYMMDD_HHMMZ.json` (geographic weather data)
-- **Station metadata**: `map_obs_meta_YYYYMMDD_HHMMZ.json` (station info)
-- **Time series**: Ozone concentration data
-- **Markdown outlooks**: Weather forecast text
-- **Images**: PNG files for visualization
-- **Forecasts**: Clyfar ensembles (`forecast_possibility_heatmap_*`, `forecast_exceedance_probabilities_*`, `forecast_percentile_scenarios_*`) and reduced HRRR surface layers (`forecast_hrrr_surface_layers_*`). Endpoint: `/api/upload/forecasts`. Full JSON schemas in `DATA_MANIFEST.json` §forecasts (~L247–L629). Server accepts any valid JSON; schema is not enforced server-side, so brc-tools is the contract-holder.
+A third dev laptop/VM may also run this repo: **not operational, never the source of truth.**
 
-## API Endpoints
-- **Upload**: `POST /api/upload/:dataType` (CHPC only, API key required)
-- **Fetch data**: `GET /api/static/{filename}`
-- **File listing**: `GET /api/filelist.json`
-- **Live observations**: `GET /api/live-observations`
+Bring-up runbook, nginx template, cert renewal, and chronic gotchas (Linode firewall
+default-Drop, certbot `--manual` trap, `.dev` TLD SNI filtering, pm2 systemd unit) are
+in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
 
-## Security
-- API key authentication via `x-api-key` header
-- CHPC hostname validation (chpc.utah.edu)
-- File type validation (JSON/MD/TXT only)
-- 10MB file size limit
+## Data pipeline
+CHPC `brc-tools` (Synoptic + HRRR/herbie via polars/pandas) → POST `/api/upload/:dataType`
+with `x-api-key` + CHPC-hostname validation → fanned out to every URL in
+`BASINWX_API_URLS` (first = primary, rest = best-effort mirrors) → served at
+`/api/static/*` and `/api/filelist/:dataType`.
 
-## Tech Stack
-- **Backend**: Node.js, Express, Multer
-- **Frontend**: Leaflet, Plotly.js, vanilla JavaScript
-- **Data**: JSON files, Markdown content
+Accepted dataTypes (`server/routes/dataUpload.js`):
+`observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast`.
 
-## Known Issues & Redundancy
-1. **Multiple CSS files** with similar styles (13 files)
-2. **Console.log statements** throughout codebase
-3. **TODO comments** for unfinished features
-4. **Unused code** in many files
-5. **Images folder** has many unused files
+Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
+the contract-holder for new dataTypes — server doesn't enforce schema).
+`GET /api/health` reports `version` + `manifestVersion` so producers can
+compatibility-check before uploading.
+
+On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
+notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
+public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
+are independent. If uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
+
+## Protected branches
+**Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
+direct push seems warranted, confirm with the user — then ask a **second time** before
+proceeding. Applies to merges, reverts, version bumps, every commit.
+
+GitHub rulesets on all three branches require one approving review; self-approval is
+impossible, so every merge is `gh pr merge <N> --admin`. Claude **may** run these, but only
+with JRL confirming **each merge individually** before it happens — never as a batch, and
+never inferred from earlier approval. Absent that, stage the PRs and hand over the one-liners.
+Merge commits should carry both of us as `Co-Authored-By` trailers.
+
+## Versioning & release train
+`dev` always carries the next version as `X.Y.Z-dev`; `ops` ships clean `X.Y.Z` with a
+lightweight `vX.Y.Z` tag on its tip, so the two boxes never report the same version.
+Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `ops`, merge
+commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.Y.Z release`
+→ reopen `dev` at the next `-dev`. Rationale + ceremony: `docs/DEPLOYMENT.md` §7a.
+
+**Squash-merge trap.** Chore PRs land into `dev` as *squashes*, so their original commits never
+become ancestors of `dev`. Any branch stacked on another chore branch will therefore conflict
+the moment the one below it merges — this bit `chore/bump-v1.5.0` and `chore/open-v1.5.1-dev`
+during the v1.5.0 train. Branch from `dev`, not from another PR's head. If a branch is already
+stacked, rebase it: `git checkout -B <branch> origin/dev && git cherry-pick <sha>` then
+force-push. Check a branch really is clean with `git merge-tree --write-tree HEAD origin/dev`
+(use its exit code — grepping for `<<<<<<<` false-positives on docs containing conflict-marker
+examples).
+
+## Secrets
+Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
+`SYNOPTIC_API_TOKEN`. Never commit, never echo values to logs or chat. Share via
+password manager.
+
+## Doc naming (LLM-produced markdown)
+- ALL-CAPS, **3–4 hyphen-separated words** (e.g. `DEPLOYMENT-RUNBOOK.md`,
+  `WEBSITE-BRCTOOLS-HANDOFF.md`). Avoid sentences-as-filenames.
+- Temporary/handoff docs: append `-mmmDD` before the extension (e.g.
+  `WEBSITE-BRCTOOLS-HANDOFF-apr27.md`) so future agents can spot expiry.
+- Markdown only. Python and other code files follow the language's convention
+  (lowercase, snake_case where applicable).
+
+## Reference docs (read on demand, not by default)
+- `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
+- `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
+- `docs/IMPROVEMENTS.md` — outstanding work (flagged stale by JRL; renew before reuse)
+- `DATA_MANIFEST.json` — forecast schemas
+- `git log --oneline -30` — recent merges; do not duplicate here
 
 ## Testing
-- **Development**: `npm run dev` (nodemon)
-- **API testing**: `npm run test-api` (automated script)
-- **Manual API test**: `POST localhost:${PORT}/api/upload/observations` (PORT from `.env`; typically 3000 on ops, 3001 on dev)
-- **Example data**: Files in `/public/api/static/`
-
-## Features
-- **Responsive design**: Mobile/tablet friendly with percentage-based layouts
-- **90s Mode toggle**: Iridescent background with sparkle animations
-- **Secure uploads**: API key + hostname validation
-- **Real-time data**: Automatic refresh every 10 minutes
-
-## Recent Updates
-- **PR #182 (2026-04-24)**: per-user branch preview apps on subdomains — `preview-apps.json`, `scripts/manage-previews.sh`, `PREVIEW_MODE` gate in `server.js`, `docs/DEPLOYMENT.md` §9; also fixed `routes/trafficEvents.js` to use shared `TrafficEventsService` instance via injection (eliminating separate rate-limiter and cold-start double-poll against UDoT)
-- **PR #178 (2026-04-22)**: operational-agnosticism pass — branch-derived pm2 app name, fan-out CHPC uploader (`BASINWX_API_URLS`), `docs/DEPLOYMENT.md` runbook, host-aware sidebar brand
-- Implemented 90s mode toggle with holographic background
-- Created data schema documentation (DATA_SCHEMA.md)
-- Moved unused images to `/public/images/unused/`
-
-## Secret Management
-Environment variables are used for all API keys and sensitive configuration:
-- **Copy setup**: `cp .env.example .env` and fill in your values
-- **Required keys**: DATA_UPLOAD_API_KEY, UDOT_API_KEY, SYNOPTIC_API_TOKEN
-- **Never commit**: .env files are gitignored automatically
-- **Team sharing**: Use secure password manager (1Password, Bitwarden) for sharing secrets
-- **Production**: Set environment variables directly on server/cloud platform
-
-## Protected Branches
-**Never push directly to `dev`, `ops`, or `main`.**  All changes to these branches must go through a pull request. If you believe a direct push is warranted, ask the user to confirm — then ask a **second time** to be sure before proceeding. This applies to merges, reverts, version bumps, and any other commits.
-
-## Team Notes
-- Small collaborative team (lead + RAs — see README for current roster)
-- CSS-HTML mapping: fire.css ↔ fire.html pattern
-- 20-item improvement list available (IMPROVEMENTS.md)
+- `npm run dev` — nodemon server
+- `npm test` — Jest (known baseline: 4 failures in `cameraAnalysisScheduler.test.js`;
+  anything else failing is new breakage)
+- `npm run test-api` — loopback POST against the upload route

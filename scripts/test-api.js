@@ -63,14 +63,17 @@ async function testFetch() {
     console.log('🔄 Testing data fetch...');
     
     try {
-        const response = await fetch(`${BASE_URL}/api/filelist.json`);
+        // /api/filelist.json was a deploy-time fossil removed in d05ef52.
+        // The live route is /api/filelist/:dataType and returns bare filenames.
+        const response = await fetch(`${BASE_URL}/api/filelist/observations`);
         const files = await response.json();
-        console.log('✅ Available files:', files);
-        
-        if (files.length > 0) {
-            const dataResponse = await fetch(`${BASE_URL}/api/static/${files[0]}`);
+        console.log('✅ Available files:', files.length, 'in observations');
+
+        const dataFiles = files.filter(f => f !== 'filelist.json');
+        if (dataFiles.length > 0) {
+            const dataResponse = await fetch(`${BASE_URL}/api/static/observations/${dataFiles[0]}`);
             const data = await dataResponse.json();
-            console.log('✅ Sample data:', data.slice(0, 3));
+            console.log('✅ Sample data:', Array.isArray(data) ? data.slice(0, 3) : data);
         }
         
     } catch (error) {

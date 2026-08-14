@@ -10,8 +10,12 @@ import dataUploadRoutes from './routes/dataUpload.js';
 import roadWeatherRoutes, { setRoadWeatherService } from './routes/roadWeather.js';
 import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEvents.js';
 import synopticAPIRoutes from './routes/synopticAPI.js';
+import fireWeatherRoutes from './routes/fireWeather.js';
+import fireRestrictionsRoutes from './routes/fireRestrictions.js';
+import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
-import analyticsMiddleware, { getAnalyticsStats } from './middleware/analytics.js';
+import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from './middleware/analytics.js';
+import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
 
@@ -45,10 +49,19 @@ app.use('/api', dataUploadRoutes);
 app.use('/api', roadWeatherRoutes);
 app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
+app.use('/api', fireWeatherRoutes);
+app.use('/api', fireRestrictionsRoutes);
+// Pipeline freshness/health for CHPC operators verifying their cron jobs.
+app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
 
-// Analytics stats endpoint (protected by environment check)
+// Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
+app.get('/api/analytics/pipeline', getPipelineStats);
+// Unauthenticated by necessity (called from every visitor's browser). Cap the body hard —
+// the handler rate-limits per IP and validates every field, but there is no reason to parse
+// more than a few hundred bytes here.
+app.post('/api/analytics/engagement', express.json({ limit: '2kb' }), handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -79,6 +92,10 @@ app.get('/forecast_air_quality', (req, res) => {
 
 app.get('/forecast_weather', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/forecast_weather.html'));
+});
+
+app.get('/sports', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/sports.html'));
 });
 
 app.get('/agriculture', (req, res) => {

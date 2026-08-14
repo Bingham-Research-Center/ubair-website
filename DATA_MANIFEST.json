@@ -1,7 +1,7 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2025-11-23",
+  "lastUpdated": "2026-08-13",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -218,6 +218,29 @@
         "encoding": "UTF-8"
       },
       "template": "# Uintah Basin Air Quality Outlook\n## Valid: {date}\n\n{content}"
+    },
+    "llm_outlooks": {
+      "description": "LLM-generated air quality outlook PDFs. Accepted by the upload route since launch and live on basinwx.com, but previously undocumented here. Consumed by public/js/forecast_air_quality.js, which lists /api/filelist/llm_outlooks, filters for .pdf, and links the newest as a download.",
+      "format": "pdf",
+      "endpoint": "/api/upload/llm_outlooks",
+      "schedule": {
+        "frequency": "ad-hoc",
+        "description": "Produced alongside the Clyfar forecast cycle during ozone season; dormant out of season (last run 2026-03-30 0600Z).",
+        "timezone": "UTC",
+        "automation": "automatic"
+      },
+      "filename": {
+        "pattern": "LLM-OUTLOOK-YYYYMMDD_HHMMZ.pdf",
+        "example": "LLM-OUTLOOK-20260330_0600Z.pdf"
+      },
+      "validation": {
+        "maxFileSize": "10MB",
+        "allowedExtensions": [".pdf"]
+      },
+      "notes": [
+        "Binary payload — no JSON schema applies, so chpc_uploader.py performs size/extension checks only.",
+        "The consumer sorts filenames lexically and takes the last, so the YYYYMMDD_HHMMZ stamp must stay zero-padded and fixed-width."
+      ]
     },
     "images": {
       "description": "Visualization images (maps, charts, satellite)",
@@ -642,6 +665,135 @@
         "Ozone categories use fuzzy inference (Mamdani) with Dubois-Prade possibility theory",
         "Daily maximum values are used (local timezone: America/Denver)",
         "Forecast horizon: ~15-17 days depending on GEFS availability"
+      ]
+    },
+    "road-forecast": {
+      "description": "HRRR road-weather forecast at fixed waypoints along Uinta Basin highway corridors. Produced by brc-tools (python -m brc_tools.download.get_road_forecast); consumed by server/roadWeatherService.js getHRRRConditionAtPoint to drive /api/road-weather/forecast and the road weather map.",
+      "format": "json",
+      "endpoint": "/api/upload/road-forecast",
+      "schedule": {
+        "frequency": "ad-hoc (proof-of-concept)",
+        "description": "Manual runs from CHPC during development. Cron schedule TBD; expected hourly once promoted out of POC.",
+        "timezone": "UTC",
+        "automation": "manual"
+      },
+      "filename": {
+        "pattern": "road_forecast_YYYYMMDD_HHMMZ.json",
+        "example": "road_forecast_20260428_0520Z.json",
+        "latestSymlink": "public/api/static/road-forecast/latest.json (server copies on upload — see dataUpload.js)"
+      },
+      "schema": {
+        "type": "object",
+        "required": ["model", "init_time", "points"],
+        "properties": {
+          "model": {
+            "type": "string",
+            "enum": ["hrrr"]
+          },
+          "product": {
+            "type": "string",
+            "description": "HRRR product variant",
+            "enum": ["sfc", "subh"]
+          },
+          "init_time": {
+            "type": "string",
+            "description": "HRRR initialization time (ISO 8601 with Z). Rejected by roadWeatherService.loadHRRRForecast if older than 3 hours.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+          },
+          "generated_at": {
+            "type": "string",
+            "description": "Build wall-clock time (ISO 8601 with Z)",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+          },
+          "forecast_hours": {
+            "type": "array",
+            "items": { "type": "integer", "minimum": 0 }
+          },
+          "valid_times": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+            }
+          },
+          "variables": {
+            "type": "object",
+            "description": "Variable metadata (display label + units)"
+          },
+          "points": {
+            "type": "array",
+            "description": "Flat list of forecast waypoints. Read by getHRRRConditionAtPoint via nearest-neighbor on lat/lon.",
+            "items": {
+              "type": "object",
+              "required": ["lat", "lon", "forecasts"],
+              "properties": {
+                "route_id": {
+                  "type": "string",
+                  "enum": ["us40", "us191", "basin_roads"]
+                },
+                "name": { "type": "string" },
+                "lat": { "type": "number" },
+                "lon": { "type": "number" },
+                "elevation_m": { "type": ["number", "null"] },
+                "reference_stid": { "type": ["string", "null"] },
+                "forecasts": {
+                  "type": "array",
+                  "description": "Per-forecast-step values. Website currently reads index 0 only; full series future-proofs for downstream use.",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "valid_time": {
+                        "type": "string",
+                        "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+                      },
+                      "temp_2m": { "type": ["number", "null"], "description": "Celsius" },
+                      "wind_speed_10m": { "type": ["number", "null"], "description": "m/s" },
+                      "wind_gust": { "type": ["number", "null"], "description": "m/s" },
+                      "visibility": { "type": ["number", "null"], "description": "km (server multiplies by 1000 for metres)" },
+                      "precip_1hr": { "type": ["number", "null"], "description": "mm" },
+                      "precip_type": {
+                        "type": ["string", "null"],
+                        "enum": [null, "none", "snow", "rain", "freezing_rain", "ice_pellets", "mixed"]
+                      },
+                      "snow_depth": { "type": ["number", "null"], "description": "mm" },
+                      "cloud_cover": { "type": ["number", "null"], "description": "%" },
+                      "rh_2m": { "type": ["number", "null"], "description": "%" }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "routes": {
+            "type": "object",
+            "description": "Legacy nested-by-route shape preserved for backward compatibility. Per-variable arrays keyed by route_id then waypoint_index. New consumers should read points[] instead."
+          },
+          "cameras": {
+            "type": "array",
+            "description": "Reserved for future camera integration; emitted empty today."
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "1MB",
+        "maxAgeHours": 3,
+        "expectedPointCount": 17,
+        "unitMapping": {
+          "temp_2m": "Celsius",
+          "wind_speed_10m": "m/s",
+          "wind_gust": "m/s",
+          "visibility": "km",
+          "precip_1hr": "mm",
+          "snow_depth": "mm",
+          "cloud_cover": "%",
+          "rh_2m": "%"
+        }
+      },
+      "notes": [
+        "Server copies the upload to public/api/static/road-forecast/latest.json on success (server/routes/dataUpload.js line 188-193).",
+        "loadHRRRForecast rejects files with init_time older than 3 hours (server/roadWeatherService.js line 383-389).",
+        "Currently 17 waypoints across 3 corridors (9 us40 + 4 us191 + 4 basin_roads). Densification is a possible future upgrade.",
+        "Producer: brc-tools brc_tools.download.get_road_forecast (proof-of-concept; not yet on a cron)."
       ]
     }
   },

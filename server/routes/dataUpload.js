@@ -4,8 +4,28 @@ import path from 'path';
 import fs from 'fs';
 import { promisify } from 'util';
 import dns from 'dns';
+import { fileURLToPath } from 'url';
+import { logPipelineEvent } from '../middleware/pipelineAnalytics.js';
 
 const reverseLookup = promisify(dns.reverse);
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Read once at module load. Neither file changes at runtime, and CHPC producers
+// call /health before every single upload, so this must not hit disk per request.
+function readJsonField(relPath, field) {
+    try {
+        const content = fs.readFileSync(path.join(__dirname, relPath), 'utf8');
+        return JSON.parse(content)[field] ?? null;
+    } catch (error) {
+        console.error(`Failed to read "${field}" from ${relPath}:`, error.message);
+        return null;
+    }
+}
+
+const SERVER_VERSION = readJsonField('../../package.json', 'version');
+const MANIFEST_VERSION = readJsonField('../../DATA_MANIFEST.json', 'version');
 
 // Add this helper at the top (after imports)
 function updateFileList(uploadDir) {
@@ -32,7 +52,8 @@ const storage = multer.diskStorage({
             'llm_outlooks': 'llm_outlooks',
             'images': 'images',
             'timeseries': 'timeseries',
-            'forecasts': 'forecasts'
+            'forecasts': 'forecasts',
+            'road-forecast': 'road-forecast'
         };
 
         const dataType = req.params.dataType || 'observations';
@@ -59,8 +80,10 @@ const upload = multer({
     }
 });
 
-// Middleware to validate API key
-function validateApiKey(req, res, next) {
+// Middleware to validate API key.
+// Exported so other routers can reuse it for state-mutating endpoints
+// (e.g. POST /api/monitoring/alerts/clear).
+export function validateApiKey(req, res, next) {
     const providedKey = req.headers['x-api-key'];
     const validKey = process.env.DATA_UPLOAD_API_KEY;
 
@@ -179,10 +202,21 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { dataType } = req.params;
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
+    // Fire-and-forget; logPipelineEvent swallows its own errors, and the .catch() is a
+    // second belt so upload analytics can never reject on the ingest path.
+    logPipelineEvent({ dataType, filename, size, success: true })
+        .catch(err => console.error('[Pipeline] log failed:', err.message));
 
     // Update file list for the observations directory (where obs files actually live)
     const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
     updateFileList(observationsDir);
+
+    // Copy road-forecast uploads to latest.json for easy access
+    if (dataType === 'road-forecast') {
+      const latestPath = path.join(process.cwd(), 'public', 'api', 'static', 'road-forecast', 'latest.json');
+      fs.copyFileSync(req.file.path, latestPath);
+      console.log(`[${new Date().toISOString()}] Road forecast latest.json updated`);
+    }
 
     res.status(200).json({
       success: true,
@@ -193,15 +227,23 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     });
   } catch (error) {
     console.error('Error handling file upload:', error);
+    logPipelineEvent({ dataType: req.params.dataType, filename: req.file?.originalname, size: 0, success: false, error: error.message })
+        .catch(err => console.error('[Pipeline] log failed:', err.message));
     res.status(500).json({ success: false, message: 'Server error processing upload' });
   }
 });
 
-// Health check route for this API
+// Health check route for this API.
+// version + manifestVersion ride along on the call producers already make before
+// every upload, so brc-tools can check contract compatibility for free, and
+// "which box am I talking to?" is answerable with one curl — dev carries a -dev
+// suffix, ops does not.
 router.get('/health', (req, res) => {
     res.status(200).json({
         success: true,
         message: 'Data upload API is running',
+        version: SERVER_VERSION,
+        manifestVersion: MANIFEST_VERSION,
         timestamp: new Date().toISOString()
     });
 });

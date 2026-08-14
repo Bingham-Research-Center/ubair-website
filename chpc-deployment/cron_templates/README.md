@@ -183,7 +183,7 @@ bash -c "source ~/.bashrc && cd ~/brc-tools && python3 brc_tools/download/push_d
 **Check API key:**
 ```bash
 echo $BASINWX_API_KEY
-# Should show: 48cd2f722c19af756e7443230efe9fcc
+# Should show a non-empty 32-char hex string (value lives in the password manager, not here)
 ```
 
 **Check connectivity:**
@@ -210,7 +210,7 @@ ls -l ~/brc-tools/output/
 
 **Check website:**
 ```bash
-curl https://basinwx.com/api/filelist.json
+curl https://basinwx.com/api/filelist/observations
 ```
 
 ## Maintenance
