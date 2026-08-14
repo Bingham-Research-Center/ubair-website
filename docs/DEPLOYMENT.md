@@ -338,8 +338,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.0"     (tag v1.5.0)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.1-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.1"     (tag v1.5.1)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.2-dev"
 ```
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
