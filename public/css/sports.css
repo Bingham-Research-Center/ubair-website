@@ -41,10 +41,25 @@ h2
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 20px rgba(80, 22, 22, 0.1);
-    border-left: 4px solid darkred;
+    border-left: 4px solid var(--card-accent, darkred);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+}
+
+/* Per-card palette: --card-accent tints the border/icon, --card-text the labels */
+.condition-card[data-card-type="current-temperature"] { --card-accent: #A7D8FF; --card-text: #2E7BA8; }
+.condition-card[data-card-type="felt-temperature"] { --card-accent: #BFF4D2; --card-text: #3D9B65; }
+.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #F0B6D5; --card-text: #C48BA8; }
+.condition-card[data-card-type="dew-point"] { --card-accent: #FFD6A5; --card-text: #CCAA88; }
+.condition-card[data-card-type="uv-index"] { --card-accent: #FFB5B5; --card-text: #CC8888; }
+.condition-card[data-card-type="visibility"] { --card-accent: #B8C9FF; --card-text: #8B9BCC; }
+.condition-card[data-card-type="precipitation"] { --card-accent: #D7C7FF; --card-text: #AA99CC; }
+.condition-card[data-card-type="baseball"] { --card-accent: #AEECFF; --card-text: #7BBFCC; }
+.condition-card[data-card-type="football"] { --card-accent: #DDB892; --card-text: #B49973; }
+
+.condition-card h3 {
+    color: var(--card-text, darkred);
 }
 
 /* Inactive "thumbprint" effect of cards */
@@ -67,7 +82,7 @@ h2
 
     .card-icon {
         background-color: black !important;
-        color: red;
+        color: var(--card-accent, red);
         transition: 1s;
     }
 }
@@ -81,7 +96,7 @@ h2
     border-radius: 50%;
     margin-bottom: 1rem;
     color: black;
-    background-color: red;
+    background-color: var(--card-accent, red);
     font-size: 1.2rem;
     transition: 2.5s;
 }
@@ -89,7 +104,7 @@ h2
 .current-value {
     font-size: 1.8rem;
     font-weight: 700;
-    color: darkred;
+    color: var(--card-text, darkred);
     margin: 0.5rem 0;
 }
 
@@ -199,4 +214,84 @@ h2
     width: 50%;                 /* change this with inline style or JS */
     background: linear-gradient(90deg, #d32f2f, #388e3c);
     transition: width 0.3s ease;
+}
+
+/* ========================================
+   Prediction Game (prototype)
+   ======================================== */
+
+.prediction-game .rule-entry {
+    transition: all 0.2s;
+    font-size: 10px;
+}
+
+.prediction-game .rule-entry:hover {
+    font-size: 14px;
+}
+
+.game-slider {
+    -webkit-appearance: none;
+    accent-color: darkred;
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    width: 100%;
+    height: 25px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-top: 0.75rem;
+}
+
+.game-slider:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    height: 35px;
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+}
+
+.game-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+}
+
+.game-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+    transition: all 0.2s;
+}
+
+.game-slider::-moz-range-thumb:hover {
+    width: 16px;
+    height: 16px;
+}
+
+.game-text {
+    font-weight: 600;
+    color: darkred;
+    margin: 0.75rem 0;
+}
+
+.game-btn {
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    color: black;
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.game-btn:hover {
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+    color: red;
 }
