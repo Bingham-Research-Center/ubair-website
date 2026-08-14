@@ -5,6 +5,7 @@ import fs from 'fs';
 import { promisify } from 'util';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
+import { logPipelineEvent } from '../middleware/pipelineAnalytics.js';
 
 const reverseLookup = promisify(dns.reverse);
 
@@ -201,6 +202,10 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { dataType } = req.params;
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
+    // Fire-and-forget; logPipelineEvent swallows its own errors, and the .catch() is a
+    // second belt so upload analytics can never reject on the ingest path.
+    logPipelineEvent({ dataType, filename, size, success: true })
+        .catch(err => console.error('[Pipeline] log failed:', err.message));
 
     // Update file list for the observations directory (where obs files actually live)
     const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
@@ -222,6 +227,8 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     });
   } catch (error) {
     console.error('Error handling file upload:', error);
+    logPipelineEvent({ dataType: req.params.dataType, filename: req.file?.originalname, size: 0, success: false, error: error.message })
+        .catch(err => console.error('[Pipeline] log failed:', err.message));
     res.status(500).json({ success: false, message: 'Server error processing upload' });
   }
 });

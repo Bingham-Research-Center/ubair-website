@@ -1,6 +1,7 @@
 # BASINWX → BRC-TOOLS HANDOFF
 # Status: TEMPORARY (expires when the four acceptance criteria pass — then delete)
-# From: Bingham-Research-Center/ubair-website, branch `dev`, HEAD 57e07f8
+# From: Bingham-Research-Center/ubair-website, branch `dev`, HEAD c9cf2d0 (v1.5.1-dev)
+#       Production `ops` = v1.5.0 (tag v1.5.0, 40d6241), deployed and live on basinwx.com.
 # To:   brc-tools repo on CHPC
 # Compiled: 2026-08-13
 # Supersedes: WEBSITE-BRCTOOLS-HANDOFF-apr27.md (deleted in this PR — it contained a
@@ -15,6 +16,45 @@ Three website features (PRs #176, #183, #188) consume dataTypes brc-tools has ne
 produced, and the fan-out to `.dev` is broken for everything except observations/metadata.
 Fix both. **Do not change the website-side endpoint contract** — match the schemas below and
 the pages light up on their own.
+
+---
+
+## STATUS UPDATE — 2026-08-13 20:30Z (read before anything below)
+
+**The website side is done and deployed.** Everything that was blocking you server-side has
+shipped in v1.5.0:
+
+- `DATA_MANIFEST.json` is now **v1.2.0** and documents `llm_outlooks`.
+- `GET /api/health` now returns `version` + `manifestVersion` — one curl tells you which box
+  and which contract you're talking to. Use it as your pre-flight check.
+- `/api/monitoring/{status,freshness,uploads,alerts}` are mounted and returning 200. Use
+  `freshness` to verify your cron actually landed instead of guessing.
+- `scripts/chpc_uploader.py` no longer has the hardcoded `--data-type` allowlist that was
+  silently rejecting `forecasts`, `road-forecast`, and `llm_outlooks`. Valid types now come
+  from the manifest.
+
+Verified live on prod at 20:28Z: `/api/health` → `1.5.0` / manifest `1.2.0`; all four
+monitoring routes 200; upload route returns 401 without a key, 403 without a CHPC hostname,
+400 with no file. **The receive path is healthy. Nothing on the website is blocking you.**
+
+### ⚠️ Ingest has been stalled since 2026-08-13 19:21:06Z
+
+Last upload received: `map_obs_20260813_1920Z.json`. Nothing since — against a 5-minute
+cadence, and the box has been up and healthy that whole time. This is **upstream, on CHPC.**
+
+Two facts that should shape how you debug it:
+
+1. **Uploads arrive over SSH from loopback**, not from the public internet. Prod logs
+   `Access attempt from IP: ::ffff:127.0.0.1, Hostname: notchpeak1.int.chpc.utah.edu`. So
+   `https://www.basinwx.com/api/health` returning 200 tells you **nothing** about whether your
+   upload path works — they are independent. Check the SSH path.
+2. **`/var/log/auth.log` on prod shows an hourly `:24` job failing pubkey auth** with
+   `signature algorithm ssh-rsa not in PubkeyAcceptedAlgorithms`. OpenSSH 8.8+ disables SHA-1
+   RSA by default. If any CHPC cron still offers an `ssh-rsa` key, it fails auth and looks
+   exactly like "the job silently stopped". **Check this first** — re-key to Ed25519
+   (`ssh-keygen -t ed25519`) rather than weakening the server.
+
+JRL is updating the CHPC crons as of 2026-08-13 ~20:30Z; coordinate before changing schedules.
 
 ---
 
