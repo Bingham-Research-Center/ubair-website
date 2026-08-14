@@ -217,8 +217,9 @@ dramatic one.
 
 **Endpoint:** `POST /api/upload/forecasts` (shared dataType, distinguished by filename prefix)
 **Filename:** `forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json`
-**Manifest entry:** none yet — the schema below is extracted directly from the consumer,
-`public/js/aviation.js:33-84`. Coordinate a manifest addition when you build it.
+**Manifest entry:** `DATA_MANIFEST.json` → `dataTypes.forecasts.products.hrrr_kvel_crosswind`
+(added in manifest 2.0.0, 2026-08-14). The schema below is extracted directly from the
+consumer, `public/js/aviation.js:33-84`, and matches the manifest entry.
 
 > ⚠️ **The apr27 handoff doc got this wrong.** It specified `crosswind_kt_rwy16` /
 > `crosswind_kt_rwy34` and `metadata.runway_headings_deg_true`. Building to that spec renders
@@ -228,26 +229,28 @@ dramatic one.
 ```jsonc
 {
   "product": "aviation_crosswind",   // exact string; else header falls back to "hrrr"
-  "model": "hrrr",                   // shown in the <h2> when product matches
+  "model": "hrrr_subh",              // shown in the <h2> when product matches
   "init_time": "2026-08-13T18:00:00Z",  // rendered verbatim as a string
-  "runway_headings_deg": [160, 340],    // TOP-LEVEL. Degrees true. Drives all column pairs.
+  "runway_headings_deg": [179, 359],    // TOP-LEVEL. Degrees true. Drives all column pairs.
   "valid_times": ["2026-08-13T19:00:00Z", "..."],   // drives row count
   "series": {
     "wind_speed_kt":     [12, 14, ...],   // knots
     "wind_dir_deg":      [210, 215, ...], // degrees true
-    "headwind_kt_160":   [ 8,  9, ...],   // key = "headwind_kt_" + String(heading).padStart(3,'0')
-    "crosswind_kt_160":  [ 9, 11, ...],   // key = "crosswind_kt_" + same tag
-    "headwind_kt_340":   [-8, -9, ...],
-    "crosswind_kt_340":  [-9,-11, ...]
+    "gust_kt":           [18, 21, ...],   // producer sends it; the page currently ignores it
+    "headwind_kt_179":   [ 8,  9, ...],   // key = "headwind_kt_" + String(heading).padStart(3,'0')
+    "crosswind_kt_179":  [ 9, 11, ...],   // key = "crosswind_kt_" + same tag
+    "headwind_kt_359":   [-8, -9, ...],
+    "crosswind_kt_359":  [-9,-11, ...]
   }
 }
 ```
 
 **Every `series` array must be index-aligned with `valid_times`.** Missing/short arrays render
 as `—`, not an error — so a silent misalignment looks like partial data, not a failure.
-Column headers are derived as `Rwy` + `round(heading/10)` → `160` → `Rwy16`, `340` → `Rwy34`.
+Column headers are derived as `Rwy` + `floor(heading/10)` → `179` → `Rwy17`, `359` → `Rwy35`.
 
-Confirm KVEL's current runway headings against the live FAA chart before hardcoding.
+Runway headings **resolved 2026-08-13**: FAA chart confirmed 17/35 (true 179/359), shipped
+in brc-tools #59 / v0.1.1.
 
 ---
 
@@ -354,7 +357,9 @@ it in the producer.
 1. Which producer currently uploads clustering forecasts, and why does it not fan out?
 2. Should `road-forecast` run hourly (matching HRRR) or 3-hourly (matching the website's 1 h
    cache)? Hourly is safer given the hard 3 h reject.
-3. Confirm current KVEL runway headings against the FAA chart before hardcoding `[160, 340]`.
+3. ~~Confirm current KVEL runway headings against the FAA chart before hardcoding.~~
+   **Resolved 2026-08-13** — FAA chart confirmed 17/35 (true headings `[179, 359]`),
+   shipped in brc-tools #59 / v0.1.1.
 4. Retention: `.com` is carrying 100 k+ files with no pruning policy. Agree one before the
    Clyfar producers restart in November.
 

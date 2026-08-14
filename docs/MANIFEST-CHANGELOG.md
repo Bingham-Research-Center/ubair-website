@@ -1,5 +1,33 @@
 # Data Manifest Change Log
 
+## Version 2.0.0 (2026-08-14)
+
+### Type: Major - Contract Correction
+
+**Summary:** First declaration of `dataTypes.forecasts.products.hrrr_kvel_crosswind` —
+the HRRR sub-hourly runway head/crosswind forecast for KVEL (Vernal Regional) — under
+the corrected KVEL 17/35 contract (FAA redesignation: true headings 179/359, series keys
+`headwind_kt_179`/`crosswind_kt_179` and `headwind_kt_359`/`crosswind_kt_359`).
+
+### Changes Made
+
+- **Added:** `dataTypes.forecasts.products.hrrr_kvel_crosswind` — filename pattern
+  `forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json`, hourly schedule (`55 * * * *`),
+  full payload schema keyed off the top-level `runway_headings_deg` array. Rides the
+  existing `forecasts` endpoint; no upload-route change.
+- **Counters:** `validation.filesPerProduct` gains `"hrrr_kvel_crosswind": 1`;
+  `totalFilesPerRun` 63 → 64.
+
+### Why MAJOR
+
+The previously *documented* (never published) contract — `WEBSITE-BRCTOOLS-HANDOFF-apr27.md`
+§DATATYPE 2, since deleted — used `*_kt_160`/`*_kt_340` series keys, so the field-name rule
+in `docs/MANIFEST-GUIDE.md` applies. 2.0.0 is also the coordination signal promised in
+brc-tools PR #59 / tag v0.1.1 (the producer, which released first on 2026-08-13). Zero
+KVEL files have ever been uploaded to `.com` or `.dev`, so no data migration is needed.
+
+---
+
 ## Version 1.2.0 (2026-08-13)
 
 ### Type: Minor - Additive
