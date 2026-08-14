@@ -1,11 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sports Weather for Uintah Basin — coming soon">
+    <meta name="description" content="Things pertaining to sports and recreational activities">
     <title>BasinWx — Sports</title>
-    <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-b2.ico">
+    <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx.ico">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,76 +16,147 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/sports.css">
 </head>
+
 <body data-page-type="sports">
     <div class="colored-bar"></div>
 
-    <div class="sidebar_container"></div>
-
-    <div class="main-content">
-        <div class="sports-header">
-            <h1><i class="fa-solid fa-baseball"></i> Sports Weather</h1>
-            <p class="sports-subtitle">Weather conditions for outdoor sports and recreation in the Uintah Basin</p>
-        </div>
-
-        <!-- Draft notice -->
-        <div class="draft-notice">
-            <i class="fas fa-hard-hat"></i>
-            <strong>Under Construction</strong> — This page is a work in progress.
-            Ideas and feedback welcome on <a href="https://github.com/Bingham-Research-Center/ubair-website/pull/128" target="_blank" rel="noopener">GitHub PR #128</a>.
-        </div>
-
-        <!-- Planned sections — rough outline for discussion -->
-        <div class="sports-grid">
-
-            <div class="sports-card planned">
-                <div class="card-icon"><i class="fas fa-thermometer-half"></i></div>
-                <h2>Game Day Conditions</h2>
-                <p>Current temperature, feels-like, humidity, wind, and UV index at key venues and parks in the basin.</p>
-                <span class="status-badge">Planned</span>
-            </div>
-
-            <div class="sports-card planned">
-                <div class="card-icon"><i class="fas fa-cloud-rain"></i></div>
-                <h2>Rain / Field Playability</h2>
-                <p>Precipitation totals, soil saturation proxy, and a simple playability score for grass and turf fields.</p>
-                <span class="status-badge">Planned</span>
-            </div>
-
-            <div class="sports-card planned">
-                <div class="card-icon"><i class="fas fa-wind"></i></div>
-                <h2>Wind & Throwing Conditions</h2>
-                <p>Headwind/crosswind components, gust risk, and direction relative to common field orientations — useful for football, baseball, disc golf.</p>
-                <span class="status-badge">Planned</span>
-            </div>
-
-            <div class="sports-card planned">
-                <div class="card-icon"><i class="fas fa-sun"></i></div>
-                <h2>Heat Risk</h2>
-                <p>WBGT (wet bulb globe temperature) estimate, heat index, and activity advisories following NATA / NOAA thresholds.</p>
-                <span class="status-badge">Planned</span>
-            </div>
-
-            <div class="sports-card planned">
-                <div class="card-icon"><i class="fas fa-snowflake"></i></div>
-                <h2>Winter Sports</h2>
-                <p>Snow depth, new snow, temperature, and wind chill for local sledding hills and backcountry access points.</p>
-                <span class="status-badge">Planned</span>
-            </div>
-
-            <div class="sports-card draft">
-                <div class="card-icon"><i class="fas fa-dice"></i></div>
-                <h2>Weather Wager Game</h2>
-                <p>Prototype prediction game — guess tomorrow's high temp and win bragging rights. Based on Braxton's design in PR #128.</p>
-                <span class="status-badge draft-badge">Draft / Prototype</span>
-            </div>
-
-        </div>
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
     </div>
 
-    <script src="/public/js/loadSidebar.js"></script>
+    <!-- Page content -->
+    <main class="content">
+        <div class="sports">
+            <h1>Sports</h1>
+
+            <div class="summary-grid">
+
+                <div class="condition-card" data-card-type="current-temperature">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-temperature-quarter"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Current Temperature</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="felt-temperature">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-temperature-quarter"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Felt Temperature</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="wind-speed-direction">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-wind"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Wind Speed + Direction</h3>
+                        <p class="current-value">-- --</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="dew-point">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-flask"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Dew Point</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="uv-index">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-binoculars"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>UV Index + Field Conditions</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="visibility">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Visibility</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="precipitation">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-cloud-sun-rain"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Chance Of Precipitation</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="baseball">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-baseball"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Wind Influence On Baseball</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+
+                <div class="condition-card" data-card-type="football">
+                    <div class="card-icon">
+                        <i class="fa-solid fa-football"></i>
+                    </div>
+                    <div class="card-content">
+                        <h3>Wind Influence On Football</h3>
+                        <p class="current-value">--</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prediction Game -->
+            <div class="forecast-section prediction-game">
+                <h2><i class="fa-solid fa-dice"></i> Prediction Game (Prototype)</h2>
+                <div class="forecast-content">
+                    <p>Rules:</p>
+                    <ul>
+                        <li class="rule-entry">You have 1000 tokens to predict with</li>
+                        <li class="rule-entry">You can divide them between the 2 options however you like</li>
+                        <li class="rule-entry">When you lock in your prediction, one side is chosen</li>
+                        <li class="rule-entry">All tokens on the losing side are decreased by 75%</li>
+                        <li class="rule-entry">All tokens on the winning side are increased by 50%</li>
+                        <li class="rule-entry">Reach 3000 tokens to win</li>
+                    </ul>
+                    <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
+                    <div class="game-text" id="gameProportion"></div>
+                    <button class="game-btn" id="gameGuessBtn">Lock in prediction</button>
+                    <div class="game-text" id="gameResult"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; 2026 Bingham Research Center. Sports forecasts are experimental. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="/public/js/sports.js"></script>
+    <script type="module" src="/public/js/loadSidebar.js"></script>
 </body>
+
 </html>

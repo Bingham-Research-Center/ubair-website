@@ -1,100 +1,297 @@
-/* Sports page */
-
-.sports-header {
-    padding: 2rem 2rem 0.5rem;
+h1 {
+    background: linear-gradient(135deg, red, darkred);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
 }
 
-.sports-header h1 {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0 0 0.4rem;
-    color: var(--primary-color, #1a3a5c);
+body[data-page-type="sports"] h1::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, red, darkred);
+    border-radius: 2px;
+}
+h2
+{
+    color: black;
+    font-family: 'Arial Black', sans-serif;
+    margin-left: 15px;
 }
 
-.sports-subtitle {
-    color: #555;
-    font-size: 1.05rem;
-    margin: 0;
+/* Panel Style */
+.weather-summary {
+    margin-bottom: 2rem;
 }
 
-.draft-notice {
-    margin: 1.2rem 2rem;
-    padding: 0.75rem 1rem;
-    background: #fff8e1;
-    border-left: 4px solid #f59e0b;
-    border-radius: 4px;
-    font-size: 0.95rem;
-    color: #78400a;
-}
-
-.draft-notice a {
-    color: #1a3a5c;
-}
-
-.sports-grid {
+.summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
-    padding: 1rem 2rem 2rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
-.sports-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 1.4rem;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+.condition-card {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(80, 22, 22, 0.1);
+    border-left: 4px solid var(--card-accent, darkred);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
 }
 
-.sports-card.draft {
-    border-color: #f59e0b;
-    background: #fffdf0;
+/* Per-card palette: --card-accent tints the border/icon, --card-text the labels */
+.condition-card[data-card-type="current-temperature"] { --card-accent: #A7D8FF; --card-text: #2E7BA8; }
+.condition-card[data-card-type="felt-temperature"] { --card-accent: #BFF4D2; --card-text: #3D9B65; }
+.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #F0B6D5; --card-text: #C48BA8; }
+.condition-card[data-card-type="dew-point"] { --card-accent: #FFD6A5; --card-text: #CCAA88; }
+.condition-card[data-card-type="uv-index"] { --card-accent: #FFB5B5; --card-text: #CC8888; }
+.condition-card[data-card-type="visibility"] { --card-accent: #B8C9FF; --card-text: #8B9BCC; }
+.condition-card[data-card-type="precipitation"] { --card-accent: #D7C7FF; --card-text: #AA99CC; }
+.condition-card[data-card-type="baseball"] { --card-accent: #AEECFF; --card-text: #7BBFCC; }
+.condition-card[data-card-type="football"] { --card-accent: #DDB892; --card-text: #B49973; }
+
+.condition-card h3 {
+    color: var(--card-text, darkred);
+}
+
+/* Inactive "thumbprint" effect of cards */
+.condition-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgb(125, 0, 0), transparent);
+    border-radius: 0 12px 0 100%;
+    opacity: 0;
+}
+
+.condition-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
+    border-left-color: black !important;
+
+    .card-icon {
+        background-color: black !important;
+        color: var(--card-accent, red);
+        transition: 1s;
+    }
 }
 
 .card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    margin-bottom: 1rem;
+    color: black;
+    background-color: var(--card-accent, red);
+    font-size: 1.2rem;
+    transition: 2.5s;
+}
+
+.current-value {
     font-size: 1.8rem;
-    color: var(--primary-color, #1a3a5c);
+    font-weight: 700;
+    color: var(--card-text, darkred);
+    margin: 0.5rem 0;
 }
 
-.sports-card h2 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin: 0;
-    color: #1a3a5c;
-}
-
-.sports-card p {
+.trend {
+    color: #666;
     font-size: 0.9rem;
-    color: #555;
     margin: 0;
-    flex: 1;
 }
 
-.status-badge {
-    display: inline-block;
-    margin-top: 0.5rem;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.78rem;
+/* Forecast Container */
+.forecast-container {
+    display: grid;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.forecast-section {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 6px 25px rgba(80, 22, 22, 0.08);
+    border: 1px solid rgba(80, 22, 22, 0.1);
+    position: relative;
+}
+
+.forecast-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, red, darkred, black);
+    border-radius: 16px 16px 0 0;
+}
+
+.forecast-section h2 {
+    color: darkred;
+    font-size: 1.3rem;
     font-weight: 600;
-    background: #e0e7ef;
-    color: #1a3a5c;
-    width: fit-content;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
-.draft-badge {
-    background: #fde68a;
-    color: #78400a;
+.forecast-section h2 i {
+    color: orangered;
+    font-size: 1.1rem;
 }
 
-@media (max-width: 640px) {
-    .sports-header,
-    .draft-notice,
-    .sports-grid {
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
+.forecast-content {
+    color: #555;
+    line-height: 1.6;
+}
+
+/* Base style for any soil moisture indicator */
+.soil-moisture {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    color: #ffffff;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* Very dry soil */
+.soil-moisture-dry {
+    background-color: #d32f2f;  /* red */
+}
+
+/* Low moisture */
+.soil-moisture-low {
+    background-color: #f57c00;  /* orange */
+}
+
+/* Medium/ok moisture */
+.soil-moisture-medium {
+    background-color: #fdd835;  /* yellow */
+    color: #333333;             /* better contrast on yellow */
+}
+
+/* Good/ideal moisture */
+.soil-moisture-good {
+    background-color: #388e3c;  /* green */
+}
+
+/* Too wet / waterlogged */
+.soil-moisture-wet {
+    background-color: #1976d2;  /* blue */
+}
+
+/* Optional: a simple bar-style visual */
+.soil-moisture-bar {
+    width: 150px;
+    height: 12px;
+    border-radius: 999px;
+    background-color: #eeeeee;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.soil-moisture-bar-fill {
+    height: 100%;
+    width: 50%;                 /* change this with inline style or JS */
+    background: linear-gradient(90deg, #d32f2f, #388e3c);
+    transition: width 0.3s ease;
+}
+
+/* ========================================
+   Prediction Game (prototype)
+   ======================================== */
+
+.prediction-game .rule-entry {
+    transition: all 0.2s;
+    font-size: 10px;
+}
+
+.prediction-game .rule-entry:hover {
+    font-size: 14px;
+}
+
+.game-slider {
+    -webkit-appearance: none;
+    accent-color: darkred;
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    width: 100%;
+    height: 25px;
+    border-radius: 6px;
+    transition: all 0.2s;
+    margin-top: 0.75rem;
+}
+
+.game-slider:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    height: 35px;
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+}
+
+.game-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+}
+
+.game-slider::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: transparent;
+    cursor: pointer;
+    outline: white 2px dotted;
+    border: none;
+    transition: all 0.2s;
+}
+
+.game-slider::-moz-range-thumb:hover {
+    width: 16px;
+    height: 16px;
+}
+
+.game-text {
+    font-weight: 600;
+    color: darkred;
+    margin: 0.75rem 0;
+}
+
+.game-btn {
+    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    color: black;
+    width: 100%;
+    border: none;
+    border-radius: 6px;
+    padding: 0.6rem 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.game-btn:hover {
+    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+    color: red;
 }
