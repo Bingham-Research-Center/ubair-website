@@ -28,6 +28,25 @@ export const GENERATED_INDEX_FILES = new Set([
     'outlooks_list.json',
 ]);
 
+/**
+ * Producers upload indexes too, and they trap freshness the same way.
+ *
+ * An exact-name Set was not enough. brc-tools uploads its forecast bundle as many ~1.5 MB
+ * run files *plus* a small `<product>_index.json` listing them. On linode-dev the run files
+ * were being rejected by nginx (413, `client_max_body_size` unset -> 1 MB default) while the
+ * 3 KB index sailed through, so the index's mtime was refreshed hourly on a directory whose
+ * newest *data* file was four months old. Freshness reported `forecasts` as "stale by 164
+ * minutes" instead of "stale by four months", which is the difference between a blip and a
+ * dead pipeline — and nobody looked.
+ *
+ * So: treat any `*_index.json` / `*_list.json` as an index regardless of who wrote it.
+ * Producers name run/observation payloads with a timestamp, never with these suffixes.
+ */
+export function isGeneratedIndex(filename) {
+    return GENERATED_INDEX_FILES.has(filename)
+        || /_(index|list)\.json$/.test(filename);
+}
+
 class DataMonitor {
     constructor() {
         this.manifestPath = path.join(__dirname, '../../DATA_MANIFEST.json');
@@ -76,9 +95,9 @@ class DataMonitor {
             try {
                 const files = fs.readdirSync(dataDir)
                     .filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'))
-                    // Server-regenerated indexes would otherwise pin ageMinutes to ~0 forever
-                    // and mask a dead producer. See GENERATED_INDEX_FILES.
-                    .filter(f => !GENERATED_INDEX_FILES.has(f))
+                    // Indexes (server-regenerated or producer-uploaded) would otherwise pin
+                    // ageMinutes to ~0 forever and mask a dead producer. See isGeneratedIndex.
+                    .filter(f => !isGeneratedIndex(f))
                     .map(f => ({
                         name: f,
                         path: path.join(dataDir, f),
@@ -89,7 +108,7 @@ class DataMonitor {
                 if (files.length === 0) {
                     results[dataType] = {
                         status: 'no_data',
-                        message: 'No data files found (directory holds only server-generated indexes)'
+                        message: 'No data files found (directory holds only index files)'
                     };
                     continue;
                 }

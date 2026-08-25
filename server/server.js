@@ -150,14 +150,26 @@ app.get('/about/:page', (req, res) => {
 // fs.readdir on the per-type directory) instead.
 
 app.get('/api/filelist/:dataType', async (req, res) => {
+    const { dataType } = req.params;
     try {
-        const { dataType } = req.params;
         const dataDir = path.join(__dirname, '../public/api/static', dataType);
         const files = await fs.readdir(dataDir);
         const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf'));
         res.json(allowedFiles);
     } catch (error) {
-        res.status(500).json({ error: `Failed to list files for ${req.params.dataType}` });
+        // A directory that was never created means "this producer has never uploaded here",
+        // which is a 404, not a server fault. Collapsing both into 500 cost real diagnostic
+        // time on linode-dev, where timeseries/llm_outlooks/images 500ed and read as broken
+        // code rather than an idle dataType. Keep the two distinguishable.
+        if (error.code === 'ENOENT') {
+            return res.status(404).json({
+                error: `No uploads received yet for ${dataType}`,
+                dataType,
+                reason: 'directory-missing'
+            });
+        }
+        console.error(`filelist failed for ${dataType}:`, error);
+        res.status(500).json({ error: `Failed to list files for ${dataType}` });
     }
 });
 
