@@ -10,6 +10,21 @@
 
 ---
 
+## ⚠️ SUPPLEMENTED 2026-08-25 — read `WEBSITE-BRCTOOLS-HANDOFF-aug25.md` first
+
+Since this document was written:
+
+- **TARGET 1 (`road-forecast`) is DONE.** Live and fresh on both hosts. Acceptance criterion 1
+  passes. Criteria 2, 3 and 4 are still open.
+- A four-month silent outage was found on `.dev`: nginx 413'd every ~1.5 MB run file while the
+  3 KB index kept landing, and brc-tools reported success for all 45 of them. The nginx side is
+  fixed; the producer not noticing is not. That is now the top priority, ahead of TARGETs 2/3.
+- The fan-out hypothesis in §FAN-OUT is **confirmed**: it is per-dataType, not global.
+
+Everything below is still accurate for schemas and the endpoint contract.
+
+---
+
 ## YOUR JOB IN ONE SENTENCE
 
 Three website features (PRs #176, #183, #188) consume dataTypes brc-tools has never
