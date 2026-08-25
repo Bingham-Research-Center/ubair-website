@@ -18,7 +18,7 @@ whole tree. Read on demand; do not auto-load.
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
 | Onboard a new RA | `chpc-deployment/README.md` then `docs/howto/quinten-handoff.md` |
-| Plumb a new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (root, temporary) |
+| Plumb a new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-aug25.md` first (root, temporary — silent upload failures + dark dataTypes), then `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` for the per-target schemas |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
 | Fix a road weather bug | `docs/ROADS_AUDIT.md` + `docs/HOW_IT_WORKS.md` |
