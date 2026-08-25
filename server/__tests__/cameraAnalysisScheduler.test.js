@@ -23,11 +23,27 @@ describe('CameraAnalysisScheduler', () => {
 
     describe('Initialization', () => {
         it('should initialize with default configuration', () => {
+            // This is the one place the concrete defaults are pinned. If a default moves,
+            // exactly this test should go red — the derived assertions elsewhere follow
+            // config so they cannot drift silently.
             expect(scheduler.config.batchSize).toBe(1);
-            expect(scheduler.config.intervalSeconds).toBe(25);
-            expect(scheduler.config.jitterSeconds).toBe(4);
-            expect(scheduler.config.cachePaddingFactor).toBe(1.05);
+            expect(scheduler.config.intervalSeconds).toBe(30);
             expect(scheduler.config.maxRetries).toBe(3);
+            expect(scheduler.config.baseCacheTTLSeconds).toBe(600);
+            expect(scheduler.config.rotationBufferSeconds).toBe(600);
+        });
+
+        it('exposes no config keys the scheduler does not actually read', () => {
+            // jitterSeconds and cachePaddingFactor were asserted here for months after the
+            // scheduler stopped having them; the suite stayed red and everyone learned to
+            // ignore it. Lock the shape so a removed key fails loudly instead.
+            expect(Object.keys(scheduler.config).sort()).toEqual([
+                'baseCacheTTLSeconds',
+                'batchSize',
+                'intervalSeconds',
+                'maxRetries',
+                'rotationBufferSeconds',
+            ]);
         });
 
         it('should initialize with empty camera queue', () => {
@@ -66,18 +82,16 @@ describe('CameraAnalysisScheduler', () => {
         });
 
         it('should use env vars when set', () => {
-            process.env.CAMERA_INTERVAL_SECONDS = '30';
+            // Deliberately not 30 for the interval: 30 is also the default, so asserting it
+            // would pass even if the override were ignored entirely.
+            process.env.CAMERA_INTERVAL_SECONDS = '45';
             process.env.CAMERA_BATCH_SIZE = '2';
-            process.env.CAMERA_JITTER_SECONDS = '6';
-            process.env.CAMERA_CACHE_PADDING = '1.3';
             process.env.CAMERA_MAX_RETRIES = '5';
 
             const s = new CameraAnalysisScheduler();
 
-            expect(s.config.intervalSeconds).toBe(30);
+            expect(s.config.intervalSeconds).toBe(45);
             expect(s.config.batchSize).toBe(2);
-            expect(s.config.jitterSeconds).toBe(6);
-            expect(s.config.cachePaddingFactor).toBe(1.3);
             expect(s.config.maxRetries).toBe(5);
         });
     });
@@ -166,11 +180,15 @@ describe('CameraAnalysisScheduler', () => {
         it('should calculate correct API calls per hour with default config', () => {
             scheduler.cameraQueue = new Array(20).fill({ id: 1 });
 
-            // batchSize=1, intervalSeconds=25, viewsPerCamera=3
-            // (1 camera * 3 views) * (3600 / 25) = 3 * 144 = 432 calls/hour
-            const rate = scheduler.calculateApiCallRate();
+            // rate = batchSize * viewsPerCamera(3) * (3600 / intervalSeconds).
+            // Derived from config rather than hardcoded: the previous version pinned 432
+            // for a 25s interval and went red the moment the default became 30s.
+            const { batchSize, intervalSeconds } = scheduler.config;
+            const expected = batchSize * 3 * (3600 / intervalSeconds);
 
-            expect(rate).toBe(432);
+            expect(scheduler.calculateApiCallRate()).toBe(expected);
+            // With the shipped defaults that is 1 * 3 * 120 = 360/hour.
+            expect(expected).toBe(360);
         });
 
         it('should return 0 when no cameras in queue', () => {
@@ -244,16 +262,23 @@ describe('CameraAnalysisScheduler', () => {
             scheduler.stop();
 
             expect(scheduler.isRunning).toBe(false);
-            expect(scheduler.analysisTimeout).toBeNull();
+            // The timer handle is `analysisInterval`. `analysisTimeout` never existed on the
+            // scheduler, so the old assertion was reading undefined off a typo'd name.
+            expect(scheduler.analysisInterval).toBeNull();
         });
 
         it('should not start if already running', () => {
             scheduler.start();
-            const interval = scheduler.analysisTimeout;
+            const interval = scheduler.analysisInterval;
+
+            // Guard: with the old `analysisTimeout` name this was undefined, so the
+            // comparison below was undefined === undefined and the test asserted nothing.
+            expect(interval).not.toBeNull();
+            expect(interval).toBeDefined();
 
             scheduler.start(); // Try to start again
 
-            expect(scheduler.analysisTimeout).toBe(interval); // Same interval
+            expect(scheduler.analysisInterval).toBe(interval); // same timer, not restarted
         });
 
         it('should not stop if already stopped', () => {
