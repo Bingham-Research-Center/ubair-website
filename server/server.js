@@ -38,8 +38,14 @@ const reportEmailService = new ReportEmailService({
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
 setTrafficEventsService(backgroundRefresh.trafficEventsService);
 
-// Only parse JSON for application/json content-type (skip multipart/form-data uploads)
-app.use(express.json({ type: 'application/json' }));
+// Only parse JSON for application/json content-type (skip multipart/form-data uploads).
+//
+// `limit` is stated explicitly at body-parser's own default rather than left implicit. Data
+// uploads are multipart and go through multer (10 MB ceiling), so they never touch this
+// parser; every JSON body the app legitimately receives is small. Leaving the limit invisible
+// cost real time on 2026-08-25, when a 1.5 MB JSON probe of the upload path returned 500 and
+// looked like a server fault instead of a body-size rejection.
+app.use(express.json({ type: 'application/json', limit: '100kb' }));
 
 // Analytics middleware (tracks page visits anonymously)
 app.use(analyticsMiddleware);
@@ -298,8 +304,28 @@ process.on('unhandledRejection', (reason) => {
     });
 });
 
-// Error handling middleware
+// Error handling middleware.
+//
+// body-parser raises typed errors for things the *client* got wrong — an oversized body,
+// malformed JSON. Answering those with 500 plus a stack dump is wrong twice: the caller is
+// told the server broke when in fact their request was rejected, and pm2's error log fills
+// with stack traces for routine client noise. Keep 500 for genuine faults only.
 app.use((err, req, res, next) => {
+    if (res.headersSent) return next(err);
+
+    if (err?.type === 'entity.too.large') {
+        return res.status(413).json({
+            error: 'Request body too large',
+            limit: err.limit,
+            length: err.length,
+            hint: 'Data uploads use multipart/form-data on /api/upload/:dataType, not a JSON body.'
+        });
+    }
+
+    if (err?.type === 'entity.parse.failed' || (err instanceof SyntaxError && 'body' in err)) {
+        return res.status(400).json({ error: 'Malformed JSON body' });
+    }
+
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
