@@ -418,6 +418,21 @@ quotas — see §9.
   # 413 = stopped at nginx -> client_max_body_size is unset.
   ```
 
+  **There is a script for this**: `scripts/fix-nginx-body-size.sh`. It writes a drop-in at
+  `/etc/nginx/conf.d/upload-body-size.conf` (http level, inherited by every server block —
+  your vhosts are never edited), validates with `nginx -t`, rolls itself back if that fails,
+  reloads, then re-probes. `--check` probes without root or changes; `--revert` undoes it.
+
+  ```bash
+  sudo ./scripts/fix-nginx-body-size.sh            # apply
+  ./scripts/fix-nginx-body-size.sh --check         # probe only
+  ```
+
+  Note `systemctl reload nginx` is **graceful** — old workers keep the old limit until their
+  connections drain, so a probe fired immediately after a reload can report 413 on a fix that
+  worked. This produced a false failure on the first real run. The script retries for ~15s;
+  if you reload by hand, re-probe before concluding anything.
+
   **Do not probe this with a raw JSON body.** `server.js` mounts `express.json()` with no
   `limit`, so its default is **100 kb** and anything larger raises an unhandled
   `PayloadTooLargeError` — the box answers **500** and looks broken when it is healthy.
