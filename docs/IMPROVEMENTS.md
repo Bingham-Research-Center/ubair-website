@@ -25,7 +25,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Fix 4 failing tests** in `server/__tests__/cameraAnalysisScheduler.test.js` | Test drift after scheduler default changes (expected 25, got 30; expected 432, got 360). Don't add features on top of red tests. |
-| 🔜 | **Security deps PR** | `nodemailer ^6→^7` (advisory `<7.0.7`), `node-cron ^3→^4` (transitively fixes uuid), `@github/copilot` to current. 5 GH-reported vulns. |
+| 🔧 | **Security deps — partly done** | Done: `@github/copilot` **removed** (never imported; it is a CLI, not a library — 2 high advisories cleared for free) and `nodemailer ^6→^9.0.5` (clears 8; inert here, no SMTP configured; API surface `createTransport`/`verify`/`sendMail` smoke-tested on 9.0.5). Remaining, and **not** low-risk: `npm audit` reports **19** vulns (12 high), not the 5 recorded here. `node-cron ^3→^4` drives `backgroundRefresh.js` and changes task lifecycle — bump only with a watch that jobs still fire. `express`, `multer`, `form-data`, `ws`, `socket.io` are all on the ingest path; bump them deliberately with upload tests, not in a sweep. |
 | 🔜 | **Pick a logger and burn down 178 `console.log`s** | Recommend `pino`. One file at a time, lowest-risk first (`scripts/`, then `server/`). |
 | 🔜 | **Standardise error boundaries on fetch calls** | API failures still cascade in places. Try/catch + user-visible loading/error state. |
 | 🔜 | **Data validation on incoming JSON** | server doesn't enforce `DATA_MANIFEST.json` schemas; malformed brc-tools uploads can crash visualisations. Tier 3 contract test would catch this. |
