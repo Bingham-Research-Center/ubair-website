@@ -15,8 +15,9 @@ Read `CLAUDE.md` first — protected branches, the squash-merge trap, and the wo
 
 | | |
 |---|---|
-| `dev` | `10eb7ff`, v1.5.2-dev, manifest 2.0.0 — **7 commits ahead of `ops`** |
-| `ops` / prod | `6b84f21`, v1.5.1, manifest 1.2.0 |
+| `dev` | v1.5.3-dev, manifest 2.0.0 |
+| `ops` | `ffd0bfb`, v1.5.2, manifest 2.0.0, tagged `v1.5.2` — **merged but NOT deployed** |
+| prod box | still serving v1.5.2's predecessor until someone runs the Chunk 1 deploy |
 | Test suite | **155/155 green.** Any failure is new breakage — the old 4-failure baseline is retired |
 | `.dev` ingest | healthy; forecasts recovered 2026-08-25 after a four-month outage |
 | Open PRs | #220 (nginx script), #128 (Quinten's sports page) |
@@ -26,7 +27,13 @@ and `docs/DEPLOYMENT.md` §8. Do not re-derive them.
 
 ---
 
-## CHUNK 1 — Promote v1.5.2 to production ← DO THIS FIRST
+## CHUNK 1 — Promote v1.5.2 to production ← GIT SIDE DONE, DEPLOY STILL PENDING
+
+> **Updated 2026-08-26.** The release train has been run: `dev` stripped to 1.5.2 (#222),
+> promoted to `ops` (#223, merge `ffd0bfb`), tagged **v1.5.2**, merged to `main` (#224), and
+> `dev` reopened at 1.5.3-dev. **`ops` is not deployed.** The prod box needs root, so the
+> commands below are still outstanding and are JRL's to run. Until then `www.basinwx.com`
+> keeps serving 1.5.1 with the defects listed here.
 
 **Why:** prod still carries defects already fixed on `dev`. Verified against `www.basinwx.com`
 on 2026-08-26:
