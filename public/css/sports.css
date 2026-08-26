@@ -220,13 +220,26 @@ h2
    Prediction Game (prototype)
    ======================================== */
 
+.prediction-game {
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.prediction-game:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
+    border-color: rgba(80, 22, 22, 0.2);
+}
+
 .prediction-game .rule-entry {
-    transition: all 0.2s;
+    transition: transform 0.25s ease, font-size 0.25s ease, color 0.25s ease;
     font-size: 10px;
+    transform: translateX(0);
 }
 
 .prediction-game .rule-entry:hover {
     font-size: 14px;
+    transform: translateX(4px);
+    color: #3d0000;
 }
 
 .game-slider {
