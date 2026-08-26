@@ -15,7 +15,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Promote `dev` → `ops`** to land 21 commits on `.com` | PRs #142, #178–#188 plus 7 fixes; needs a deliberate `dev→ops` PR + `pm2 restart basinwx-ops` |
-| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` |
+| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (apr27 doc deleted) |
 | 🔜 | **Fan-out gap for `forecasts/` to `.dev`** | `.com` has 100s of clustering files, `.dev` has zero. brc-tools uploader inconsistency. |
 | 🔜 | **Operational health page** (`/admin/health`) | per-dataType last-upload time + expected cadence + pm2 uptime + git HEAD; tier-3 of the apr26 plan |
 | 🔜 | **Upload-freshness alarm** | cron walks `public/api/static/`, emails via `reportEmailService` if any dataType exceeds expected cadence |
@@ -24,8 +24,8 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 
 | ✓ | Item | Notes |
 |---|---|---|
-| 🔜 | **Fix 4 failing tests** in `server/__tests__/cameraAnalysisScheduler.test.js` | Test drift after scheduler default changes (expected 25, got 30; expected 432, got 360). Don't add features on top of red tests. |
-| 🔜 | **Security deps PR** | `nodemailer ^6→^7` (advisory `<7.0.7`), `node-cron ^3→^4` (transitively fixes uuid), `@github/copilot` to current. 5 GH-reported vulns. |
+| ✅ | **Fix 4 failing tests** in `server/__tests__/cameraAnalysisScheduler.test.js` | Done 2026-08-25 — suite is now **155/155 green**. Was drift: `intervalSeconds` default moved 25→30, `jitterSeconds`/`cachePaddingFactor` were removed from the config entirely (with their `CAMERA_JITTER_SECONDS`/`CAMERA_CACHE_PADDING` env vars), and `analysisTimeout` is a property the scheduler never had — the real handle is `analysisInterval`. That last one also made *'should not start if already running'* silently vacuous: it compared `undefined` to `undefined` and passed while asserting nothing. Rate assertions now derive from config so a default change reddens only the one test that pins defaults. |
+| 🔧 | **Security deps — partly done** | Done: `@github/copilot` **removed** (never imported; it is a CLI, not a library — 2 high advisories cleared for free) and `nodemailer ^6→^9.0.5` (clears 8; inert here, no SMTP configured; API surface `createTransport`/`verify`/`sendMail` smoke-tested on 9.0.5). Remaining, and **not** low-risk: `npm audit` reports **19** vulns (12 high), not the 5 recorded here. `node-cron ^3→^4` drives `backgroundRefresh.js` and changes task lifecycle — bump only with a watch that jobs still fire. `express`, `multer`, `form-data`, `ws`, `socket.io` are all on the ingest path; bump them deliberately with upload tests, not in a sweep. |
 | 🔜 | **Pick a logger and burn down 178 `console.log`s** | Recommend `pino`. One file at a time, lowest-risk first (`scripts/`, then `server/`). |
 | 🔜 | **Standardise error boundaries on fetch calls** | API failures still cascade in places. Try/catch + user-visible loading/error state. |
 | 🔜 | **Data validation on incoming JSON** | server doesn't enforce `DATA_MANIFEST.json` schemas; malformed brc-tools uploads can crash visualisations. Tier 3 contract test would catch this. |
@@ -48,7 +48,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Add `road-forecast` schema to `DATA_MANIFEST.json`** | currently undocumented dataType; brc-tools is the contract-holder but website-side manifest is where consumers look |
-| 🔜 | **Add `forecast_hrrr_kvel_crosswind_*` schema to `DATA_MANIFEST.json`** | extracted in `WEBSITE-BRCTOOLS-HANDOFF-apr27.md` §DATATYPE 2; copy-pin |
+| ✅ | **Add `forecast_hrrr_kvel_crosswind_*` schema to `DATA_MANIFEST.json`** | done in manifest 2.0.0 (2026-08-14), KVEL 17/35 contract. Do **not** copy-pin the deleted apr27 §DATATYPE 2 schema — its `crosswind_kt_rwy16`-style keys were wrong and render an empty table |
 | 🔜 | **CHPC↔website contract test** | small CI/cron job that POSTs synthetic JSON for every dataType, verifies it lands; would have caught the dark-dataTypes regression |
 
 ## Documentation hygiene (see `REVIEW-DOCS-apr27.md`)
