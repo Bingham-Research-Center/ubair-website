@@ -10,6 +10,19 @@
     --roads-ice: #bfdbfe;             /* Ice blue */
 }
 
+/* Keep the roads footer in normal document flow so it never covers content. */
+body[data-page-type="roads"] .content {
+    padding-bottom: 2rem;
+}
+
+body[data-page-type="roads"] .main-footer {
+    position: relative;
+    inset: auto;
+    width: calc(100% - 250px);
+    margin-left: 250px;
+    box-sizing: border-box;
+}
+
 /* Override main header for roads theme */
 body[data-page-type="roads"] h1 {
     background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
@@ -826,6 +839,22 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    body[data-page-type="roads"] .content {
+        padding-bottom: 1.5rem !important;
+    }
+
+    body[data-page-type="roads"] .main-footer {
+        position: relative !important;
+        inset: auto !important;
+        width: 100% !important;
+        height: auto !important;
+        margin-left: 0;
+    }
+
+    body[data-page-type="roads"] .footer-content {
+        height: auto !important;
+    }
+
     .summary-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
