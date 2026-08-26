@@ -181,6 +181,12 @@ server {
     ssl_certificate /etc/letsencrypt/live/<domain>/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/<domain>/privkey.pem;
 
+    # REQUIRED for ingest. nginx defaults to 1m; HRRR forecast run files are ~1.5 MB
+    # each, so without this nginx returns 413 before Express ever sees the upload —
+    # and the small companion index file still gets through, which makes the pipeline
+    # look alive. See the 413 gotcha in §8.
+    client_max_body_size 32m;
+
     location / {
         proxy_pass http://127.0.0.1:<port>;
         proxy_set_header Host $host;
@@ -270,7 +276,23 @@ sudo certbot certificates                      # expect: > 30 days to expiry
 # 6.9  External HTTPS OK?
 curl -I https://www.<domain>/                  # expect: HTTP/2 200
 
-# 6.10 Recent pm2 log history clean?
+# 6.10 Large uploads survive nginx? (413 here = client_max_body_size unset; see §8)
+#      Must be multipart -- a raw JSON body trips express.json()'s 100 kb default and
+#      returns 500 on a perfectly healthy box.
+python3 -c "import json; open('/tmp/big.json','w').write(json.dumps({'pad':'a'*1500000}))"
+curl -s -o /dev/null -w '%{http_code}\n' -X POST https://<domain>/api/upload/forecasts \
+     -F 'file=@/tmp/big.json;filename=probe.json'                      # want 401, not 413
+
+# 6.11 Does the newest index reference files that actually exist?
+#      (a "yes" to /api/health plus a fresh index still permits a dead producer)
+curl -fsS https://<domain>/api/static/forecasts/forecast_hrrr_surface_layers_index.json \
+  | python3 -c 'import json,sys; [print(r["filename"]) for r in json.load(sys.stdin)["runs"]]' \
+  | while read f; do
+      code=$(curl -s -o /dev/null -w '%{http_code}' "https://<domain>/api/static/forecasts/$f")
+      echo "$code $f"   # any 404 => run files are being dropped, index is lying
+    done
+
+# 6.12 Recent pm2 log history clean?
 pm2 logs basinwx-$(git -C /srv/ubair-website branch --show-current) --lines 50 --nostream
 ```
 
@@ -338,8 +360,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.0"     (tag v1.5.0)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.1-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.1"     (tag v1.5.1)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.2-dev"
 ```
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
@@ -384,6 +406,40 @@ quotas — see §9.
 - **`deploy` vs. `sudo` user.** pm2's state (`~/.pm2/`) lives in `deploy`'s home. Never run pm2 as root or any other user, or you end up with two separate daemons and mystifying "process not found" behaviour.
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
+- **nginx `client_max_body_size` (the silent-413 trap).** nginx's default body limit is **1 MB**. CHPC's forecast bundle is many ~1.5 MB run files *plus* a ~3 KB `<product>_index.json` that lists them. With the limit unset, nginx 413s every run file while passing the index — so `/api/filelist/forecasts` and the index both keep updating, `pipeline_summary.json` records "success", and the dataType looks merely *slightly* stale rather than dead. This is what happened on **linode-dev**: forecast run files stopped landing on **2026-04-27** and were not noticed until **2026-08-25**, because the index refreshed hourly the whole time. The uploads never reach Express, so nothing appears in pm2 logs either — only nginx's access log shows the 413. Confirm with a synthetic body rather than trusting a green `/api/health`:
+
+  ```bash
+  # Probe the REAL producer path: multipart/form-data, as multer's upload.single('file')
+  # and chpc_uploader.py's requests `files=` both use.
+  python3 -c "import json; open('/tmp/big.json','w').write(json.dumps({'pad':'a'*1500000}))"
+  curl -s -o /dev/null -w '%{http_code}\n' -X POST https://<domain>/api/upload/forecasts \
+       -F 'file=@/tmp/big.json;filename=probe.json'
+  # 401 = reached the app, auth declined it -> nginx is fine (this is what .com returns).
+  # 413 = stopped at nginx -> client_max_body_size is unset.
+  ```
+
+  **There is a script for this**: `scripts/fix-nginx-body-size.sh`. It writes a drop-in at
+  `/etc/nginx/conf.d/upload-body-size.conf` (http level, inherited by every server block —
+  your vhosts are never edited), validates with `nginx -t`, rolls itself back if that fails,
+  reloads, then re-probes. `--check` probes without root or changes; `--revert` undoes it.
+
+  ```bash
+  sudo ./scripts/fix-nginx-body-size.sh            # apply
+  ./scripts/fix-nginx-body-size.sh --check         # probe only
+  ```
+
+  Note `systemctl reload nginx` is **graceful** — old workers keep the old limit until their
+  connections drain, so a probe fired immediately after a reload can report 413 on a fix that
+  worked. This produced a false failure on the first real run. The script retries for ~15s;
+  if you reload by hand, re-probe before concluding anything.
+
+  **Do not probe this with a raw JSON body.** `server.js` mounts `express.json()` with no
+  `limit`, so its default is **100 kb** and anything larger raises an unhandled
+  `PayloadTooLargeError` — the box answers **500** and looks broken when it is healthy.
+  That is a red herring, not the ingest path: real uploads are multipart, and multer's own
+  ceiling is 10 MB. Measured 2026-08-25: multipart 1.5 MB gives 413 on `.dev` public,
+  401 on `.dev` loopback, 401 on `.com` public.
+
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
 - **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
 

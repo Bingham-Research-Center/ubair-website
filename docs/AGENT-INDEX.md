@@ -12,13 +12,14 @@ whole tree. Read on demand; do not auto-load.
 ## Read first when…
 | Goal | File |
 |---|---|
+| **Pick up outstanding work as an agent** | `docs/AGENT-WORK-QUEUE-aug26.md` — 7 sized chunks, ordered by value; start here |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
 | Work the CHPC/producer side | `chpc-deployment/README.md` (+ `DEPLOYMENT_GUIDE.md`, `MONITORING_GUIDE.md` there) |
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
 | Onboard a new RA | `chpc-deployment/README.md` then `docs/howto/quinten-handoff.md` |
-| Plumb a new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (root, temporary) |
+| Plumb a new forecast dataType from brc-tools | `WEBSITE-BRCTOOLS-HANDOFF-aug25.md` first (root, temporary — silent upload failures + dark dataTypes), then `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` for the per-target schemas |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
 | Fix a road weather bug | `docs/ROADS_AUDIT.md` + `docs/HOW_IT_WORKS.md` |
@@ -38,6 +39,7 @@ whole tree. Read on demand; do not auto-load.
 | Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
 
 ## Outstanding-work indices
+- `docs/AGENT-WORK-QUEUE-aug26.md` — **current**, agent-sized chunks with verification steps (temporary; delete when empty)
 - `docs/IMPROVEMENTS.md` — top-level list (last verified 2026-04-27 — check items before trusting)
 - `docs/ROADS_AUDIT.md` — road-weather findings, some still open
 
