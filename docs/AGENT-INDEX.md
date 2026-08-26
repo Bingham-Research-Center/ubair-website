@@ -12,6 +12,7 @@ whole tree. Read on demand; do not auto-load.
 ## Read first when…
 | Goal | File |
 |---|---|
+| **Pick up outstanding work as an agent** | `docs/AGENT-WORK-QUEUE-aug26.md` — 7 sized chunks, ordered by value; start here |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
 | Work the CHPC/producer side | `chpc-deployment/README.md` (+ `DEPLOYMENT_GUIDE.md`, `MONITORING_GUIDE.md` there) |
@@ -38,6 +39,7 @@ whole tree. Read on demand; do not auto-load.
 | Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
 
 ## Outstanding-work indices
+- `docs/AGENT-WORK-QUEUE-aug26.md` — **current**, agent-sized chunks with verification steps (temporary; delete when empty)
 - `docs/IMPROVEMENTS.md` — top-level list (last verified 2026-04-27 — check items before trusting)
 - `docs/ROADS_AUDIT.md` — road-weather findings, some still open
 

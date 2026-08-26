@@ -10,6 +10,32 @@
 
 ---
 
+## OUTCOME UPDATE — 2026-08-26 02:20Z (the symptom is gone; the defect is NOT)
+
+Run files started landing on `.dev` with the **very first bundle after the nginx fix**:
+
+```
+first run file through: 2026-08-25T06:47:19Z   (the 06:48Z bundle)
+most recent:            2026-08-26T00:48:04Z
+13 files present, ~1.52 MB each
+freshness: status "fresh", ageMinutes 92, expectedFreqMinutes 360, latestFile a real run file
+```
+
+Acceptance criterion 1 now **passes** — all three runs the index advertises return 200.
+TARGET 3 (`forecast_hrrr_surface_layers`) is unblocked.
+
+**Do not read that as P0-1 and P0-2 being fixed.** They are not. brc-tools still does not check
+upload status and still publishes the index independently of its payloads — it simply is not
+failing at the moment, because the server stopped rejecting it. The exact same four-month
+silence will recur the next time any upload fails for any reason: a size change, a cert
+problem, a full disk, a network blip.
+
+**Criterion 4 is the one that still matters and is still untested.** Point the uploader at a
+host with a low body limit and confirm a non-zero exit code and no index publication. Until
+that passes, nothing in this document is actually fixed — only unexercised.
+
+---
+
 ## YOUR JOB IN ONE SENTENCE
 
 **brc-tools reported success for 45 consecutive forecast uploads in which every single data
