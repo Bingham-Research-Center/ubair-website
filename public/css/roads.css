@@ -109,7 +109,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     bottom: 30px;
     left: 50%;
     transform: translateX(-50%);
-    width: 600px;
+    width: min(720px, calc(100% - 48px));
+    box-sizing: border-box;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     border-radius: 15px;
@@ -288,6 +289,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* Compact card color variants */
 .condition-card-compact.road-conditions {
     border-color: var(--roads-surface);
+    flex-grow: 1.25;
 }
 
 .condition-card-compact.road-conditions .card-icon-small {
@@ -1338,12 +1340,15 @@ body[data-page-type="roads"] .leaflet-drag-target {
         padding: 3px 6px;
         gap: 3px;
         min-width: 50px;
+        min-height: 42px;
     }
 
     .card-icon-small {
-        width: 16px;
-        height: 16px;
-        font-size: 0.6rem;
+        display: none;
+    }
+
+    .card-data h5 {
+        font-size: 0.65rem;
     }
 
     .card-data .value {
