@@ -1,5 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 import {
+    buildForecastMapData,
     buildRouteForecastSummary,
     classifyRoadHazard,
     getForecastFreshness,
@@ -115,5 +116,39 @@ describe('HRRR road forecast model', () => {
         expect(getForecastFreshness('2026-08-27T03:00:00Z', now)).toMatchObject({ level: 'fresh', ageHours: 2 });
         expect(getForecastFreshness('2026-08-27T06:00:00Z', now)).toMatchObject({ level: 'fresh', ageHours: 0 });
         expect(getForecastFreshness('not-a-date', now)).toMatchObject({ level: 'unavailable' });
+    });
+
+    it('builds map segments from adjoining forecast points using the worse endpoint', () => {
+        const route = makeRoute();
+        route.waypoints.push({
+            name: 'Valley',
+            lat: 40.2,
+            lon: -110.2,
+            forecasts: {
+                temp_2m: [5, 5, 5, 5],
+                wind_gust: [3, 3, 3, 3],
+                visibility: [20, 20, 20, 20],
+                precip_1hr: [0, 0, 0, 0],
+                precip_type: ['none', 'none', 'none', 'none']
+            }
+        });
+        const forecast = {
+            forecast_hours: [1, 3, 6, 12],
+            valid_times: [
+                '2026-08-27T04:00:00Z',
+                '2026-08-27T06:00:00Z',
+                '2026-08-27T09:00:00Z',
+                '2026-08-27T15:00:00Z'
+            ],
+            routes: { us40: route }
+        };
+
+        const mapData = buildForecastMapData(forecast, 2);
+        expect(mapData).toMatchObject({ hour: 6, validTime: '2026-08-27T09:00:00Z' });
+        expect(mapData.routes[0].points).toHaveLength(2);
+        expect(mapData.routes[0].segments[0]).toMatchObject({
+            worstPointName: 'Summit',
+            hazard: { level: 'danger' }
+        });
     });
 });

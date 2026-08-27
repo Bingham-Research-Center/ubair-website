@@ -248,6 +248,55 @@ export function buildRouteForecastSummary(forecast, routeId, requestedHours = DE
     };
 }
 
+/**
+ * Build map-ready forecast points and adjoining route segments for one hour.
+ * Coordinates remain the reduced HRRR waypoints and are not exact road geometry.
+ */
+export function buildForecastMapData(forecast, index) {
+    const hour = finiteNumber(forecast?.forecast_hours?.[index]);
+    const validTime = forecast?.valid_times?.[index] || null;
+
+    const routes = Object.entries(forecast?.routes || {}).map(([routeId, route]) => {
+        const points = (route.waypoints || []).map(waypoint => {
+            const lat = finiteNumber(waypoint.lat);
+            const lon = finiteNumber(waypoint.lon);
+            if (lat === null || lon === null) return null;
+
+            const pointForecast = getWaypointForecastAtIndex(waypoint, index, validTime);
+            return {
+                name: waypoint.name || 'Forecast point',
+                lat,
+                lon,
+                elevation_m: finiteNumber(waypoint.elevation_m),
+                forecast: pointForecast,
+                hazard: classifyRoadHazard(pointForecast)
+            };
+        }).filter(Boolean);
+
+        const segments = points.slice(0, -1).map((start, pointIndex) => {
+            const end = points[pointIndex + 1];
+            const worstPoint = start.hazard.severity >= end.hazard.severity ? start : end;
+            return {
+                id: `${routeId}-${pointIndex}`,
+                start,
+                end,
+                hazard: worstPoint.hazard,
+                forecast: worstPoint.forecast,
+                worstPointName: worstPoint.name
+            };
+        });
+
+        return {
+            routeId,
+            routeName: route.name || routeId,
+            points,
+            segments
+        };
+    });
+
+    return { index, hour, validTime, routes };
+}
+
 export function getForecastFreshness(initTime, now = Date.now()) {
     const initMs = new Date(initTime).getTime();
     if (!Number.isFinite(initMs)) {
