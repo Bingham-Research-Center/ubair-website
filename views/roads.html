@@ -109,6 +109,25 @@
             </div>
         </section>
 
+        <section class="hrrr-guidance-panel" id="hrrr-guidance-panel" aria-labelledby="hrrr-guidance-title">
+            <div class="hrrr-guidance-header">
+                <div class="hrrr-guidance-heading">
+                    <span class="hrrr-guidance-eyebrow"><i class="fas fa-cloud-sun"></i> HRRR model guidance</span>
+                    <h2 id="hrrr-guidance-title">Road forecast · next 12 hours</h2>
+                </div>
+                <div class="hrrr-guidance-status is-loading" id="hrrr-guidance-status" role="status" aria-live="polite">
+                    Checking the latest model run…
+                </div>
+            </div>
+            <div class="hrrr-guidance-meta" id="hrrr-guidance-meta">
+                Forecast initialization and coverage will appear here.
+            </div>
+            <p class="hrrr-guidance-disclaimer">
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                Atmospheric model guidance—not an observed pavement condition. Confirm critical travel decisions with UDOT reports and cameras.
+            </p>
+        </section>
+
         <!-- Route-Specific Forecasts -->
         <div class="routes-container">
             <!-- US-40 Corridor -->
@@ -269,6 +288,7 @@
     <script src="/public/js/roads/RouteConditions.js"></script>
     <script src="/public/js/roads/ConditionCards.js"></script>
     <script src="/public/js/roads/initialization.js"></script>
+    <script type="module" src="/public/js/roads/HRRRRoadForecast.js"></script>
 
     <!-- Easter Eggs - Activated via Konami Code -->
     <link rel="stylesheet" href="/public/css/easter-eggs.css">
