@@ -23,6 +23,31 @@ body[data-page-type="roads"] .main-footer {
     box-sizing: border-box;
 }
 
+body[data-page-type="roads"] .sidebar-disclaimer {
+    padding: 10px 15px;
+    font-size: 0.7rem;
+}
+
+body[data-page-type="roads"] .sidebar ul li {
+    padding: 12px 20px;
+}
+
+.roads-data-notice {
+    margin-top: 1rem;
+    padding: 1rem 1.25rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.75);
+    color: #475569;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.roads-data-notice strong,
+.roads-data-notice a {
+    color: var(--roads-primary);
+}
+
 /* Override main header for roads theme */
 body[data-page-type="roads"] h1 {
     background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
