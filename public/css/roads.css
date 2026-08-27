@@ -2394,3 +2394,218 @@ body[data-page-type="roads"] .leaflet-drag-target {
         animation: none;
     }
 }
+
+.hrrr-route-forecast {
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dbeafe;
+}
+
+.hrrr-route-loading,
+.hrrr-route-unavailable {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 9px;
+    font-size: 0.86rem;
+}
+
+.hrrr-route-unavailable {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-route-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.hrrr-route-title {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    color: #172554;
+    line-height: 1.2;
+}
+
+.hrrr-route-kicker {
+    color: var(--roads-secondary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hrrr-route-title strong {
+    margin-top: 0.15rem;
+    font-size: 0.94rem;
+}
+
+.hrrr-hazard-onset {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    color: #166534;
+    background: #f0fdf4;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.hrrr-hazard-onset.is-caution {
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.hrrr-hazard-onset.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-period-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.hrrr-period-card {
+    min-width: 0;
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid #bbf7d0;
+    border-top: 4px solid #16a34a;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.hrrr-period-card.is-caution {
+    border-color: #fde68a;
+    border-top-color: #d97706;
+}
+
+.hrrr-period-card.is-danger {
+    border-color: #fecaca;
+    border-top-color: #dc2626;
+}
+
+.hrrr-period-card.is-unavailable {
+    border-color: #cbd5e1;
+    border-top-color: #64748b;
+}
+
+.hrrr-period-time {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+}
+
+.hrrr-period-time strong {
+    color: #172554;
+    font-size: 0.98rem;
+}
+
+.hrrr-period-time time {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.hrrr-period-hazard {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #166534;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.hrrr-period-hazard.is-caution {
+    color: #a16207;
+}
+
+.hrrr-period-hazard.is-danger {
+    color: #b91c1c;
+}
+
+.hrrr-period-hazard.is-unavailable {
+    color: #64748b;
+}
+
+.hrrr-period-reason {
+    min-height: 2.25em;
+    margin: 0.35rem 0 0.65rem;
+    color: #475569;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+
+.hrrr-period-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 0.55rem;
+    margin: 0;
+}
+
+.hrrr-period-metric {
+    min-width: 0;
+}
+
+.hrrr-period-metric dt {
+    color: #94a3b8;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hrrr-period-metric dd {
+    overflow: hidden;
+    margin: 0.08rem 0 0;
+    color: #1e293b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (max-width: 1050px) {
+    .hrrr-period-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .hrrr-route-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .hrrr-hazard-onset {
+        width: 100%;
+    }
+
+    .hrrr-period-grid {
+        grid-auto-columns: minmax(210px, 78vw);
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        overflow-x: auto;
+        padding: 0.1rem 0.1rem 0.55rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .hrrr-period-card {
+        scroll-snap-align: start;
+    }
+}
