@@ -96,7 +96,7 @@ async function updateConditionCards() {
         // Fetch camera detections to supplement station data
         let cameraSnowDetected = false;
         try {
-            const cameraResponse = await fetch('/api/road-weather/data');
+            const cameraResponse = await fetch('/api/road-weather');
             if (cameraResponse.ok) {
                 const cameraData = await cameraResponse.json();
                 const detections = cameraData.cameraDetections || [];
