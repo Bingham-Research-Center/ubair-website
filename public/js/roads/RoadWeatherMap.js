@@ -753,7 +753,7 @@ class RoadWeatherMap {
             const div = L.DomUtil.create('div', 'camera-cycle-control');
             div.innerHTML = `
                 <div class="camera-cycle-container">
-                    <label class="camera-cycle-label">Auto-cycle cameras:</label>
+                    <span class="camera-cycle-label">Camera tour</span>
                     <div class="camera-cycle-switch" id="camera-cycle-toggle">
                         <div class="camera-cycle-slider">
                             <div class="camera-cycle-timer-fill" id="camera-cycle-timer-fill"></div>
