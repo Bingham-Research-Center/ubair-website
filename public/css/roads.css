@@ -1095,8 +1095,11 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .legend-toggle {
     display: flex;
     align-items: center;
+    width: 100%;
+    min-height: 44px;
     gap: 8px;
     padding: 12px 15px;
+    border: 0;
     background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
     color: white;
     cursor: pointer;
@@ -1104,10 +1107,18 @@ body[data-page-type="roads"] .leaflet-drag-target {
     font-weight: 600;
     transition: all 0.3s ease;
     user-select: none;
+    font-family: inherit;
+    text-align: left;
 }
 
 .legend-toggle:hover {
     background: linear-gradient(135deg, var(--roads-secondary), var(--roads-accent));
+}
+
+.legend-toggle:focus-visible,
+.camera-cycle-button:focus-visible {
+    outline: 3px solid var(--roads-accent);
+    outline-offset: 3px;
 }
 
 .legend-toggle i.fas.fa-info-circle {
@@ -2375,7 +2386,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(10px);
     border-radius: 12px;
-    padding: 0.5rem 0.75rem;
+    padding: 0.25rem 0.6rem;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     border: 2px solid var(--roads-primary);
     margin-top: 10px;
@@ -2388,6 +2399,15 @@ body[data-page-type="roads"] .leaflet-drag-target {
     gap: 0.5rem;
 }
 
+.camera-cycle-button {
+    min-height: 44px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    cursor: pointer;
+}
+
 .camera-cycle-label {
     color: var(--roads-primary);
     font-weight: 600;
@@ -2398,20 +2418,21 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .camera-cycle-switch {
     width: 48px;
+    min-width: 48px;
     height: 26px;
+    min-height: 26px;
     background: #ddd;
     border-radius: 13px;
     position: relative;
-    cursor: pointer;
     transition: background 0.3s ease;
     border: 2px solid var(--roads-primary);
 }
 
-.camera-cycle-switch:hover {
+.camera-cycle-button:hover .camera-cycle-switch {
     background: #bbb;
 }
 
-.camera-cycle-switch.active {
+.camera-cycle-button.active .camera-cycle-switch {
     background: var(--roads-primary);
 }
 
@@ -2428,7 +2449,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     overflow: hidden;
 }
 
-.camera-cycle-switch.active .camera-cycle-slider {
+.camera-cycle-button.active .camera-cycle-slider {
     transform: translateX(22px);
 }
 

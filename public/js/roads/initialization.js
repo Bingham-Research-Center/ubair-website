@@ -95,8 +95,14 @@ function initializeUnitsToggle() {
 
     if (!unitsToggle || !unitsLabel) return;
 
-    // Set initial label
-    unitsLabel.textContent = unitsSystem.getSystemName();
+    const updateUnitsLabel = () => {
+        const currentSystem = unitsSystem.getSystemName();
+        const nextSystem = currentSystem === 'Metric' ? 'Imperial' : 'Metric';
+        unitsLabel.textContent = currentSystem;
+        unitsToggle.setAttribute('aria-label', `Switch to ${nextSystem} units`);
+    };
+
+    updateUnitsLabel();
 
     // Add click handler
     unitsToggle.addEventListener('click', function() {
@@ -104,7 +110,7 @@ function initializeUnitsToggle() {
         const isMetric = unitsSystem.toggle();
 
         // Update button label
-        unitsLabel.textContent = unitsSystem.getSystemName();
+        updateUnitsLabel();
 
         // Refresh all displays that use units
         refreshUnitsDisplays();
