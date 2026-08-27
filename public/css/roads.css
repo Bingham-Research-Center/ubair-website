@@ -1088,7 +1088,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 @media (min-width: 769px) {
     .leaflet-control.road-legend-collapsible {
-        margin-bottom: 110px;
+        margin-bottom: 110px !important;
     }
 }
 
