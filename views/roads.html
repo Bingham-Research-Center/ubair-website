@@ -7,20 +7,17 @@
     <title>Road Weather | BasinWx</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx.ico">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
-    <!-- CSS -->
+    <!-- Map library CSS -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/vendor/leaflet.markercluster/MarkerCluster.css">
+    <link rel="stylesheet" href="/vendor/leaflet.markercluster/MarkerCluster.Default.css">
+
+    <!-- Site CSS loads last so page-specific overrides remain authoritative. -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 </head>
 <body data-page-type="roads">
     <!-- Colored Bar -->
@@ -273,8 +270,8 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    <script src="/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
     <script src="/public/js/map-state-manager.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/loadFooter.js"></script>

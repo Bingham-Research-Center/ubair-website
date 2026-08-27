@@ -10,6 +10,10 @@
     --roads-ice: #bfdbfe;             /* Ice blue */
 }
 
+body[data-page-type="roads"] {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+}
+
 /* Keep the roads footer in normal document flow so it never covers content. */
 body[data-page-type="roads"] .content {
     padding-bottom: 2rem;
@@ -1529,6 +1533,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 @media (max-width: 480px) {
     /* Ultra-mobile layout */
+    body[data-page-type="roads"] h1 {
+        font-size: clamp(1.5rem, 7.2vw, 1.75rem);
+    }
+
     .map-container-fullscreen {
         height: auto;
     }

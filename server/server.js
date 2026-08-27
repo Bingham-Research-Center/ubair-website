@@ -79,6 +79,21 @@ app.use('/public', express.static('public', {
     }
 }));
 
+// Locally installed UI assets keep the roads map usable when public CDNs are slow or unavailable.
+const vendorStaticOptions = { maxAge: '1y', immutable: true };
+app.use('/vendor/leaflet', express.static(
+    path.join(__dirname, '../node_modules/leaflet/dist'),
+    vendorStaticOptions
+));
+app.use('/vendor/leaflet.markercluster', express.static(
+    path.join(__dirname, '../node_modules/leaflet.markercluster/dist'),
+    vendorStaticOptions
+));
+app.use('/vendor/fontawesome', express.static(
+    path.join(__dirname, '../node_modules/@fortawesome/fontawesome-free'),
+    vendorStaticOptions
+));
+
 // HTML Routes
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/index.html'));
