@@ -135,7 +135,6 @@ class TrafficEventsManager {
         const safeEventType = escapeHtml((event.eventType || 'Unknown').replace(/([A-Z])/g, ' $1').trim());
         const safeSeverity = escapeHtml(event.severity || 'Unknown');
         const safeComment = escapeHtml(event.comment || '');
-        const safePriority = Number.isFinite(Number(event.priority)) ? Number(event.priority) : 0;
 
         return `
             <div class="event-card" style="
@@ -161,9 +160,6 @@ class TrafficEventsManager {
                             font-size: 12px;
                             font-weight: 500;
                         ">${statusText}</span>
-                        <div style="text-align: right; margin-top: 4px; font-size: 11px; color: #999;">
-                            Priority: ${safePriority}/10
-                        </div>
                     </div>
                 </div>
 
