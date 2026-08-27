@@ -12,6 +12,7 @@ export const HRRR_HAZARD_LEVELS = Object.freeze({
 });
 
 const DEFAULT_DISPLAY_HOURS = Object.freeze([1, 3, 6, 12]);
+const CONTINUOUS_CORRIDOR_IDS = new Set(['us40', 'us191']);
 
 function finiteNumber(value) {
     if (value === null || value === undefined || value === '') return null;
@@ -273,7 +274,10 @@ export function buildForecastMapData(forecast, index) {
             };
         }).filter(Boolean);
 
-        const segments = points.slice(0, -1).map((start, pointIndex) => {
+        // Local Basin points represent separate roads, so only explicitly known
+        // continuous corridors should be joined with approximate map lines.
+        const shouldConnectPoints = route.connect_waypoints === true || CONTINUOUS_CORRIDOR_IDS.has(routeId);
+        const segments = (shouldConnectPoints ? points.slice(0, -1) : []).map((start, pointIndex) => {
             const end = points[pointIndex + 1];
             const worstPoint = start.hazard.severity >= end.hazard.severity ? start : end;
             return {

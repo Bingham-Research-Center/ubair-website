@@ -151,4 +151,23 @@ describe('HRRR road forecast model', () => {
             hazard: { level: 'danger' }
         });
     });
+
+    it('keeps independent Basin road forecast locations as points without connecting lines', () => {
+        const route = makeRoute();
+        route.waypoints.push({
+            name: 'Second local road',
+            lat: 40.2,
+            lon: -110.2,
+            forecasts: route.waypoints[0].forecasts
+        });
+        const forecast = {
+            forecast_hours: [1],
+            valid_times: ['2026-08-27T04:00:00Z'],
+            routes: { basin_roads: route }
+        };
+
+        const mapData = buildForecastMapData(forecast, 0);
+        expect(mapData.routes[0].points).toHaveLength(2);
+        expect(mapData.routes[0].segments).toHaveLength(0);
+    });
 });
