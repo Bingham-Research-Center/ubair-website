@@ -28,6 +28,11 @@ function normalizePrecipType(value) {
     return String(value || 'none').trim().toLowerCase().replaceAll('_', ' ');
 }
 
+function summarizeNumericValues(values, method) {
+    const finiteValues = values.map(finiteNumber).filter(value => value !== null);
+    return finiteValues.length > 0 ? Math[method](...finiteValues) : null;
+}
+
 /**
  * Accept either the API wrapper ({ success, forecast }) or the forecast body.
  * Throws for malformed payloads so callers can render a truthful unavailable state.
@@ -196,13 +201,23 @@ export function summarizeRouteAtIndex(route, index, validTime = null) {
 
     const ranked = [...waypointSummaries].sort((a, b) => b.hazard.severity - a.hazard.severity);
     const worstPoint = ranked[0];
+    const precipitationTypes = [...new Set(waypointSummaries
+        .map(point => point.forecast.precip_type)
+        .filter(type => type && type !== 'none'))];
 
     return {
         routeName: route.name || 'Route',
         validTime,
         hazard: worstPoint.hazard,
         worstPoint,
-        waypoints: waypointSummaries
+        waypoints: waypointSummaries,
+        metrics: {
+            minTemperature: summarizeNumericValues(waypointSummaries.map(point => point.forecast.temp_2m), 'min'),
+            maxWindGust: summarizeNumericValues(waypointSummaries.map(point => point.forecast.wind_gust), 'max'),
+            minVisibility: summarizeNumericValues(waypointSummaries.map(point => point.forecast.visibility), 'min'),
+            maxPrecipitation: summarizeNumericValues(waypointSummaries.map(point => point.forecast.precip_1hr), 'max'),
+            precipitationTypes
+        }
     };
 }
 

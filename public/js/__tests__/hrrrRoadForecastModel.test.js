@@ -98,6 +98,14 @@ describe('HRRR road forecast model', () => {
         const summary = buildRouteForecastSummary(forecast, 'us40');
         expect(summary.periods).toHaveLength(4);
         expect(summary.periods[0].hazard.level).toBe('clear');
+        expect(summary.periods[0].metrics).toEqual({
+            minTemperature: 4,
+            maxWindGust: 4,
+            minVisibility: 20,
+            maxPrecipitation: 0,
+            precipitationTypes: []
+        });
+        expect(summary.periods[2].metrics.precipitationTypes).toEqual(['snow']);
         expect(summary.onset).toMatchObject({ hour: 3 });
         expect(summary.onset.worstPoint.name).toBe('Summit');
     });
