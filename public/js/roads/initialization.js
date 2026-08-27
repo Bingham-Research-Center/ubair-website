@@ -66,9 +66,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize units toggle
     initializeUnitsToggle();
 
+    // Initialize map reset control
+    initializeMapReset();
+
     // Initialize experimental road AI toggle
     initializeExperimentalRoadToggle();
 });
+
+/**
+ * Restore the map to the standard Uintah Basin view.
+ */
+function initializeMapReset() {
+    const resetButton = document.getElementById('reset-map-view');
+    if (!resetButton) return;
+
+    resetButton.addEventListener('click', () => {
+        roadWeatherMap?.resetView();
+    });
+}
 
 /**
  * Initialize the units toggle button

@@ -99,6 +99,14 @@ class RoadWeatherMap {
         this.map.getPane('closurePane').style.pointerEvents = 'auto';
     }
 
+    resetView() {
+        if (!this.map) return;
+
+        window.mapStateManager?.clearMapState();
+        window.mapStateManager?.clearRestoreIntent();
+        this.map.setView(this.options.center, this.options.zoom, { animate: true });
+    }
+
     async loadRoadWeatherData() {
         try {
             const response = await fetch('/api/road-weather');
