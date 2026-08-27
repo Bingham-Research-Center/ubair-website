@@ -90,7 +90,7 @@ class RoadWeatherMap {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 15,
             minZoom: 8,
-            attribution: '© OpenStreetMap | Road Data: UDOT, NWS, Open-Meteo'
+            attribution: '© OpenStreetMap | Road Data: UDOT, HRRR, NWS, Open-Meteo'
         }).addTo(this.map);
 
         // Create a custom pane for closures to ensure they're always on top

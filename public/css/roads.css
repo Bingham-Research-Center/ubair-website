@@ -2651,6 +2651,11 @@ body[data-page-type="roads"] .leaflet-drag-target {
     gap: 0.65rem;
 }
 
+.hrrr-period-grid:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 3px;
+}
+
 .hrrr-period-card {
     min-width: 0;
     padding: 0.75rem;

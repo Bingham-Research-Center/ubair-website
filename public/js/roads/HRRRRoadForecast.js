@@ -69,6 +69,13 @@ function precipitationSummary(metrics) {
     return `${type} ${formatPrecipitationFromMm(metrics.maxPrecipitation)}`;
 }
 
+function pointPrecipitationSummary(forecast) {
+    const amount = Number.isFinite(forecast.precip_1hr) ? forecast.precip_1hr : null;
+    const type = String(forecast.precip_type || 'none').toLowerCase();
+    if ((amount === null || amount <= 0) && type === 'none') return 'Dry';
+    return `${titleCase(type)} · ${formatPrecipitationFromMm(amount)}`;
+}
+
 function createElement(tagName, className, text = null) {
     const element = document.createElement(tagName);
     if (className) element.className = className;
@@ -388,7 +395,7 @@ export class HRRRRoadForecastController {
             ['Temperature', formatTemperatureFromCelsius(forecast.temp_2m)],
             ['Wind gust', formatWindFromMetersPerSecond(forecast.wind_gust)],
             ['Visibility', formatVisibilityFromKm(forecast.visibility)],
-            ['Precipitation', `${titleCase(forecast.precip_type || 'none')} · ${formatPrecipitationFromMm(forecast.precip_1hr)}`]
+            ['Precipitation', pointPrecipitationSummary(forecast)]
         ].forEach(([label, value]) => {
             const row = createElement('div', '');
             row.append(createElement('dt', '', label), createElement('dd', '', value));
@@ -453,7 +460,8 @@ export class HRRRRoadForecastController {
 
         const periodGrid = createElement('div', 'hrrr-period-grid');
         periodGrid.setAttribute('role', 'list');
-        periodGrid.setAttribute('aria-label', `${summary.routeName} forecast periods`);
+        periodGrid.tabIndex = 0;
+        periodGrid.setAttribute('aria-label', `${summary.routeName} forecast periods. Scroll horizontally for later hours on smaller screens.`);
         summary.periods.forEach(period => periodGrid.append(this.createPeriodCard(period)));
 
         container.replaceChildren(header, periodGrid);
