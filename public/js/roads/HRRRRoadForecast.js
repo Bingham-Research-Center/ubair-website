@@ -1,7 +1,9 @@
 import {
+    buildForecastMapData,
     buildRouteForecastSummary,
     getForecastFreshness,
-    normalizeHRRRForecastResponse
+    normalizeHRRRForecastResponse,
+    selectForecastDisplayIndices
 } from './HRRRForecastModel.js';
 
 const HRRR_ENDPOINT = '/api/road-weather/forecast';
@@ -104,12 +106,38 @@ export class HRRRRoadForecastController {
         this.panel = document.getElementById('hrrr-guidance-panel');
         this.statusElement = document.getElementById('hrrr-guidance-status');
         this.metaElement = document.getElementById('hrrr-guidance-meta');
-        this.handleUnitsToggle = () => this.renderRouteForecasts();
+        this.mapControls = document.getElementById('hrrr-map-controls');
+        this.mapStatus = document.getElementById('hrrr-map-status');
+        this.mapHourControl = document.getElementById('hrrr-map-hour-control');
+        this.mapHours = document.getElementById('hrrr-map-hours');
+        this.mapLegend = document.getElementById('hrrr-map-legend');
+        this.mapModeButtons = [...document.querySelectorAll('[data-hrrr-map-mode]')];
+        this.forecastModeButton = document.querySelector('[data-hrrr-map-mode="forecast"]');
+        this.mapMode = 'observed';
+        this.selectedForecastIndex = 0;
+        this.forecastLayerGroup = null;
+
+        this.handleUnitsToggle = () => {
+            this.renderRouteForecasts();
+            if (this.mapMode === 'forecast') this.renderForecastMapLayer();
+        };
+        this.handleMapModeClick = event => this.setMapMode(event.currentTarget.dataset.hrrrMapMode);
+        this.handleForecastHourClick = event => {
+            const button = event.target.closest('[data-hrrr-forecast-index]');
+            if (!button || button.disabled) return;
+            this.setForecastIndex(Number(button.dataset.hrrrForecastIndex));
+        };
+        this.handleMapLayersRendered = () => {
+            if (this.mapMode === 'forecast') this.applyMapMode();
+        };
     }
 
     async init() {
         if (!this.panel || !this.statusElement || !this.metaElement) return;
 
+        this.mapModeButtons.forEach(button => button.addEventListener('click', this.handleMapModeClick));
+        this.mapHours?.addEventListener('click', this.handleForecastHourClick);
+        window.addEventListener('roads-map:layers-rendered', this.handleMapLayersRendered);
         await this.load();
         document.getElementById('units-toggle')?.addEventListener('click', this.handleUnitsToggle);
         this.refreshTimer = window.setInterval(() => this.load({ isRefresh: true }), this.refreshIntervalMs);
@@ -169,6 +197,8 @@ export class HRRRRoadForecastController {
         );
 
         this.renderRouteForecasts();
+        this.renderMapHourButtons();
+        if (this.mapMode === 'forecast') this.applyMapMode();
     }
 
     renderUnavailable(message, retainingPreviousRun = false) {
@@ -181,7 +211,200 @@ export class HRRRRoadForecastController {
             ? `The previously loaded run remains visible. ${message}`
             : message;
 
-        if (!retainingPreviousRun) this.renderRouteUnavailable(message);
+        if (!retainingPreviousRun) {
+            this.renderRouteUnavailable(message);
+            this.renderMapUnavailable();
+        }
+    }
+
+    renderMapHourButtons() {
+        if (!this.forecast || !this.mapHours) return;
+
+        const selections = selectForecastDisplayIndices(this.forecast.forecast_hours);
+        if (!selections.some(selection => selection.index === this.selectedForecastIndex)) {
+            this.selectedForecastIndex = selections[0]?.index ?? 0;
+        }
+
+        const buttons = selections.map(selection => {
+            const button = createElement('button', '', `+${selection.hour}h`);
+            button.type = 'button';
+            button.dataset.hrrrForecastIndex = String(selection.index);
+            button.setAttribute('aria-label', `Show HRRR forecast for ${formatMountainHour(this.forecast.valid_times[selection.index])}, plus ${selection.hour} hours`);
+            const time = createElement('small', '', formatMountainHour(this.forecast.valid_times[selection.index]));
+            button.append(time);
+            return button;
+        });
+
+        this.mapHours.replaceChildren(...buttons);
+        if (this.forecastModeButton) this.forecastModeButton.disabled = false;
+        this.updateMapControlState();
+    }
+
+    renderMapUnavailable() {
+        if (this.forecastModeButton) this.forecastModeButton.disabled = true;
+        if (this.mapHours) this.mapHours.textContent = 'Forecast unavailable';
+        this.setMapMode('observed');
+    }
+
+    setMapMode(mode) {
+        if (mode === 'forecast' && (!this.forecast || this.forecastModeButton?.disabled)) return;
+        this.mapMode = mode === 'forecast' ? 'forecast' : 'observed';
+        this.updateMapControlState();
+        this.applyMapMode();
+    }
+
+    setForecastIndex(index) {
+        if (!Number.isInteger(index) || !this.forecast?.forecast_hours?.[index]) return;
+        this.selectedForecastIndex = index;
+        this.updateMapControlState();
+        if (this.mapMode === 'forecast') this.renderForecastMapLayer();
+    }
+
+    updateMapControlState() {
+        this.mapModeButtons.forEach(button => {
+            const isActive = button.dataset.hrrrMapMode === this.mapMode;
+            button.classList.toggle('is-active', isActive);
+            button.setAttribute('aria-pressed', String(isActive));
+        });
+
+        const forecastActive = this.mapMode === 'forecast';
+        if (this.mapHourControl) this.mapHourControl.setAttribute('aria-disabled', String(!forecastActive));
+        this.mapHours?.querySelectorAll('button').forEach(button => {
+            const isSelected = Number(button.dataset.hrrrForecastIndex) === this.selectedForecastIndex;
+            button.disabled = !forecastActive;
+            button.classList.toggle('is-active', isSelected);
+            button.setAttribute('aria-pressed', String(isSelected));
+        });
+        if (this.mapLegend) this.mapLegend.hidden = !forecastActive;
+    }
+
+    applyMapMode() {
+        if (this.mapMode === 'forecast') {
+            this.setCurrentMapChromeVisible(false);
+            this.hideCurrentRoadLayers();
+            this.renderForecastMapLayer();
+            return;
+        }
+
+        this.clearForecastMapLayer();
+        this.showCurrentRoadLayers();
+        this.setCurrentMapChromeVisible(true);
+        if (this.mapStatus) {
+            this.mapStatus.textContent = 'Map showing the current UDOT, station, camera, and model blend.';
+        }
+    }
+
+    hideCurrentRoadLayers() {
+        const roadWeatherMap = window.roadWeatherMap;
+        if (!roadWeatherMap?.map || !roadWeatherMap.roadLayers) return;
+        roadWeatherMap.roadLayers.forEach(layer => {
+            if (roadWeatherMap.map.hasLayer(layer)) roadWeatherMap.map.removeLayer(layer);
+        });
+    }
+
+    setCurrentMapChromeVisible(visible) {
+        [
+            document.querySelector('.conditions-overlay'),
+            document.querySelector('.road-legend-collapsible')
+        ].filter(Boolean).forEach(element => {
+            element.hidden = !visible;
+            element.setAttribute('aria-hidden', String(!visible));
+        });
+    }
+
+    showCurrentRoadLayers() {
+        const roadWeatherMap = window.roadWeatherMap;
+        if (!roadWeatherMap?.map || !roadWeatherMap.roadLayers) return;
+        roadWeatherMap.roadLayers.forEach(layer => {
+            if (!roadWeatherMap.map.hasLayer(layer)) layer.addTo(roadWeatherMap.map);
+        });
+    }
+
+    renderForecastMapLayer() {
+        const roadWeatherMap = window.roadWeatherMap;
+        if (!this.forecast || !roadWeatherMap?.map || !window.L) return;
+
+        this.clearForecastMapLayer();
+        this.hideCurrentRoadLayers();
+
+        const mapData = buildForecastMapData(this.forecast, this.selectedForecastIndex);
+        const layerGroup = window.L.layerGroup();
+
+        mapData.routes.forEach(route => {
+            route.segments.forEach(segment => {
+                const line = window.L.polyline(
+                    [[segment.start.lat, segment.start.lon], [segment.end.lat, segment.end.lon]],
+                    {
+                        color: segment.hazard.color,
+                        weight: 7,
+                        opacity: 0.9,
+                        dashArray: '12, 7',
+                        lineCap: 'round'
+                    }
+                );
+                line.bindPopup(
+                    this.createForecastPopup(route.routeName, segment.worstPointName, segment.forecast, segment.hazard, mapData),
+                    { maxWidth: 300, autoPanPaddingTopLeft: [300, 130], autoPanPaddingBottomRight: [40, 80] }
+                );
+                line.addTo(layerGroup);
+            });
+
+            route.points.forEach(point => {
+                const marker = window.L.circleMarker([point.lat, point.lon], {
+                    radius: 5,
+                    color: '#ffffff',
+                    weight: 2,
+                    fillColor: point.hazard.color,
+                    fillOpacity: 1
+                });
+                marker.bindPopup(
+                    this.createForecastPopup(route.routeName, point.name, point.forecast, point.hazard, mapData),
+                    { maxWidth: 300, autoPanPaddingTopLeft: [300, 130], autoPanPaddingBottomRight: [40, 80] }
+                );
+                marker.addTo(layerGroup);
+            });
+        });
+
+        layerGroup.addTo(roadWeatherMap.map);
+        this.forecastLayerGroup = layerGroup;
+
+        if (this.mapStatus) {
+            this.mapStatus.textContent = `Map showing HRRR +${mapData.hour}h guidance for ${formatMountainTime(mapData.validTime)}. Dashed lines connect forecast waypoints and are not exact road geometry.`;
+        }
+    }
+
+    createForecastPopup(routeName, pointName, forecast, hazard, mapData) {
+        const popup = createElement('div', 'hrrr-map-popup');
+        popup.append(
+            createElement('span', 'hrrr-map-popup-kicker', `HRRR +${mapData.hour}h guidance`),
+            createElement('h4', '', routeName),
+            createElement('p', 'hrrr-map-popup-location', pointName),
+            createElement('p', `hrrr-map-popup-hazard is-${hazard.level}`, `${hazard.label}: ${hazard.reason}`)
+        );
+
+        const metrics = createElement('dl', 'hrrr-map-popup-metrics');
+        [
+            ['Valid', formatMountainTime(mapData.validTime)],
+            ['Temperature', formatTemperatureFromCelsius(forecast.temp_2m)],
+            ['Wind gust', formatWindFromMetersPerSecond(forecast.wind_gust)],
+            ['Visibility', formatVisibilityFromKm(forecast.visibility)],
+            ['Precipitation', `${titleCase(forecast.precip_type || 'none')} · ${formatPrecipitationFromMm(forecast.precip_1hr)}`]
+        ].forEach(([label, value]) => {
+            const row = createElement('div', '');
+            row.append(createElement('dt', '', label), createElement('dd', '', value));
+            metrics.append(row);
+        });
+
+        popup.append(metrics, createElement('p', 'hrrr-map-popup-note', 'Atmospheric model guidance—not an observed pavement condition.'));
+        return popup;
+    }
+
+    clearForecastMapLayer() {
+        const map = window.roadWeatherMap?.map;
+        if (map && this.forecastLayerGroup && map.hasLayer(this.forecastLayerGroup)) {
+            map.removeLayer(this.forecastLayerGroup);
+        }
+        this.forecastLayerGroup = null;
     }
 
     renderRouteForecasts() {
@@ -290,7 +513,13 @@ export class HRRRRoadForecastController {
     }
 
     destroy() {
+        this.clearForecastMapLayer();
+        this.showCurrentRoadLayers();
+        this.setCurrentMapChromeVisible(true);
         document.getElementById('units-toggle')?.removeEventListener('click', this.handleUnitsToggle);
+        this.mapModeButtons.forEach(button => button.removeEventListener('click', this.handleMapModeClick));
+        this.mapHours?.removeEventListener('click', this.handleForecastHourClick);
+        window.removeEventListener('roads-map:layers-rendered', this.handleMapLayersRendered);
         if (this.refreshTimer !== null) {
             window.clearInterval(this.refreshTimer);
             this.refreshTimer = null;

@@ -113,6 +113,7 @@ class RoadWeatherMap {
             this.renderRoadSegments(data.segments);
             this.renderWeatherStations(data.stations);
             this.renderTrafficCameras(data.cameras, data.cameraDetections);
+            window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
 
         } catch (error) {
             console.error('Error loading road weather data:', error);
@@ -175,6 +176,8 @@ class RoadWeatherMap {
         stations.forEach(station => {
             this.renderWeatherStation(station);
         });
+
+        window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
     }
 
     renderRoadSegments(segments) {

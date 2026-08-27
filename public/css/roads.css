@@ -2354,6 +2354,158 @@ body[data-page-type="roads"] .leaflet-drag-target {
     color: var(--roads-secondary);
 }
 
+.hrrr-map-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.8rem 1rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #dbeafe;
+}
+
+.hrrr-map-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.hrrr-map-control-label {
+    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hrrr-map-toggle,
+.hrrr-map-hours {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.22rem;
+    background: #e2e8f0;
+    border-radius: 9px;
+}
+
+.hrrr-map-toggle button,
+.hrrr-map-hours button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 2.1rem;
+    padding: 0.4rem 0.7rem;
+    color: #475569;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.hrrr-map-toggle button:hover:not(:disabled),
+.hrrr-map-hours button:hover:not(:disabled) {
+    color: var(--roads-primary);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.hrrr-map-toggle button.is-active,
+.hrrr-map-hours button.is-active {
+    color: var(--roads-primary);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+}
+
+.hrrr-map-toggle button:focus-visible,
+.hrrr-map-hours button:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 2px;
+}
+
+.hrrr-map-toggle button:disabled,
+.hrrr-map-hours button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+.hrrr-map-hours button {
+    min-width: 3.7rem;
+    flex-direction: column;
+    gap: 0.05rem;
+    line-height: 1.05;
+}
+
+.hrrr-map-hours button small {
+    color: #64748b;
+    font-size: 0.58rem;
+    font-weight: 600;
+}
+
+.hrrr-map-hours-loading {
+    padding: 0.45rem 0.65rem;
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.hrrr-map-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-left: auto;
+    padding: 0.45rem 0.65rem;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.hrrr-map-legend[hidden] {
+    display: none;
+}
+
+.hrrr-map-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.hrrr-map-legend i {
+    width: 0.65rem;
+    height: 0.65rem;
+    background: #64748b;
+    border-radius: 50%;
+}
+
+.hrrr-map-legend i.is-clear {
+    background: #16a34a;
+}
+
+.hrrr-map-legend i.is-caution {
+    background: #d97706;
+}
+
+.hrrr-map-legend i.is-danger {
+    background: #dc2626;
+}
+
+.hrrr-map-status {
+    margin: 0.65rem 0 0;
+    color: #475569;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.conditions-overlay[hidden],
+.leaflet-control.road-legend-collapsible[hidden] {
+    display: none !important;
+}
+
 .hrrr-guidance-disclaimer {
     margin: 0.75rem 0 0;
     color: #64748b;
@@ -2386,6 +2538,28 @@ body[data-page-type="roads"] .leaflet-drag-target {
     .hrrr-guidance-status {
         max-width: 100%;
         white-space: normal;
+    }
+
+    .hrrr-map-controls,
+    .hrrr-map-control-group {
+        width: 100%;
+    }
+
+    .hrrr-map-toggle,
+    .hrrr-map-hours {
+        width: 100%;
+    }
+
+    .hrrr-map-toggle button,
+    .hrrr-map-hours button {
+        flex: 1 1 0;
+        padding-inline: 0.35rem;
+    }
+
+    .hrrr-map-legend {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
     }
 }
 
@@ -2577,6 +2751,82 @@ body[data-page-type="roads"] .leaflet-drag-target {
     font-weight: 700;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.hrrr-map-popup {
+    min-width: 210px;
+    color: #1e293b;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.hrrr-map-popup-kicker {
+    color: var(--roads-secondary);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.hrrr-map-popup h4 {
+    margin: 0.25rem 0 0;
+    color: #172554;
+    font-size: 1rem;
+}
+
+.hrrr-map-popup-location {
+    margin: 0.15rem 0 0.55rem;
+    color: #64748b;
+    font-size: 0.76rem;
+}
+
+.hrrr-map-popup-hazard {
+    margin: 0 0 0.6rem;
+    padding: 0.4rem 0.5rem;
+    color: #166534;
+    background: #f0fdf4;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.hrrr-map-popup-hazard.is-caution {
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.hrrr-map-popup-hazard.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-map-popup-metrics {
+    margin: 0;
+}
+
+.hrrr-map-popup-metrics div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.7rem;
+}
+
+.hrrr-map-popup-metrics dt {
+    color: #64748b;
+}
+
+.hrrr-map-popup-metrics dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.hrrr-map-popup-note {
+    margin: 0.55rem 0 0;
+    color: #64748b;
+    font-size: 0.62rem;
+    line-height: 1.35;
 }
 
 @media (max-width: 1050px) {

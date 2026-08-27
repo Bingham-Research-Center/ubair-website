@@ -122,6 +122,33 @@
             <div class="hrrr-guidance-meta" id="hrrr-guidance-meta">
                 Forecast initialization and coverage will appear here.
             </div>
+            <div class="hrrr-map-controls" id="hrrr-map-controls">
+                <div class="hrrr-map-control-group">
+                    <span class="hrrr-map-control-label">Map layer</span>
+                    <div class="hrrr-map-toggle" role="group" aria-label="Road map layer">
+                        <button type="button" class="is-active" data-hrrr-map-mode="observed" aria-pressed="true">
+                            <i class="fas fa-satellite-dish" aria-hidden="true"></i> Current conditions
+                        </button>
+                        <button type="button" data-hrrr-map-mode="forecast" aria-pressed="false" disabled>
+                            <i class="fas fa-forward" aria-hidden="true"></i> HRRR forecast
+                        </button>
+                    </div>
+                </div>
+                <div class="hrrr-map-control-group hrrr-map-hour-control" id="hrrr-map-hour-control" aria-disabled="true">
+                    <span class="hrrr-map-control-label">Forecast time</span>
+                    <div class="hrrr-map-hours" id="hrrr-map-hours" role="group" aria-label="HRRR forecast time">
+                        <span class="hrrr-map-hours-loading">Loading…</span>
+                    </div>
+                </div>
+                <div class="hrrr-map-legend" id="hrrr-map-legend" aria-label="HRRR forecast concern levels" hidden>
+                    <span><i class="is-clear" aria-hidden="true"></i> Low concern</span>
+                    <span><i class="is-caution" aria-hidden="true"></i> Caution</span>
+                    <span><i class="is-danger" aria-hidden="true"></i> High concern</span>
+                </div>
+            </div>
+            <p class="hrrr-map-status" id="hrrr-map-status" role="status" aria-live="polite">
+                Map showing the current UDOT, station, camera, and model blend.
+            </p>
             <p class="hrrr-guidance-disclaimer">
                 <i class="fas fa-info-circle" aria-hidden="true"></i>
                 Atmospheric model guidance—not an observed pavement condition. Confirm critical travel decisions with UDOT reports and cameras.
