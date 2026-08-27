@@ -119,17 +119,6 @@ function refreshUnitsDisplays() {
     // Refresh condition cards on the map
     updateConditionCards();
 
-    // Update default unit labels in HTML when showing placeholders
-    const windCard = document.querySelector('.condition-card-compact.wind .value');
-    if (windCard && windCard.textContent.includes('--')) {
-        windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
-    }
-
-    const visCard = document.querySelector('.condition-card-compact.visibility .value');
-    if (visCard && visCard.textContent.includes('--')) {
-        visCard.textContent = `-- ${unitsSystem.getVisibilityUnit()}`;
-    }
-
     // Smart refresh that uses cached data instead of reloading everything
     smartRefreshRoutes();
 }
