@@ -9,6 +9,37 @@ const CONDITION_PRIORITY = { red: 3, yellow: 2, green: 1 };
 const CONDITION_LABELS = { red: 'Dangerous', yellow: 'Caution', green: 'Clear' };
 const UNAVAILABLE_VALUE = 'Not reported';
 
+function updateConditionsFreshness(timestamp, label = 'Station data updated') {
+    const freshnessElement = document.getElementById('conditions-updated');
+    if (!freshnessElement) return;
+
+    const updatedAt = timestamp ? new Date(timestamp) : null;
+    if (!updatedAt || Number.isNaN(updatedAt.getTime())) {
+        freshnessElement.textContent = 'Data update time unavailable';
+        freshnessElement.removeAttribute('title');
+        return;
+    }
+
+    const formattedTime = new Intl.DateTimeFormat([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+    }).format(updatedAt);
+
+    freshnessElement.textContent = `${label} ${formattedTime}`;
+    freshnessElement.title = updatedAt.toLocaleString();
+}
+
+function getLatestStationUpdate(stations) {
+    const timestamps = stations
+        .map(station => Date.parse(station.lastUpdated))
+        .filter(timestamp => Number.isFinite(timestamp));
+
+    return timestamps.length > 0 ? Math.max(...timestamps) : null;
+}
+
 /**
  * Update condition cards with location-specific data when a station is clicked
  */
@@ -84,15 +115,17 @@ async function updateConditionCards() {
     try {
         const response = await fetch('/api/road-weather/stations');
         if (!response.ok) {
-            updateCardsWithFallback();
+            await updateCardsWithFallback();
             return;
         }
 
         const stations = await response.json();
         if (!stations || stations.length === 0) {
-            updateCardsWithFallback();
+            await updateCardsWithFallback();
             return;
         }
+
+        updateConditionsFreshness(getLatestStationUpdate(stations));
 
         // Fetch camera detections to supplement station data
         let cameraSnowDetected = false;
@@ -224,7 +257,7 @@ async function updateConditionCards() {
         }
     } catch (error) {
         console.error('Error updating condition cards:', error);
-        updateCardsWithFallback();
+        await updateCardsWithFallback();
     }
 }
 
@@ -241,9 +274,13 @@ async function updateCardsWithFallback() {
 
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
                 if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
+                updateConditionsFreshness(Date.now(), 'Backup data loaded');
+                return;
             }
         }
+        updateConditionsFreshness(null);
     } catch (error) {
         console.error('Fallback also failed:', error);
+        updateConditionsFreshness(null);
     }
 }
