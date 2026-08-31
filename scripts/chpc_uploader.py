@@ -274,8 +274,11 @@ class BasinWxUploader:
                 else:
                     logger.error(f"✗ Upload failed: {response.status_code} - {response.text}")
 
-                    if response.status_code in [401, 403]:
-                        # Don't retry auth failures
+                    # Terminal failures: retrying cannot change the outcome.
+                    #   401/403 - the key or the origin is wrong.
+                    #   413     - the body will never fit; a retry loop only buries the
+                    #             signal. See WEBSITE-BRCTOOLS-OPEN-ASKS.md A3.
+                    if response.status_code in [401, 403, 413]:
                         return False
 
             except requests.exceptions.RequestException as e:

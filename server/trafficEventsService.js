@@ -51,8 +51,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
-            const staleCached = await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
-            return staleCached || []; // Fallback to 24h old cache
+            return (await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000)) || []; // Fallback to 24h old cache
         }
 
         try {
@@ -171,8 +170,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT events API call (too recent)');
-            const staleCached = await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
-            return staleCached || []; // Fallback to 24h old cache
+            return (await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000)) || []; // Fallback to 24h old cache
         }
 
         try {

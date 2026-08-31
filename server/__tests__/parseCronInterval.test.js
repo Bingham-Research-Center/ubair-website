@@ -14,7 +14,7 @@ describe('parseCronIntervalMinutes — every frequency DATA_MANIFEST.json actual
     test.each([
         ['*/10 * * * *',        10,   'observations'],
         ['0 */6 * * *',         360,  'metadata'],
-        ['0 * * * *',           60,   'timeseries'],
+        ['0 * * * *',           60,   'forecasts.hrrr_surface_layers'],
         ['*/30 * * * *',        30,   'images'],
         ['30 3,9,15,21 * * *',  360,  'forecasts — the one the old parser got wrong'],
     ])('%s -> %i minutes (%s)', (expr, expected) => {
