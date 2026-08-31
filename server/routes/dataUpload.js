@@ -51,7 +51,6 @@ const storage = multer.diskStorage({
             'outlooks': 'outlooks',
             'llm_outlooks': 'llm_outlooks',
             'images': 'images',
-            'timeseries': 'timeseries',
             'forecasts': 'forecasts',
             'road-forecast': 'road-forecast'
         };

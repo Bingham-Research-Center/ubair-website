@@ -1,7 +1,7 @@
 {
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2026-08-14",
+  "lastUpdated": "2026-08-27",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -143,59 +143,6 @@
       "validation": {
         "maxFileSize": "1MB",
         "maxStations": 1000
-      }
-    },
-    "timeseries": {
-      "description": "Time series data for charts (hourly/forecast data)",
-      "format": "json",
-      "endpoint": "/api/upload/timeseries",
-      "schedule": {
-        "frequency": "0 * * * *",
-        "description": "Every hour",
-        "timezone": "UTC"
-      },
-      "filename": {
-        "pattern": "{variable}_{stid}_YYYYMMDD_HHMMZ.json",
-        "example": "ozone_BUNUT_20250731_1200Z.json"
-      },
-      "schema": {
-        "type": "object",
-        "required": ["station_id", "variable", "units", "data"],
-        "properties": {
-          "station_id": {
-            "type": "string",
-            "description": "Station ID"
-          },
-          "variable": {
-            "type": "string",
-            "description": "Variable name"
-          },
-          "units": {
-            "type": "string",
-            "description": "Measurement units"
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "required": ["time", "value"],
-              "properties": {
-                "time": {
-                  "type": "string",
-                  "description": "ISO 8601 timestamp"
-                },
-                "value": {
-                  "type": "number",
-                  "description": "Measurement value"
-                }
-              }
-            }
-          }
-        }
-      },
-      "validation": {
-        "maxFileSize": "5MB",
-        "maxDataPoints": 10000
       }
     },
     "outlooks": {
@@ -628,7 +575,7 @@
           "description": "HRRR sub-hourly runway head/crosswind forecast for KVEL (Vernal Regional). Runways 17/35 per FAA redesignation (true headings 179/359).",
           "schedule": {
             "frequency": "55 * * * *",
-            "description": "Automatic - hourly export of the latest HRRR subh run (cron pending install on CHPC)",
+            "description": "Automatic - hourly export of the latest HRRR subh run (cron installed on notchpeak1 2026-08-27)",
             "timezone": "UTC"
           },
           "filename": {
@@ -914,7 +861,6 @@
     "expectedDataFlow": {
       "observations": "Every 10 minutes (automatic)",
       "metadata": "Every 6 hours (automatic)",
-      "timeseries": "Every hour (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
       "images": "Every 30 minutes (automatic)",
       "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly"
