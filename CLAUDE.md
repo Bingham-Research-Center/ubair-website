@@ -9,15 +9,17 @@ Leaflet/Plotly, vanilla JS frontend.
 | Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
 | Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` (port 3001) | `/srv/ubair-website` | `deploy` |
 
-Both rows verified by direct inspection 2026-08-13 (prod first, dev later the same day).
-`docs/DEPLOYMENT.md` §1b describes a *target* layout that **dev already matches** but
-production does **not**; §1a records what is actually deployed on each. Don't assume a fact
-from one box holds on the other — they differ in app name, port, path, user, and ingest path.
+`docs/DEPLOYMENT.md` §1a records what is actually deployed on each box (verified by direct
+inspection 2026-08-13); §1b is a *target* layout that dev already matches but production does
+not. Don't assume a fact from one box holds on the other — they differ in app name, port,
+path, user, and ingest path.
 
 **Ingest reaches the two boxes differently.** Prod's uploads arrive on loopback over an SSH
-tunnel; **dev's arrive as ordinary public HTTPS** from notchpeak1's real IP (`155.101.26.78`)
-through nginx → 3001. So on prod a green public `/api/health` says nothing about ingest, while
-on dev the public path *is* the ingest path — if `.dev` is unreachable, ingest is down with it.
+tunnel (`::ffff:127.0.0.1`, `x-client-hostname: notchpeak1.int.chpc.utah.edu`); **dev's arrive
+as ordinary public HTTPS** from notchpeak1 (`155.101.26.78`) through nginx → 3001. So on prod
+a green public `/api/health` says nothing about ingest — if uploads stop, check the SSH path
+first (`docs/DEPLOYMENT.md` §1a) — while on dev the public path *is* the ingest path: if
+`.dev` is unreachable, ingest is down with it.
 
 `.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
 merging into `dev` is a real-world dry-run before promoting to `ops`.
@@ -49,11 +51,6 @@ Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-too
 the contract-holder for new dataTypes — server doesn't enforce schema).
 `GET /api/health` reports `version` + `manifestVersion` so producers can
 compatibility-check before uploading.
-
-On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
-notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
-public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
-are independent. If uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
 
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
@@ -104,9 +101,7 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (155/155 as of 2026-08-25).** Any failure is new
-  breakage. The old "4 known failures in `cameraAnalysisScheduler.test.js`" caveat is retired:
-  they were assertions against a config shape the scheduler had stopped having, and a tolerated
-  red suite is how a genuinely vacuous test (`analysisTimeout`, a property that never existed)
-  survived unnoticed.
+- `npm test` — Jest. **The suite is green (155/155 as of 2026-08-25); any failure is new
+  breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
+  unnoticed.
 - `npm run test-api` — loopback POST against the upload route
