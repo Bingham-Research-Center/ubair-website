@@ -16,36 +16,30 @@ Read `CLAUDE.md` first — protected branches, the squash-merge trap, and the wo
 | | |
 |---|---|
 | `dev` | v1.5.3-dev, manifest 2.0.0 |
-| `ops` | `ffd0bfb`, v1.5.2, manifest 2.0.0, tagged `v1.5.2` — **merged but NOT deployed** |
-| prod box | still serving v1.5.2's predecessor until someone runs the Chunk 1 deploy |
+| `ops` | `ffd0bfb`, v1.5.2, manifest 2.0.0, tagged `v1.5.2` |
+| prod box | **deployed** — `www.basinwx.com` verified serving 1.5.2 / manifest 2.0.0 on 2026-08-26 |
 | Test suite | **155/155 green.** Any failure is new breakage — the old 4-failure baseline is retired |
 | `.dev` ingest | healthy; forecasts recovered 2026-08-25 after a four-month outage |
-| Open PRs | #220 (nginx script), #128 (Quinten's sports page) |
+| Open PRs | #128 (Quinten's sports page) — #220 merged |
 
-The 2026-08-25 incident and its causes are recorded in `WEBSITE-BRCTOOLS-HANDOFF-aug25.md`
-and `docs/DEPLOYMENT.md` §8. Do not re-derive them.
+The 2026-08-25 incident and its causes are recorded in `docs/DEPLOYMENT.md` §8. The producer
+contract lives in `docs/WEBSITE-BRCTOOLS-CONTRACT.md` and everything still unanswered in
+`WEBSITE-BRCTOOLS-OPEN-ASKS.md`. Do not re-derive them.
 
 ---
 
-## CHUNK 1 — Promote v1.5.2 to production ← GIT SIDE DONE, DEPLOY STILL PENDING
+## CHUNK 1 — Promote v1.5.2 to production ← ✅ DONE 2026-08-26
 
-> **Updated 2026-08-26.** The release train has been run: `dev` stripped to 1.5.2 (#222),
-> promoted to `ops` (#223, merge `ffd0bfb`), tagged **v1.5.2**, merged to `main` (#224), and
-> `dev` reopened at 1.5.3-dev. **`ops` is not deployed.** The prod box needs root, so the
-> commands below are still outstanding and are JRL's to run. Until then `www.basinwx.com`
-> keeps serving 1.5.1 with the defects listed here.
+> **Closed 2026-08-26.** The release train ran — `dev` stripped to 1.5.2 (#222), promoted to
+> `ops` (#223, merge `ffd0bfb`), tagged **v1.5.2**, merged to `main` (#224), `dev` reopened at
+> 1.5.3-dev — and the prod box has since been deployed. Verified live 2026-08-26:
+> `www.basinwx.com` reports **1.5.2 / manifest 2.0.0** and `/api/filelist/timeseries` returns
+> **404**, not 500. The steps below are kept only as the reference procedure for the next
+> promotion. Nothing here is outstanding.
 
-**Why:** prod still carries defects already fixed on `dev`. Verified against `www.basinwx.com`
-on 2026-08-26:
-
-```
-/api/filelist/timeseries   ->  HTTP 500   (should be 404)
-oversized JSON body        ->  HTTP 500   (should be 413)
-```
-
-Prod also still has the freshness index blindspot **latent** — its forecasts are healthy today,
-so nothing is masked, but the identical trap is armed the moment its producer goes quiet. And
-prod is on manifest 1.2.0, so it will not accept the KVEL contract.
+**Why it mattered:** prod carried defects already fixed on `dev` — `/api/filelist/timeseries`
+returned 500 instead of 404, an oversized JSON body returned 500 instead of 413, and prod sat
+on manifest 1.2.0 and so would not accept the KVEL contract. All three resolved by the deploy.
 
 **Steps** (ceremony is `docs/DEPLOYMENT.md` §7a; every step is a PR — never push to a
 protected branch):
@@ -131,8 +125,8 @@ Then wait one producer cycle (~6 h) and confirm run files still land.
 
 ## CHUNK 4 — Website-side index-consistency backstop
 
-**Why:** `WEBSITE-BRCTOOLS-HANDOFF-aug25.md` names a producer that publishes an index for files
-it did not upload. The proper fix is producer-side (P0-2 there) and this must not substitute for
+**Why:** `WEBSITE-BRCTOOLS-OPEN-ASKS.md` A2 names a producer that publishes an index for files
+it did not upload. The proper fix is producer-side and this must not substitute for
 it — but a backstop would have caught the outage in a day rather than four months.
 
 **Shape:** extend `server/monitoring/dataMonitor.js` so that for any dataType holding a
@@ -160,13 +154,14 @@ branches.
 
 ## CHUNK 6 — Dark dataTypes (BLOCKED on brc-tools)
 
-`timeseries` has never been uploaded to **either** host despite a declared hourly schedule.
 `llm_outlooks` and `images` reach `.com` but have never created a directory on `.dev` — fan-out
-is per-dataType, not global. `outlooks` is stale on both (`.dev` by ~20 months).
+is per-dataType, not global (`WEBSITE-BRCTOOLS-OPEN-ASKS.md` A5, brc-tools' to fix). `outlooks`
+is stale on both.
 
-Full table and the asks are in `WEBSITE-BRCTOOLS-HANDOFF-aug25.md`. **Website-side action is
-only to decide whether `timeseries` should stay in `DATA_MANIFEST.json`** — a declared dataType
-that never ships is a permanently false "missing" in monitoring. That decision is JRL's.
+`timeseries` is **not** blocked on brc-tools — it has no consumer at all. The only reader is
+`public/js/api.js` calling `/api/synoptic/timeseries`, the live Synoptic proxy, which never
+touches `/api/static/timeseries/*`. So the sole action is a website-side decision on whether it
+stays in `DATA_MANIFEST.json` (A10) — JRL's call, no producer work either way.
 
 ---
 
@@ -180,7 +175,11 @@ that never ships is a permanently false "missing" in monitoring. That decision i
   Fix: `sudo apt update && sudo apt install --only-upgrade gh`.
 - **`DATA_MANIFEST.json` forecasts schedule** declares `30 3,9,15,21 * * *` but the producer
   runs at ~00:48/06:48/12:48/18:48 UTC. The interval is right so staleness is correct; only the
-  phase is wrong. brc-tools is the contract-holder — do not unilaterally edit it.
+  phase is wrong. brc-tools is the contract-holder — do not unilaterally edit it (A4).
+- **`road-forecast` declares `"ad-hoc (proof-of-concept)"`** as its frequency.
+  `parseCronIntervalMinutes` sees <5 fields and silently defaults to 60 min, which happens to
+  match the real `:22` hourly cadence — correct by accident. Declare `22 * * * *` (A11). This
+  one *is* ours; the producer cadence is already what we want.
 
 ---
 
