@@ -8,7 +8,8 @@ import {
     airDensity,
     crosswindComponentMs,
     crosswindDriftInches,
-    settleRound
+    settleRound,
+    formatLogScore
 } from '../sports.js';
 
 // The observation feed is raw SI (Celsius, m/s, Pascals) and api.js deliberately
@@ -186,6 +187,21 @@ describe('crosswindDriftInches', () => {
     it('returns null when the inputs are missing', () => {
         expect(crosswindDriftInches(BALLS.baseball, null, rho)).toBeNull();
         expect(crosswindDriftInches(BALLS.baseball, 5, null)).toBeNull();
+    });
+});
+
+describe('formatLogScore', () => {
+    it('formats a finite score with a sign', () => {
+        expect(formatLogScore(0.0823)).toBe('+0.082');
+        expect(formatLogScore(-0.1335)).toBe('-0.134');
+        expect(formatLogScore(0)).toBe('+0.000');
+    });
+
+    it('renders a wiped bank readably instead of "-Infinity"', () => {
+        // settleRound returns log(0) when the winning side was left empty.
+        // toFixed() would render the string "-Infinity", which is not a score.
+        expect(formatLogScore(-Infinity)).toBe('\u2212\u221e');
+        expect(formatLogScore(NaN)).toBe('\u2014');
     });
 });
 

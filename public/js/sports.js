@@ -88,7 +88,7 @@ function toPascals(value, unit) {
     if (value === null) return null;
     if (unit === 'Pascals') return value;
     if (unit === 'hPa' || unit === 'Millibars') return value * 100;
-    console.warn(`sports: unexpected pressure unit "${unit}" — falling back to standard`);
+    console.warn(`sports: unexpected pressure unit "${unit}" — not displaying`);
     return null;
 }
 
@@ -216,6 +216,13 @@ export function crosswindDriftInches(ball, crosswindMs, rho) {
     const flightSeconds = ball.flightMetres / ball.speedMs;
 
     return 0.5 * sidewaysAccel * flightSeconds ** 2 * METRES_TO_INCHES;
+}
+
+// A wiped-out side scores log(0). Number.prototype.toFixed returns "-Infinity"
+// for that rather than throwing, but it reads badly on the card.
+export function formatLogScore(value) {
+    if (!Number.isFinite(value)) return value < 0 ? '−∞' : '—';
+    return `${value >= 0 ? '+' : ''}${value.toFixed(3)}`;
 }
 
 function formatDrift(inches, crosswindMs, ball) {
@@ -382,8 +389,7 @@ function initPredictionGame() {
         scoreEl.textContent = gameState.round === 0
             ? `Bank ${STARTING_TOKENS} tokens · house quote ${Math.round(HOUSE_PROBABILITY_LEFT * 100)}% on LEFT`
             : `Bank ${Math.round(gameState.tokens)} tokens · round ${gameState.round} · ` +
-              `cumulative log score ${gameState.cumulativeLogScore >= 0 ? '+' : ''}` +
-              `${gameState.cumulativeLogScore.toFixed(3)}`;
+              `cumulative log score ${formatLogScore(gameState.cumulativeLogScore)}`;
     }
 
     function reset() {
@@ -424,8 +430,8 @@ function initPredictionGame() {
             resultEl.textContent = `${winnerLabel} — you reached ${TARGET_TOKENS} tokens. ` +
                 'Against a fair coin at fair odds that is luck, not skill, and that is the point.';
         } else {
-            resultEl.textContent = `${winnerLabel} · round log score ` +
-                `${roundLogScore >= 0 ? '+' : ''}${roundLogScore.toFixed(3)}`;
+            resultEl.textContent =
+                `${winnerLabel} · round log score ${formatLogScore(roundLogScore)}`;
         }
 
         if (gameState.finished) {
