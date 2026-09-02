@@ -1,5 +1,75 @@
 # Data Manifest Change Log
 
+## Version 2.1.0 (2026-08-27)
+
+### Type: Minor - Removal of a never-implemented declaration
+
+**Summary:** Removes `dataTypes.timeseries`. It was declared with an hourly schedule
+(`0 * * * *`) from the manifest's first version and **has never been uploaded to either
+host, once, ever** — so `/api/monitoring/freshness` carried a permanently false
+"missing" for it.
+
+### Changes Made
+
+- **Removed:** `dataTypes.timeseries` (endpoint `/api/upload/timeseries`, schema for
+  `{station_id, variable, units, data[]}`).
+- **Removed:** `monitoring.expectedDataFlow.timeseries`.
+- **Removed:** `'timeseries'` from `dataTypeMap` in `server/routes/dataUpload.js`.
+- **Corrected:** `forecasts.products.hrrr_kvel_crosswind.schedule.description` no longer
+  says "cron pending install on CHPC" — it was installed on notchpeak1 on 2026-08-27,
+  and the first file landed on both hosts the same day.
+
+### Why MINOR rather than MAJOR
+
+`docs/MANIFEST-GUIDE.md` reserves MAJOR for changes that break a producer or consumer.
+Nothing can break here:
+
+- **No producer has ever targeted it.** Every brc-tools exporter uses
+  `DEFAULT_UPLOAD_BUCKET = "forecasts"`, including the waypoint and KVEL crosswind
+  exporters. There is no code path anywhere that posts to `/api/upload/timeseries`.
+- **No consumer reads it.** The frontend takes station time series live from Synoptic
+  via `/api/synoptic/timeseries` (`public/js/api.js`, `server/routes/synopticAPI.js`),
+  which is unaffected. `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` recorded this at the time:
+  *"not needed — frontend uses live /api/synoptic/timeseries"*.
+
+The upload route still accepts an unknown `:dataType` (`dataTypeMap[dataType] || dataType`),
+so even a stray post would be stored rather than rejected. Removing the declaration only
+stops the monitor expecting data that was never coming.
+
+### If it comes back
+
+Re-add under a MINOR bump, with a producer landing in the same release. A declared
+dataType with no producer is a standing false alarm, which is what this removes.
+
+---
+## Version 2.0.0 (2026-08-14)
+
+### Type: Major - Contract Correction
+
+**Summary:** First declaration of `dataTypes.forecasts.products.hrrr_kvel_crosswind` —
+the HRRR sub-hourly runway head/crosswind forecast for KVEL (Vernal Regional) — under
+the corrected KVEL 17/35 contract (FAA redesignation: true headings 179/359, series keys
+`headwind_kt_179`/`crosswind_kt_179` and `headwind_kt_359`/`crosswind_kt_359`).
+
+### Changes Made
+
+- **Added:** `dataTypes.forecasts.products.hrrr_kvel_crosswind` — filename pattern
+  `forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json`, hourly schedule (`55 * * * *`),
+  full payload schema keyed off the top-level `runway_headings_deg` array. Rides the
+  existing `forecasts` endpoint; no upload-route change.
+- **Counters:** `validation.filesPerProduct` gains `"hrrr_kvel_crosswind": 1`;
+  `totalFilesPerRun` 63 → 64.
+
+### Why MAJOR
+
+The previously *documented* (never published) contract — `WEBSITE-BRCTOOLS-HANDOFF-apr27.md`
+§DATATYPE 2, since deleted — used `*_kt_160`/`*_kt_340` series keys, so the field-name rule
+in `docs/MANIFEST-GUIDE.md` applies. 2.0.0 is also the coordination signal promised in
+brc-tools PR #59 / tag v0.1.1 (the producer, which released first on 2026-08-13). Zero
+KVEL files have ever been uploaded to `.com` or `.dev`, so no data migration is needed.
+
+---
+
 ## Version 1.2.0 (2026-08-13)
 
 ### Type: Minor - Additive

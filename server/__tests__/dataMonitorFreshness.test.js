@@ -100,3 +100,69 @@ describe('checkDataFreshness — server-generated indexes', () => {
         expect(observations.totalFiles).toBe(1);
     });
 });
+
+describe('checkDataFreshness — producer-uploaded indexes', () => {
+    // The linode-dev forecasts shape, 2026-08-25: nginx (client_max_body_size unset ->
+    // 1 MB default) was 413ing every ~1.5 MB HRRR run file while letting the 3 KB
+    // forecast_hrrr_surface_layers_index.json through. The index's mtime was hours old;
+    // the newest actual run on disk was four months old. Freshness reported
+    // "stale by 164 minutes" and the outage went unnoticed.
+    const forecastsManifest = {
+        forecasts: {
+            endpoint: '/api/static/forecasts',
+            schedule: { frequency: '0 * * * *' },
+        },
+    };
+
+    test('an hourly-refreshed producer index does not hide a months-dead producer', async () => {
+        monitor = await makeMonitor(forecastsManifest);
+
+        writeFile(monitor, 'forecasts', 'forecast_hrrr_surface_layers_20260427_2100Z.json', 2880 * HOUR);
+        writeFile(monitor, 'forecasts', 'forecast_hrrr_surface_layers_index.json', 3 * HOUR);
+
+        const { forecasts } = monitor.checkDataFreshness();
+
+        expect(forecasts.latestFile).toBe('forecast_hrrr_surface_layers_20260427_2100Z.json');
+        expect(forecasts.status).toBe('stale');
+        // The age must reflect the run file (~120 days), not the index (~3 h).
+        expect(forecasts.ageMinutes).toBeGreaterThan(100 * 24 * 60);
+    });
+
+    test('a directory holding only a producer index reports no_data', async () => {
+        monitor = await makeMonitor(forecastsManifest);
+        writeFile(monitor, 'forecasts', 'forecast_hrrr_surface_layers_index.json', 0);
+
+        const { forecasts } = monitor.checkDataFreshness();
+
+        expect(forecasts.status).toBe('no_data');
+        expect(forecasts.ageMinutes).toBeUndefined();
+    });
+
+    test('timestamped run files are never mistaken for indexes', async () => {
+        monitor = await makeMonitor(forecastsManifest);
+        writeFile(monitor, 'forecasts', 'forecast_hrrr_surface_layers_20260825_0300Z.json', 60 * 1000);
+        writeFile(monitor, 'forecast_unused', 'ignored.json', 0);
+
+        const { forecasts } = monitor.checkDataFreshness();
+
+        expect(forecasts.status).toBe('fresh');
+        expect(forecasts.latestFile).toBe('forecast_hrrr_surface_layers_20260825_0300Z.json');
+        expect(forecasts.totalFiles).toBe(1);
+    });
+});
+
+describe('isGeneratedIndex', () => {
+    test('classifies index-shaped names, not timestamped payloads', async () => {
+        const { isGeneratedIndex } = await import('../monitoring/dataMonitor.js');
+
+        expect(isGeneratedIndex('filelist.json')).toBe(true);
+        expect(isGeneratedIndex('outlooks_list.json')).toBe(true);
+        expect(isGeneratedIndex('forecast_hrrr_surface_layers_index.json')).toBe(true);
+        expect(isGeneratedIndex('forecast_hrrr_kvel_crosswind_index.json')).toBe(true);
+
+        expect(isGeneratedIndex('map_obs_20260825_0330Z.json')).toBe(false);
+        expect(isGeneratedIndex('forecast_hrrr_surface_layers_20260824_2200Z.json')).toBe(false);
+        expect(isGeneratedIndex('road_forecast_20260825_0322Z.json')).toBe(false);
+        expect(isGeneratedIndex('outlook_20240205_1115.md')).toBe(false);
+    });
+});

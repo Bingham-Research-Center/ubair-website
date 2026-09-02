@@ -43,7 +43,7 @@ with `x-api-key` + CHPC-hostname validation → fanned out to every URL in
 `/api/static/*` and `/api/filelist/:dataType`.
 
 Accepted dataTypes (`server/routes/dataUpload.js`):
-`observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast`.
+`observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast`.
 
 Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
 the contract-holder for new dataTypes — server doesn't enforce schema).
@@ -104,6 +104,9 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest (known baseline: 4 failures in `cameraAnalysisScheduler.test.js`;
-  anything else failing is new breakage)
+- `npm test` — Jest. **The suite is green (155/155 as of 2026-08-25).** Any failure is new
+  breakage. The old "4 known failures in `cameraAnalysisScheduler.test.js`" caveat is retired:
+  they were assertions against a config shape the scheduler had stopped having, and a tolerated
+  red suite is how a genuinely vacuous test (`analysisTimeout`, a property that never existed)
+  survived unnoticed.
 - `npm run test-api` — loopback POST against the upload route

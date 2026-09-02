@@ -2235,3 +2235,632 @@ body[data-page-type="roads"] .leaflet-drag-target {
     50% { transform: scale(0.8); }
     100% { transform: scale(1); }
 }
+
+/* HRRR road guidance */
+.hrrr-guidance-panel {
+    margin: -0.5rem 0 2rem;
+    padding: 1.1rem 1.25rem;
+    background:
+        linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(255, 255, 255, 0.98));
+    border: 1px solid #bfdbfe;
+    border-left: 5px solid var(--roads-secondary);
+    border-radius: 14px;
+    box-shadow: 0 8px 24px rgba(30, 58, 138, 0.08);
+}
+
+.hrrr-guidance-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.hrrr-guidance-heading {
+    min-width: 0;
+}
+
+.hrrr-guidance-eyebrow {
+    display: block;
+    margin-bottom: 0.25rem;
+    color: var(--roads-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hrrr-guidance-heading h2 {
+    margin: 0;
+    color: #172554;
+    font-size: clamp(1.15rem, 2vw, 1.45rem);
+    line-height: 1.2;
+}
+
+.hrrr-guidance-status {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
+    gap: 0.55rem;
+    padding: 0.5rem 0.8rem;
+    color: #334155;
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.hrrr-guidance-status::before {
+    width: 0.55rem;
+    height: 0.55rem;
+    background: #64748b;
+    border-radius: 50%;
+    content: '';
+}
+
+.hrrr-guidance-status.is-loading::before {
+    animation: hrrr-status-pulse 1.4s ease-in-out infinite;
+}
+
+.hrrr-guidance-status.is-fresh {
+    color: #166534;
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.hrrr-guidance-status.is-fresh::before {
+    background: #16a34a;
+}
+
+.hrrr-guidance-status.is-aging {
+    color: #92400e;
+    background: #fffbeb;
+    border-color: #fcd34d;
+}
+
+.hrrr-guidance-status.is-aging::before {
+    background: #d97706;
+}
+
+.hrrr-guidance-status.is-stale,
+.hrrr-guidance-status.is-unavailable {
+    color: #991b1b;
+    background: #fef2f2;
+    border-color: #fca5a5;
+}
+
+.hrrr-guidance-status.is-stale::before,
+.hrrr-guidance-status.is-unavailable::before {
+    background: #dc2626;
+}
+
+.hrrr-guidance-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    margin-top: 0.8rem;
+    color: #475569;
+    font-size: 0.86rem;
+}
+
+.hrrr-guidance-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.hrrr-guidance-meta i {
+    color: var(--roads-secondary);
+}
+
+.hrrr-map-controls {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 0.8rem 1rem;
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid #dbeafe;
+}
+
+.hrrr-map-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.hrrr-map-control-label {
+    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.hrrr-map-toggle,
+.hrrr-map-hours {
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.22rem;
+    background: #e2e8f0;
+    border-radius: 9px;
+}
+
+.hrrr-map-toggle button,
+.hrrr-map-hours button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 2.1rem;
+    padding: 0.4rem 0.7rem;
+    color: #475569;
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.75rem;
+    font-weight: 700;
+    transition: background 0.18s ease, box-shadow 0.18s ease, color 0.18s ease;
+}
+
+.hrrr-map-toggle button:hover:not(:disabled),
+.hrrr-map-hours button:hover:not(:disabled) {
+    color: var(--roads-primary);
+    background: rgba(255, 255, 255, 0.7);
+}
+
+.hrrr-map-toggle button.is-active,
+.hrrr-map-hours button.is-active {
+    color: var(--roads-primary);
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+}
+
+.hrrr-map-toggle button:focus-visible,
+.hrrr-map-hours button:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 2px;
+}
+
+.hrrr-map-toggle button:disabled,
+.hrrr-map-hours button:disabled {
+    cursor: not-allowed;
+    opacity: 0.48;
+}
+
+.hrrr-map-hours button {
+    min-width: 3.7rem;
+    flex-direction: column;
+    gap: 0.05rem;
+    line-height: 1.05;
+}
+
+.hrrr-map-hours button small {
+    color: #64748b;
+    font-size: 0.58rem;
+    font-weight: 600;
+}
+
+.hrrr-map-hours-loading {
+    padding: 0.45rem 0.65rem;
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.hrrr-map-legend {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-left: auto;
+    padding: 0.45rem 0.65rem;
+    color: #475569;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid #dbeafe;
+    border-radius: 8px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.hrrr-map-legend[hidden] {
+    display: none;
+}
+
+.hrrr-map-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.hrrr-map-legend i {
+    width: 0.65rem;
+    height: 0.65rem;
+    background: #64748b;
+    border-radius: 50%;
+}
+
+.hrrr-map-legend i.is-clear {
+    background: #16a34a;
+}
+
+.hrrr-map-legend i.is-caution {
+    background: #d97706;
+}
+
+.hrrr-map-legend i.is-danger {
+    background: #dc2626;
+}
+
+.hrrr-map-status {
+    margin: 0.65rem 0 0;
+    color: #475569;
+    font-size: 0.74rem;
+    line-height: 1.4;
+}
+
+.conditions-overlay[hidden],
+.leaflet-control.road-legend-collapsible[hidden] {
+    display: none !important;
+}
+
+.hrrr-guidance-disclaimer {
+    margin: 0.75rem 0 0;
+    color: #64748b;
+    font-size: 0.78rem;
+    line-height: 1.45;
+}
+
+.hrrr-guidance-disclaimer i {
+    margin-right: 0.3rem;
+    color: var(--roads-secondary);
+}
+
+@keyframes hrrr-status-pulse {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 1; }
+}
+
+@media (max-width: 700px) {
+    .hrrr-guidance-panel {
+        margin-top: 0;
+        padding: 1rem;
+    }
+
+    .hrrr-guidance-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hrrr-guidance-status {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .hrrr-map-controls,
+    .hrrr-map-control-group {
+        width: 100%;
+    }
+
+    .hrrr-map-toggle,
+    .hrrr-map-hours {
+        width: 100%;
+    }
+
+    .hrrr-map-toggle button,
+    .hrrr-map-hours button {
+        flex: 1 1 0;
+        padding-inline: 0.35rem;
+    }
+
+    .hrrr-map-legend {
+        width: 100%;
+        justify-content: space-between;
+        margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hrrr-guidance-status.is-loading::before {
+        animation: none;
+    }
+}
+
+.hrrr-route-forecast {
+    margin-top: 1.1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #dbeafe;
+}
+
+.hrrr-route-loading,
+.hrrr-route-unavailable {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    margin: 0;
+    padding: 0.8rem 0.9rem;
+    color: #64748b;
+    background: #f8fafc;
+    border-radius: 9px;
+    font-size: 0.86rem;
+}
+
+.hrrr-route-unavailable {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-route-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+}
+
+.hrrr-route-title {
+    display: flex;
+    flex: 0 0 auto;
+    flex-direction: column;
+    color: #172554;
+    line-height: 1.2;
+}
+
+.hrrr-route-kicker {
+    color: var(--roads-secondary);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.hrrr-route-title strong {
+    margin-top: 0.15rem;
+    font-size: 0.94rem;
+}
+
+.hrrr-hazard-onset {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.45rem 0.65rem;
+    color: #166534;
+    background: #f0fdf4;
+    border-radius: 8px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.hrrr-hazard-onset.is-caution {
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.hrrr-hazard-onset.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-period-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.65rem;
+}
+
+.hrrr-period-grid:focus-visible {
+    outline: 3px solid rgba(59, 130, 246, 0.35);
+    outline-offset: 3px;
+}
+
+.hrrr-period-card {
+    min-width: 0;
+    padding: 0.75rem;
+    background: #fff;
+    border: 1px solid #bbf7d0;
+    border-top: 4px solid #16a34a;
+    border-radius: 10px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+}
+
+.hrrr-period-card.is-caution {
+    border-color: #fde68a;
+    border-top-color: #d97706;
+}
+
+.hrrr-period-card.is-danger {
+    border-color: #fecaca;
+    border-top-color: #dc2626;
+}
+
+.hrrr-period-card.is-unavailable {
+    border-color: #cbd5e1;
+    border-top-color: #64748b;
+}
+
+.hrrr-period-time {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+}
+
+.hrrr-period-time strong {
+    color: #172554;
+    font-size: 0.98rem;
+}
+
+.hrrr-period-time time {
+    color: #64748b;
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+.hrrr-period-hazard {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: #166534;
+    font-size: 0.76rem;
+    font-weight: 800;
+}
+
+.hrrr-period-hazard.is-caution {
+    color: #a16207;
+}
+
+.hrrr-period-hazard.is-danger {
+    color: #b91c1c;
+}
+
+.hrrr-period-hazard.is-unavailable {
+    color: #64748b;
+}
+
+.hrrr-period-reason {
+    min-height: 2.25em;
+    margin: 0.35rem 0 0.65rem;
+    color: #475569;
+    font-size: 0.7rem;
+    line-height: 1.3;
+}
+
+.hrrr-period-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.4rem 0.55rem;
+    margin: 0;
+}
+
+.hrrr-period-metric {
+    min-width: 0;
+}
+
+.hrrr-period-metric dt {
+    color: #94a3b8;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hrrr-period-metric dd {
+    overflow: hidden;
+    margin: 0.08rem 0 0;
+    color: #1e293b;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hrrr-map-popup {
+    min-width: 210px;
+    color: #1e293b;
+    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.hrrr-map-popup-kicker {
+    color: var(--roads-secondary);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.hrrr-map-popup h4 {
+    margin: 0.25rem 0 0;
+    color: #172554;
+    font-size: 1rem;
+}
+
+.hrrr-map-popup-location {
+    margin: 0.15rem 0 0.55rem;
+    color: #64748b;
+    font-size: 0.76rem;
+}
+
+.hrrr-map-popup-hazard {
+    margin: 0 0 0.6rem;
+    padding: 0.4rem 0.5rem;
+    color: #166534;
+    background: #f0fdf4;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.hrrr-map-popup-hazard.is-caution {
+    color: #92400e;
+    background: #fffbeb;
+}
+
+.hrrr-map-popup-hazard.is-danger {
+    color: #991b1b;
+    background: #fef2f2;
+}
+
+.hrrr-map-popup-metrics {
+    margin: 0;
+}
+
+.hrrr-map-popup-metrics div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.7rem;
+}
+
+.hrrr-map-popup-metrics dt {
+    color: #64748b;
+}
+
+.hrrr-map-popup-metrics dd {
+    margin: 0;
+    font-weight: 700;
+    text-align: right;
+}
+
+.hrrr-map-popup-note {
+    margin: 0.55rem 0 0;
+    color: #64748b;
+    font-size: 0.62rem;
+    line-height: 1.35;
+}
+
+@media (max-width: 1050px) {
+    .hrrr-period-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .hrrr-route-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.65rem;
+    }
+
+    .hrrr-hazard-onset {
+        width: 100%;
+    }
+
+    .hrrr-period-grid {
+        grid-auto-columns: minmax(210px, 78vw);
+        grid-auto-flow: column;
+        grid-template-columns: none;
+        overflow-x: auto;
+        padding: 0.1rem 0.1rem 0.55rem;
+        scroll-snap-type: x proximity;
+    }
+
+    .hrrr-period-card {
+        scroll-snap-align: start;
+    }
+}

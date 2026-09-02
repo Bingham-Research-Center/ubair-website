@@ -109,6 +109,52 @@
             </div>
         </section>
 
+        <section class="hrrr-guidance-panel" id="hrrr-guidance-panel" aria-labelledby="hrrr-guidance-title">
+            <div class="hrrr-guidance-header">
+                <div class="hrrr-guidance-heading">
+                    <span class="hrrr-guidance-eyebrow"><i class="fas fa-cloud-sun"></i> HRRR model guidance</span>
+                    <h2 id="hrrr-guidance-title">Road forecast · next 12 hours</h2>
+                </div>
+                <div class="hrrr-guidance-status is-loading" id="hrrr-guidance-status" role="status" aria-live="polite">
+                    Checking the latest model run…
+                </div>
+            </div>
+            <div class="hrrr-guidance-meta" id="hrrr-guidance-meta">
+                Forecast initialization and coverage will appear here.
+            </div>
+            <div class="hrrr-map-controls" id="hrrr-map-controls">
+                <div class="hrrr-map-control-group">
+                    <span class="hrrr-map-control-label">Map layer</span>
+                    <div class="hrrr-map-toggle" role="group" aria-label="Road map layer">
+                        <button type="button" class="is-active" data-hrrr-map-mode="observed" aria-pressed="true">
+                            <i class="fas fa-satellite-dish" aria-hidden="true"></i> Current conditions
+                        </button>
+                        <button type="button" data-hrrr-map-mode="forecast" aria-pressed="false" disabled>
+                            <i class="fas fa-forward" aria-hidden="true"></i> HRRR forecast
+                        </button>
+                    </div>
+                </div>
+                <div class="hrrr-map-control-group hrrr-map-hour-control" id="hrrr-map-hour-control" aria-disabled="true">
+                    <span class="hrrr-map-control-label">Forecast time</span>
+                    <div class="hrrr-map-hours" id="hrrr-map-hours" role="group" aria-label="HRRR forecast time">
+                        <span class="hrrr-map-hours-loading">Loading…</span>
+                    </div>
+                </div>
+                <div class="hrrr-map-legend" id="hrrr-map-legend" aria-label="HRRR forecast concern levels" hidden>
+                    <span><i class="is-clear" aria-hidden="true"></i> Low concern</span>
+                    <span><i class="is-caution" aria-hidden="true"></i> Caution</span>
+                    <span><i class="is-danger" aria-hidden="true"></i> High concern</span>
+                </div>
+            </div>
+            <p class="hrrr-map-status" id="hrrr-map-status" role="status" aria-live="polite">
+                Map showing the current UDOT, station, camera, and model blend.
+            </p>
+            <p class="hrrr-guidance-disclaimer">
+                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                Atmospheric model guidance—not an observed pavement condition. Confirm critical travel decisions with UDOT reports and cameras.
+            </p>
+        </section>
+
         <!-- Route-Specific Forecasts -->
         <div class="routes-container">
             <!-- US-40 Corridor -->
@@ -117,6 +163,9 @@
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Roosevelt to Vernal:</strong> Primary east-west route through Basin</p>
+                        <div class="hrrr-route-forecast" data-hrrr-route="us40" aria-live="polite">
+                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+                        </div>
                         <div class="route-conditions" id="us40-conditions">
                             <div class="conditions-loading">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -133,6 +182,9 @@
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Vernal to Duchesne:</strong> Major north-south connector with elevation changes</p>
+                        <div class="hrrr-route-forecast" data-hrrr-route="us191" aria-live="polite">
+                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+                        </div>
                         <div class="route-conditions" id="us191-conditions">
                             <div class="conditions-loading">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -165,6 +217,9 @@
                 <div class="route-content">
                     <div class="route-details">
                         <p><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
+                        <div class="hrrr-route-forecast" data-hrrr-route="basin_roads" aria-live="polite">
+                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+                        </div>
                         <div class="route-conditions carousel-container" id="basin-roads-conditions">
                             <div class="conditions-loading">
                                 <i class="fas fa-spinner fa-spin"></i>
@@ -269,6 +324,7 @@
     <script src="/public/js/roads/RouteConditions.js"></script>
     <script src="/public/js/roads/ConditionCards.js"></script>
     <script src="/public/js/roads/initialization.js"></script>
+    <script type="module" src="/public/js/roads/HRRRRoadForecast.js"></script>
 
     <!-- Easter Eggs - Activated via Konami Code -->
     <link rel="stylesheet" href="/public/css/easter-eggs.css">

@@ -46,7 +46,7 @@ function buildTable(payload) {
 
     const headers = ['Time (UTC)', 'Wind kt', 'Dir°'];
     for (const heading of runways) {
-        const rwy = String(Math.round(heading / 10)).padStart(2, '0');
+        const rwy = String(Math.floor(heading / 10)).padStart(2, '0');
         headers.push(`HW Rwy${rwy}`);
         headers.push(`XW Rwy${rwy}`);
     }
