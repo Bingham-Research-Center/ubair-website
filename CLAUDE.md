@@ -50,6 +50,15 @@ the contract-holder for new dataTypes — server doesn't enforce schema).
 `GET /api/health` reports `version` + `manifestVersion` so producers can
 compatibility-check before uploading.
 
+**Observations arrive as raw SI and stay that way.** `air_temp`/`dew_point_temperature` are
+Celsius, `wind_speed` is m/s, pressures are Pascals. `processObservationData` in
+`public/js/api.js` deliberately does **not** convert (the `convertUnits` call is commented out
+on purpose) — every page converts at its own display layer, reading `observations._units`.
+There is no shared conversion helper; the repo carries five parallel copies. A page that
+misses this silently prints Celsius labelled °F, which is how the sports page came to report a
+19 °F wind chill on a 77 °F day. Note also that **`relative_humidity` is not in the feed at
+all** — derive it from temperature and dew point if you need it.
+
 On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
 notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
 public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
@@ -109,4 +118,8 @@ password manager.
   they were assertions against a config shape the scheduler had stopped having, and a tolerated
   red suite is how a genuinely vacuous test (`analysisTimeout`, a property that never existed)
   survived unnoticed.
+- **A red suite on a feature branch is usually staleness, not new breakage.** Run the same
+  suite on `dev` and compare before blaming the change. PR #128 failed 4 tests in
+  `cameraAnalysisScheduler.test.js` that passed 26/26 on `dev`; merging `origin/dev` in cleared
+  them. Treat a failure as new only once `dev` is green on that suite.
 - `npm run test-api` — loopback POST against the upload route
