@@ -72,12 +72,11 @@ commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.
 
 **Squash-merge trap.** Chore PRs land into `dev` as *squashes*, so their original commits never
 become ancestors of `dev`. Any branch stacked on another chore branch will therefore conflict
-the moment the one below it merges — this bit `chore/bump-v1.5.0` and `chore/open-v1.5.1-dev`
-during the v1.5.0 train. Branch from `dev`, not from another PR's head. If a branch is already
-stacked, rebase it: `git checkout -B <branch> origin/dev && git cherry-pick <sha>` then
-force-push. Check a branch really is clean with `git merge-tree --write-tree HEAD origin/dev`
-(use its exit code — grepping for `<<<<<<<` false-positives on docs containing conflict-marker
-examples).
+the moment the one below it merges (this bit the v1.5.0 train twice). Branch from `dev`, never
+from another PR's head; rebase a stacked branch with `git checkout -B <branch> origin/dev &&
+git cherry-pick <sha>` + force-push. Check cleanliness with the *exit code* of
+`git merge-tree --write-tree HEAD origin/dev` (grepping for conflict markers false-positives
+on docs quoting them).
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
@@ -101,7 +100,7 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (155/155 as of 2026-08-25); any failure is new
+- `npm test` — Jest. **The suite is green (169/169 as of 2026-09-02); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - `npm run test-api` — loopback POST against the upload route
