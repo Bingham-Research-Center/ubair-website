@@ -75,8 +75,8 @@ become ancestors of `dev`. Any branch stacked on another chore branch will there
 the moment the one below it merges (this bit the v1.5.0 train twice). Branch from `dev`, never
 from another PR's head; rebase a stacked branch with `git checkout -B <branch> origin/dev &&
 git cherry-pick <sha>` + force-push. Check cleanliness with the *exit code* of
-`git merge-tree --write-tree HEAD origin/dev` (grepping for conflict markers false-positives
-on docs quoting them).
+`git merge-tree --write-tree HEAD origin/dev` — grepping for conflict markers gives false
+positives on docs that quote them.
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
