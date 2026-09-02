@@ -15,7 +15,7 @@ Statuses: 🔜 pending · 🔄 in-progress · ✅ done · ⏸️ deferred (decis
 | ✓ | Item | Notes |
 |---|---|---|
 | 🔜 | **Promote `dev` → `ops`** to land 21 commits on `.com` | PRs #142, #178–#188 plus 7 fixes; needs a deliberate `dev→ops` PR + `pm2 restart basinwx-ops` |
-| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; full handoff in `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (apr27 doc deleted) |
+| 🔜 | **Fix three dark dataTypes** (road-forecast, kvel_crosswind, hrrr_surface_layers) | brc-tools side; contract in `docs/WEBSITE-BRCTOOLS-CONTRACT.md`, open items in `WEBSITE-BRCTOOLS-OPEN-ASKS.md` |
 | 🔜 | **Fan-out gap for `forecasts/` to `.dev`** | `.com` has 100s of clustering files, `.dev` has zero. brc-tools uploader inconsistency. |
 | 🔜 | **Operational health page** (`/admin/health`) | per-dataType last-upload time + expected cadence + pm2 uptime + git HEAD; tier-3 of the apr26 plan |
 | 🔜 | **Upload-freshness alarm** | cron walks `public/api/static/`, emails via `reportEmailService` if any dataType exceeds expected cadence |
