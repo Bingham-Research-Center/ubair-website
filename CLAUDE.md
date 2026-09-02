@@ -52,6 +52,20 @@ the contract-holder for new dataTypes — server doesn't enforce schema).
 `GET /api/health` reports `version` + `manifestVersion` so producers can
 compatibility-check before uploading.
 
+**Observations arrive as raw SI and stay that way.** `air_temp`/`dew_point_temperature` are
+Celsius, `wind_speed` is m/s, pressures are Pascals. `processObservationData` in
+`public/js/api.js` deliberately does **not** convert (the `convertUnits` call is commented out
+on purpose) — every page converts at its own display layer, reading `observations._units`.
+No shared conversion helper exists — `mapUtils.js` converts inline inside `createPopupContent`
+rather than exporting anything reusable — and eight files carry their own copy. A page that
+misses this silently prints Celsius labelled °F, which is how the sports page came to report a
+19 °F wind chill on a 77 °F day.
+
+Watch the gap between contract and reality: `DATA_MANIFEST.json` declares `relative_humidity`,
+but **no current production observation file contains it**. That is a producer-side gap, not a
+contract that never had the field — derive RH from temperature and dew point meanwhile, and
+check the actual payload rather than the manifest before relying on any variable.
+
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
 direct push seems warranted, confirm with the user — then ask a **second time** before
@@ -103,4 +117,8 @@ password manager.
 - `npm test` — Jest. **The suite is green (169/169 as of 2026-09-02); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
+- **First rule out staleness.** "Any failure is new breakage" holds only once the branch is
+  current with `dev`. Run the same suite on `dev` and compare before blaming the change. PR #128
+  failed 4 tests in `cameraAnalysisScheduler.test.js` that passed 26/26 on `dev`; merging
+  `origin/dev` in cleared them.
 - `npm run test-api` — loopback POST against the upload route
