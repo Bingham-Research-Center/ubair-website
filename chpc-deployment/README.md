@@ -18,8 +18,8 @@
 >   the value still exists in git history, so treat that key as compromised until rotated.
 >
 > **Read these instead:**
-> - `WEBSITE-BRCTOOLS-HANDOFF-aug13.md` (repo root) — current CHPC-side work, verified
->   against both live hosts
+> - `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — the endpoint contract and per-product schemas,
+>   verified against both live hosts; `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for open work
 > - `DATA_MANIFEST.json` — canonical schemas, the actual contract
 > - `docs/DEPLOYMENT.md` — bring-up runbook and chronic gotchas
 >

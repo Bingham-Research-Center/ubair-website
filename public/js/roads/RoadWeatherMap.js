@@ -90,7 +90,7 @@ class RoadWeatherMap {
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 15,
             minZoom: 8,
-            attribution: '© OpenStreetMap | Road Data: UDOT, NWS, Open-Meteo'
+            attribution: '© OpenStreetMap | Road Data: UDOT, HRRR, NWS, Open-Meteo'
         }).addTo(this.map);
 
         // Create a custom pane for closures to ensure they're always on top
@@ -113,6 +113,7 @@ class RoadWeatherMap {
             this.renderRoadSegments(data.segments);
             this.renderWeatherStations(data.stations);
             this.renderTrafficCameras(data.cameras, data.cameraDetections);
+            window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
 
         } catch (error) {
             console.error('Error loading road weather data:', error);
@@ -175,6 +176,8 @@ class RoadWeatherMap {
         stations.forEach(station => {
             this.renderWeatherStation(station);
         });
+
+        window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
     }
 
     renderRoadSegments(segments) {

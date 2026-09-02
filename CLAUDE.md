@@ -43,7 +43,7 @@ with `x-api-key` + CHPC-hostname validation → fanned out to every URL in
 `/api/static/*` and `/api/filelist/:dataType`.
 
 Accepted dataTypes (`server/routes/dataUpload.js`):
-`observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast`.
+`observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast`.
 
 Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
 the contract-holder for new dataTypes — server doesn't enforce schema).
