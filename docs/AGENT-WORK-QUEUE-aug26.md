@@ -154,9 +154,9 @@ branches.
 
 ## CHUNK 6 — Dark dataTypes (BLOCKED on brc-tools)
 
-`llm_outlooks` and `images` reach `.com` but have never created a directory on `.dev` — fan-out
-is per-dataType, not global (`WEBSITE-BRCTOOLS-OPEN-ASKS.md` A5, brc-tools' to fix). `outlooks`
-is stale on both.
+`llm_outlooks` reaches `.com` but has never created a directory on `.dev`; `images` created
+one on 2026-08-27 and has been silent since — fan-out is per-dataType, not global
+(`WEBSITE-BRCTOOLS-OPEN-ASKS.md` A5, brc-tools' to fix). `outlooks` is stale on both.
 
 `timeseries` is **not** blocked on brc-tools — it has no consumer at all. The only reader is
 `public/js/api.js` calling `/api/synoptic/timeseries`, the live Synoptic proxy, which never

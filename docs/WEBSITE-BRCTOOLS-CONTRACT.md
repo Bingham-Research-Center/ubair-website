@@ -68,7 +68,7 @@ POST  https://www.basinwx.dev/api/upload/:dataType
 **Accepted dataTypes** (`dataTypeMap`, ~:48-57) — anything else 400s:
 
 ```
-observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast
+observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast
 ```
 
 **Responses:** `200` stored · `400` bad type / invalid JSON / no file · `401` bad key ·
@@ -99,9 +99,10 @@ python3 scripts/chpc_uploader.py --data-type road-forecast --file rf.json
 before ever POSTing — it is the cheapest place to catch a unit regression.
 
 **Fan-out is per-dataType, not global** — confirmed by measurement, not hypothesis.
-`observations`, `metadata` and `road-forecast` reach both hosts; `llm_outlooks` and `images`
-have never created a directory on `.dev`. That means **more than one upload code path exists**
-in brc-tools: one reads `BASINWX_API_URLS`, another hardcodes `www.basinwx.com`. The
+`observations`, `metadata` and `road-forecast` reach both hosts; `llm_outlooks` has still
+never created a directory on `.dev`. `images` did once, on 2026-08-27 (5 GEFS meteograms) — so
+that path is not wholly dead, which narrows the cause. That means **more than one upload code
+path exists** in brc-tools: one reads `BASINWX_API_URLS`, another hardcodes `www.basinwx.com`. The
 observations producer is the known-good template. Fix centrally — share the uploader, not the
 production logic.
 
