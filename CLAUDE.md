@@ -9,15 +9,17 @@ Leaflet/Plotly, vanilla JS frontend.
 | Production | `ops` | `www.basinwx.com` | `ubair-site` | `/var/www/ubair-website` | `root` |
 | Rehearsal mirror | `dev` | `www.basinwx.dev` | `basinwx-dev` (port 3001) | `/srv/ubair-website` | `deploy` |
 
-Both rows verified by direct inspection 2026-08-13 (prod first, dev later the same day).
-`docs/DEPLOYMENT.md` §1b describes a *target* layout that **dev already matches** but
-production does **not**; §1a records what is actually deployed on each. Don't assume a fact
-from one box holds on the other — they differ in app name, port, path, user, and ingest path.
+`docs/DEPLOYMENT.md` §1a records what is actually deployed on each box (verified by direct
+inspection 2026-08-13); §1b is a *target* layout that dev already matches but production does
+not. Don't assume a fact from one box holds on the other — they differ in app name, port,
+path, user, and ingest path.
 
 **Ingest reaches the two boxes differently.** Prod's uploads arrive on loopback over an SSH
-tunnel; **dev's arrive as ordinary public HTTPS** from notchpeak1's real IP (`155.101.26.78`)
-through nginx → 3001. So on prod a green public `/api/health` says nothing about ingest, while
-on dev the public path *is* the ingest path — if `.dev` is unreachable, ingest is down with it.
+tunnel (`::ffff:127.0.0.1`, `x-client-hostname: notchpeak1.int.chpc.utah.edu`); **dev's arrive
+as ordinary public HTTPS** from notchpeak1 (`155.101.26.78`) through nginx → 3001. So on prod
+a green public `/api/health` says nothing about ingest — if uploads stop, check the SSH path
+first (`docs/DEPLOYMENT.md` §1a) — while on dev the public path *is* the ingest path: if
+`.dev` is unreachable, ingest is down with it.
 
 `.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
 merging into `dev` is a real-world dry-run before promoting to `ops`.
@@ -64,11 +66,6 @@ but **no current production observation file contains it**. That is a producer-s
 contract that never had the field — derive RH from temperature and dew point meanwhile, and
 check the actual payload rather than the manifest before relying on any variable.
 
-On linode-prod, uploads land from `::ffff:127.0.0.1` with `x-client-hostname:
-notchpeak1.int.chpc.utah.edu` — CHPC reaches port 3000 over **SSH**, not by POSTing to the
-public domain. So a green `/api/health` from outside proves nothing about ingest; the two paths
-are independent. If uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
-
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
 direct push seems warranted, confirm with the user — then ask a **second time** before
@@ -89,12 +86,11 @@ commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.
 
 **Squash-merge trap.** Chore PRs land into `dev` as *squashes*, so their original commits never
 become ancestors of `dev`. Any branch stacked on another chore branch will therefore conflict
-the moment the one below it merges — this bit `chore/bump-v1.5.0` and `chore/open-v1.5.1-dev`
-during the v1.5.0 train. Branch from `dev`, not from another PR's head. If a branch is already
-stacked, rebase it: `git checkout -B <branch> origin/dev && git cherry-pick <sha>` then
-force-push. Check a branch really is clean with `git merge-tree --write-tree HEAD origin/dev`
-(use its exit code — grepping for `<<<<<<<` false-positives on docs containing conflict-marker
-examples).
+the moment the one below it merges (this bit the v1.5.0 train twice). Branch from `dev`, never
+from another PR's head; rebase a stacked branch with `git checkout -B <branch> origin/dev &&
+git cherry-pick <sha>` + force-push. Check cleanliness with the *exit code* of
+`git merge-tree --write-tree HEAD origin/dev` — grepping for conflict markers gives false
+positives on docs that quote them.
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
@@ -118,13 +114,11 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (155/155 as of 2026-08-25).** Any failure is new
-  breakage. The old "4 known failures in `cameraAnalysisScheduler.test.js`" caveat is retired:
-  they were assertions against a config shape the scheduler had stopped having, and a tolerated
-  red suite is how a genuinely vacuous test (`analysisTimeout`, a property that never existed)
-  survived unnoticed.
+- `npm test` — Jest. **The suite is green (169/169 as of 2026-09-02); any failure is new
+  breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
+  unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is
-  current with `dev`. Run the same suite on `dev` and compare before blaming the change. PR #128 failed 4 tests in
-  `cameraAnalysisScheduler.test.js` that passed 26/26 on `dev`; merging `origin/dev` in cleared
-  them. Treat a failure as new only once `dev` is green on that suite.
+  current with `dev`. Run the same suite on `dev` and compare before blaming the change. PR #128
+  failed 4 tests in `cameraAnalysisScheduler.test.js` that passed 26/26 on `dev`; merging
+  `origin/dev` in cleared them.
 - `npm run test-api` — loopback POST against the upload route
