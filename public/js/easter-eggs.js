@@ -14,6 +14,7 @@ class EasterEggManager {
         this.active = false;
         this.konamiSequence = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight', 'b', 'a'];
         this.userSequence = [];
+        this.easterEggs = [];
 
         this.initKonamiListener();
     }
@@ -106,97 +107,6 @@ class EasterEggManager {
             this.switchToEnglish();
         }
     }
-
-    /**
-     * Random experimental easter egg features (Not used anywhere as of now)
-     */
-    // noinspection JSUnusedGlobalSymbols (this shuts up WebStorm raising an warning)
-    otherEasterEggs() {
-        let flips = 0;
-        const easterEggHTML = `
-            <div class="easter-egg-box coin-egg" id="coinEgg">
-                <button class="easter-egg-toggle" id="coinToggle">
-                    <span class="toggle-icon">▼</span>
-                    <span class="toggle-text">COIN FLIP + FORTUNE</span>
-                </button>
-                <div class="easter-egg-content" id="coinContent">
-                    <button class="easter-egg-action-btn coin-filter-btn" id="coinFilterBtn">
-                        FLIP A COIN + GET A FORTUNE
-                    </button>
-                    <div class="easter-egg-text rainbow-txt" id="coinResult"></div>
-                </div>
-            </div>
-        `;
-
-        document.body.insertAdjacentHTML('beforeend', easterEggHTML);
-
-        const toggle = document.getElementById('coinToggle');
-        const content = document.getElementById('coinContent');
-        const filterBtn = document.getElementById('coinFilterBtn');
-
-        toggle.addEventListener('click', () => {
-            content.classList.toggle('hidden');
-            const icon = toggle.querySelector('.toggle-icon');
-            icon.textContent = content.classList.contains('hidden') ? '▶' : '▼';
-        });
-
-        /**
-         * COIN FLIP + FORTUNE FUNCTIONALITY
-         */
-        filterBtn.addEventListener('click', () => {
-            //Decides coin side
-            const side = Math.floor(Math.random() * 2);
-            let sideFace;
-            if (side === 0) {
-                sideFace = "TAILS"
-            } else {
-                sideFace = "HEADS"
-            }
-
-            //Decides fortune
-            const omens = [
-                "You will *probably* not find an abandoned $25,000 briefcase today.",
-                "You will *probably* not be struck by lightning tonight.",
-                "You will *probably* not win the lottery today.",
-                "You will *probably* breath today.",
-                "You will *probably* not be abducted by aliens tonight.",
-                "You will *probably* not find ancient aztec gold today.",
-                "You will *probably* have to do your taxes eventually",
-                "You will *probably* not watch Shrek with French subtitles, German audio, and Russian captions tonight.",
-                "You will continue to be on this website."
-            ];
-            const selectedOmen = omens[Math.floor(Math.random() * omens.length)];
-
-            //CHANGES TEXT ON FILTER BUTTON
-            flips += 1;
-            let message = "FLIP AGAIN?";
-            if (flips >= 8) {
-                message = "SLOW DOWN THERE!";
-            }
-            if (flips >= 16) {
-                message = "IT MIGHT BE TIME FOR A BREAK!";
-            }
-            if (flips >= 30) {
-                message = "YOU HAVE A BIT OF A PROBLEM!";
-            }
-            if (flips >= 50) {
-                message = "STOP IT! STOP IT!";
-            }
-            if (flips >= 75) {
-                message = "💀💀💀";
-            }
-            filterBtn.textContent = message + " (" + flips.toString() + ")";
-
-            //DISPLAYS RESULT
-            const resultText = "You flipped a " + sideFace + "! " + selectedOmen;
-            const query = document.getElementById('coinResult');
-            query.textContent = resultText;
-        });
-    }
-
-
-
-
 
     /**
      * Dutch John Rick Roll Easter Egg (Homepage)
