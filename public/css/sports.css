@@ -1,5 +1,9 @@
-h1 {
-    background: linear-gradient(135deg, red, darkred);
+/* Sports page.
+   Scoped to body[data-page-type="sports"] rather than using bare element
+   selectors, so nothing here can leak into the injected sidebar or footer. */
+
+body[data-page-type="sports"] h1 {
+    background: linear-gradient(135deg, var(--usu-red, #C8102E), #7D0018);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -14,20 +18,25 @@ body[data-page-type="sports"] h1::after {
     transform: translateX(-50%);
     width: 80px;
     height: 3px;
-    background: linear-gradient(90deg, red, darkred);
+    background: linear-gradient(90deg, var(--usu-red, #C8102E), #7D0018);
     border-radius: 2px;
 }
-h2
-{
-    color: black;
-    font-family: 'Arial Black', sans-serif;
-    margin-left: 15px;
+
+body[data-page-type="sports"] .sports-subtitle {
+    color: #555;
+    font-size: 1.05rem;
+    margin: 1.25rem 0 2rem;
 }
 
-/* Panel Style */
-.weather-summary {
-    margin-bottom: 2rem;
+body[data-page-type="sports"] .observation-stamp {
+    display: block;
+    color: #6B6B6B;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
 }
+
+/* Condition cards
+   ------------------------------------------------------------------ */
 
 .summary-grid {
     display: grid;
@@ -41,50 +50,37 @@ h2
     border-radius: 12px;
     padding: 1.5rem;
     box-shadow: 0 4px 20px rgba(80, 22, 22, 0.1);
-    border-left: 4px solid var(--card-accent, darkred);
-    transition: all 0.3s ease;
+    border-left: 4px solid var(--card-accent, #7D0018);
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-left-color 0.3s ease;
     position: relative;
     overflow: hidden;
 }
 
-/* Per-card palette: --card-accent tints the border/icon, --card-text the labels */
-.condition-card[data-card-type="current-temperature"] { --card-accent: #A7D8FF; --card-text: #2E7BA8; }
-.condition-card[data-card-type="felt-temperature"] { --card-accent: #BFF4D2; --card-text: #3D9B65; }
-.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #F0B6D5; --card-text: #C48BA8; }
-.condition-card[data-card-type="dew-point"] { --card-accent: #FFD6A5; --card-text: #CCAA88; }
-.condition-card[data-card-type="uv-index"] { --card-accent: #FFB5B5; --card-text: #CC8888; }
-.condition-card[data-card-type="visibility"] { --card-accent: #B8C9FF; --card-text: #8B9BCC; }
-.condition-card[data-card-type="precipitation"] { --card-accent: #D7C7FF; --card-text: #AA99CC; }
-.condition-card[data-card-type="baseball"] { --card-accent: #AEECFF; --card-text: #7BBFCC; }
-.condition-card[data-card-type="football"] { --card-accent: #DDB892; --card-text: #B49973; }
+/* Per-card palette: --card-accent tints the border and icon disc, --card-text the
+   labels and the value. Every --card-text clears WCAG AA (>= 4.5:1) on white; the
+   pastel accents are decorative only and never carry text. */
+.condition-card[data-card-type="current-temperature"]  { --card-accent: #A7D8FF; --card-text: #2E7BA8; }
+.condition-card[data-card-type="felt-temperature"]     { --card-accent: #BFF4D2; --card-text: #2C8452; }
+.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #F0B6D5; --card-text: #AF5080; }
+.condition-card[data-card-type="dew-point"]            { --card-accent: #FFD6A5; --card-text: #9C6B3A; }
+.condition-card[data-card-type="baseball"]             { --card-accent: #AEECFF; --card-text: #2E7F8E; }
+.condition-card[data-card-type="football"]             { --card-accent: #DDB892; --card-text: #8E7045; }
 
 .condition-card h3 {
-    color: var(--card-text, darkred);
-}
-
-/* Inactive "thumbprint" effect of cards */
-.condition-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, rgb(125, 0, 0), transparent);
-    border-radius: 0 12px 0 100%;
-    opacity: 0;
+    color: var(--card-text, #7D0018);
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
 }
 
 .condition-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
-    border-left-color: black !important;
+    box-shadow: 0 8px 30px rgba(80, 22, 22, 0.18);
+    border-left-color: #1A1A1A;
+}
 
-    .card-icon {
-        background-color: black !important;
-        color: var(--card-accent, red);
-        transition: 1s;
-    }
+.condition-card:hover .card-icon {
+    background-color: #1A1A1A;
+    color: var(--card-accent, #C8102E);
 }
 
 .card-icon {
@@ -95,31 +91,29 @@ h2
     height: 50px;
     border-radius: 50%;
     margin-bottom: 1rem;
-    color: black;
-    background-color: var(--card-accent, red);
+    color: #1A1A1A;
+    background-color: var(--card-accent, #C8102E);
     font-size: 1.2rem;
-    transition: 2.5s;
+    transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 .current-value {
     font-size: 1.8rem;
     font-weight: 700;
-    color: var(--card-text, darkred);
-    margin: 0.5rem 0;
+    color: var(--card-text, #7D0018);
+    margin: 0.5rem 0 0.25rem;
+    line-height: 1.2;
 }
 
-.trend {
-    color: #666;
-    font-size: 0.9rem;
+.card-note {
+    color: #5A5A5A;
+    font-size: 0.85rem;
     margin: 0;
+    min-height: 1.1em;
 }
 
-/* Forecast Container */
-.forecast-container {
-    display: grid;
-    gap: 2rem;
-    margin-bottom: 2rem;
-}
+/* Panels
+   ------------------------------------------------------------------ */
 
 .forecast-section {
     background: white;
@@ -128,6 +122,7 @@ h2
     box-shadow: 0 6px 25px rgba(80, 22, 22, 0.08);
     border: 1px solid rgba(80, 22, 22, 0.1);
     position: relative;
+    margin-bottom: 2rem;
 }
 
 .forecast-section::before {
@@ -137,88 +132,65 @@ h2
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, red, darkred, black);
+    background: linear-gradient(90deg, var(--usu-red, #C8102E), #7D0018, #1A1A1A);
     border-radius: 16px 16px 0 0;
 }
 
 .forecast-section h2 {
-    color: darkred;
+    color: #7D0018;
     font-size: 1.3rem;
     font-weight: 600;
-    margin-bottom: 1.5rem;
+    margin: 0 0 1.5rem;
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
 
 .forecast-section h2 i {
-    color: orangered;
+    color: var(--usu-red, #C8102E);
     font-size: 1.1rem;
 }
 
 .forecast-content {
-    color: #555;
+    color: #4A4A4A;
     line-height: 1.6;
 }
 
-/* Base style for any soil moisture indicator */
-.soil-moisture {
-    display: inline-block;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    color: #ffffff;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    font-size: 0.9rem;
+.forecast-content p {
+    margin: 0 0 1rem;
+}
+
+/* Crosswind drift model
+   ------------------------------------------------------------------ */
+
+.model-controls {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
     font-weight: 600;
 }
 
-/* Very dry soil */
-.soil-moisture-dry {
-    background-color: #d32f2f;  /* red */
+.bearing-select {
+    font: inherit;
+    padding: 0.4rem 0.6rem;
+    border: 1px solid #B0B0B0;
+    border-radius: 6px;
+    background: #fff;
+    color: #1A1A1A;
 }
 
-/* Low moisture */
-.soil-moisture-low {
-    background-color: #f57c00;  /* orange */
+.model-caveat {
+    background: #FFF6F6;
+    border-left: 4px solid var(--usu-red, #C8102E);
+    border-radius: 4px;
+    padding: 0.75rem 1rem;
+    font-size: 0.92rem;
+    color: #5A2020;
 }
 
-/* Medium/ok moisture */
-.soil-moisture-medium {
-    background-color: #fdd835;  /* yellow */
-    color: #333333;             /* better contrast on yellow */
-}
-
-/* Good/ideal moisture */
-.soil-moisture-good {
-    background-color: #388e3c;  /* green */
-}
-
-/* Too wet / waterlogged */
-.soil-moisture-wet {
-    background-color: #1976d2;  /* blue */
-}
-
-/* Optional: a simple bar-style visual */
-.soil-moisture-bar {
-    width: 150px;
-    height: 12px;
-    border-radius: 999px;
-    background-color: #eeeeee;
-    overflow: hidden;
-    display: inline-block;
-    vertical-align: middle;
-}
-
-.soil-moisture-bar-fill {
-    height: 100%;
-    width: 50%;                 /* change this with inline style or JS */
-    background: linear-gradient(90deg, #d32f2f, #388e3c);
-    transition: width 0.3s ease;
-}
-
-/* ========================================
-   Prediction Game (prototype)
-   ======================================== */
+/* Prediction game
+   ------------------------------------------------------------------ */
 
 .prediction-game {
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
@@ -226,85 +198,113 @@ h2
 
 .prediction-game:hover {
     transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(45, 80, 22, 0.15);
+    box-shadow: 0 8px 30px rgba(80, 22, 22, 0.15);
     border-color: rgba(80, 22, 22, 0.2);
 }
 
+/* Readable at rest. The previous 10px-growing-to-14px-on-hover reflowed the list
+   under the cursor and never reached a legible size on touch. */
 .prediction-game .rule-entry {
-    transition: transform 0.25s ease, font-size 0.25s ease, color 0.25s ease;
-    font-size: 10px;
-    transform: translateX(0);
+    font-size: 0.9rem;
+    margin-bottom: 0.4rem;
+    transition: color 0.25s ease;
 }
 
 .prediction-game .rule-entry:hover {
-    font-size: 14px;
-    transform: translateX(4px);
     color: #3d0000;
+}
+
+.game-slider-label {
+    display: block;
+    font-weight: 600;
+    color: #7D0018;
+    margin-top: 1rem;
 }
 
 .game-slider {
     -webkit-appearance: none;
-    accent-color: darkred;
-    background: linear-gradient(135deg, indianred 0%, darkred 100%);
+    appearance: none;
+    accent-color: #7D0018;
+    background: linear-gradient(135deg, #B2404A 0%, #7D0018 100%);
     width: 100%;
     height: 25px;
     border-radius: 6px;
-    transition: all 0.2s;
+    transition: background 0.2s;
     margin-top: 0.75rem;
 }
 
-.game-slider:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-    height: 35px;
-    background: linear-gradient(135deg, darkred 0%, #000000 100%);
+.game-slider:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .game-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 16px;
-    height: 16px;
-    background: transparent;
+    width: 18px;
+    height: 33px;
+    background: #FFFFFF;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
     cursor: pointer;
-    outline: white 2px dotted;
-    border: none;
 }
 
 .game-slider::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    background: transparent;
+    width: 18px;
+    height: 33px;
+    background: #FFFFFF;
+    border: 2px solid #1A1A1A;
+    border-radius: 4px;
     cursor: pointer;
-    outline: white 2px dotted;
-    border: none;
-    transition: all 0.2s;
-}
-
-.game-slider::-moz-range-thumb:hover {
-    width: 16px;
-    height: 16px;
 }
 
 .game-text {
     font-weight: 600;
-    color: darkred;
+    color: #7D0018;
     margin: 0.75rem 0;
 }
 
+.game-score {
+    font-weight: 500;
+    color: #4A4A4A;
+    font-variant-numeric: tabular-nums;
+}
+
+.game-buttons {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .game-btn {
-    background: linear-gradient(135deg, indianred 0%, darkred 100%);
-    color: black;
-    width: 100%;
+    background: linear-gradient(135deg, #B2404A 0%, #7D0018 100%);
+    color: #FFFFFF;
+    flex: 1 1 12rem;
     border: none;
     border-radius: 6px;
     padding: 0.6rem 1rem;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: background 0.2s, opacity 0.2s;
 }
 
-.game-btn:hover {
-    background: linear-gradient(135deg, darkred 0%, #000000 100%);
-    color: red;
+.game-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7D0018 0%, #1A1A1A 100%);
+}
+
+.game-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.game-btn-secondary {
+    background: #FFFFFF;
+    color: #7D0018;
+    border: 2px solid #7D0018;
+    flex: 0 1 8rem;
+}
+
+.game-btn-secondary:hover:not(:disabled) {
+    background: #7D0018;
+    color: #FFFFFF;
 }

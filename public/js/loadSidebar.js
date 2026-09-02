@@ -28,6 +28,12 @@ const PAGE_DISCLAIMERS = {
         For active wildfires and operational guidance, consult Utah Fire Info and the National Weather Service.
         ©2026, Utah State University.`,
 
+    '/sports': `DISCLAIMER: Sports weather products are experimental research outputs for planning
+        and recreation only. Crosswind drift figures are modelled estimates, not measurements, and assume a
+        steady crosswind with no spin on the ball. Real-time data are preliminary and subject to quality
+        control. For official forecasts and warnings, please visit the National Weather Service.
+        ©2026, Utah State University.`,
+
     '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
         Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
 

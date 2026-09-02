@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Things pertaining to sports and recreational activities">
+    <meta name="description" content="Live weather conditions for outdoor sports and recreation in the Uintah Basin — temperature, wind, and modelled crosswind effects on ball flight.">
     <title>BasinWx — Sports</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx.ico">
 
@@ -31,27 +31,33 @@
     <!-- Page content -->
     <main class="content">
         <div class="sports">
-            <h1>Sports</h1>
+            <h1>Sports Weather</h1>
+            <p class="sports-subtitle">
+                Conditions for outdoor sports and recreation in the Uintah Basin.
+                <span id="observationTimestamp" class="observation-stamp"></span>
+            </p>
 
             <div class="summary-grid">
 
                 <div class="condition-card" data-card-type="current-temperature">
                     <div class="card-icon">
-                        <i class="fa-solid fa-temperature-quarter"></i>
+                        <i class="fa-solid fa-temperature-half"></i>
                     </div>
                     <div class="card-content">
                         <h3>Current Temperature</h3>
                         <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
                 </div>
 
                 <div class="condition-card" data-card-type="felt-temperature">
                     <div class="card-icon">
-                        <i class="fa-solid fa-temperature-quarter"></i>
+                        <i class="fa-solid fa-person-running"></i>
                     </div>
                     <div class="card-content">
                         <h3>Felt Temperature</h3>
                         <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
                 </div>
 
@@ -61,47 +67,19 @@
                     </div>
                     <div class="card-content">
                         <h3>Wind Speed + Direction</h3>
-                        <p class="current-value">-- --</p>
+                        <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
                 </div>
 
                 <div class="condition-card" data-card-type="dew-point">
                     <div class="card-icon">
-                        <i class="fa-solid fa-flask"></i>
+                        <i class="fa-solid fa-droplet"></i>
                     </div>
                     <div class="card-content">
                         <h3>Dew Point</h3>
                         <p class="current-value">--</p>
-                    </div>
-                </div>
-
-                <div class="condition-card" data-card-type="uv-index">
-                    <div class="card-icon">
-                        <i class="fa-solid fa-binoculars"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>UV Index + Field Conditions</h3>
-                        <p class="current-value">--</p>
-                    </div>
-                </div>
-
-                <div class="condition-card" data-card-type="visibility">
-                    <div class="card-icon">
-                        <i class="fa-solid fa-eye"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Visibility</h3>
-                        <p class="current-value">--</p>
-                    </div>
-                </div>
-
-                <div class="condition-card" data-card-type="precipitation">
-                    <div class="card-icon">
-                        <i class="fa-solid fa-cloud-sun-rain"></i>
-                    </div>
-                    <div class="card-content">
-                        <h3>Chance Of Precipitation</h3>
-                        <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
                 </div>
 
@@ -110,8 +88,9 @@
                         <i class="fa-solid fa-baseball"></i>
                     </div>
                     <div class="card-content">
-                        <h3>Wind Influence On Baseball</h3>
+                        <h3>Crosswind Drift — Baseball</h3>
                         <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
                 </div>
 
@@ -120,29 +99,80 @@
                         <i class="fa-solid fa-football"></i>
                     </div>
                     <div class="card-content">
-                        <h3>Wind Influence On Football</h3>
+                        <h3>Crosswind Drift — Football</h3>
                         <p class="current-value">--</p>
+                        <p class="card-note"></p>
                     </div>
+                </div>
+            </div>
+
+            <!-- Crosswind model controls + assumptions -->
+            <div class="forecast-section drift-model">
+                <h2><i class="fa-solid fa-compass"></i> Crosswind Drift Model</h2>
+                <div class="forecast-content">
+                    <p class="model-controls">
+                        <label for="throwBearing">Which way is the ball thrown?</label>
+                        <select id="throwBearing" class="bearing-select">
+                            <option value="0">North</option>
+                            <option value="45">Northeast</option>
+                            <option value="90">East</option>
+                            <option value="135">Southeast</option>
+                            <option value="180">South</option>
+                            <option value="225">Southwest</option>
+                            <option value="270">West</option>
+                            <option value="315">Northwest</option>
+                        </select>
+                    </p>
+                    <p>
+                        Only the part of the wind blowing <em>across</em> the flight path pushes the
+                        ball sideways, so the drift depends on which way the throw goes. Most local
+                        football fields run roughly north–south, which is the default here.
+                    </p>
+                    <p>
+                        The wind pushes the ball with a drag force, and dividing that by the ball's
+                        mass gives a sideways acceleration. Because the ball starts with no sideways
+                        motion at all, the drift builds up as <em>½ a t²</em> — the same formula as a
+                        dropped object, except the "gravity" is the wind's shove and it is weaker for
+                        a heavy ball. A football drifts far more than a baseball: it is lighter for
+                        the area it presents, and it is in the air nearly three times as long.
+                    </p>
+                    <p class="model-caveat">
+                        <strong>Modelled estimate, not a measurement.</strong> Assumes a steady
+                        crosswind for the whole flight, no spin or Magnus effect, and a constant drag
+                        coefficient. Air density is taken from this station's own pressure and
+                        temperature — at basin elevation that is about 20% thinner than sea level, so
+                        about 20% less push than a sea-level calculator would give.
+                    </p>
                 </div>
             </div>
 
             <!-- Prediction Game -->
             <div class="forecast-section prediction-game">
-                <h2><i class="fa-solid fa-dice"></i> Prediction Game (Prototype)</h2>
+                <h2><i class="fa-solid fa-dice"></i> Prediction Game — coin-flip trainer (prototype)</h2>
                 <div class="forecast-content">
-                    <p>Rules:</p>
+                    <p>
+                        A demonstration of how forecasts are scored. The outcome here is a fair coin,
+                        not the weather — swapping in a real basin forecast is the next step.
+                    </p>
                     <ul>
-                        <li class="rule-entry">You have 1000 tokens to predict with</li>
-                        <li class="rule-entry">You can divide them between the 2 options however you like</li>
-                        <li class="rule-entry">When you lock in your prediction, one side is chosen</li>
-                        <li class="rule-entry">All tokens on the losing side are decreased by 75%</li>
-                        <li class="rule-entry">All tokens on the winning side are increased by 50%</li>
-                        <li class="rule-entry">Reach 3000 tokens to win</li>
+                        <li class="rule-entry">You start with 1000 tokens and split them between two outcomes.</li>
+                        <li class="rule-entry">The house quotes each side at 50%. A winning stake pays back stake ÷ quote, so a correct 50% call doubles that stake and the other stake is lost.</li>
+                        <li class="rule-entry">Those are <em>fair</em> odds: your bank neither grows nor shrinks on average, whatever you choose.</li>
+                        <li class="rule-entry">Each round scores you the log of (your probability ÷ the house's). Match the house and you score zero.</li>
+                        <li class="rule-entry">Against a coin you have no edge, so the long-run best play is an even split — and the bank barely moves. That is the lesson.</li>
+                        <li class="rule-entry">Reach 3000 tokens and the game stops, but against a fair coin that is luck rather than skill.</li>
                     </ul>
-                    <input type="range" min="0" max="1000" value="500" class="slider game-slider" id="gameSlider">
+
+                    <label for="gameSlider" class="game-slider-label">Share of your bank on LEFT</label>
+                    <input type="range" min="0" max="100" value="50" step="1"
+                           class="slider game-slider" id="gameSlider">
                     <div class="game-text" id="gameProportion"></div>
-                    <button class="game-btn" id="gameGuessBtn">Lock in prediction</button>
-                    <div class="game-text" id="gameResult"></div>
+                    <div class="game-buttons">
+                        <button class="game-btn" id="gameGuessBtn">Lock in prediction</button>
+                        <button class="game-btn game-btn-secondary" id="gameResetBtn">Reset</button>
+                    </div>
+                    <div class="game-text" id="gameResult" role="status" aria-live="polite"></div>
+                    <div class="game-text game-score" id="gameScore"></div>
                 </div>
             </div>
         </div>
@@ -151,12 +181,13 @@
     <!-- Footer -->
     <footer class="main-footer">
         <div class="footer-content">
-            <p>&copy; 2026 Bingham Research Center. Sports forecasts are experimental. All rights reserved.</p>
+            <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Sports forecasts are experimental. All rights reserved.</p>
         </div>
     </footer>
 
-    <script type="module" src="/public/js/sports.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/loadFooter.js"></script>
+    <script type="module" src="/public/js/sports.js"></script>
 </body>
 
 </html>
