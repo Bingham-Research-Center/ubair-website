@@ -5,9 +5,10 @@
 class MapStateManager {
     constructor() {
         this.storageKey = 'ubair_map_state';
+        this.restoreIntentKey = 'ubair_map_restore_intent';
         this.defaultState = {
-            center: [40.15, -110.1],
-            zoom: 8,
+            center: [40.3033, -109.7],
+            zoom: 10,
             timestamp: Date.now()
         };
     }
@@ -53,7 +54,13 @@ class MapStateManager {
 
             // Restore map position
             if (state.center && state.zoom) {
-                map.setView([state.center.lat, state.center.lng], state.zoom);
+                const latitude = Array.isArray(state.center) ? state.center[0] : state.center.lat;
+                const longitude = Array.isArray(state.center) ? state.center[1] : state.center.lng;
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
+
+                map.setView([latitude, longitude], state.zoom);
+                this.clearRestoreIntent();
+                this.clearReturnSignal();
                 return true;
             }
         } catch (error) {
@@ -93,19 +100,49 @@ class MapStateManager {
         }
     }
 
+    setRestoreIntent(source) {
+        try {
+            sessionStorage.setItem(this.restoreIntentKey, source);
+        } catch (error) {
+            console.warn('Failed to save map restore intent:', error);
+        }
+    }
+
+    clearRestoreIntent() {
+        try {
+            sessionStorage.removeItem(this.restoreIntentKey);
+        } catch (error) {
+            console.warn('Failed to clear map restore intent:', error);
+        }
+    }
+
+    clearReturnSignal() {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('returnFrom')) return;
+
+        url.searchParams.delete('returnFrom');
+        window.history.replaceState(
+            window.history.state,
+            document.title,
+            `${url.pathname}${url.search}${url.hash}`
+        );
+    }
+
     /**
      * Check if we should restore state (e.g., coming back from webcam viewer)
      */
     shouldRestoreState() {
         const referrer = document.referrer;
         const savedState = this.getSavedState();
-
-        // Restore if we have saved state and came from webcam viewer or direct navigation
-        return savedState && (
-            referrer.includes('/webcam-viewer') ||
-            referrer === '' ||
-            performance.navigation.type === 1 // page reload
+        const urlParams = new URLSearchParams(window.location.search);
+        const returningFromWebcam = (
+            urlParams.get('returnFrom') === 'webcam' ||
+            referrer.includes('/webcam-viewer')
         );
+        const hasRestoreIntent = sessionStorage.getItem(this.restoreIntentKey) === 'webcam';
+
+        // A normal visit or reload should always start at the Basin default view.
+        return Boolean(savedState && returningFromWebcam && hasRestoreIntent);
     }
 
     /**
@@ -117,6 +154,7 @@ class MapStateManager {
             navigatedTo: 'webcam',
             cameraId: cameraId
         });
+        this.setRestoreIntent('webcam');
 
         // Navigate to webcam viewer
         const url = `/webcam-viewer?id=${cameraId}&return=roads`;
@@ -136,7 +174,7 @@ class MapStateManager {
             window.close();
         } else {
             // Navigate back to the specified return page (usually roads)
-            window.location.href = `/${returnPage}`;
+            window.location.href = `/${returnPage}?returnFrom=webcam`;
         }
     }
 

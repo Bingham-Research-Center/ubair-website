@@ -66,9 +66,24 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize units toggle
     initializeUnitsToggle();
 
+    // Initialize map reset control
+    initializeMapReset();
+
     // Initialize experimental road AI toggle
     initializeExperimentalRoadToggle();
 });
+
+/**
+ * Restore the map to the standard Uintah Basin view.
+ */
+function initializeMapReset() {
+    const resetButton = document.getElementById('reset-map-view');
+    if (!resetButton) return;
+
+    resetButton.addEventListener('click', () => {
+        roadWeatherMap?.resetView();
+    });
+}
 
 /**
  * Initialize the units toggle button
@@ -80,8 +95,14 @@ function initializeUnitsToggle() {
 
     if (!unitsToggle || !unitsLabel) return;
 
-    // Set initial label
-    unitsLabel.textContent = unitsSystem.getSystemName();
+    const updateUnitsLabel = () => {
+        const currentSystem = unitsSystem.getSystemName();
+        const nextSystem = currentSystem === 'Metric' ? 'Imperial' : 'Metric';
+        unitsLabel.textContent = currentSystem;
+        unitsToggle.setAttribute('aria-label', `Switch to ${nextSystem} units`);
+    };
+
+    updateUnitsLabel();
 
     // Add click handler
     unitsToggle.addEventListener('click', function() {
@@ -89,7 +110,7 @@ function initializeUnitsToggle() {
         const isMetric = unitsSystem.toggle();
 
         // Update button label
-        unitsLabel.textContent = unitsSystem.getSystemName();
+        updateUnitsLabel();
 
         // Refresh all displays that use units
         refreshUnitsDisplays();
@@ -103,17 +124,6 @@ function initializeUnitsToggle() {
 function refreshUnitsDisplays() {
     // Refresh condition cards on the map
     updateConditionCards();
-
-    // Update default unit labels in HTML when showing placeholders
-    const windCard = document.querySelector('.condition-card-compact.wind .value');
-    if (windCard && windCard.textContent.includes('--')) {
-        windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
-    }
-
-    const visCard = document.querySelector('.condition-card-compact.visibility .value');
-    if (visCard && visCard.textContent.includes('--')) {
-        visCard.textContent = `-- ${unitsSystem.getVisibilityUnit()}`;
-    }
 
     // Smart refresh that uses cached data instead of reloading everything
     smartRefreshRoutes();

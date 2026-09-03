@@ -4,23 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Road Weather Conditions and Forecasts for Uintah Basin">
-    <title>BasinWx</title>
+    <title>Road Weather | BasinWx</title>
     <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx.ico">
 
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
-    <!-- CSS -->
+    <!-- Map library CSS -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+    <link rel="stylesheet" href="/vendor/leaflet.markercluster/MarkerCluster.css">
+    <link rel="stylesheet" href="/vendor/leaflet.markercluster/MarkerCluster.Default.css">
+
+    <!-- Site CSS loads last so page-specific overrides remain authoritative. -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
 </head>
 <body data-page-type="roads">
     <!-- Colored Bar -->
@@ -50,8 +47,8 @@
                                 <i class="fas fa-road"></i>
                             </div>
                             <div class="card-data">
-                                <h5>Road Conditions</h5>
-                                <p class="value">--</p>
+                                <h5>Road Surface</h5>
+                                <p class="value">Not reported</p>
                             </div>
                         </div>
 
@@ -61,7 +58,7 @@
                             </div>
                             <div class="card-data">
                                 <h5>Visibility</h5>
-                                <p class="value">-- mi</p>
+                                <p class="value">Not reported</p>
                             </div>
                         </div>
 
@@ -71,7 +68,7 @@
                             </div>
                             <div class="card-data">
                                 <h5>Precipitation</h5>
-                                <p class="value">--</p>
+                                <p class="value">Not reported</p>
                             </div>
                         </div>
 
@@ -81,10 +78,13 @@
                             </div>
                             <div class="card-data">
                                 <h5>Wind</h5>
-                                <p class="value">-- mph</p>
+                                <p class="value">Not reported</p>
                             </div>
                         </div>
                     </div>
+                    <p class="conditions-updated" id="conditions-updated" role="status" aria-live="polite">
+                        Checking data freshness…
+                    </p>
                 </div>
 
                 <!-- Units Toggle -->
@@ -96,7 +96,14 @@
                     </button>
                 </div>
 
-                <div class="experimental-toggle-container">
+                <div class="map-reset-container">
+                    <button class="map-reset-view" id="reset-map-view" type="button" title="Return to the default Basin view">
+                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                        <span>Reset view</span>
+                    </button>
+                </div>
+
+                <div class="experimental-toggle-container" hidden>
                     <label class="experimental-toggle-label" for="experimental-road-toggle">
                         <input type="checkbox" id="experimental-road-toggle">
                         <span>Experimental Road AI</span>
@@ -232,7 +239,7 @@
         </div>
 
         <!-- Travel Advisory Section -->
-        <section class="advisory-section">
+        <section class="advisory-section" id="travel-advisories">
             <h2><i class="fas fa-exclamation-triangle"></i> Travel Advisories</h2>
             <!-- Traffic Events Dashboard -->
             <div class="traffic-events-container">
@@ -300,6 +307,14 @@
                 </div>
             </div>
         </section>
+
+        <aside class="roads-data-notice" aria-label="Road data notice">
+            <strong>Road data notice:</strong>
+            Transportation data are provided by UDOT and may be incomplete, delayed, or changed without notice.
+            Data are provided &ldquo;as is.&rdquo; Verify critical travel information with
+            <a href="https://commuterlink.utah.gov/" target="_blank" rel="noopener">UDOT CommuterLink</a>
+            or another official source before departure.
+        </aside>
     </main>
 
     <!-- Footer -->
@@ -310,8 +325,8 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+    <script src="/vendor/leaflet/leaflet.js"></script>
+    <script src="/vendor/leaflet.markercluster/leaflet.markercluster.js"></script>
     <script src="/public/js/map-state-manager.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/loadFooter.js"></script>
