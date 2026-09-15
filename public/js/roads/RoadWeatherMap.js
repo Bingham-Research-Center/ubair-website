@@ -99,6 +99,14 @@ class RoadWeatherMap {
         this.map.getPane('closurePane').style.pointerEvents = 'auto';
     }
 
+    resetView() {
+        if (!this.map) return;
+
+        window.mapStateManager?.clearMapState();
+        window.mapStateManager?.clearRestoreIntent();
+        this.map.setView(this.options.center, this.options.zoom, { animate: true });
+    }
+
     async loadRoadWeatherData() {
         try {
             const response = await fetch('/api/road-weather');
@@ -755,14 +763,15 @@ class RoadWeatherMap {
         control.onAdd = () => {
             const div = L.DomUtil.create('div', 'camera-cycle-control');
             div.innerHTML = `
-                <div class="camera-cycle-container">
-                    <label class="camera-cycle-label">Auto-cycle cameras:</label>
-                    <div class="camera-cycle-switch" id="camera-cycle-toggle">
-                        <div class="camera-cycle-slider">
-                            <div class="camera-cycle-timer-fill" id="camera-cycle-timer-fill"></div>
-                        </div>
-                    </div>
-                </div>
+                <button class="camera-cycle-container camera-cycle-button" id="camera-cycle-toggle"
+                        type="button" role="switch" aria-checked="false" aria-label="Toggle camera tour">
+                    <span class="camera-cycle-label" aria-hidden="true">Camera tour</span>
+                    <span class="camera-cycle-switch" aria-hidden="true">
+                        <span class="camera-cycle-slider">
+                            <span class="camera-cycle-timer-fill" id="camera-cycle-timer-fill"></span>
+                        </span>
+                    </span>
+                </button>
             `;
             L.DomEvent.disableClickPropagation(div);
             L.DomEvent.disableScrollPropagation(div);
@@ -777,6 +786,7 @@ class RoadWeatherMap {
 
         toggle.addEventListener('click', () => {
             this.cameraCycleActive = !this.cameraCycleActive;
+            toggle.setAttribute('aria-checked', String(this.cameraCycleActive));
             if (this.cameraCycleActive) {
                 toggle.classList.add('active');
                 if (timerFill) timerFill.style.animation = 'camera-cycle-timer 8s linear infinite';
@@ -819,12 +829,13 @@ class RoadWeatherMap {
         legend.onAdd = () => {
             const div = L.DomUtil.create('div', 'road-legend-collapsible');
             div.innerHTML = `
-                <div class="legend-toggle" id="legend-toggle">
-                    <i class="fas fa-info-circle"></i>
+                <button class="legend-toggle" id="legend-toggle" type="button"
+                        aria-expanded="false" aria-controls="legend-content">
+                    <i class="fas fa-info-circle" aria-hidden="true"></i>
                     <span>Legend</span>
-                    <i class="fas fa-chevron-up legend-arrow" id="legend-arrow"></i>
-                </div>
-                <div class="legend-content" id="legend-content">
+                    <i class="fas fa-chevron-up legend-arrow" id="legend-arrow" aria-hidden="true"></i>
+                </button>
+                <div class="legend-content" id="legend-content" aria-hidden="true" inert>
                     <div class="legend-items">
                         <div class="legend-section">
                             <h5>Road Conditions</h5>
@@ -860,7 +871,6 @@ class RoadWeatherMap {
                                 <span>Construction</span>
                             </div>
                         </div>
-                    </div>
                         <div class="legend-section">
                             <h5>Layer Toggles</h5>
                             <label class="legend-toggle-item">
@@ -880,14 +890,13 @@ class RoadWeatherMap {
 
                 toggle.addEventListener('click', () => {
                     const isExpanded = content.classList.contains('expanded');
+                    const shouldExpand = !isExpanded;
 
-                    if (isExpanded) {
-                        content.classList.remove('expanded');
-                        arrow.classList.remove('rotated');
-                    } else {
-                        content.classList.add('expanded');
-                        arrow.classList.add('rotated');
-                    }
+                    content.classList.toggle('expanded', shouldExpand);
+                    arrow.classList.toggle('rotated', shouldExpand);
+                    toggle.setAttribute('aria-expanded', String(shouldExpand));
+                    content.setAttribute('aria-hidden', String(!shouldExpand));
+                    content.toggleAttribute('inert', !shouldExpand);
                 });
 
                 const stationToggle = document.getElementById('toggle-weather-stations');

@@ -7,6 +7,38 @@
 
 const CONDITION_PRIORITY = { red: 3, yellow: 2, green: 1 };
 const CONDITION_LABELS = { red: 'Dangerous', yellow: 'Caution', green: 'Clear' };
+const UNAVAILABLE_VALUE = 'Not reported';
+
+function updateConditionsFreshness(timestamp, label = 'Station data updated') {
+    const freshnessElement = document.getElementById('conditions-updated');
+    if (!freshnessElement) return;
+
+    const updatedAt = timestamp ? new Date(timestamp) : null;
+    if (!updatedAt || Number.isNaN(updatedAt.getTime())) {
+        freshnessElement.textContent = 'Data update time unavailable';
+        freshnessElement.removeAttribute('title');
+        return;
+    }
+
+    const formattedTime = new Intl.DateTimeFormat([], {
+        month: 'short',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+    }).format(updatedAt);
+
+    freshnessElement.textContent = `${label} ${formattedTime}`;
+    freshnessElement.title = updatedAt.toLocaleString();
+}
+
+function getLatestStationUpdate(stations) {
+    const timestamps = stations
+        .map(station => Date.parse(station.lastUpdated))
+        .filter(timestamp => Number.isFinite(timestamp));
+
+    return timestamps.length > 0 ? Math.max(...timestamps) : null;
+}
 
 /**
  * Update condition cards with location-specific data when a station is clicked
@@ -16,7 +48,7 @@ function updateConditionCardsWithLocation(locationData) {
     const condCard = document.querySelector('.condition-card-compact.road-conditions');
     const condValue = condCard?.querySelector('.value');
     if (condCard && condValue) {
-        const condition = locationData.condition || '--';
+        const condition = locationData.condition || UNAVAILABLE_VALUE;
         condValue.textContent = condition;
         condCard.classList.remove('level-green', 'level-yellow', 'level-red');
     }
@@ -45,33 +77,33 @@ function updateConditionCardsWithLocation(locationData) {
 
             visCard.textContent = limitValue > maxVis ? `${maxVis}+ ${unitsSystem.getVisibilityUnit()}` : formattedVis;
         } else {
-            visCard.textContent = `-- ${unitsSystem.getVisibilityUnit()}`;
+            visCard.textContent = UNAVAILABLE_VALUE;
         }
     }
 
     // Precipitation
     const precipCard = document.querySelector('.condition-card-compact.precipitation .value');
     if (precipCard) {
-        const precip = locationData.precipitation || locationData.snowLevel || locationData.condition;
-        if (precip) {
+        const precip = locationData.precipitation ?? locationData.snowLevel ?? locationData.condition;
+        if (precip !== null && precip !== undefined && precip !== '') {
             if (typeof precip === 'string') {
                 precipCard.textContent = precip === 'none' ? 'Dry' : precip;
             } else {
                 precipCard.textContent = precip > 0 ? unitsSystem.formatPrecipitationRateFromMm(precip) : 'None';
             }
         } else {
-            precipCard.textContent = '--';
+            precipCard.textContent = UNAVAILABLE_VALUE;
         }
     }
 
     // Wind
     const windCard = document.querySelector('.condition-card-compact.wind .value');
     if (windCard) {
-        const wind = locationData.windSpeed || locationData.windGust;
-        if (wind && wind > 0) {
+        const wind = locationData.windSpeed ?? locationData.windGust;
+        if (wind !== null && wind !== undefined && wind !== '' && !isNaN(wind) && wind >= 0) {
             windCard.textContent = unitsSystem.formatWindSpeed(wind);
         } else {
-            windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
+            windCard.textContent = UNAVAILABLE_VALUE;
         }
     }
 }
@@ -83,20 +115,22 @@ async function updateConditionCards() {
     try {
         const response = await fetch('/api/road-weather/stations');
         if (!response.ok) {
-            updateCardsWithFallback();
+            await updateCardsWithFallback();
             return;
         }
 
         const stations = await response.json();
         if (!stations || stations.length === 0) {
-            updateCardsWithFallback();
+            await updateCardsWithFallback();
             return;
         }
+
+        updateConditionsFreshness(getLatestStationUpdate(stations));
 
         // Fetch camera detections to supplement station data
         let cameraSnowDetected = false;
         try {
-            const cameraResponse = await fetch('/api/road-weather/data');
+            const cameraResponse = await fetch('/api/road-weather');
             if (cameraResponse.ok) {
                 const cameraData = await cameraResponse.json();
                 const detections = cameraData.cameraDetections || [];
@@ -112,24 +146,25 @@ async function updateConditionCards() {
         const condCard = document.querySelector('.condition-card-compact.road-conditions');
         const condValue = condCard?.querySelector('.value');
         if (condCard && condValue) {
-            let worstLevel = 'green';
-            let worstStatus = 'Clear';
+            let worstLevel = null;
+            let worstStatus = UNAVAILABLE_VALUE;
             for (const s of stations) {
                 if (!s.condition) continue;
                 const level = s.condition.condition;
-                if ((CONDITION_PRIORITY[level] || 0) > (CONDITION_PRIORITY[worstLevel] || 0)) {
+                if (!CONDITION_PRIORITY[level]) continue;
+                if (!worstLevel || (CONDITION_PRIORITY[level] || 0) > (CONDITION_PRIORITY[worstLevel] || 0)) {
                     worstLevel = level;
-                    worstStatus = s.condition.status;
+                    worstStatus = s.condition.status || CONDITION_LABELS[level] || UNAVAILABLE_VALUE;
                 }
             }
             // Escalate to at least yellow if cameras detect snow
-            if (cameraSnowDetected && CONDITION_PRIORITY[worstLevel] < CONDITION_PRIORITY['yellow']) {
+            if (cameraSnowDetected && (CONDITION_PRIORITY[worstLevel] || 0) < CONDITION_PRIORITY.yellow) {
                 worstLevel = 'yellow';
                 worstStatus = 'Caution';
             }
             condValue.textContent = worstStatus;
             condCard.classList.remove('level-green', 'level-yellow', 'level-red');
-            condCard.classList.add(`level-${worstLevel}`);
+            if (worstLevel) condCard.classList.add(`level-${worstLevel}`);
         }
 
         // --- Visibility: min–max range with station names ---
@@ -155,7 +190,7 @@ async function updateConditionCards() {
                     visCard.textContent = `${fmtMin} – ${fmtMax}`;
                 }
             } else {
-                visCard.textContent = `-- ${unitsSystem.getVisibilityUnit()}`;
+                visCard.textContent = UNAVAILABLE_VALUE;
             }
         }
 
@@ -165,10 +200,12 @@ async function updateConditionCards() {
             let hasSnow = cameraSnowDetected;
             let hasRain = false;
             let hasWet = false;
+            let hasSurfaceReport = false;
 
             for (const s of stations) {
                 const surface = (s.surfaceStatus || '').toLowerCase();
                 const precip = (s.precipitation || '').toLowerCase();
+                if (surface || precip) hasSurfaceReport = true;
 
                 if (surface.includes('snow') || precip.includes('snow')) hasSnow = true;
                 if (surface.includes('rain') || precip.includes('rain')) hasRain = true;
@@ -183,8 +220,10 @@ async function updateConditionCards() {
                 precipCard.textContent = 'Rain';
             } else if (hasWet) {
                 precipCard.textContent = 'Wet';
-            } else {
+            } else if (hasSurfaceReport) {
                 precipCard.textContent = 'Dry';
+            } else {
+                precipCard.textContent = UNAVAILABLE_VALUE;
             }
         }
 
@@ -193,27 +232,32 @@ async function updateConditionCards() {
         if (windCard) {
             let maxWind = 0;
             let maxWindStation = '';
+            let hasWindReport = false;
             for (const s of stations) {
                 const gust = parseFloat(s.windSpeedGust);
                 const avg = parseFloat(s.windSpeedAvg);
-                const wind = !isNaN(gust) && gust > 0 ? gust : avg;
-                if (!isNaN(wind) && wind > maxWind) {
+                const reportedWinds = [gust, avg].filter(wind => !isNaN(wind) && wind >= 0);
+                if (reportedWinds.length === 0) continue;
+
+                hasWindReport = true;
+                const wind = Math.max(...reportedWinds);
+                if (wind >= maxWind) {
                     maxWind = wind;
-                    maxWindStation = s.name;
+                    maxWindStation = s.name || 'Unknown station';
                 }
             }
 
-            if (maxWind > 0) {
+            if (hasWindReport) {
                 const short = maxWindStation.replace(/^UDOT\s*/i, '').split(/\s+/).slice(0, 2).join(' ');
                 windCard.textContent = `${unitsSystem.formatWindSpeed(maxWind)}`;
                 windCard.title = `Max gust at ${short}`;
             } else {
-                windCard.textContent = `-- ${unitsSystem.getWindUnit()}`;
+                windCard.textContent = UNAVAILABLE_VALUE;
             }
         }
     } catch (error) {
         console.error('Error updating condition cards:', error);
-        updateCardsWithFallback();
+        await updateCardsWithFallback();
     }
 }
 
@@ -230,9 +274,13 @@ async function updateCardsWithFallback() {
 
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
                 if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
+                updateConditionsFreshness(Date.now(), 'Backup data loaded');
+                return;
             }
         }
+        updateConditionsFreshness(null);
     } catch (error) {
         console.error('Fallback also failed:', error);
+        updateConditionsFreshness(null);
     }
 }
