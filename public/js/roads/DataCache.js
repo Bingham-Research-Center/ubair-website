@@ -31,13 +31,13 @@ const routeDataCache = {
      */
     async updateCache() {
         try {
-            const [stationsResponse, eventsResponse] = await Promise.all([
-                fetch('/api/road-weather/stations'),
+            const [roadData, eventsResponse] = await Promise.all([
+                roadWeatherDataCache.getData(),
                 fetch('/api/traffic-events')
             ]);
 
-            if (stationsResponse.ok && eventsResponse.ok) {
-                this.stations = await stationsResponse.json();
+            if (Array.isArray(roadData.stations) && eventsResponse.ok) {
+                this.stations = roadData.stations;
                 this.events = await eventsResponse.json();
                 this.lastUpdated = Date.now();
                 return { stations: this.stations, events: this.events };

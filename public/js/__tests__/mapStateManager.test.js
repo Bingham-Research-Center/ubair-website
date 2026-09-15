@@ -52,8 +52,8 @@ describe('Map state restoration', () => {
         expect(manager.shouldRestoreState()).toBe(false);
     });
 
-    it('discards invalid coordinates and return signals instead of retrying every load', () => {
-        const { manager, context, values } = browser({ search: '?returnFrom=webcam', center: { lat: null, lng: -109.7 } });
+    it.each([{ lat: null, lng: -109.7 }, [999, 999], [-91, 0], [0, -181]])('discards invalid coordinates %j and return signals', center => {
+        const { manager, context, values } = browser({ search: '?returnFrom=webcam', center });
         const map = { setView: jest.fn() };
         expect(manager.restoreMapState(map)).toBe(false);
         expect(map.setView).not.toHaveBeenCalled();

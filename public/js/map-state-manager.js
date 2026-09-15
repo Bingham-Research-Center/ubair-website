@@ -56,7 +56,8 @@ class MapStateManager {
             if (state.center && state.zoom) {
                 const latitude = Array.isArray(state.center) ? state.center[0] : state.center.lat;
                 const longitude = Array.isArray(state.center) ? state.center[1] : state.center.lng;
-                if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+                if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+                    Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
                     this.clearMapState();
                     this.clearRestoreIntent();
                     this.clearReturnSignal();

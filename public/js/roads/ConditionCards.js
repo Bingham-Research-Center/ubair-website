@@ -113,31 +113,17 @@ function updateConditionCardsWithLocation(locationData) {
  */
 async function updateConditionCards() {
     try {
-        const response = await fetch('/api/road-weather/stations');
-        if (!response.ok) {
-            await updateCardsWithFallback();
-            return;
-        }
-
-        const stations = await response.json();
-        if (!stations || stations.length === 0) {
+        const data = await roadWeatherDataCache.getData();
+        const stations = data.stations;
+        if (!Array.isArray(stations) || stations.length === 0) {
             await updateCardsWithFallback();
             return;
         }
 
         updateConditionsFreshness(getLatestStationUpdate(stations));
-
-        // Fetch camera detections to supplement station data
-        let cameraSnowDetected = false;
-        try {
-            const cameraData = await roadWeatherDataCache.getData();
-            const detections = cameraData.cameraDetections || [];
-            cameraSnowDetected = detections.some(
-                d => d.snowDetected === true && d.confidence >= 0.5
-            );
-        } catch (e) {
-            console.warn('Could not fetch camera detections for summary bar:', e.message);
-        }
+        const cameraSnowDetected = (data.cameraDetections || []).some(
+            d => d.snowDetected === true && d.confidence >= 0.5
+        );
 
         // --- Road Conditions: worst-case across all stations ---
         const condCard = document.querySelector('.condition-card-compact.road-conditions');
@@ -250,6 +236,7 @@ async function updateConditionCards() {
                 windCard.title = `Max gust at ${short}`;
             } else {
                 windCard.textContent = UNAVAILABLE_VALUE;
+                windCard.removeAttribute('title');
             }
         }
     } catch (error) {
@@ -262,22 +249,31 @@ async function updateConditionCards() {
  * Update cards with fallback data from Open-Meteo API
  */
 async function updateCardsWithFallback() {
+    // Backup weather only supplies wind; remove values from an older station snapshot.
+    for (const type of ['road-conditions', 'visibility', 'precipitation', 'wind']) {
+        const card = document.querySelector(`.condition-card-compact.${type}`);
+        const value = card?.querySelector('.value');
+        if (value) {
+            value.textContent = UNAVAILABLE_VALUE;
+            value.removeAttribute('title');
+        }
+        card?.classList.remove('level-green', 'level-yellow', 'level-red');
+    }
+    updateConditionsFreshness(null);
+
     try {
         const response = await fetch('/api/road-weather/openmeteo/40.3033/-109.7');
         if (response.ok) {
             const data = await response.json();
-            if (data && data.current) {
-                const windKmh = data.current.windSpeed;
-
+            const windKmh = data?.current?.windSpeed;
+            if (Number.isFinite(windKmh) && windKmh >= 0) {
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
                 if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
-                updateConditionsFreshness(Date.now(), 'Backup data loaded');
-                return;
+                const freshnessElement = document.getElementById('conditions-updated');
+                if (freshnessElement) freshnessElement.textContent = 'Backup wind data; update time unavailable';
             }
         }
-        updateConditionsFreshness(null);
     } catch (error) {
         console.error('Fallback also failed:', error);
-        updateConditionsFreshness(null);
     }
 }

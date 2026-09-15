@@ -17,22 +17,24 @@ function browser(fetch) {
     return { context, cache: vm.runInContext('roadWeatherDataCache', context) };
 }
 
-const payload = { segments: [], stations: [], cameras: [], cameraDetections: [] };
+const payload = { segments: [], stations: [{ name: 'Station', lastUpdated: '2026-09-15T05:00:00Z' }], cameras: [], cameraDetections: [] };
 const response = () => ({ ok: true, json: async () => payload });
 
 describe('shared road weather data', () => {
-    it('shares one aggregate request between the actual map and card startup paths', async () => {
-        const fetch = jest.fn(async url => url.endsWith('/stations')
-            ? { ok: true, json: async () => [{ name: 'Station', lastUpdated: new Date().toISOString() }] }
-            : response());
+    it('shares one station snapshot across map, card, and route startup paths', async () => {
+        const fetch = jest.fn(async url => {
+            if (url === '/api/road-weather') return response();
+            if (url === '/api/traffic-events') return { ok: true, json: async () => ({ events: [] }) };
+            throw new Error(`Unexpected request: ${url}`);
+        });
         const { context } = browser(fetch);
         const map = {
             clearLayers: jest.fn(), renderRoadSegments: jest.fn(), renderWeatherStations: jest.fn(),
             renderTrafficCameras: jest.fn(), loadStaticRoadData: jest.fn()
         };
         context.map = map;
-        await vm.runInContext('Promise.all([RoadWeatherMap.prototype.loadRoadWeatherData.call(map), updateConditionCards()])', context);
-        expect(fetch.mock.calls.filter(([url]) => url === '/api/road-weather')).toHaveLength(1);
+        await vm.runInContext('Promise.all([RoadWeatherMap.prototype.loadRoadWeatherData.call(map), updateConditionCards(), routeDataCache.getData()])', context);
+        expect(fetch.mock.calls.map(([url]) => url).sort()).toEqual(['/api/road-weather', '/api/traffic-events']);
         expect(map.renderTrafficCameras).toHaveBeenCalledWith(payload.cameras, payload.cameraDetections);
         expect(map.loadStaticRoadData).not.toHaveBeenCalled();
     });
