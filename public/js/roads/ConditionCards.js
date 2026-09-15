@@ -130,14 +130,11 @@ async function updateConditionCards() {
         // Fetch camera detections to supplement station data
         let cameraSnowDetected = false;
         try {
-            const cameraResponse = await fetch('/api/road-weather');
-            if (cameraResponse.ok) {
-                const cameraData = await cameraResponse.json();
-                const detections = cameraData.cameraDetections || [];
-                cameraSnowDetected = detections.some(
-                    d => d.snowDetected === true && d.confidence >= 0.5
-                );
-            }
+            const cameraData = await roadWeatherDataCache.getData();
+            const detections = cameraData.cameraDetections || [];
+            cameraSnowDetected = detections.some(
+                d => d.snowDetected === true && d.confidence >= 0.5
+            );
         } catch (e) {
             console.warn('Could not fetch camera detections for summary bar:', e.message);
         }

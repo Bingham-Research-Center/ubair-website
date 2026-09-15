@@ -120,7 +120,7 @@ cmd_up() {
 
   # Install dependencies
   echo "Installing npm dependencies..."
-  npm ci --prefix "$worktree_dir" --silent
+  npm install --prefix "$worktree_dir" --silent
 
   # Start pm2 and persist the dump so the preview survives a reboot
   # (the pm2 systemd unit only restores apps captured by the last `pm2 save`)
@@ -183,7 +183,7 @@ cmd_update() {
   git -C "$worktree_dir" reset --hard "origin/$branch"
 
   echo "Updating npm dependencies..."
-  npm ci --prefix "$worktree_dir" --silent
+  npm install --prefix "$worktree_dir" --silent
 
   echo "Restarting pm2 app: $pm2_name..."
   pm2 restart "$pm2_name"

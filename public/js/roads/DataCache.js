@@ -67,3 +67,25 @@ const routeDataCache = {
         return { stations: this.stations, events: this.events };
     }
 };
+
+// The map and condition cards share both cached data and an in-flight request.
+const roadWeatherDataCache = {
+    data: null,
+    lastUpdated: 0,
+    pending: null,
+
+    async getData() {
+        if (this.data && Date.now() - this.lastUpdated < 300000) return this.data;
+        if (!this.pending) {
+            this.pending = (async () => {
+                const response = await fetch('/api/road-weather');
+                if (!response.ok) throw new Error(`Road weather request failed: ${response.status}`);
+                const data = await response.json();
+                this.data = data;
+                this.lastUpdated = Date.now();
+                return data;
+            })().finally(() => { this.pending = null; });
+        }
+        return this.pending;
+    }
+};

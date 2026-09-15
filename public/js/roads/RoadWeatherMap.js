@@ -109,14 +109,7 @@ class RoadWeatherMap {
 
     async loadRoadWeatherData() {
         try {
-            const response = await fetch('/api/road-weather');
-            if (!response.ok) {
-                // Fallback to static/demo data
-                this.loadStaticRoadData();
-                return;
-            }
-
-            const data = await response.json();
+            const data = await roadWeatherDataCache.getData();
             this.clearLayers();
             this.renderRoadSegments(data.segments);
             this.renderWeatherStations(data.stations);
