@@ -93,13 +93,54 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 }
 
 /**
+ * Build a compact route-level incident summary. Full event details remain in
+ * the Travel Advisories section to avoid repeating long descriptions.
+ */
+function createRouteIncidentSummary(routeName, events) {
+    const safeRouteName = escapeHtml(routeName);
+    if (!Array.isArray(events) || events.length === 0) {
+        return `
+            <div class="route-incidents">
+                <div class="route-incident-summary none">
+                    <span class="no-incidents">✅ No current incidents reported on ${safeRouteName}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    const firstEvent = events[0];
+    const eventType = (firstEvent.eventType || 'Incident')
+        .replace(/([A-Z])/g, ' $1')
+        .trim()
+        .replace(/\b\w/g, character => character.toUpperCase());
+    const rawDescription = firstEvent.description || firstEvent.message || 'Details available below';
+    const shortDescription = rawDescription.length > 120
+        ? `${rawDescription.slice(0, 117).trimEnd()}…`
+        : rawDescription;
+
+    return `
+        <div class="route-incidents">
+            <div class="route-incident-summary">
+                <span class="incident-summary-count">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                    ${events.length} active
+                </span>
+                <span class="incident-summary-text">
+                    <strong>${escapeHtml(eventType)}:</strong> ${escapeHtml(shortDescription)}
+                </span>
+                <a class="incident-details-link" href="#travel-advisories">View details</a>
+            </div>
+        </div>
+    `;
+}
+
+/**
  * Display route conditions in a container
  * @param {HTMLElement} container - Container element to render into
  * @param {Object} data - Route data object
  */
 function displayRouteConditions(container, data) {
     const { routeName, stations, events, cities } = data;
-    const safeRouteName = escapeHtml(routeName);
 
     // Calculate metrics
     const avgTemp = stations.length > 0 ?
@@ -140,22 +181,7 @@ function displayRouteConditions(container, data) {
             </div>
         </div>
 
-        ${events.length > 0 ? `
-            <div class="route-incidents">
-                <h4><i class="fas fa-exclamation-triangle"></i> Current Incidents on ${safeRouteName}</h4>
-                ${events.slice(0, 3).map(event => `
-                    <div class="incident-item ${event.eventType === 'construction' ? 'construction' : ''}">
-                        <strong>${escapeHtml(event.eventType?.toUpperCase() || 'INCIDENT')}:</strong> ${escapeHtml(event.description || event.message || 'No details available')}
-                        ${event.location ? `<br><small>📍 ${escapeHtml(event.location)}</small>` : ''}
-                    </div>
-                `).join('')}
-                ${events.length > 3 ? `<small>... and ${events.length - 3} more incidents</small>` : ''}
-            </div>
-        ` : `
-            <div class="route-incidents">
-                <div class="no-incidents">✅ No current incidents reported on ${safeRouteName}</div>
-            </div>
-        `}
+        ${createRouteIncidentSummary(routeName, events)}
     `;
 
     container.innerHTML = html;

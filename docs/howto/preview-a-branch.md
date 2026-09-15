@@ -55,7 +55,7 @@ That script does the heavy lifting:
 - Creates a `git worktree` — a second checkout of your branch at `/srv/ubair-website-preview-<user>/`.
 - Symlinks the live CHPC data directory so your preview sees the same real observations as production.
 - Copies `.env`, overrides `PORT` and sets `PREVIEW_MODE=true`.
-- Runs `npm ci` and `pm2 start` with a derived app name like `basinwx-feature-braxton-sports`.
+- Runs `npm install` and `pm2 start` with a derived app name like `basinwx-feature-braxton-sports`.
 - Runs `pm2 save` so the preview survives a reboot.
 
 At the end it prints nginx + certbot instructions. Run them once:
@@ -78,7 +78,7 @@ After you push new commits to your branch, refresh the preview:
 scripts/manage-previews.sh update <your-username>
 ```
 
-That fetches origin, hard-resets the worktree to `origin/<branch>`, re-runs `npm ci`, and restarts pm2.
+That fetches origin, hard-resets the worktree to `origin/<branch>`, re-runs `npm install`, and restarts pm2.
 
 #### When you're done: tear it down
 

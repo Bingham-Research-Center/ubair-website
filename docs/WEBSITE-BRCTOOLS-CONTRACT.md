@@ -65,20 +65,24 @@ POST  https://www.basinwx.dev/api/upload/:dataType
   `.png` `.pdf`**. Anything else is unlinked and 400s. `.json` is additionally `JSON.parse`d;
   `.md`/`.txt` are rejected if they contain a NUL byte; `.png`/`.pdf` skip content validation.
 
-**Accepted dataTypes** (`dataTypeMap`, ~:48-57) — anything else 400s:
+**Supported manifest dataTypes** (`dataTypeMap`, ~:48-57):
 
 ```
 observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast
 ```
 
-**Responses:** `200` stored · `400` bad type / invalid JSON / no file · `401` bad key ·
+The upload route currently falls back to the supplied dataType as the storage
+subdirectory; it does not reject unknown dataTypes with an allow-list. Producers
+should use the supported manifest types above rather than relying on that fallback.
+
+**Responses:** `200` stored · `400` invalid file extension / invalid JSON / no file · `401` bad key ·
 `403` not CHPC · `413` over a body limit.
 
 **Two body limits, not one.** multer's is 10 MB. nginx's `client_max_body_size` sits in front
 of the public path — 32 MB on dev since 2026-08-25, and unset means a **1 MB** default that
-413s before Express ever sees the request. `express.json()` is mounted with no `limit`, so its
-100 kb default applies to *raw JSON* bodies only; a raw-JSON probe returns 500 and is a red
-herring. **Probe with multipart, the way the real producer posts.** Full detail:
+413s before Express ever sees the request. `express.json()` has an explicit
+100 kb limit for *raw JSON* bodies; oversized JSON returns 413 and malformed JSON returns 400.
+A raw-JSON probe does not exercise multipart uploads. **Probe with multipart, the way the real producer posts.** Full detail:
 `docs/DEPLOYMENT.md` §8.
 
 ---
