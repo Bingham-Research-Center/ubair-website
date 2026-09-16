@@ -274,9 +274,6 @@
 <script src="/public/js/outlook-highlight.js"></script>
 
 <script>
-    // Store outside click handler reference to enable proper cleanup
-    let legendOutsideClickHandler = null;
-
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize forecast tabs
         initForecastTabs();
@@ -320,24 +317,9 @@
         if (toggle && dropdown) {
             toggle.addEventListener('click', () => {
                 dropdown.classList.toggle('active');
-                // Update aria-expanded for accessibility
-                toggle.setAttribute('aria-expanded', dropdown.classList.contains('active'));
+                const isOpen = dropdown.classList.contains('active');
+                toggle.setAttribute('aria-expanded', String(isOpen));
             });
-            
-            // Remove any existing listener before adding new one to prevent memory leaks
-            if (legendOutsideClickHandler) {
-                document.removeEventListener('click', legendOutsideClickHandler);
-            }
-            
-            // Create and store the handler for proper cleanup
-            legendOutsideClickHandler = (e) => {
-                if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                    toggle.setAttribute('aria-expanded', 'false');
-                }
-            };
-            
-            document.addEventListener('click', legendOutsideClickHandler);
         }
     }
 
