@@ -145,12 +145,22 @@ send us the correct expression and we will update the manifest.
 
 ---
 
-## A5 — Fan-out gap: `llm_outlooks` and `images` · brc-tools · OPEN
+## A5 — Fan-out gap: `llm_outlooks`; plus an upstream `images` gap · brc-tools · OPEN
 
-Neither has **ever** created a directory on `.dev` — not stale, never present. Both are healthy
+`llm_outlooks` has **never** created a directory on `.dev` — not stale, never present, healthy
 on `.com`. Confirmed again 2026-08-26 via `/api/monitoring/freshness` (`missing` on dev,
 `stale` on com). Fan-out is per-dataType, so at least two upload code paths exist and one
 hardcodes `www.basinwx.com`.
+
+**Updated 2026-08-31 (measured on disk, both hosts):** `images` is no longer in the same
+category. It *did* reach `.dev` — 5 GEFS meteograms (`meteogram_UB-repr_*_20260827-1800`) on
+2026-08-27 — so the images fan-out path works at least sometimes. More useful: **both hosts hold
+byte-identical newest images**, and neither has received anything since. `.com` shows ~268
+images/day through 2026-03-30, then nothing for five months until those same 5 files. So the
+images gap is **upstream production, not fan-out** — and the 2026-03-30 cutoff is consistent with
+the end of ozone season, i.e. plausibly correct rather than broken. Two questions for brc-tools:
+(a) is `clyfar` heatmap production intentionally seasonal, and (b) were the 2026-08-27 meteograms
+a one-off test or the start of a cadence that then stopped?
 
 This must be fixed **before ozone season (~Nov)** or `.dev` runs blind all winter and stops
 being a usable rehearsal mirror. Audit commands: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §3.

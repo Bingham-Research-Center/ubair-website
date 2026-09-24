@@ -65,20 +65,24 @@ POST  https://www.basinwx.dev/api/upload/:dataType
   `.png` `.pdf`**. Anything else is unlinked and 400s. `.json` is additionally `JSON.parse`d;
   `.md`/`.txt` are rejected if they contain a NUL byte; `.png`/`.pdf` skip content validation.
 
-**Accepted dataTypes** (`dataTypeMap`, ~:48-57) — anything else 400s:
+**Supported manifest dataTypes** (`dataTypeMap`, ~:48-57):
 
 ```
-observations | metadata | outlooks | llm_outlooks | images | timeseries | forecasts | road-forecast
+observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast
 ```
 
-**Responses:** `200` stored · `400` bad type / invalid JSON / no file · `401` bad key ·
+The upload route currently falls back to the supplied dataType as the storage
+subdirectory; it does not reject unknown dataTypes with an allow-list. Producers
+should use the supported manifest types above rather than relying on that fallback.
+
+**Responses:** `200` stored · `400` invalid file extension / invalid JSON / no file · `401` bad key ·
 `403` not CHPC · `413` over a body limit.
 
 **Two body limits, not one.** multer's is 10 MB. nginx's `client_max_body_size` sits in front
 of the public path — 32 MB on dev since 2026-08-25, and unset means a **1 MB** default that
-413s before Express ever sees the request. `express.json()` is mounted with no `limit`, so its
-100 kb default applies to *raw JSON* bodies only; a raw-JSON probe returns 500 and is a red
-herring. **Probe with multipart, the way the real producer posts.** Full detail:
+413s before Express ever sees the request. `express.json()` has an explicit
+100 kb limit for *raw JSON* bodies; oversized JSON returns 413 and malformed JSON returns 400.
+A raw-JSON probe does not exercise multipart uploads. **Probe with multipart, the way the real producer posts.** Full detail:
 `docs/DEPLOYMENT.md` §8.
 
 ---
@@ -99,9 +103,10 @@ python3 scripts/chpc_uploader.py --data-type road-forecast --file rf.json
 before ever POSTing — it is the cheapest place to catch a unit regression.
 
 **Fan-out is per-dataType, not global** — confirmed by measurement, not hypothesis.
-`observations`, `metadata` and `road-forecast` reach both hosts; `llm_outlooks` and `images`
-have never created a directory on `.dev`. That means **more than one upload code path exists**
-in brc-tools: one reads `BASINWX_API_URLS`, another hardcodes `www.basinwx.com`. The
+`observations`, `metadata` and `road-forecast` reach both hosts; `llm_outlooks` has still
+never created a directory on `.dev`. `images` did once, on 2026-08-27 (5 GEFS meteograms) — so
+that path is not wholly dead, which narrows the cause. That means **more than one upload code
+path exists** in brc-tools: one reads `BASINWX_API_URLS`, another hardcodes `www.basinwx.com`. The
 observations producer is the known-good template. Fix centrally — share the uploader, not the
 production logic.
 

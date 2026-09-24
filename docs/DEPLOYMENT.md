@@ -108,7 +108,7 @@ away.
 | Acts as `deploy` (no sudo) | Needs `sudo` |
 |---|---|
 | `git pull`, `git checkout` | `nginx -t`, `systemctl reload nginx` |
-| `npm ci`, `npm run` | `certbot ...` |
+| `npm install`, `npm run` | `certbot ...` |
 | `pm2 start/reload/save/logs` | `systemctl` (incl. `pm2-deploy` unit setup) |
 | read/write `/srv/ubair-website` | write `/etc/nginx/`, `/etc/letsencrypt/` |
 | read `.env` | `chmod`/`chown` under `/etc` |
@@ -117,6 +117,12 @@ Keep both boxes consistent with this split. `deploy` must own `/srv/ubair-websit
 
 **Production does not currently follow this split** — it runs as `root` out of
 `/var/www/ubair-website` (§1a). This section describes the target, not today.
+
+## Dependency installation
+
+`package-lock.json` is currently gitignored. Use `npm install` for deployments and
+previews; `npm ci` requires a lockfile and fails on a clean clone. A tracked lockfile
+policy is separate follow-up work. Install dependencies whenever package.json changes.
 
 ## 3. Fresh-box bring-up
 
@@ -131,7 +137,7 @@ cd /srv/ubair-website
 sudo -u deploy git checkout <dev|ops>
 
 # 3.2 Install
-sudo -u deploy npm ci
+sudo -u deploy npm install
 
 # 3.3 Environment
 sudo -u deploy cp .env.example .env
@@ -203,7 +209,7 @@ If certbot stored the cert under a different directory name, check `sudo ls -l /
 ### Pull a new commit into the running branch
 
 ```bash
-sudo -u deploy bash -lc 'cd /srv/ubair-website && git pull && npm ci && pm2 reload ecosystem.config.cjs --update-env && pm2 save'
+sudo -u deploy bash -lc 'cd /srv/ubair-website && git pull && npm install && pm2 reload ecosystem.config.cjs --update-env && pm2 save'
 ```
 
 ### Swap the dev box to a feature branch for a demo
@@ -213,7 +219,7 @@ sudo -u deploy bash -lc '
   cd /srv/ubair-website &&
   git fetch --all &&
   git checkout <feature-branch> &&
-  npm ci &&
+  npm install &&
   # Delete only our own branch-derived pm2 apps. Never "pm2 delete all" — it
   # nukes unrelated apps running under the same deploy user.
   for app in $(pm2 jlist | python3 -c "import json,sys; print(\"\\n\".join(a[\"name\"] for a in json.load(sys.stdin) if a[\"name\"].startswith(\"basinwx-\")))"); do
@@ -360,8 +366,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.2"     (tag v1.5.2)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.3-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.3"     (tag v1.5.3)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.4-dev"
 ```
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
@@ -477,7 +483,7 @@ scripts/manage-previews.sh status
 1. `up` creates a `git worktree` of the feature branch at `/srv/ubair-website-preview-<user>` (sibling to the main repo).
 2. The worktree's `public/api/static` is symlinked to the main dev repo's so the preview shows live CHPC data.
 3. A `.env` is created with `PORT=<preview port>` and `PREVIEW_MODE=true` (disables background refresh and report emails).
-4. `npm ci` installs dependencies, then `pm2 start ecosystem.config.cjs` launches the app.
+4. `npm install` installs dependencies, then `pm2 start ecosystem.config.cjs` launches the app.
 5. The pm2 app name is derived from the branch name by `ecosystem.config.cjs` — e.g. `basinwx-feature-braxton-sports`.
 
 ### Adding a new user / preview

@@ -12,7 +12,7 @@ const PAGE_DISCLAIMERS = {
         Consult with agricultural extension services and professional agronomists for farming decisions.
         ©2024, Utah State University.`,
 
-    '/roads': `This site uses real-time transportation data provided by the Utah Department of Transportation (UDOT). While we strive to display accurate information, UDOT does not guarantee the completeness or timeliness of this data. The data is provided 'as is' and may be subject to change without notice. Users should independently verify any critical information. ©2025, Utah State University.`,
+    '/roads': `UDOT data may be delayed. Verify critical trips with official sources.`,
 
     '/aviation': `DISCLAIMER: Aviation weather products are for planning purposes only. Always obtain official
         weather briefings from Flight Service or approved sources before flight operations.
@@ -26,6 +26,12 @@ const PAGE_DISCLAIMERS = {
         They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
         Satellite hotspot detections (NASA FIRMS) can lag by ~3 hours and may include false positives.
         For active wildfires and operational guidance, consult Utah Fire Info and the National Weather Service.
+        ©2026, Utah State University.`,
+
+    '/sports': `DISCLAIMER: Sports weather products are experimental research outputs for planning
+        and recreation only. Crosswind drift figures are modelled estimates, not measurements, and assume a
+        steady crosswind with no spin on the ball. Real-time data are preliminary and subject to quality
+        control. For official forecasts and warnings, please visit the National Weather Service.
         ©2026, Utah State University.`,
 
     '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
