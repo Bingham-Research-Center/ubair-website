@@ -31,13 +31,13 @@ const routeDataCache = {
      */
     async updateCache() {
         try {
-            const [stationsResponse, eventsResponse] = await Promise.all([
-                fetch('/api/road-weather/stations'),
+            const [roadData, eventsResponse] = await Promise.all([
+                roadWeatherDataCache.getData(),
                 fetch('/api/traffic-events')
             ]);
 
-            if (stationsResponse.ok && eventsResponse.ok) {
-                this.stations = await stationsResponse.json();
+            if (Array.isArray(roadData.stations) && eventsResponse.ok) {
+                this.stations = roadData.stations;
                 this.events = await eventsResponse.json();
                 this.lastUpdated = Date.now();
                 return { stations: this.stations, events: this.events };
@@ -65,5 +65,27 @@ const routeDataCache = {
         }
 
         return { stations: this.stations, events: this.events };
+    }
+};
+
+// The map and condition cards share both cached data and an in-flight request.
+const roadWeatherDataCache = {
+    data: null,
+    lastUpdated: 0,
+    pending: null,
+
+    async getData() {
+        if (this.data && Date.now() - this.lastUpdated < 300000) return this.data;
+        if (!this.pending) {
+            this.pending = (async () => {
+                const response = await fetch('/api/road-weather');
+                if (!response.ok) throw new Error(`Road weather request failed: ${response.status}`);
+                const data = await response.json();
+                this.data = data;
+                this.lastUpdated = Date.now();
+                return data;
+            })().finally(() => { this.pending = null; });
+        }
+        return this.pending;
     }
 };

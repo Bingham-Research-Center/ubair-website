@@ -89,7 +89,9 @@ const PRIORITY_VARIABLES = {
     'Snow Depth': { order: 10 }
 };
 
-function getCardinalDirection(degrees) {
+// Exported so pages other than the map can reuse it (sports.js). index_map.js:347
+// still carries its own copy; folding that in is a separate cleanup.
+export function getCardinalDirection(degrees) {
     if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
     const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
     const index = Math.round(degrees / 22.5) % 16;
