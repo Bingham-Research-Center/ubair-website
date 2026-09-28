@@ -1,0 +1,61 @@
+name: ux-review
+
+# One trigger list, two jobs gated by `if:`.
+#   label-ux-paths  (opened/synchronize/reopened): PR touches a CODEOWNERS UX path -> add
+#                   `needs-ux-review` and request Derek's by-eye review.
+#   request-derek   (labeled): a human added `needs-ux-review` -> request Derek.
+# A label added with GITHUB_TOKEN never fires a `labeled` run (GitHub blocks workflow-triggered
+# workflows), which is why label-ux-paths requests the review itself instead of relying on
+# request-derek. Both skip forks: a fork PR gets a read-only token and `gh pr edit` would fail.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+env:
+  GH_TOKEN: ${{ github.token }}
+  PR: ${{ github.event.pull_request.number }}
+  REPO: ${{ github.repository }}
+  REVIEWER: dmeanea123
+
+jobs:
+  label-ux-paths:
+    if: >-
+      github.event.action != 'labeled' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Label UX-path changes and request Derek
+        env:
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if gh pr view "$PR" --repo "$REPO" --json labels -q '.labels[].name' | grep -qx needs-ux-review; then
+            echo "already labelled needs-ux-review; nothing to do"
+            exit 0
+          fi
+          changed=$(gh pr diff "$PR" --repo "$REPO" --name-only)
+          if printf '%s\n' "$changed" | grep -Eq '^(views/|public/css/|public/partials/|public/images/)'; then
+            gh pr edit "$PR" --repo "$REPO" --add-label needs-ux-review
+            echo "UX path changed: added needs-ux-review"
+            if [ "$AUTHOR" != "$REVIEWER" ]; then
+              gh pr edit "$PR" --repo "$REPO" --add-reviewer "$REVIEWER"
+              echo "requested review from $REVIEWER"
+            fi
+          else
+            echo "no UX path changed"
+          fi
+
+  request-derek:
+    if: >-
+      github.event.action == 'labeled' &&
+      github.event.label.name == 'needs-ux-review' &&
+      github.event.pull_request.user.login != 'dmeanea123' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request Derek's by-eye review
+        run: gh pr edit "$PR" --repo "$REPO" --add-reviewer "$REVIEWER"

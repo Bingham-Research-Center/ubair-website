@@ -1,0 +1,46 @@
+name: Bug
+description: Something is wrong on a live site
+labels: ["type:bug"]
+body:
+  - type: input
+    id: page-url
+    attributes:
+      label: Page URL
+      placeholder: "https://www.basinwx.com/live_aq"
+    validations:
+      required: true
+  - type: dropdown
+    id: site
+    attributes:
+      label: Site
+      options:
+        - basinwx.com
+        - basinwx.dev
+        - preview (<name>.basinwx.dev)
+    validations:
+      required: true
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device / width
+      options:
+        - desktop
+        - phone (375 px)
+        - tablet
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+      description: What should have happened.
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+      description: What happened instead. Paste any console errors.
+    validations:
+      required: true
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot
+      description: Drag an image here.

@@ -1,0 +1,80 @@
+name: Task (student)
+description: A sized, student-ready piece of work
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Triage adds the `area:` label and `student-ready` when the checklist on the wiki is met.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Which part of the site this touches (becomes the `area:` label at triage).
+      options:
+        - homepage
+        - live-map
+        - ozone-alert
+        - clyfar
+        - roads
+        - weather
+        - sports
+        - aviation
+        - agriculture
+        - water
+        - about
+        - nav-ux
+        - ops
+        - data
+        - docs
+    validations:
+      required: true
+  - type: dropdown
+    id: estimate
+    attributes:
+      label: Estimate (hours)
+      description: More than 8 hours is an epic with sub-issues, not a task.
+      options:
+        - "1"
+        - "2"
+        - "4"
+        - "8"
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: Milestone
+      description: Triage sets the real milestone on the issue; pick the one you are aiming at.
+      options:
+        - v1.6.0 Beta relaunch (Nov 1)
+        - v2.0.0 Ozone season open (Dec 1)
+        - Mid-season checkpoint (Jan 15)
+        - Season close (Mar 15)
+        - none yet
+  - type: textarea
+    id: success
+    attributes:
+      label: Success looks like
+      description: At least one criterion a reviewer can verify without asking you.
+      placeholder: |
+        Success looks like:
+        - On <.com|.dev|preview> at <path>, a <user> can <action> and sees <result>.
+        - At 375px: <what must still work>.
+        - Test: `npm test` passes; <specific test or manual check>.
+        Not in scope: <one line>
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files to touch
+      description: file:line if known, or "explore first, 1 h cap".
+      placeholder: "public/js/mapUtils.js:13-18"
+  - type: checkboxes
+    id: review-needs
+    attributes:
+      label: Review needs
+      options:
+        - label: Needs a preview URL
+        - label: Needs Derek's by-eye UX review
