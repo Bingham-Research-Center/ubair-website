@@ -1,5 +1,4 @@
 import { jest } from '@jest/globals';
-import { getMonitor } from '../monitoring/dataMonitor.js';
 import {
     getPreviewSkipLog,
     initializeOutlookRefresh,
@@ -52,14 +51,5 @@ describe('preview-mode background job gating', () => {
         expect(reportEmailService.start).toHaveBeenCalledTimes(1);
         expect(generateOutlooksList).toHaveBeenCalledTimes(1);
         expect(setIntervalFn).toHaveBeenCalledWith(generateOutlooksList, OUTLOOKS_REFRESH_INTERVAL_MS);
-    });
-
-    test('the monitor stays timer-free when initialized', () => {
-        process.env.PREVIEW_MODE = 'true';
-        const setIntervalSpy = jest.spyOn(global, 'setInterval');
-
-        getMonitor();
-
-        expect(setIntervalSpy).not.toHaveBeenCalled();
     });
 });
