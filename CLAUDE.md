@@ -11,18 +11,16 @@ Leaflet/Plotly, vanilla JS frontend.
 
 `docs/DEPLOYMENT.md` §1a records what is actually deployed on each box (verified by direct
 inspection 2026-08-13); §1b is a *target* layout that dev already matches but production does
-not. Don't assume a fact from one box holds on the other — they differ in app name, port,
-path, user, and ingest path.
+not. Don't assume a fact from one box holds on the other — they differ in app name, port, path
+and user. Bringing prod in line with dev is issue #253, item 4.
 
-**Ingest takes the same road to both boxes: public HTTPS from notchpeak1.** brc-tools POSTs to
-`https://basinwx.com` and `https://basinwx.dev` (its own log says so, and notchpeak1 holds no
-SSH keys for either box). The upload log lines differ only because the app records
-`X-Forwarded-For` when the proxy sets it: dev's nginx does, so dev logs `155.101.26.78`;
-prod's evidently does not, so prod logs `::ffff:127.0.0.1`. Until 2026-09-23 the docs read
-prod's loopback address as an SSH tunnel; there is none. If uploads stop on either box, the
-public path (DNS, cert, nginx body limit, the app) is the whole path. Producers should target
-`www.`: the bare `basinwx.com` also resolves to a Namecheap forwarding host that does not
-serve HTTPS (`docs/DEPLOYMENT.md` §8).
+**Ingest is the same on both boxes: public HTTPS from notchpeak1**, through nginx, into the
+app. Prod's upload log shows `::ffff:127.0.0.1` only because its proxy does not pass
+`X-Forwarded-For`; dev's nginx does, so dev logs `155.101.26.78`. There is no SSH tunnel, and
+notchpeak1 holds no SSH keys for either box (the docs claimed a tunnel until 2026-09-23). If
+uploads stop, the public path — DNS, cert, nginx body limit, the app — is the whole path.
+Producers should target `www.`: the bare `basinwx.com` also resolves to a Namecheap forwarding
+host that does not serve HTTPS (`docs/DEPLOYMENT.md` §8).
 
 `.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
 merging into `dev` is a real-world dry-run before promoting to `ops`.
@@ -41,6 +39,24 @@ Bring-up runbook, nginx template, cert renewal, and chronic gotchas (Linode fire
 default-Drop, certbot `--manual` trap, `.dev` TLD SNI filtering, pm2 systemd unit) are
 in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
 
+## Checking and deploying the boxes
+- **Start with `scripts/probe.py`** (python3 only, runs from anywhere). Per box: DNS, cert
+  days left, served version vs newest tag, commit and start time, whether `npm install` ran,
+  per-dataType freshness, and with `DATA_UPLOAD_API_KEY` in the environment the last upload
+  attempts. Its first run found prod a release behind.
+- `GET /api/health` → `version`, `manifestVersion` and, since 1.5.5, `commit`, `branch`,
+  `startedAt`, `vendorAssets`. `GET /api/monitoring/uploads` with the key in `x-api-key` → the
+  last 200 attempts the app saw, rejected ones included, with source IP and `x-client-hostname`.
+  `GET /api/monitoring/freshness` → age of the newest file per dataType.
+- **Claude cannot reach either box.** notchpeak1 has no SSH keys; deploys are JRL's, from
+  elsewhere. Verify from outside and hand over the one-liner.
+- **`npm install` is part of every deploy.** `package-lock.json` is gitignored and the roads
+  page serves Leaflet, markercluster and Font Awesome out of `node_modules`; a pull without it
+  404s those routes and `/api/health` reports `vendorAssets.ok: false`.
+  Prod, as root: `cd /var/www/ubair-website && git pull --ff-only origin ops && npm install && pm2 restart ubair-site`.
+  Dev, as deploy: `cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev`.
+  Then re-run `probe.py`: `release matches newest tag` on prod, the new commit on dev.
+
 ## Data pipeline
 CHPC `brc-tools` (Synoptic + HRRR/herbie via polars/pandas) → POST `/api/upload/:dataType`
 with `x-api-key` + CHPC-hostname validation → fanned out to every URL in
@@ -51,9 +67,8 @@ Accepted dataTypes (`server/routes/dataUpload.js`):
 `observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast`.
 
 Forecast schemas are pinned in `DATA_MANIFEST.json` (canonical contract; brc-tools is
-the contract-holder for new dataTypes — server doesn't enforce schema).
-`GET /api/health` reports `version` + `manifestVersion` so producers can
-compatibility-check before uploading.
+the contract-holder for new dataTypes — server doesn't enforce schema). Producers call
+`GET /api/health` before every upload to compatibility-check `manifestVersion`.
 
 **Observations arrive as raw SI and stay that way.** `air_temp`/`dew_point_temperature` are
 Celsius, `wind_speed` is m/s, pressures are Pascals. `processObservationData` in
@@ -87,13 +102,14 @@ Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `op
 commit `Merge dev into ops: vX.Y.Z`) → tag `ops` → `Merge ops into main: vX.Y.Z release`
 → reopen `dev` at the next `-dev`. Rationale + ceremony: `docs/DEPLOYMENT.md` §7a.
 
-**Squash-merge trap.** Chore PRs land into `dev` as *squashes*, so their original commits never
-become ancestors of `dev`. Any branch stacked on another chore branch will therefore conflict
-the moment the one below it merges (this bit the v1.5.0 train twice). Branch from `dev`, never
-from another PR's head; rebase a stacked branch with `git checkout -B <branch> origin/dev &&
-git cherry-pick <sha>` + force-push. Check cleanliness with the *exit code* of
-`git merge-tree --write-tree HEAD origin/dev` — grepping for conflict markers gives false
-positives on docs that quote them.
+**Stacking trap.** Release-train chore PRs land into `dev` as *squashes*, so their original
+commits never become ancestors of `dev`; feature PRs land as merge commits. Either way, branch
+from `dev`, never from another PR's head — a branch stacked on a squashed PR conflicts the
+moment the one below it merges (this bit the v1.5.0 train twice). Rebase a stacked branch with
+`git checkout -B <branch> origin/dev && git cherry-pick <sha>` + force-push. Check cleanliness
+with the *exit code* of `git merge-tree --write-tree HEAD origin/dev` — grepping for conflict
+markers gives false positives on docs that quote them. Several PRs open at once? Check them
+pairwise the same way so they can merge in any order.
 
 ## Secrets
 Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
@@ -111,13 +127,14 @@ password manager.
 ## Reference docs (read on demand, not by default)
 - `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
 - `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
-- `docs/IMPROVEMENTS.md` — outstanding work (flagged stale by JRL; renew before reuse)
+- Issue #253 (pinned) — ops follow-ups that need a box, an account or a decision; newer than
+  `docs/IMPROVEMENTS.md`, which JRL has flagged stale
 - `DATA_MANIFEST.json` — forecast schemas
 - `git log --oneline -30` — recent merges; do not duplicate here
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (222/222 as of 2026-09-24); any failure is new
+- `npm test` — Jest. **The suite is green (229/229 as of 2026-09-28); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is
