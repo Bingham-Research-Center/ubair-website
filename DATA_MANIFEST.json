@@ -1,7 +1,7 @@
 {
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2026-08-27",
+  "lastUpdated": "2026-09-28",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -194,8 +194,8 @@
       "format": "png",
       "endpoint": "/api/upload/images",
       "schedule": {
-        "frequency": "*/30 * * * *",
-        "description": "Every 30 minutes",
+        "frequency": "0 */6 * * *",
+        "description": "Every 6 hours: GEFS meteograms for the 00/06/12/18Z cycles, uploaded ~9.5 h after each cycle. Freshness flags stale at 2x this (12 h), i.e. one missed cycle.",
         "timezone": "UTC"
       },
       "filename": {
@@ -862,7 +862,7 @@
       "observations": "Every 10 minutes (automatic)",
       "metadata": "Every 6 hours (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
-      "images": "Every 30 minutes (automatic)",
+      "images": "Every 6 hours (automatic; one batch of GEFS meteograms per cycle, ~9.5 h after 00/06/12/18Z)",
       "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly"
     },
     "alertThresholds": {

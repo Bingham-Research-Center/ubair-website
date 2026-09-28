@@ -134,7 +134,7 @@ python chpc_uploader.py --health-check
 | **metadata** | Every 6 hours | JSON | Station locations and info |
 | **timeseries** | Every hour | JSON | Historical/forecast time series |
 | **outlooks** | Twice daily (6am, 6pm) | Markdown | Weather forecast text |
-| **images** | Every 30 min | PNG/JPG | Satellite, radar, model output |
+| **images** | Every 6 hours (GEFS cycles, ~9.5 h lag) | PNG | GEFS meteograms: wind, temp, solar, snow, MSLP |
 
 ## Data Formats
 

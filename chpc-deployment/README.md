@@ -190,7 +190,7 @@ Cron Job (every 10 min)            Website displays on live map
 | metadata | Every 6 hours | ~8KB | MEDIUM |
 | timeseries | Hourly | Varies | MEDIUM |
 | outlooks | Twice daily | ~5KB | LOW |
-| images | Every 30 min | ~500KB | LOW |
+| images | Every 6 hours (GEFS cycles) | ~80-400KB each, 5 per cycle | LOW |
 
 ---
 
