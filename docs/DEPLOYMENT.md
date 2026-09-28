@@ -252,6 +252,11 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/nginx-reload
 
 Run these top-to-bottom when the browser shows an unexpected response. First failing step is the diagnosis.
 
+**Step 0, from anywhere with python3:** `scripts/probe.py` (defaults to both boxes) prints DNS,
+certificate days left, version/commit/start time, whether `npm install` ran, per-dataType
+freshness and, with `DATA_UPLOAD_API_KEY` in the environment, the last upload attempts. It is
+the outside view only; the steps below need a shell on the box.
+
 ```bash
 # 6.1  Right branch?
 cd /srv/ubair-website && git branch --show-current

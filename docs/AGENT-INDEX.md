@@ -14,6 +14,7 @@ whole tree. Read on demand; do not auto-load.
 |---|---|
 | **Pick up outstanding work as an agent** | `docs/AGENT-WORK-QUEUE-aug26.md` — 7 sized chunks, ordered by value; start here |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
+| **Check both live boxes from outside, no shell needed** | `scripts/probe.py` (python3 only; see `docs/DEPLOYMENT.md` §6 step 0) |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
 | Work the CHPC/producer side | `chpc-deployment/README.md` (+ `DEPLOYMENT_GUIDE.md`, `MONITORING_GUIDE.md` there) |
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
