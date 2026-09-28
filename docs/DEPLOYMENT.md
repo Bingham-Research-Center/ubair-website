@@ -377,7 +377,7 @@ when pm2 restarted, and `vendorAssets.ok: false` means `npm install` was skipped
 roads page serves Leaflet, markercluster and Font Awesome out of `node_modules`). For
 "did my push land?", `GET /api/monitoring/uploads` with the upload key in `x-api-key`
 lists the last attempts the app saw, rejected ones included, with source IP and
-`x-client-hostname`. `scripts/probe.sh` runs all of this for both boxes.
+`x-client-hostname`. `scripts/probe.py` runs all of this for both boxes.
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
 promotion PR strips the suffix, `ops` gets tagged `v<version>`, and `dev`
