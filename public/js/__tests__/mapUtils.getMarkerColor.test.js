@@ -13,6 +13,7 @@ describe('getMarkerColor', () => {
     });
 
     it.each([
+        [0, 'green'],
         [49, 'green'],
         [50, 'orange'],
         [69, 'orange'],
