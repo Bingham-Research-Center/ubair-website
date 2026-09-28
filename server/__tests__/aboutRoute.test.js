@@ -1,7 +1,11 @@
 import request from 'supertest';
-import app from '../server.js';
+import app, { server } from '../server.js';
 
 describe('/about/:page', () => {
+    test('does not start the HTTP listener during tests', () => {
+        expect(server.listening).toBe(false);
+    });
+
     test('serves an allowlisted about page', async () => {
         const response = await request(app)
             .get('/about/faq')

@@ -436,4 +436,5 @@ if (!isTestEnvironment) {
         });
 }
 
+export { server };
 export default app;
