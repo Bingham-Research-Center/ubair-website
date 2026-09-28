@@ -127,14 +127,15 @@ password manager.
 ## Reference docs (read on demand, not by default)
 - `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
 - `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
-- Issue #253 (pinned) — ops follow-ups that need a box, an account or a decision; newer than
-  `docs/IMPROVEMENTS.md`, which JRL has flagged stale
+- Issue #253 (pinned) — ops follow-ups that need a box, an account or a decision
+- Outstanding work is GitHub Issues (`student-ready`, `copilot-ok` labels) on the "BasinWx
+  Winter 2026/27" Project; humans read the wiki, agents read `docs/`
 - `DATA_MANIFEST.json` — forecast schemas
 - `git log --oneline -30` — recent merges; do not duplicate here
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (229/229 as of 2026-09-28); any failure is new
+- `npm test` — Jest. **The suite is green (230/230 as of 2026-09-28); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is

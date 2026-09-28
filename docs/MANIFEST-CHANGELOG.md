@@ -17,8 +17,8 @@ on every cycle, and the alert carried no information.
 - **Changed:** `monitoring.expectedDataFlow.images` to match.
 - **Added:** a test in `server/__tests__/dataMonitorFreshness.test.js` that loads the real
   manifest and checks a 7 h gap reads fresh and a 13 h gap reads stale.
-- **Docs:** the "every 30 min" line in `chpc-deployment/DEPLOYMENT_GUIDE.md`,
-  `chpc-deployment/README.md` and `docs/DATA-PIPELINE-OVERVIEW.md`.
+- **Docs:** the "every 30 min" line in `docs/DATA-PIPELINE-OVERVIEW.md` and in the two CHPC
+  deployment guides since deleted from the tree (2026-09-28; last present at `b6dbddf`).
 
 ### Why the interval is 6 h and not 6 h + 9.5 h
 
