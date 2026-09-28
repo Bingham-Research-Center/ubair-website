@@ -226,7 +226,7 @@ This adds:
 - Metadata (every 6 hours)
 - Timeseries (hourly)
 - Outlooks (twice daily)
-- Images (every 30 min)
+- Images (every 6 hours: one batch of GEFS meteograms per 00/06/12/18Z cycle)
 
 ---
 

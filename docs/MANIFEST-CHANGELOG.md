@@ -1,5 +1,39 @@
 # Data Manifest Change Log
 
+## Version 2.1.1 (2026-09-28)
+
+### Type: Patch - Monitoring cadence correction, no schema change
+
+**Summary:** `dataTypes.images.schedule` said every 30 minutes (`*/30 * * * *`). What
+actually lands is one batch of five GEFS meteograms (wind, temp, solar, snow, MSLP) per
+6-hourly cycle, about 9.5 h after 00/06/12/18Z. The monitor flags stale at twice the
+declared interval, so the box reported `images` stale 73 minutes after a normal upload,
+on every cycle, and the alert carried no information.
+
+### Changes Made
+
+- **Changed:** `dataTypes.images.schedule.frequency` `*/30 * * * *` -> `0 */6 * * *`, with a
+  description that names the product and the lag.
+- **Changed:** `monitoring.expectedDataFlow.images` to match.
+- **Added:** a test in `server/__tests__/dataMonitorFreshness.test.js` that loads the real
+  manifest and checks a 7 h gap reads fresh and a 13 h gap reads stale.
+- **Docs:** the "every 30 min" line in `chpc-deployment/DEPLOYMENT_GUIDE.md`,
+  `chpc-deployment/README.md` and `docs/DATA-PIPELINE-OVERVIEW.md`.
+
+### Why the interval is 6 h and not 6 h + 9.5 h
+
+Freshness is the newest file's age, and stale means older than 2x the interval. With 6 h
+that is 12 h: exactly one missed cycle. Folding the 9.5 h upload lag into the interval
+would push the threshold past 30 h and hide four missed cycles in a row, which is what
+happened 2026-09-26 to 09-27 (Clyfar's `submit_gefs_plots.sh` hung on a Herbie download
+with no timeout; 19 of 114 runs since 08-31 failed the same way, fixed on the Clyfar side).
+
+### What is still wrong in `dataTypes.images`
+
+`filename.pattern`, `filename.example` and `validation.imageTypes` still describe
+satellite/radar imagery. The files are `meteogram_UB-repr_<var>_<YYYYMMDD-HHMM>_GEFS.png`.
+Left for the producer side (brc-tools/Clyfar) to correct as the contract-holder.
+
 ## Version 2.1.0 (2026-08-27)
 
 ### Type: Minor - Removal of a never-implemented declaration
