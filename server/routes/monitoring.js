@@ -7,6 +7,7 @@
 import express from 'express';
 import { getMonitor } from '../monitoring/dataMonitor.js';
 import { validateApiKey } from './dataUpload.js';
+import { getRecentUploadAttempts, countUploadAttempts } from '../monitoring/uploadAttempts.js';
 
 const router = express.Router();
 
@@ -48,23 +49,22 @@ router.get('/monitoring/freshness', (req, res) => {
 });
 
 /**
- * GET /api/monitoring/uploads
- * Upload statistics
+ * GET /api/monitoring/uploads?limit=50
+ * The most recent upload attempts (newest first), accepted and rejected alike, as the app
+ * saw them: source IP, x-client-hostname, dataType, filename, status, one-phrase reason.
+ *
+ * API-key gated (same key the producer uploads with): it names CHPC hosts and addresses.
+ * In-memory only — see server/monitoring/uploadAttempts.js. Replaces a parser of
+ * /tmp/basinwx_upload.log, a file nothing wrote, which answered "Log file not found" on
+ * both boxes from 2025 until 2026-09.
  */
-router.get('/monitoring/uploads', (req, res) => {
-    try {
-        const monitor = getMonitor();
-        const stats = monitor.getUploadStats();
-        res.json({
-            timestamp: new Date().toISOString(),
-            stats
-        });
-    } catch (error) {
-        res.status(500).json({
-            error: 'Failed to get upload stats',
-            message: error.message
-        });
-    }
+router.get('/monitoring/uploads', validateApiKey, (req, res) => {
+    const limit = Number.parseInt(req.query.limit, 10);
+    res.json({
+        timestamp: new Date().toISOString(),
+        buffered: countUploadAttempts(),
+        recent: getRecentUploadAttempts(Number.isFinite(limit) && limit > 0 ? limit : 50)
+    });
 });
 
 /**

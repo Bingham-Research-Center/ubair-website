@@ -370,6 +370,15 @@ curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.4"     (tag 
 curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.5-dev"
 ```
 
+Since 1.5.5 the same response also carries `commit`, `branch`, `startedAt` and
+`vendorAssets`, which together verify a deploy from outside: `version` is what
+`package.json` claims, `commit` is what `git pull` actually landed, `startedAt` moves only
+when pm2 restarted, and `vendorAssets.ok: false` means `npm install` was skipped (the
+roads page serves Leaflet, markercluster and Font Awesome out of `node_modules`). For
+"did my push land?", `GET /api/monitoring/uploads` with the upload key in `x-api-key`
+lists the last attempts the app saw, rejected ones included, with source IP and
+`x-client-hostname`. `scripts/probe.py` runs all of this for both boxes.
+
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
 promotion PR strips the suffix, `ops` gets tagged `v<version>`, and `dev`
 immediately bumps to the next `-dev`. The two boxes therefore never report the
