@@ -14,12 +14,15 @@ inspection 2026-08-13); §1b is a *target* layout that dev already matches but p
 not. Don't assume a fact from one box holds on the other — they differ in app name, port,
 path, user, and ingest path.
 
-**Ingest reaches the two boxes differently.** Prod's uploads arrive on loopback over an SSH
-tunnel (`::ffff:127.0.0.1`, `x-client-hostname: notchpeak1.int.chpc.utah.edu`); **dev's arrive
-as ordinary public HTTPS** from notchpeak1 (`155.101.26.78`) through nginx → 3001. So on prod
-a green public `/api/health` says nothing about ingest — if uploads stop, check the SSH path
-first (`docs/DEPLOYMENT.md` §1a) — while on dev the public path *is* the ingest path: if
-`.dev` is unreachable, ingest is down with it.
+**Ingest takes the same road to both boxes: public HTTPS from notchpeak1.** brc-tools POSTs to
+`https://basinwx.com` and `https://basinwx.dev` (its own log says so, and notchpeak1 holds no
+SSH keys for either box). The upload log lines differ only because the app records
+`X-Forwarded-For` when the proxy sets it: dev's nginx does, so dev logs `155.101.26.78`;
+prod's evidently does not, so prod logs `::ffff:127.0.0.1`. Until 2026-09-23 the docs read
+prod's loopback address as an SSH tunnel; there is none. If uploads stop on either box, the
+public path (DNS, cert, nginx body limit, the app) is the whole path. Producers should target
+`www.`: the bare `basinwx.com` also resolves to a Namecheap forwarding host that does not
+serve HTTPS (`docs/DEPLOYMENT.md` §8).
 
 `.dev` receives the same CHPC fan-out as `.com` and is where stakeholder demos happen —
 merging into `dev` is a real-world dry-run before promoting to `ops`.

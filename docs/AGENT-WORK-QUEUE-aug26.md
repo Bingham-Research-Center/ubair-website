@@ -62,8 +62,10 @@ curl -s https://www.basinwx.com/api/health          # expect 1.5.2 / manifest 2.
 curl -s -o /dev/null -w '%{http_code}\n' https://www.basinwx.com/api/filelist/timeseries  # 404
 ```
 
-**Do NOT** run `scripts/fix-nginx-body-size.sh` on prod. Prod's uploads arrive on loopback over
-the SSH tunnel and bypass nginx entirely; its nginx already passes 1.5 MB (measured: 401).
+**Do NOT** run `scripts/fix-nginx-body-size.sh` on prod without checking first: its nginx already
+passes 1.5 MB (measured: 401). *Corrected 2026-09-23: prod's uploads do go through nginx over
+public HTTPS; the "loopback / SSH tunnel" reading was wrong (`DEPLOYMENT.md` §1a). The
+measurement stands.*
 
 **Verify:** version 1.5.2, manifest 2.0.0, `timeseries` 404 not 500, and prod's own
 `/api/monitoring/freshness` naming run files rather than `*_index.json`.
