@@ -36,7 +36,8 @@ ordinary public HTTPS from notchpeak1's real IP through nginx. Consequences:
 - On dev the public path **is** the ingest path, so nginx sits in front of it and its body
   limit applies. This is what caused the four-month outage; see `docs/DEPLOYMENT.md` §8.
 
-**Pre-flight check.** `GET /api/health` returns `version` + `manifestVersion`. Use it to
+**Pre-flight check.** `GET /api/health` returns `version` + `manifestVersion` (and, since
+1.5.5, `commit`, `startedAt` and `vendorAssets`, so a half-finished deploy is visible too). Use it to
 confirm which box and which contract you are talking to before uploading anything — the two
 boxes deliberately never report the same version.
 

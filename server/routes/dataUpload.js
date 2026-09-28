@@ -6,6 +6,8 @@ import { promisify } from 'util';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
 import { logPipelineEvent } from '../middleware/pipelineAnalytics.js';
+import { recordUploadAttempt } from '../monitoring/uploadAttempts.js';
+import { getBuildInfo } from '../buildInfo.js';
 
 const reverseLookup = promisify(dns.reverse);
 
@@ -79,6 +81,28 @@ const upload = multer({
     }
 });
 
+// Client IP as the proxy in front of us reports it (first X-Forwarded-For hop), else the
+// socket peer. Prod's proxy does not set the header, so prod logs ::ffff:127.0.0.1 for every
+// upload; dev's nginx does, so dev logs CHPC's real IP. Same producer, same public HTTPS path.
+function clientIpOf(req) {
+    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
+}
+
+// One line per attempt into the in-memory ring that GET /api/monitoring/uploads serves.
+// Called at every exit of the upload path so a rejected push is as visible as an accepted one.
+function noteAttempt(req, status, detail, filename = null) {
+    // validateApiKey also guards /api/monitoring/*; only the upload path is an "attempt".
+    if (!req.path?.startsWith('/upload/')) return;
+    recordUploadAttempt({
+        ip: clientIpOf(req),
+        hostname: req.headers['x-client-hostname'] ?? null,
+        dataType: req.params?.dataType ?? null,
+        filename,
+        status,
+        detail,
+    });
+}
+
 // Middleware to validate API key.
 // Exported so other routers can reuse it for state-mutating endpoints
 // (e.g. POST /api/monitoring/alerts/clear).
@@ -90,6 +114,7 @@ export function validateApiKey(req, res, next) {
 
     if (!validKey) {
         console.error('ERROR: DATA_UPLOAD_API_KEY environment variable is not set!');
+        noteAttempt(req, 500, 'server has no DATA_UPLOAD_API_KEY');
         return res.status(500).json({
             success: false,
             message: 'Server configuration error: API key not configured'
@@ -97,6 +122,7 @@ export function validateApiKey(req, res, next) {
     }
 
     if (!providedKey) {
+        noteAttempt(req, 401, 'no api key');
         return res.status(401).json({
             success: false,
             message: 'No API key provided in x-api-key header'
@@ -104,6 +130,7 @@ export function validateApiKey(req, res, next) {
     }
 
     if (providedKey !== validKey) {
+        noteAttempt(req, 401, 'wrong api key');
         return res.status(401).json({
             success: false,
             message: `Invalid API key provided: ${providedKey.slice(0, 5)}...`
@@ -115,7 +142,7 @@ export function validateApiKey(req, res, next) {
 
 async function validateCHPCOrigin(req, res, next) {
     try {
-        const clientIp = req.headers['x-forwarded-for']?.split(',')[0] || req.ip;
+        const clientIp = clientIpOf(req);
         const clientHostname = req.headers['x-client-hostname'];
 
         // Log access attempts for security monitoring
@@ -144,6 +171,7 @@ async function validateCHPCOrigin(req, res, next) {
 
         // Both methods failed
         console.log(`Access denied from ${clientIp}`);
+        noteAttempt(req, 403, 'not a chpc host');
         return res.status(403).json({
             success: false,
             message: 'Forbidden: Not from authorized CHPC system'
@@ -151,6 +179,7 @@ async function validateCHPCOrigin(req, res, next) {
 
     } catch (error) {
         console.error('Origin validation error:', error);
+        noteAttempt(req, 500, 'origin check crashed');
         return res.status(500).json({
             success: false,
             message: 'Server error during validation'
@@ -162,6 +191,7 @@ async function validateCHPCOrigin(req, res, next) {
 router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
+      noteAttempt(req, 400, 'no file in request');
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
@@ -172,6 +202,7 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     // Invalid type
     if (ext !== '.json' && !textExts.includes(ext) && !binaryExts.includes(ext)) {
       fs.unlinkSync(req.file.path);
+      noteAttempt(req, 400, 'invalid file type', req.file.originalname);
       return res.status(400).json({ success: false, message: 'Invalid file type' });
     }
 
@@ -186,12 +217,14 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
           JSON.parse(content);
         } catch {
           fs.unlinkSync(req.file.path);
+          noteAttempt(req, 400, 'invalid json', req.file.originalname);
           return res.status(400).json({ success: false, message: 'Invalid JSON file' });
         }
       } else {
         // Text validation: accept UTF-8 markdown/plain text, reject binary-like payloads.
         if (content.includes('\u0000')) {
           fs.unlinkSync(req.file.path);
+          noteAttempt(req, 400, 'binary content in text file', req.file.originalname);
           return res.status(400).json({ success: false, message: 'Invalid text file' });
         }
       }
@@ -205,6 +238,7 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     // second belt so upload analytics can never reject on the ingest path.
     logPipelineEvent({ dataType, filename, size, success: true })
         .catch(err => console.error('[Pipeline] log failed:', err.message));
+    noteAttempt(req, 200, 'accepted', filename);
 
     // Update file list for the observations directory (where obs files actually live)
     const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
@@ -226,6 +260,7 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     });
   } catch (error) {
     console.error('Error handling file upload:', error);
+    noteAttempt(req, 500, 'server error', req.file?.originalname ?? null);
     logPipelineEvent({ dataType: req.params.dataType, filename: req.file?.originalname, size: 0, success: false, error: error.message })
         .catch(err => console.error('[Pipeline] log failed:', err.message));
     res.status(500).json({ success: false, message: 'Server error processing upload' });
@@ -237,12 +272,22 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 // every upload, so brc-tools can check contract compatibility for free, and
 // "which box am I talking to?" is answerable with one curl — dev carries a -dev
 // suffix, ops does not.
+//
+// commit/branch/startedAt/vendorAssets make a deploy verifiable from outside without a
+// shell: version says what package.json claims, commit says what `git pull` actually
+// landed, startedAt says whether pm2 restarted, vendorAssets says whether `npm install` ran.
 router.get('/health', (req, res) => {
+    const build = getBuildInfo();
     res.status(200).json({
         success: true,
         message: 'Data upload API is running',
         version: SERVER_VERSION,
         manifestVersion: MANIFEST_VERSION,
+        commit: build.commit,
+        branch: build.branch,
+        startedAt: build.startedAt,
+        uptimeSeconds: Math.round(process.uptime()),
+        vendorAssets: build.vendorAssets,
         timestamp: new Date().toISOString()
     });
 });
