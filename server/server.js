@@ -18,9 +18,17 @@ import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from '
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
+import { generateOutlooksList } from './generateOutlooksList.js';
+import {
+    getPreviewSkipLog,
+    initializeOutlookRefresh,
+    isPreviewMode,
+    startRuntimeBackgroundJobs
+} from './startup/backgroundJobs.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -241,12 +249,10 @@ server.listen(PORT, () => {
     console.log('Data upload API available at /api/data/upload/:dataType');
     console.log('');
 
-    // Skip background jobs for preview instances (feature-branch worktrees)
-    if (process.env.PREVIEW_MODE === 'true') {
-        console.log('PREVIEW_MODE=true — background refresh and report emails disabled.');
+    if (previewMode) {
+        console.log(getPreviewSkipLog());
     } else {
-        backgroundRefresh.start();
-        reportEmailService.start();
+        startRuntimeBackgroundJobs({ backgroundRefresh, reportEmailService });
     }
 });
 
@@ -367,50 +373,12 @@ async function checkDirectoryStructure() {
     }
 }
 
-// Start server
-async function generateOutlooksList() {
-    try {
-        const directory = path.join(__dirname, '../public/api/static/outlooks');
-        const files = await fs.readdir(directory);
-
-        const outlooks = files
-            .filter(file => /^outlook_\d{8}_\d{4}\.md$/.test(file))  // Only outlook_YYYYMMDD_HHMM.md
-            .map(filename => {
-                // Extract date from filename (format: outlook_YYYYMMDD_HHMM.md)
-                const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-                const [_, year, month, day, hour, minute] = match;
-                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                const formattedDate = new Date(date).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                return { filename, date, formattedDate };
-            })
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Write to outlooks_list.json (not file_list.json)
-        await fs.writeFile(
-            path.join(directory, 'outlooks_list.json'),
-            JSON.stringify(outlooks, null, 2)
-        );
-
-        return outlooks;
-    } catch (error) {
-        console.error('Error generating outlooks list:', error);
-        return [];
-    }
-}
-
-// Update the server startup and intervals
 checkDirectoryStructure()
-    .then(() => {
-        generateOutlooksList(); // Initial generation
-        // Refresh every 5 minutes (300000ms) instead of 1 hour
-        setInterval(generateOutlooksList, 300000);
+    .then(async () => {
+        await initializeOutlookRefresh({
+            generateOutlooksList,
+            env: process.env
+        });
     })
     .catch(err => {
         console.error('Failed to verify directory structure:', err);
