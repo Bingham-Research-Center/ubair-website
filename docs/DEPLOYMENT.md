@@ -37,30 +37,40 @@ nginx **is** configured and matches §4's intent, just under different vhost fil
 Both proxy to `upstream ubair_app { server 127.0.0.1:3000; }`. Verified end to end:
 `https://www.basinwx.com/api/health` → 200.
 
-**The two boxes ingest over completely different paths.** This is the single most misleading
-difference between them — verified on both, 2026-08-13, by reading the upload log lines each box
-writes (`Access attempt from IP: <ip>, Hostname: <host>`):
+**Both boxes ingest over the same path: public HTTPS from notchpeak1.** The upload log lines
+each box writes (`Access attempt from IP: <ip>, Hostname: <host>`) look different, and on
+2026-08-13 that difference was read as two transports. It is not. Corrected 2026-09-23 from the
+producer side:
 
-| Box | Logged source IP | What it means |
+| Box | Logged source IP | Why |
 |---|---|---|
-| linode-prod | `::ffff:127.0.0.1` | loopback — CHPC reaches port 3000 through an **SSH session/tunnel**, *not* by POSTing to `https://www.basinwx.com` |
-| linode-dev | `155.101.26.78` | notchpeak1's **real public IP** — CHPC POSTs straight to `https://www.basinwx.dev`, in through nginx → 3001 |
+| linode-prod | `::ffff:127.0.0.1` | the proxy in front of port 3000 does not pass `X-Forwarded-For`, so the app sees its own loopback peer (inferred from the address; the `ubair` vhost predates the §4 template) |
+| linode-dev | `155.101.26.78` | nginx sets `X-Forwarded-For` per §4, so the app sees notchpeak1's real address |
+
+Evidence: brc-tools' own log on notchpeak1 shows every primary upload as a POST to
+`https://basinwx.com/api/upload/...`; notchpeak1 has no SSH private keys at all, so nothing there
+can open a tunnel; and `dataUpload.js` logs the first `X-Forwarded-For` hop when present and the
+socket peer otherwise. The 2026-08-25 measurement in §8 (a 1.5 MB multipart probe to `.com`
+public answered 401, i.e. it reached the app) already showed the public path carrying prod's
+traffic.
 
 Both are accepted by the same rule: `server/routes/dataUpload.js` grants access when
-`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`), so
-the transport underneath never had to match.
+`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`).
 
-Consequences, and they point in opposite directions:
+Consequences, the same on both boxes:
 
-- **On prod, a green public `/api/health` proves nothing about ingest** — the two paths are
-  unrelated. When uploads stop there, check the SSH path before touching nginx or the app.
-- **On dev, the public path *is* the ingest path.** If `https://www.basinwx.dev` is unreachable
-  from the outside — expired cert, nginx down, firewall — ingest stops with it. Dev has no SSH
-  ingest to fall back on: the `deploy` user has no `authorized_keys` at all, so nothing from
-  CHPC is logging in.
+- **If uploads stop, the public path is the whole path**: DNS, certificate, nginx (body limit,
+  §8), then the app. There is no SSH path to check on prod. A green public `/api/health` says
+  the box is reachable, not that the last push landed; `/api/monitoring/freshness` and, from
+  1.5.5, `/api/monitoring/uploads` answer that.
+- **If `https://www.basinwx.com` or `https://www.basinwx.dev` is unreachable from outside**
+  (expired cert, nginx down, firewall), ingest to that box stops with it. The `deploy` user on
+  dev has no `authorized_keys`; nothing from CHPC logs in to either box.
+- Prod's log cannot tell one producer from another by address. Adding the two
+  `proxy_set_header` lines from §4 to prod's vhost fixes that; until then rely on
+  `x-client-hostname`.
 
-Don't "fix" dev to match prod, or vice versa, without asking why. Ozone-season fan-out currently
-depends on dev's public path staying up.
+Ozone-season fan-out depends on both public paths staying up.
 
 nginx on dev **is** populated (unlike prod, where `sites-enabled/` is empty and how traffic
 reaches port 3000 is still undocumented):
@@ -448,6 +458,14 @@ quotas — see §9.
 
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
 - **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
+
+- **The bare `basinwx.com` resolves to two addresses.** Besides the Linode box, Namecheap's
+  URL-forwarding host `192.64.119.30` is in the A record set, and it does not answer HTTPS at
+  all (observed 2026-09-23 from notchpeak1; `www.basinwx.com` has the one correct record).
+  brc-tools targets the bare domain. `requests` falls through to the next address on a refused
+  connection, which is why no upload has failed on it yet, but a slow refusal would burn the
+  30 s upload timeout. Either point producers at `https://www.basinwx.com` or remove the stray
+  record at Namecheap. `scripts/probe.py` warns while it is present.
 
 ## 9. Per-user branch previews
 
