@@ -31,10 +31,16 @@ function browser() {
         }
     });
     vm.runInContext(source, context);
-    return { cards, freshness, cache, fetch, update: () => vm.runInContext('updateConditionCards()', context) };
+    return { cards, freshness, cache, fetch, update: () => vm.runInContext('updateConditionCards()', context),
+        updateLocation: data => vm.runInContext('updateConditionCardsWithLocation', context)(data) };
 }
 
 describe('condition card fallback', () => {
+    it('does not use a road condition as precipitation after a location weather fetch fails', () => {
+        const { cards, updateLocation } = browser();
+        updateLocation({ condition: 'Clear' });
+        expect(cards.precipitation.value.textContent).toBe('Not reported');
+    });
     it('does not report dry precipitation for an unknown station surface', async () => {
         const { cards, cache, update } = browser();
         cache.getData.mockResolvedValue({ stations: [{ surfaceStatus: 'Unknown' }], cameraDetections: [] });

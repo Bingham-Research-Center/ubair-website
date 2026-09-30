@@ -84,7 +84,7 @@ function updateConditionCardsWithLocation(locationData) {
     // Precipitation
     const precipCard = document.querySelector('.condition-card-compact.precipitation .value');
     if (precipCard) {
-        const precip = locationData.precipitation ?? locationData.snowLevel ?? locationData.condition;
+        const precip = locationData.precipitation ?? locationData.snowLevel;
         if (precip !== null && precip !== undefined && precip !== '') {
             if (typeof precip === 'string') {
                 precipCard.textContent = precip === 'none' ? 'Dry' : precip;
