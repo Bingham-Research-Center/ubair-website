@@ -975,19 +975,27 @@ class RoadWeatherService {
                        lng <= this.uintahBasinBounds.east;
             });
 
-            const processedRestAreas = basinRestAreas.map(restArea => ({
-                id: restArea.Id,
-                name: restArea.Name,
-                lat: parseFloat(restArea.Latitude),
-                lng: parseFloat(restArea.Longitude),
-                location: restArea.Location,
-                yearBuilt: restArea.YearBuilt,
-                carStalls: parseInt(restArea.CarStalls) || 0,
-                truckStalls: parseInt(restArea.TruckStalls) || 0,
-                nearestCommunities: restArea.NearestCommunities,
-                imageUrl: restArea.ImageUrl,
-                totalStalls: (parseInt(restArea.CarStalls) || 0) + (parseInt(restArea.TruckStalls) || 0)
-            }));
+            const processedRestAreas = basinRestAreas.map(restArea => {
+                const reportedCount = value => {
+                    const count = Number.parseInt(value, 10);
+                    return Number.isFinite(count) && count >= 0 ? count : null;
+                };
+                const carStalls = reportedCount(restArea.CarStalls);
+                const truckStalls = reportedCount(restArea.TruckStalls);
+                return {
+                    id: restArea.Id,
+                    name: restArea.Name,
+                    lat: parseFloat(restArea.Latitude),
+                    lng: parseFloat(restArea.Longitude),
+                    location: restArea.Location,
+                    yearBuilt: restArea.YearBuilt,
+                    carStalls,
+                    truckStalls,
+                    nearestCommunities: restArea.NearestCommunities,
+                    imageUrl: restArea.ImageUrl,
+                    totalStalls: carStalls !== null && truckStalls !== null ? carStalls + truckStalls : null
+                };
+            });
 
             // Cache for 1 hour (rest areas don't change frequently)
             cache.set(cacheKey, processedRestAreas, 3600);

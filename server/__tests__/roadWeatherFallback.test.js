@@ -105,6 +105,15 @@ describe('road weather availability', () => {
 });
 
 describe('missing readings', () => {
+    it('does not turn missing rest-area capacity into zero or an invented total', async () => {
+        fetch.mockResolvedValue({ ok: true, json: async () => [
+            { Id: 1, Latitude: 40.3, Longitude: -110, CarStalls: null, TruckStalls: '4' },
+            { Id: 2, Latitude: 40.3, Longitude: -110, CarStalls: '0', TruckStalls: '4' }
+        ] });
+        const areas = await service.fetchUDOTRestAreas();
+        expect(areas[0]).toMatchObject({ carStalls: null, truckStalls: 4, totalStalls: null });
+        expect(areas[1]).toMatchObject({ carStalls: 0, truckStalls: 4, totalStalls: 4 });
+    });
     it('never substitutes mild weather after both weather providers fail', async () => {
         jest.spyOn(service, 'fetchOpenMeteoData').mockResolvedValue(null);
         expect(await service.getCurrentWeatherCondition()).toBeNull();
