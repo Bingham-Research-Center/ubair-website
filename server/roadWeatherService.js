@@ -141,9 +141,9 @@ class RoadWeatherService {
     }
 
     mapUDOTConditionToColor(roadCondition, weatherCondition, restriction) {
-        const road = roadCondition.toLowerCase();
-        const weather = weatherCondition.toLowerCase();
-        const restrict = restriction.toLowerCase();
+        const road = (roadCondition || '').toLowerCase();
+        const weather = (weatherCondition || '').toLowerCase();
+        const restrict = (restriction || '').toLowerCase();
 
         // Red conditions - dangerous
         if (restrict.includes('closed') || restrict.includes('no travel') ||
@@ -169,8 +169,7 @@ class RoadWeatherService {
             return { condition: 'yellow', status: 'Wet Roads', reason: 'Use caution on wet pavement' };
         }
 
-        // Default green
-        return { condition: 'green', status: 'Normal', reason: roadCondition };
+        return { condition: 'gray', status: 'No Data', reason: 'Road condition not reported or not recognized' };
     }
 
     async fetchNWSData(lat, lon) {
@@ -231,9 +230,9 @@ class RoadWeatherService {
     }
 
     determineRoadCondition(station, weatherData) {
-        let condition = 'green';
-        let status = 'Passable';
-        let reason = '';
+        let condition = 'gray';
+        let status = 'No Data';
+        let reason = 'Road surface not reported';
 
         if (!station) {
             return { condition: 'gray', status: 'No Data', reason: 'Station data unavailable' };
@@ -279,7 +278,7 @@ class RoadWeatherService {
             condition = 'green';
             status = 'Passable';
             reason = 'Wet roads';
-        } else if (surfaceStatus.includes('dry') || surfaceStatus === '') {
+        } else if (surfaceStatus.includes('dry')) {
             condition = 'green';
             status = 'Passable';
             reason = 'Normal conditions';
@@ -402,10 +401,10 @@ class RoadWeatherService {
 
         return {
             temperature: fc.temp_2m,
-            precipitation: fc.precip_1hr || 0,
-            snowfall: (fc.precip_type === 'snow') ? (fc.precip_1hr || 0) : 0,
-            windSpeed: fc.wind_speed_10m || 0,
-            visibility: (fc.visibility || 10) * 1000 // km → meters
+            precipitation: fc.precip_1hr ?? null,
+            snowfall: fc.precip_type === 'snow' ? (fc.precip_1hr ?? null) : (fc.precip_type ? 0 : null),
+            windSpeed: fc.wind_speed_10m ?? null,
+            visibility: Number.isFinite(fc.visibility) ? fc.visibility * 1000 : null // km to meters
         };
     }
 
@@ -420,9 +419,10 @@ class RoadWeatherService {
             case 'light':
                 return { condition: 'yellow', status: 'Light Snow', reason: 'Light snow on camera' };
             case 'none':
+                return { condition: 'green', status: 'Clear', reason: 'No snow detected' };
             case 'unknown':
             default:
-                return { condition: 'green', status: 'Clear', reason: 'No snow detected' };
+                return { condition: 'gray', status: 'No Data', reason: 'Camera condition unavailable' };
         }
     }
 
@@ -766,16 +766,13 @@ class RoadWeatherService {
             console.warn('Could not fetch current weather for road estimation:', error);
         }
 
-        return {
-            temperature: 10, // Default mild conditions
-            precipitation: 0,
-            snowfall: 0,
-            windSpeed: 5,
-            visibility: 10000
-        };
+        return null;
     }
 
     estimateRoadCondition(road, weather) {
+        if (!weather || !['temperature', 'precipitation', 'snowfall', 'windSpeed', 'visibility'].every(key => Number.isFinite(weather[key]))) {
+            return { condition: 'gray', status: 'No Data', reason: 'Weather data unavailable or incomplete' };
+        }
         const temp = weather.temperature;
         const precip = weather.precipitation;
         const snow = weather.snowfall;
@@ -1008,9 +1005,9 @@ class RoadWeatherService {
         const precipitation = (station.Precipitation || '').toLowerCase();
         const windSpeed = parseFloat(station.WindSpeedAvg);
 
-        let condition = 'green';
-        let status = 'Normal';
-        let reason = 'Good conditions';
+        let condition = 'gray';
+        let status = 'No Data';
+        let reason = 'Road surface not reported';
 
         // Check for dangerous conditions
         if (surfaceStatus.includes('ice') || surfaceStatus.includes('icy')) {
@@ -1039,7 +1036,7 @@ class RoadWeatherService {
             condition = 'yellow';
             status = 'High Winds';
             reason = `Strong winds at ${windSpeed} mph`;
-        } else if (surfaceStatus.includes('dry') || !surfaceStatus) {
+        } else if (surfaceStatus.includes('dry')) {
             condition = 'green';
             status = 'Clear';
             reason = 'Dry road surface';
@@ -1302,7 +1299,8 @@ class RoadWeatherService {
             return 'windy';
         }
 
-        return 'open';
+        const reportedOpen = pass.SeasonalInfo?.some(info => info.SeasonalClosureStatus === 'OPEN');
+        return reportedOpen || surfaceStatus.includes('dry') ? 'open' : 'unknown';
     }
 
     determinePassSeverity(pass) {

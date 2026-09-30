@@ -710,7 +710,7 @@ class RoadWeatherMap {
         } else if (surfaceStatus.includes('snow') || (temp && temp <= 32)) {
             return 'caution';
         }
-        return 'good';
+        return surfaceStatus.includes('dry') ? 'good' : 'unknown';
     }
 
     getSegmentColor(condition) {
@@ -1496,10 +1496,15 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 statusEmoji = '💨';
                 statusText = 'WINDY';
                 break;
-            default:
+            case 'open':
                 iconColor = '#10b981'; // Green
                 statusEmoji = '✅';
                 statusText = 'OPEN';
+                break;
+            default:
+                iconColor = '#6c757d';
+                statusEmoji = '❔';
+                statusText = 'NOT REPORTED';
         }
         const safeStatusEmoji = escapeHtml(statusEmoji);
         const safeStatusText = escapeHtml(statusText);

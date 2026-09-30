@@ -35,6 +35,13 @@ function browser() {
 }
 
 describe('condition card fallback', () => {
+    it('does not report dry precipitation for an unknown station surface', async () => {
+        const { cards, cache, update } = browser();
+        cache.getData.mockResolvedValue({ stations: [{ surfaceStatus: 'Unknown' }], cameraDetections: [] });
+        await update();
+        expect(cards.precipitation.value.textContent).toBe('Not reported');
+        expect(cards['road-conditions'].value.textContent).toBe('Not reported');
+    });
     it('clears stale station values and timestamps when only backup wind is available', async () => {
         const { cards, freshness, cache, update } = browser();
         await update();

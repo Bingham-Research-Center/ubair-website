@@ -139,12 +139,16 @@ function createRouteIncidentSummary(routeName, events) {
  * @param {HTMLElement} container - Container element to render into
  * @param {Object} data - Route data object
  */
+function averageReportedTemperature(stations) {
+    const temperatures = stations.map(station => parseFloat(station.airTemperature)).filter(Number.isFinite);
+    return temperatures.length ? Math.round(temperatures.reduce((sum, value) => sum + value, 0) / temperatures.length) : '--';
+}
+
 function displayRouteConditions(container, data) {
     const { routeName, stations, events, cities } = data;
 
     // Calculate metrics
-    const avgTemp = stations.length > 0 ?
-        Math.round(stations.reduce((sum, s) => sum + (parseFloat(s.airTemperature) || 0), 0) / stations.length) : '--';
+    const avgTemp = averageReportedTemperature(stations);
 
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
