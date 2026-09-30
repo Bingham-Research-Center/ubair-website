@@ -163,14 +163,19 @@ class BackgroundRefreshService {
             console.log(`[${new Date().toISOString()}] Refreshing essential data...`);
 
             // Fetch essential data (3 UDOT API calls)
-            const [roads, cameras, weatherStations] = await Promise.all([
+            const [roads, cameras, weatherStations] = await Promise.allSettled([
                 this.roadWeatherService.fetchUDOTRoadConditions(),
                 this.roadWeatherService.fetchUDOTCameras(),
                 this.roadWeatherService.fetchUDOTWeatherStations()
             ]);
 
             // Update camera analysis scheduler with new camera list
-            this.cameraAnalysisScheduler.updateCameraList(cameras, weatherStations);
+            if (cameras.status === 'fulfilled') {
+                this.cameraAnalysisScheduler.updateCameraList(cameras.value,
+                    weatherStations.status === 'fulfilled' ? weatherStations.value : []);
+            }
+            const failed = [roads, cameras, weatherStations].find(result => result.status === 'rejected');
+            if (failed) throw failed.reason;
 
             const duration = Date.now() - startTime;
             this.stats.lastRefresh.essential = new Date();

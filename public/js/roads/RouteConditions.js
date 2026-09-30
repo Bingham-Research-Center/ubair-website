@@ -323,8 +323,7 @@ function displayRoadSlide(container, road, stations, events) {
  */
 function createRoadSlideContent(road, stations, events) {
     // Calculate metrics like the other route conditions
-    const avgTemp = stations.length > 0 ?
-        Math.round(stations.reduce((sum, s) => sum + (parseFloat(s.airTemperature) || 0), 0) / stations.length) : '--';
+    const avgTemp = averageReportedTemperature(stations);
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
     const travelStatus = determineTravelStatus(stations, events);

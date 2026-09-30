@@ -26,6 +26,18 @@ function otherFeeds() {
 }
 
 describe('road weather availability', () => {
+    it('keeps successful camera refreshes when the background road fetch fails', async () => {
+        const { default: BackgroundRefreshService } = await import('../backgroundRefresh.js');
+        otherFeeds();
+        jest.spyOn(service, 'fetchUDOTRoadConditions').mockRejectedValue(new Error('offline'));
+        const background = { roadWeatherService: service,
+            cameraAnalysisScheduler: { updateCameraList: jest.fn() },
+            stats: { errors: { essential: 0 }, lastRefresh: {}, refreshCount: { essential: 0 } } };
+        await BackgroundRefreshService.prototype.refreshEssentialData.call(background);
+        expect(background.cameraAnalysisScheduler.updateCameraList).toHaveBeenCalledWith(
+            [{ id: 'camera', lastUpdated: updated }], [{ id: 'station', lastUpdated: updated }]);
+        expect(background.stats.errors.essential).toBe(1);
+    });
     it.each(['fetchUDOTRoadConditions', 'fetchUDOTCameras', 'fetchUDOTWeatherStations'])(
         '%s reports HTTP and network failures instead of empty success', async method => {
             fetch.mockResolvedValueOnce({ ok: false, status: 503 }).mockRejectedValueOnce(new Error('offline'));
@@ -89,5 +101,40 @@ describe('road weather availability', () => {
         await router.stack.find(layer => layer.route?.path === '/road-weather').route.stack[0].handle({}, response);
         expect(response.status).toHaveBeenCalledWith(503);
         expect(response.json).toHaveBeenCalledWith(expect.objectContaining({ status: 'unavailable', lastUpdated: updated, segments: [] }));
+    });
+});
+
+describe('missing readings', () => {
+    it('never substitutes mild weather after both weather providers fail', async () => {
+        jest.spyOn(service, 'fetchOpenMeteoData').mockResolvedValue(null);
+        expect(await service.getCurrentWeatherCondition()).toBeNull();
+        expect(service.estimateRoadCondition({}, null)).toMatchObject({ condition: 'gray', status: 'No Data' });
+    });
+
+    it('leaves missing and unknown road and station reports unknown', () => {
+        expect(service.mapUDOTConditionToColor(null, null, null).condition).toBe('gray');
+        expect(service.mapUDOTConditionToColor('Unknown', 'Unknown', '').condition).toBe('gray');
+        expect(service.determineStationCondition({}).condition).toBe('gray');
+        expect(service.determineStationCondition({ SurfaceStatus: 'Unknown' }).condition).toBe('gray');
+        expect(service.determineRoadCondition({}).condition).toBe('gray');
+        expect(service.determineStationCondition({ SurfaceStatus: 'Dry' }).condition).toBe('green');
+        expect(service.cameraSnowLevelToCondition('unknown').condition).toBe('gray');
+        expect(service.cameraSnowLevelToCondition('none').condition).toBe('green');
+    });
+
+    it('requires a reported pass status or surface before reporting open', () => {
+        expect(service.determinePassStatus({})).toBe('unknown');
+        expect(service.determinePassStatus({ SurfaceStatus: 'Unknown', AirTemperature: 50 })).toBe('unknown');
+        expect(service.determinePassStatus({ SurfaceStatus: 'Dry' })).toBe('open');
+        expect(service.determinePassStatus({ SeasonalInfo: [{ SeasonalClosureStatus: 'CLOSED' }] })).toBe('closed');
+    });
+
+    it('does not invent HRRR wind, precipitation or visibility and preserves zero visibility', () => {
+        const forecast = { points: [{ lat: 40, lon: -110, temp_2m: 10 }] };
+        const partial = service.getHRRRConditionAtPoint(40, -110, forecast);
+        expect(partial).toMatchObject({ precipitation: null, windSpeed: null, visibility: null });
+        expect(service.estimateRoadCondition({}, partial).condition).toBe('gray');
+        forecast.points[0].visibility = 0;
+        expect(service.getHRRRConditionAtPoint(40, -110, forecast).visibility).toBe(0);
     });
 });
