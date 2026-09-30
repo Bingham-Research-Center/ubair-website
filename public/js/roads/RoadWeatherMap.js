@@ -1655,9 +1655,9 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const safeLocation = escapeHtml(restArea.location || 'Unknown');
         const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
         const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
-        const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
-        const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
-        const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
+        const safeTotalStalls = Number.isFinite(restArea.totalStalls) ? Math.max(0, Math.round(restArea.totalStalls)) : null;
+        const safeCarStalls = Number.isFinite(restArea.carStalls) ? Math.max(0, Math.round(restArea.carStalls)) : null;
+        const safeTruckStalls = Number.isFinite(restArea.truckStalls) ? Math.max(0, Math.round(restArea.truckStalls)) : null;
         const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
         // Create rest area icon with stall count indicator
         const iconHtml = `
@@ -1711,7 +1711,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Parking Facilities</h5>
                     ${safeCarStalls > 0 ? `<div><strong>Car Stalls:</strong> ${safeCarStalls}</div>` : ''}
                     ${safeTruckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${safeTruckStalls}</div>` : ''}
-                    <div><strong>Total:</strong> ${safeTotalStalls} stalls</div>
+                    <div><strong>Total:</strong> ${safeTotalStalls === null ? 'Not reported' : `${safeTotalStalls} stalls`}</div>
                 </div>
             `;
         }
