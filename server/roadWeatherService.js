@@ -43,6 +43,7 @@ class RoadWeatherService {
         this.nwsUserAgent = 'BasinWX/1.0 (basinwx.com)';
         this.snowDetectionService = new SnowDetectionService();
         this.cameraAnalysisScheduler = cameraAnalysisScheduler;
+        this.lastRoadConditionsUpdate = null;
         this.uintahBasinBounds = {
             north: 41.0,    // Expanded north to include more mountain areas
             south: 39.5,    // Expanded south for broader coverage
@@ -54,7 +55,7 @@ class RoadWeatherService {
     async fetchUDOTRoadConditions() {
         const cacheKey = 'udot_road_conditions';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(road => ({ ...road, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/roadconditions?key=${this.udotApiKey}&format=json`;
@@ -114,7 +115,9 @@ class RoadWeatherService {
                     restriction: road.Restriction,
                     encodedPolyline: road.EncodedPolyline,
                     coordinates: coordinates,
-                    lastUpdated: new Date(road.LastUpdated * 1000).toISOString(),
+                    source: 'UDOT',
+                    cached: false,
+                    lastUpdated: this.udotTimestamp(road.LastUpdated),
                     condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction)
                 };
             });
@@ -123,8 +126,18 @@ class RoadWeatherService {
             return processedRoads;
         } catch (error) {
             console.error('Error fetching UDOT road conditions:', error);
-            return [];
+            throw error;
         }
+    }
+
+    udotTimestamp(value) {
+        const timestamp = Number(value) * 1000;
+        return Number.isFinite(timestamp) && timestamp > 0 ? new Date(timestamp).toISOString() : null;
+    }
+
+    latestUpdate(records) {
+        const times = records.map(record => Date.parse(record.lastUpdated)).filter(Number.isFinite);
+        return times.length ? new Date(Math.max(...times)).toISOString() : null;
     }
 
     mapUDOTConditionToColor(roadCondition, weatherCondition, restriction) {
@@ -589,7 +602,8 @@ class RoadWeatherService {
                 coordinates: road.waypoints,
                 overallCondition: ensembleResult,
                 type: 'hrrr_estimated',
-                lastUpdated: hrrrForecast.init_time || new Date().toISOString()
+                source: 'HRRR',
+                lastUpdated: hrrrForecast.init_time || null
             };
         });
     }
@@ -603,11 +617,25 @@ class RoadWeatherService {
             }
 
             // 2. Fetch all live data sources in parallel
-            const [udotRoads, cameras, weatherStations] = await Promise.all([
+            const results = await Promise.allSettled([
                 this.fetchUDOTRoadConditions(),
                 this.fetchUDOTCameras(),
                 this.fetchUDOTWeatherStations()
             ]);
+            const [udotRoads, cameras, weatherStations] = results.map(result =>
+                result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []
+            );
+            const sources = Object.fromEntries(['roads', 'cameras', 'stations'].map((name, index) => {
+                const records = [udotRoads, cameras, weatherStations][index];
+                const available = results[index].status === 'fulfilled' && records.length > 0;
+                return [name, {
+                    status: available ? (records.some(record => record.cached) ? 'cached' : 'available') : 'unavailable',
+                    lastUpdated: this.latestUpdate(records),
+                    message: available ? null : `UDOT ${name} feed unavailable or returned no data`
+                }];
+            }));
+            if (udotRoads.length > 0) this.lastRoadConditionsUpdate = sources.roads.lastUpdated;
+            sources.roads.lastUpdated = this.lastRoadConditionsUpdate;
 
             // Get camera snow detections from scheduler cache (no API calls triggered)
             // If scheduler is not available, fall back to direct analysis (backwards compatibility)
@@ -628,6 +656,8 @@ class RoadWeatherService {
                     coordinates: udotRoad.coordinates,
                     overallCondition: udotRoad.condition,
                     type: 'monitored',
+                    source: udotRoad.source,
+                    cached: udotRoad.cached,
                     lastUpdated: udotRoad.lastUpdated,
                     roadCondition: udotRoad.roadCondition,
                     weatherCondition: udotRoad.weatherCondition,
@@ -642,11 +672,14 @@ class RoadWeatherService {
             });
 
             // 5. Build additional road segments from HRRR (roads not covered by UDOT)
-            const additionalSegments = this.buildAdditionalRoadSegmentsFromHRRR(hrrrForecast);
+            // HRRR has its own forecast layer. Do not fill an unavailable observed feed with it.
+            const additionalSegments = udotRoads.length > 0 ? this.buildAdditionalRoadSegmentsFromHRRR(hrrrForecast) : [];
 
             const allRoadSegments = [...roadSegments, ...additionalSegments];
 
             return {
+                status: sources.roads.status,
+                sources,
                 segments: allRoadSegments,
                 cameras: cameras,
                 stations: weatherStations,
@@ -658,7 +691,7 @@ class RoadWeatherService {
                 cameraAnalyzedLocations: cameraSnowDetections.length,
                 monitoredRoads: roadSegments.length,
                 additionalRoads: additionalSegments.length,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: sources.roads.lastUpdated
             };
         } catch (error) {
             console.error('Error getting complete road data:', error);
@@ -799,7 +832,7 @@ class RoadWeatherService {
     async fetchUDOTCameras() {
         const cacheKey = 'udot_cameras';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(camera => ({ ...camera, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/cameras?key=${this.udotApiKey}&format=json`;
@@ -832,6 +865,9 @@ class RoadWeatherService {
                 roadway: camera.Roadway,
                 lat: parseFloat(camera.Latitude),
                 lng: parseFloat(camera.Longitude),
+                source: 'UDOT',
+                cached: false,
+                lastUpdated: this.udotTimestamp(camera.LastUpdated),
                 views: camera.Views.map(view => ({
                     url: view.Url,
                     status: view.Status,
@@ -843,14 +879,14 @@ class RoadWeatherService {
             return processedCameras;
         } catch (error) {
             console.error('Error fetching UDOT cameras:', error);
-            return [];
+            throw error;
         }
     }
 
     async fetchUDOTWeatherStations() {
         const cacheKey = 'udot_weather_stations';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(station => ({ ...station, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${this.udotApiKey}&format=json`;
@@ -896,7 +932,8 @@ class RoadWeatherService {
                 windSpeedGust: station.WindSpeedGust,
                 windDirection: station.WindDirection,
                 source: station.Source,
-                lastUpdated: new Date(station.LastUpdated * 1000).toISOString(),
+                cached: false,
+                lastUpdated: this.udotTimestamp(station.LastUpdated),
                 condition: this.determineStationCondition(station)
             }));
 
@@ -904,7 +941,7 @@ class RoadWeatherService {
             return processedStations;
         } catch (error) {
             console.error('Error fetching UDOT weather stations:', error);
-            return [];
+            throw error;
         }
     }
 
