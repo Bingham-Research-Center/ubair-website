@@ -148,6 +148,9 @@ router.get('/traffic-events/map', async (req, res) => {
         // Optimize data for map display
         const mapEvents = allEvents.map(event => ({
             id: event.id,
+            cached: event.cached,
+            retrievedAt: event.retrievedAt,
+            lastUpdated: event.lastUpdated,
             name: event.name || event.description.substring(0, 50) + '...',
             latitude: event.latitude,
             longitude: event.longitude,
