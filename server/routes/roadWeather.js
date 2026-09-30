@@ -17,9 +17,13 @@ router.get('/road-weather', async (req, res) => {
         res.json(data);
     } catch (error) {
         console.error('Error in /road-weather endpoint:', error);
-        res.status(500).json({
+        res.status(503).json({
+            status: 'unavailable',
+            lastUpdated: roadWeatherService.lastRoadConditionsUpdate || null,
             error: 'Failed to fetch road weather data',
-            message: error.message
+            segments: [],
+            stations: [],
+            cameras: []
         });
     }
 });
@@ -105,6 +109,8 @@ router.get('/road-weather/stations', async (req, res) => {
     } catch (error) {
         console.error('Error fetching weather stations:', error);
         res.status(500).json({
+            status: 'unavailable',
+            lastUpdated: null,
             error: 'Failed to fetch weather stations',
             message: error.message
         });
