@@ -1163,7 +1163,14 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .legend-content.expanded {
     max-height: 300px;
+    overflow-y: auto;
     transition: max-height 0.4s ease-in;
+}
+
+#road-legend-source {
+    max-width: min(16rem, 60vw);
+    white-space: normal;
+    line-height: 1.4;
 }
 
 .legend-items {
