@@ -28,15 +28,14 @@ describe('shared road weather data', () => {
             throw new Error(`Unexpected request: ${url}`);
         });
         const { context } = browser(fetch);
-        const map = {
-            clearLayers: jest.fn(), renderRoadSegments: jest.fn(), renderWeatherStations: jest.fn(),
-            renderTrafficCameras: jest.fn(), loadStaticRoadData: jest.fn()
-        };
+        const map = vm.runInContext('new RoadWeatherMap("road-map")', context);
+        map.renderWeatherStations = jest.fn();
+        map.renderTrafficCameras = jest.fn();
         context.map = map;
         await vm.runInContext('Promise.all([RoadWeatherMap.prototype.loadRoadWeatherData.call(map), updateConditionCards(), routeDataCache.getData()])', context);
         expect(fetch.mock.calls.map(([url]) => url).sort()).toEqual(['/api/road-weather', '/api/traffic-events']);
         expect(map.renderTrafficCameras).toHaveBeenCalledWith(payload.cameras, payload.cameraDetections);
-        expect(map.loadStaticRoadData).not.toHaveBeenCalled();
+        expect(map.roadLayers.size).toBe(0);
     });
 
     it('coalesces pending requests and reuses their completed result', async () => {
@@ -49,7 +48,7 @@ describe('shared road weather data', () => {
         complete(response());
         expect(await first).toBe(payload);
         expect(await second).toBe(payload);
-        expect(await cache.getData()).toBe(payload);
+        expect(await cache.getData()).toEqual({ ...payload, cached: true });
         expect(fetch).toHaveBeenCalledTimes(1);
     });
 
