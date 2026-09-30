@@ -1070,6 +1070,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
             // Create popup content
             const popupContent = `
                 <div class="traffic-event-popup" style="max-width: 300px;">
+                    <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                     <h4 style="margin: 0 0 10px 0; color: ${safeDisplayColor};">
                         ${safeDisplayIcon} ${safeEventName}
                     </h4>
@@ -1145,6 +1146,7 @@ RoadWeatherMap.prototype.addRoadClosureOverlays = function(events) {
                     // Add popup with closure information
                     const popupContent = `
                         <div class="closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚫 Road Closure
                             </h4>
@@ -1257,6 +1259,7 @@ RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
 
                     const popupContent = `
                         <div class="alert-closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(alert))}. Approximate closure location.</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚨 UDOT Alert: Road Closure
                             </h4>

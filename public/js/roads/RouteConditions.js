@@ -348,7 +348,7 @@ function createRoadSlideContent(road, stations, events) {
                 <div class="metric-icon">🚧</div>
                 <div class="metric-value">${incidentCount}</div>
                 <div class="metric-label">Active Incidents</div>
-                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'Clear' : 'Active'}</div>
+                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'None reported' : 'Reported'}</div>
             </div>
 
             <div class="route-metric travel-time">

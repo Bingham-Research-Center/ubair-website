@@ -37,7 +37,7 @@ class TrafficEventsService {
 
         // Check memory cache first
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(record => ({ ...record, cached: true }));
 
         // Check persistent file cache
         const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
@@ -74,6 +74,8 @@ class TrafficEventsService {
             // Process alerts
             const processedAlerts = data.map(alert => ({
                 id: alert.Id,
+                cached: false,
+                retrievedAt: new Date().toISOString(),
                 message: alert.Message,
                 notes: alert.Notes,
                 startTime: new Date(alert.StartTime * 1000).toISOString(),
@@ -156,7 +158,7 @@ class TrafficEventsService {
 
         // Check memory cache first
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(record => ({ ...record, cached: true }));
 
         // Check persistent file cache
         const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
@@ -195,6 +197,8 @@ class TrafficEventsService {
 
             const processedEvents = basinEvents.map(event => ({
                 id: event.ID,
+                cached: false,
+                retrievedAt: new Date().toISOString(),
                 sourceId: event.SourceId,
                 organization: event.Organization,
                 roadwayName: event.RoadwayName,
@@ -422,7 +426,7 @@ class TrafficEventsService {
                 upcomingCount: upcomingEvents.length,
                 alertsCount: alerts.length,
                 eventTypes: this.getEventTypeSummary(allEvents),
-                lastUpdated: new Date().toISOString()
+                lastUpdated: [...allEvents, ...alerts].map(record => record.lastUpdated || record.retrievedAt).filter(Boolean).sort().at(-1) || null
             };
         } catch (error) {
             console.error('Error getting complete traffic data:', error);
@@ -480,7 +484,10 @@ class TrafficEventsService {
 
             if (age < maxAge) {
                 console.log(`Loading ${key} from disk cache (age: ${Math.round(age / 1000 / 60)} minutes)`);
-                return cacheData.data;
+                return cacheData.data.map(record => ({
+                    ...record, cached: true,
+                    retrievedAt: record.retrievedAt || new Date(cacheData.timestamp).toISOString()
+                }));
             } else {
                 console.log(`Disk cache for ${key} expired (age: ${Math.round(age / 1000 / 60)} minutes)`);
                 // Clean up expired cache file
