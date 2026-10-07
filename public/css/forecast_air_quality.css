@@ -1242,3 +1242,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .summary-card.data-unavailable .confidence {
     color: #9ca3af !important;
 }
+.coming-soon-wrapper {
+    display: none;
+}
