@@ -34,7 +34,7 @@
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.3",
     "node-fetch": "^3.3.2",
-    "nodemailer": "^9.0.5",
+    "nodemailer": "^10.0.6",
     "plotly.js": "^2.35.3",
     "plotly.js-dist": "^2.35.2",
     "pngjs": "^7.0.0",
