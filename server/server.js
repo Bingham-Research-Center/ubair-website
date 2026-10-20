@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { promises as fs } from 'fs';
+import { promises as fs, readdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 
@@ -32,6 +32,12 @@ const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const aboutPagesDir = path.join(__dirname, '../views/about');
+const aboutPageAllowlist = new Set(
+    readdirSync(aboutPagesDir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && path.extname(entry.name) === '.html')
+        .map(entry => path.basename(entry.name, '.html'))
+);
 
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
@@ -169,7 +175,13 @@ app.get('/test-viz', (req, res) => {
 });
 
 app.get('/about/:page', (req, res) => {
-    res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
+    const { page } = req.params;
+
+    if (!aboutPageAllowlist.has(page)) {
+        return res.status(404).send('Not Found');
+    }
+
+    res.sendFile(path.join(aboutPagesDir, `${page}.html`));
 });
 
 // NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
@@ -243,18 +255,22 @@ app.get('/api/live-observations', async (req, res) => {
 
 // Create HTTP server
 const server = createServer(app);
+const isTestEnvironment = process.env.NODE_ENV === 'test';
 
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    console.log('Data upload API available at /api/data/upload/:dataType');
-    console.log('');
+if (!isTestEnvironment) {
+    server.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+        console.log('Data upload API available at /api/data/upload/:dataType');
+        console.log('');
 
-    if (previewMode) {
-        console.log(getPreviewSkipLog());
-    } else {
-        startRuntimeBackgroundJobs({ backgroundRefresh, reportEmailService });
-    }
-});
+        // Skip background jobs for preview instances (feature-branch worktrees)
+        if (previewMode) {
+            console.log(getPreviewSkipLog());
+        } else {
+            startRuntimeBackgroundJobs({ backgroundRefresh, reportEmailService });
+        }
+    });
+}
 
 let isShuttingDown = false;
 const shutdown = async (signal, options = {}) => {
@@ -298,32 +314,34 @@ const shutdown = async (signal, options = {}) => {
     }, 10000).unref();
 };
 
-process.on('SIGINT', () => {
-    void shutdown('SIGINT', { reason: 'interrupt_signal', exitCode: 0 });
-});
-
-process.on('SIGTERM', () => {
-    void shutdown('SIGTERM', { reason: 'terminate_signal', exitCode: 0 });
-});
-
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught exception:', error);
-    void shutdown('uncaughtException', {
-        reason: 'uncaught_exception',
-        error,
-        exitCode: 1
+if (!isTestEnvironment) {
+    process.on('SIGINT', () => {
+        void shutdown('SIGINT', { reason: 'interrupt_signal', exitCode: 0 });
     });
-});
 
-process.on('unhandledRejection', (reason) => {
-    const rejectionError = reason instanceof Error ? reason : new Error(String(reason));
-    console.error('Unhandled rejection:', rejectionError);
-    void shutdown('unhandledRejection', {
-        reason: 'unhandled_rejection',
-        error: rejectionError,
-        exitCode: 1
+    process.on('SIGTERM', () => {
+        void shutdown('SIGTERM', { reason: 'terminate_signal', exitCode: 0 });
     });
-});
+
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught exception:', error);
+        void shutdown('uncaughtException', {
+            reason: 'uncaught_exception',
+            error,
+            exitCode: 1
+        });
+    });
+
+    process.on('unhandledRejection', (reason) => {
+        const rejectionError = reason instanceof Error ? reason : new Error(String(reason));
+        console.error('Unhandled rejection:', rejectionError);
+        void shutdown('unhandledRejection', {
+            reason: 'unhandled_rejection',
+            error: rejectionError,
+            exitCode: 1
+        });
+    });
+}
 
 // Error handling middleware.
 //
@@ -373,14 +391,20 @@ async function checkDirectoryStructure() {
     }
 }
 
-checkDirectoryStructure()
-    .then(async () => {
-        await initializeOutlookRefresh({
-            generateOutlooksList,
-            env: process.env
+// Update the server startup and intervals
+if (!isTestEnvironment) {
+    checkDirectoryStructure()
+        .then(async () => {
+            await initializeOutlookRefresh({
+                generateOutlooksList,
+                env: process.env
+            });
+        })
+        .catch(err => {
+            console.error('Failed to verify directory structure:', err);
+            process.exit(1);
         });
-    })
-    .catch(err => {
-        console.error('Failed to verify directory structure:', err);
-        process.exit(1);
-    });
+}
+
+export { server };
+export default app;

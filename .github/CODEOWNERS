@@ -1,0 +1,5 @@
+# Advisory only: auto-requests a UX by-eye review; rulesets do not require code-owner approval.
+views/** @dmeanea123
+public/css/** @dmeanea123
+public/partials/** @dmeanea123
+public/images/** @dmeanea123

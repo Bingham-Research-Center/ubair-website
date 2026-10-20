@@ -1,0 +1,28 @@
+name: Epic
+description: More than 8 hours of work; tracks a milestone goal through child issues
+labels: ["type:epic"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        After creating, convert children to sub-issues (issue sidebar → Sub-issues).
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: One paragraph.
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Success looks like
+      description: What is true on the site, or in the repo, when this epic is done.
+    validations:
+      required: true
+  - type: textarea
+    id: children
+    attributes:
+      label: Child issues
+      description: One per line; each should be a sized task (1/2/4/8 h).
+      value: "- [ ] #"

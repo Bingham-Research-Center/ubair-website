@@ -295,8 +295,9 @@ that is "never uploaded here", distinguishable from a 500 since v1.5.2.
 - **Do not emit Kelvin for `temp_2m`.** See §6.
 - **Do not drop `--validate-only` / `--dry-run` support.** The website team needs to seed test
   fixtures when you are not around.
-- **Do not put the API key in any file in either repo.** It leaked into `chpc-deployment/`
-  once and the repo is public.
+- **Do not put the API key in any file in either repo.** It leaked into the old CHPC
+  deployment helpers once (scrubbed 2026-08-13, directory deleted 2026-09-28, value still in
+  git history) and the repo is public.
 
 ---
 

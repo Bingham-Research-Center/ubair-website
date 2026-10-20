@@ -319,7 +319,7 @@ pm2 logs basinwx-$(git -C /srv/ubair-website branch --show-current) --lines 50 -
 
 ## 7. CHPC data fan-out
 
-CHPC runs `scripts/chpc_uploader.py` and the shell helpers in `chpc-deployment/`. The uploader consumes **`BASINWX_API_URLS`** (comma-separated). First URL is **primary** — its failure fails the job. Remaining URLs are **best-effort mirrors** — failures emit a loud WARN but the job still exits 0.
+CHPC runs `scripts/chpc_uploader.py` and the brc-tools producers (`brc_tools/download/push_data.py` and the scripts built on it; cron lines, env exports and pitfalls live in that repo's `docs/CHPC-REFERENCE.md` and `docs/WEBSITE-INTEGRATION.md`). The uploader consumes **`BASINWX_API_URLS`** (comma-separated). First URL is **primary** — its failure fails the job. Remaining URLs are **best-effort mirrors** — failures emit a loud WARN but the job still exits 0.
 
 Recommended CHPC env:
 

@@ -1,0 +1,29 @@
+name: test
+
+on:
+  pull_request:
+    branches: [dev, ops]
+  push:
+    branches: [dev]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Job name is the check name: add `test` as a required status check on the dev ruleset.
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          # No `cache:` and no `npm ci`: package-lock.json is gitignored (see CLAUDE.md),
+          # so there is nothing to key a cache on and nothing for `npm ci` to read.
+      - run: npm install --no-audit --no-fund
+      - run: npm test
