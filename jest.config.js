@@ -7,8 +7,12 @@ export default {
     ],
     collectCoverageFrom: [
         'server/**/*.js',
+        'public/js/**/*.js',
         '!server/__tests__/**',
-        '!server/node_modules/**'
+        '!server/node_modules/**',
+        '!public/js/__tests__/**',
+        '!public/js/**/*.min.js',
+        '!public/js/**/vendor/**'
     ],
     coverageDirectory: 'coverage',
     verbose: true
