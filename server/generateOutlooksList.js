@@ -7,11 +7,14 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export async function generateOutlooksList() {
-    try {
-        // Path to outlooks directory
-        const outlooksDir = path.join(__dirname, '../public/api/static/outlooks');
+const DEFAULT_OUTLOOKS_DIR = path.join(__dirname, '../public/api/static/outlooks');
 
+// Only issued outlooks count. Anything else in the folder (template-2025-2026.md,
+// images) must never reach the list: index 0 is shown as "the latest outlook".
+const OUTLOOK_FILE_RE = /^outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md$/;
+
+export async function generateOutlooksList(outlooksDir = DEFAULT_OUTLOOKS_DIR) {
+    try {
         // Ensure directory exists
         try {
             await fs.access(outlooksDir);
@@ -20,30 +23,32 @@ export async function generateOutlooksList() {
             console.log('Created outlooks directory');
         }
 
-        // Read all files in the directory
         const files = await fs.readdir(outlooksDir);
 
-        // Filter for markdown files and extract metadata
         const outlooks = files
-            .filter(file => file.endsWith('.md') && file !== 'template.md')
+            .filter(file => OUTLOOK_FILE_RE.test(file))
             .map(filename => {
-                // Extract date from filename (assuming format: outlook_YYYYMMDD_HHMM.md)
-                const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-                if (match) {
-                    const [_, year, month, day, hour, minute] = match;
-                    const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                    return { filename, date };
-                }
-                // Fallback for differently named files - use file stats
-                return { filename, date: new Date().toISOString() };
+                const [, year, month, day, hour, minute] = filename.match(OUTLOOK_FILE_RE);
+                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
+                // Shown as "Issued: …" on the homepage (public/js/index_outlook.js)
+                const formattedDate = new Date(date).toLocaleString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                return { filename, date, formattedDate };
             })
             .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort newest first
 
         // Write the index file
-        const indexPath = path.join(outlooksDir, 'outlooks_list.json');
-        await fs.writeFile(indexPath, JSON.stringify(outlooks, null, 2));
+        await fs.writeFile(
+            path.join(outlooksDir, 'outlooks_list.json'),
+            JSON.stringify(outlooks, null, 2)
+        );
 
-        console.log(`Generated outlooks list with ${outlooks.length} entries`);
         return outlooks;
     } catch (error) {
         console.error('Error generating outlooks list:', error);
@@ -53,5 +58,7 @@ export async function generateOutlooksList() {
 
 // Run this script directly if called from command line
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-    generateOutlooksList().catch(console.error);
+    generateOutlooksList()
+        .then(outlooks => console.log(`Generated outlooks list with ${outlooks.length} entries`))
+        .catch(console.error);
 }
