@@ -55,11 +55,15 @@ audience-appropriate. Open bugs and tasks with the issue templates; PRs go into 
 
 ## Quick health checks
 ```bash
-curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
-curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
-ssh deploy@www.basinwx.com "pm2 logs --lines 50"
-ssh deploy@www.basinwx.dev "pm2 logs --lines 50"
+scripts/probe.py                                    # both boxes: cert, version/commit, ingest, freshness
+curl -s https://www.basinwx.com/api/health/ingest   # 200 = uploads landing; 503 + reasons otherwise
+curl -s https://www.basinwx.com/api/live-observations | jq '.totalObservations'
+pm2 logs ubair-site --lines 50 --nostream           # on prod, as root
+pm2 logs basinwx-dev --lines 50 --nostream          # on dev, as deploy
 ```
+
+A green `/api/health` only says the box answers; `/api/health/ingest` says uploads can land.
+After a reboot, check that pm2 holds the port (`docs/DEPLOYMENT.md` §6.2a, §8).
 
 If the site appears down: check from a phone hotspot first. `.dev` TLDs trip some campus/ISP
 networks (HSTS-preload + SNI filtering); cellular working but wifi not = not the server. Full
