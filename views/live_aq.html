@@ -47,9 +47,25 @@
     <img src="/public/images/utah.png" id="image-overlay" alt="Study Area">
 </div>
 
-<!-- Warning Levels Overlay -->
-<div class="warning-levels-overlay">
-    <img src="/public/images/ozone-graphOZONE2.png" id="image-overlay1" alt="Warning Levels">
+<!-- Ozone marker legend -->
+<div class="live-aq-legend">
+    <button
+        type="button"
+        class="live-aq-legend-toggle"
+        id="live-aq-legend-toggle"
+        aria-controls="live-aq-legend-panel"
+        aria-expanded="true"
+    >
+        <i class="fa-solid fa-palette" aria-hidden="true"></i>
+        <span>Ozone legend</span>
+    </button>
+    <div
+        class="live-aq-legend-panel"
+        id="live-aq-legend-panel"
+        role="region"
+        aria-label="Ozone station marker legend"
+        hidden
+    ></div>
 </div>
 
 <!-- Sidebar Container -->
@@ -69,6 +85,7 @@
 <script src="/public/js/loadSidebar.js"></script>
 <script src="/public/js/loadFooter.js"></script>
 <script type="module" src="/public/js/map.js"></script>
+<script type="module" src="/public/js/liveAqLegend.js"></script>
 <script src="/public/js/nineties-mode.js"></script>
 
 <!--JRL: below is an example of looking up pretty variable names-->
