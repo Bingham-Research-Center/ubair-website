@@ -54,8 +54,17 @@ function allowed(access, p, mode) {
     }
 }
 
-// Creating or replacing a file needs search (X) as well as write permission on its directory.
-const DIR_WRITE = fs.constants.W_OK | fs.constants.X_OK;
+// Creating or replacing a file needs search (X) and write permission on its directory; the
+// filelist rewrite after every upload and GET /api/filelist also list it (R).
+const DIR_ACCESS = fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK;
+
+function isRegularFile(p) {
+    try {
+        return fs.statSync(p).isFile();
+    } catch {
+        return false;
+    }
+}
 
 /** OS user this process runs as, for log lines. Never sent in an HTTP response. */
 export function processUser() {
@@ -91,6 +100,7 @@ export function checkIngestReadiness({
     rewrittenFiles = REWRITTEN_FILES,
     exists = fs.existsSync,
     access = fs.accessSync,
+    isFile = isRegularFile,
 } = {}) {
     const problems = [];
 
@@ -102,16 +112,17 @@ export function checkIngestReadiness({
     const unwritable = dataTypes.filter(dataType => {
         const dir = path.join(staticRoot, dataType);
         // The upload route creates a missing directory, so then only its parent must be writable.
-        return !allowed(access, exists(dir) ? dir : staticRoot, DIR_WRITE);
+        return !allowed(access, exists(dir) ? dir : staticRoot, DIR_ACCESS);
     });
     if (unwritable.length > 0) {
-        problems.push(`upload directories not writable: ${unwritable.join(', ')}`);
+        problems.push(`upload directories lack read/write/search permission: ${unwritable.join(', ')}`);
     }
 
-    // A missing file is created in a directory already checked above.
+    // A missing file is created in a directory already checked above. Anything else at that
+    // path (a directory passes W_OK) fails the rewrite with EISDIR.
     const readOnly = rewrittenFiles.filter(rel => {
         const file = path.join(staticRoot, rel);
-        return exists(file) && !allowed(access, file, fs.constants.W_OK);
+        return exists(file) && !(isFile(file) && allowed(access, file, fs.constants.W_OK));
     });
     if (readOnly.length > 0) {
         problems.push(`files rewritten on upload are not writable: ${readOnly.join(', ')}`);
@@ -146,7 +157,8 @@ export function noteAcceptedUpload(at = Date.now()) {
  */
 export function seedLastUploadFromDisk({ staticRoot = defaultStaticRoot(), stat = fs.statSync } = {}) {
     try {
-        seededAtMs = stat(path.join(staticRoot, 'observations', 'filelist.json')).mtimeMs;
+        const info = stat(path.join(staticRoot, 'observations', 'filelist.json'));
+        seededAtMs = info.isFile() ? info.mtimeMs : null;
     } catch {
         seededAtMs = null;
     }

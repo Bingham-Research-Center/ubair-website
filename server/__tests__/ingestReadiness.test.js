@@ -43,7 +43,7 @@ describe('envFileProblem', () => {
 });
 
 describe('checkIngestReadiness', () => {
-    const base = { envPath: '/x/.env', staticRoot: '/x/static', exists: yes, access: allowAll };
+    const base = { envPath: '/x/.env', staticRoot: '/x/static', exists: yes, access: allowAll, isFile: yes };
     const env = { DATA_UPLOAD_API_KEY: 'k' };
 
     test('ready when the key is set and every upload directory and index is writable', () => {
@@ -61,15 +61,15 @@ describe('checkIngestReadiness', () => {
         expect(result.problems).toEqual([
             '.env exists but is not readable by this process',
             'DATA_UPLOAD_API_KEY is not set',
-            'upload directories not writable: metadata, llm_outlooks, images, forecasts, road-forecast',
+            'upload directories lack read/write/search permission: metadata, llm_outlooks, images, forecasts, road-forecast',
         ]);
     });
 
-    test('directories need search as well as write permission, files only write', () => {
+    test('directories need read, write and search permission, files only write', () => {
         const calls = [];
         checkIngestReadiness({ ...base, env, access: (p, mode) => calls.push([p, mode]) });
         expect(calls).toContainEqual(['/x/.env', R_OK]);
-        expect(calls).toContainEqual(['/x/static/metadata', W_OK | X_OK]);
+        expect(calls).toContainEqual(['/x/static/metadata', R_OK | W_OK | X_OK]);
         expect(calls).toContainEqual(['/x/static/observations/filelist.json', W_OK]);
         expect(calls).toContainEqual(['/x/static/road-forecast/latest.json', W_OK]);
     });
@@ -80,7 +80,25 @@ describe('checkIngestReadiness', () => {
             env,
             access: denyIf((p, mode) => p === '/x/static/images' && (mode & X_OK)),
         });
-        expect(result.problems).toEqual(['upload directories not writable: images']);
+        expect(result.problems).toEqual(['upload directories lack read/write/search permission: images']);
+    });
+
+    test('an observations directory that cannot be listed is not ready (every upload re-lists it)', () => {
+        const result = checkIngestReadiness({
+            ...base,
+            env,
+            access: denyIf((p, mode) => p === '/x/static/observations' && (mode & R_OK)),
+        });
+        expect(result.problems).toEqual(['upload directories lack read/write/search permission: observations']);
+    });
+
+    test('a directory where a rewritten index should be is not ready (W_OK passes, the rewrite EISDIRs)', () => {
+        const result = checkIngestReadiness({
+            ...base,
+            env,
+            isFile: p => p !== '/x/static/observations/filelist.json',
+        });
+        expect(result.problems).toEqual(['files rewritten on upload are not writable: observations/filelist.json']);
     });
 
     test('a read-only index the upload route rewrites is not ready', () => {
@@ -133,9 +151,16 @@ describe('lastUploadAgeMinutes', () => {
         expect(lastUploadAgeMinutes(now)).toBe(40);
     });
 
+    test('a directory at the filelist path does not seed a time', () => {
+        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ingest-'));
+        fs.mkdirSync(path.join(root, 'observations', 'filelist.json'), { recursive: true });
+        seedLastUploadFromDisk({ staticRoot: root });
+        expect(lastUploadAgeMinutes()).toBeNull();
+    });
+
     test('a fully successful upload overrides the seed', () => {
         const now = Date.now();
-        seedLastUploadFromDisk({ stat: () => ({ mtimeMs: now - 90 * 60000 }) });
+        seedLastUploadFromDisk({ stat: () => ({ mtimeMs: now - 90 * 60000, isFile: () => true }) });
         noteAcceptedUpload(now - 2 * 60000);
         expect(lastUploadAgeMinutes(now)).toBe(2);
     });

@@ -144,7 +144,7 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (270/270 as of 2026-10-27); any failure is new
+- `npm test` — Jest. **The suite is green (273/273 as of 2026-10-27); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is
