@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import { logPipelineEvent } from '../middleware/pipelineAnalytics.js';
 import { recordUploadAttempt } from '../monitoring/uploadAttempts.js';
 import { getBuildInfo } from '../buildInfo.js';
+import { getIngestReadiness, lastUploadAgeMinutes, UPLOAD_STALE_MINUTES } from '../ingestReadiness.js';
 
 const reverseLookup = promisify(dns.reverse);
 
@@ -46,7 +47,8 @@ const router = express.Router();
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Map data types to subdirectories
+        // Map data types to subdirectories. ingestReadiness.js lists the same set to check
+        // they are writable; add a new dataType there too.
         const dataTypeMap = {
             'observations': 'observations',
             'metadata': 'metadata',
@@ -276,6 +278,10 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 // commit/branch/startedAt/vendorAssets make a deploy verifiable from outside without a
 // shell: version says what package.json claims, commit says what `git pull` actually
 // landed, startedAt says whether pm2 restarted, vendorAssets says whether `npm install` ran.
+//
+// ingest says whether this process can accept an upload at all (key loaded, upload
+// directories writable). It does not change the status code or `success`: producers gate
+// their uploads on this call, and an outage is not the moment to change what they read.
 router.get('/health', (req, res) => {
     const build = getBuildInfo();
     res.status(200).json({
@@ -288,6 +294,30 @@ router.get('/health', (req, res) => {
         startedAt: build.startedAt,
         uptimeSeconds: Math.round(process.uptime()),
         vendorAssets: build.vendorAssets,
+        ingest: getIngestReadiness(),
+        timestamp: new Date().toISOString()
+    });
+});
+
+// For an external uptime monitor, not for producers: 503 whenever uploads cannot succeed or
+// nothing has been accepted for UPLOAD_STALE_MINUTES. Either one would have paged someone on
+// 2026-10-26, when /api/health stayed 200 through a day of rejected uploads.
+router.get('/health/ingest', (req, res) => {
+    const { ready, problems } = getIngestReadiness();
+    const lastUploadMinutes = lastUploadAgeMinutes();
+    const reasons = [...problems];
+    if (lastUploadMinutes === null) {
+        reasons.push('no accepted upload on record');
+    } else if (lastUploadMinutes > UPLOAD_STALE_MINUTES) {
+        reasons.push(`last accepted upload was ${lastUploadMinutes} min ago`);
+    }
+    const ok = reasons.length === 0;
+    res.status(ok ? 200 : 503).json({
+        ok,
+        ready,
+        lastUploadMinutes,
+        staleAfterMinutes: UPLOAD_STALE_MINUTES,
+        reasons,
         timestamp: new Date().toISOString()
     });
 });

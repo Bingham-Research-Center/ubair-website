@@ -45,9 +45,18 @@ in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
   per-dataType freshness, and with `DATA_UPLOAD_API_KEY` in the environment the last upload
   attempts. Its first run found prod a release behind.
 - `GET /api/health` → `version`, `manifestVersion` and, since 1.5.5, `commit`, `branch`,
-  `startedAt`, `vendorAssets`. `GET /api/monitoring/uploads` with the key in `x-api-key` → the
+  `startedAt`, `vendorAssets` and `ingest` (`ready`: key loaded and upload dirs writable). It
+  stays 200 either way because producers gate uploads on it; `GET /api/health/ingest` is the
+  one that returns 503 (not ready, or no upload accepted for 30 min), for an uptime monitor.
+  `GET /api/monitoring/uploads` with the key in `x-api-key` → the
   last 200 attempts the app saw, rejected ones included, with source IP and `x-client-hostname`.
   `GET /api/monitoring/freshness` → age of the newest file per dataType.
+- **Only pm2 may hold the app's port.** After a Linode reboot on 2026-10-26 a leftover
+  pre-pm2 unit, `ubair-website.service` (www-data, no `.env`), took prod's port 3000 first:
+  every upload 500ed for a day while `/api/health` stayed green and pm2 crash-looped 222k times
+  behind it. The unit was removed on 2026-10-27; since 1.5.5 a copy that cannot read `.env`
+  exits before binding. After any reboot, check `ss -ltnp 'sport = :3000'` and `ingest.ready`
+  (`docs/DEPLOYMENT.md` §8).
 - **Claude cannot reach either box.** notchpeak1 has no SSH keys; deploys are JRL's, from
   elsewhere. Verify from outside and hand over the one-liner.
 - **`npm install` is part of every deploy.** `package-lock.json` is gitignored and the roads
@@ -135,7 +144,7 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (230/230 as of 2026-09-28); any failure is new
+- `npm test` — Jest. **The suite is green (265/265 as of 2026-10-27); any failure is new
   breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is

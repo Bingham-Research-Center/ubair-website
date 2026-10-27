@@ -22,9 +22,15 @@ the other — every difference below was a real surprise.
 
 Divergences from the target layout (§1b), on production:
 
-- pm2 app is a **hand-started process named `ubair-site`**, not `basinwx-ops`.
-  `ecosystem.config.cjs` is **not in use** on that box. Renaming a live pm2 app is a deliberate
-  migration, not a side effect of a deploy — see §1c.
+- pm2 app is named **`ubair-site`**, not `basinwx-ops`. Since 2026-10-27 it is started from
+  `ecosystem.config.cjs` with `PM2_APP_NAME=ubair-site` (§1c's first step), so it has the
+  config's restart backoff, `NODE_ENV=production`, memory ceiling and timestamped logs; before
+  that it was hand-started with none of them. Renaming it is still a deliberate migration, not
+  a side effect of a deploy — see §1c.
+- **pm2 is the only thing that may start the app.** A pre-pm2 systemd unit,
+  `ubair-website.service` (`User=www-data`, no `EnvironmentFile`), stayed enabled until
+  2026-10-27 and took port 3000 after a reboot (§8). It has been removed; `pm2-root.service`
+  is the only unit that should launch `server/server.js`.
 - Repo lives at `/var/www/ubair-website`, owned and run by `root`, not `deploy` under `/srv`.
 
 nginx **is** configured and matches §4's intent, just under different vhost filenames:
@@ -44,7 +50,7 @@ producer side:
 
 | Box | Logged source IP | Why |
 |---|---|---|
-| linode-prod | `::ffff:127.0.0.1` | the proxy in front of port 3000 does not pass `X-Forwarded-For`, so the app sees its own loopback peer (inferred from the address; the `ubair` vhost predates the §4 template) |
+| linode-prod | `::ffff:127.0.0.1` until 2026-10-27, `155.101.26.78` since | the `ubair` vhost predated the §4 template and did not pass `X-Forwarded-For`, so the app saw its own loopback peer; the §4 headers were added on 2026-10-27 |
 | linode-dev | `155.101.26.78` | nginx sets `X-Forwarded-For` per §4, so the app sees notchpeak1's real address |
 
 Evidence: brc-tools' own log on notchpeak1 shows every primary upload as a POST to
@@ -66,14 +72,15 @@ Consequences, the same on both boxes:
 - **If `https://www.basinwx.com` or `https://www.basinwx.dev` is unreachable from outside**
   (expired cert, nginx down, firewall), ingest to that box stops with it. The `deploy` user on
   dev has no `authorized_keys`; nothing from CHPC logs in to either box.
-- Prod's log cannot tell one producer from another by address. Adding the two
-  `proxy_set_header` lines from §4 to prod's vhost fixes that; until then rely on
-  `x-client-hostname`.
+- Both boxes now log the producer's real address (prod since its vhost gained the §4
+  `proxy_set_header` lines on 2026-10-27). Access is still granted on `x-client-hostname`.
 
 Ozone-season fan-out depends on both public paths staying up.
 
-nginx on dev **is** populated (unlike prod, where `sites-enabled/` is empty and how traffic
-reaches port 3000 is still undocumented):
+nginx on dev is laid out like prod's (the vhost table above; checked with
+`ls -l /etc/nginx/sites-enabled/` on 2026-10-27, which settles the old claim that prod's
+`sites-enabled/` was empty), under its own names. Prod's `/etc/nginx/nginx.conf` also carried a
+stray catch-all `server_name _` block proxying to an unused `:3001`; it was removed the same day:
 
 | Vhost (`sites-enabled/`) | `server_name` | Proxies to |
 |---|---|---|
@@ -274,6 +281,13 @@ cd /srv/ubair-website && git branch --show-current
 # 6.2  pm2 process online and named correctly?
 pm2 list                                       # expect: basinwx-<branch>, status online
 
+# 6.2a Is the pm2 process the one holding the port? A second launcher can win the boot race
+#      and serve the site without .env while pm2 crash-loops behind it (§8).
+PORT=$(grep -E '^PORT=' /srv/ubair-website/.env | cut -d= -f2)
+ss -ltnp "sport = :${PORT}"                    # expect: one node, started by pm2, as deploy
+pm2 describe basinwx-<branch> | grep -E 'restarts|uptime'   # expect: restarts not climbing
+curl -fsS http://127.0.0.1:${PORT}/api/health/ingest        # expect: 200, "ok":true
+
 # 6.3  pm2 survives reboot?
 systemctl list-unit-files | grep pm2           # expect: pm2-deploy.service  enabled
 # If empty: sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u deploy --hp /home/deploy
@@ -435,6 +449,25 @@ quotas — see §9.
 - **`.dev` TLDs are HSTS-preloaded.** Browsers refuse plain HTTP. The nginx template above returns 301 → HTTPS which is required, not a nice-to-have.
 - **`deploy` vs. `sudo` user.** pm2's state (`~/.pm2/`) lives in `deploy`'s home. Never run pm2 as root or any other user, or you end up with two separate daemons and mystifying "process not found" behaviour.
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
+- **A second launcher wins the boot race (prod, 2026-10-26 → 27).** Linode rebooted prod from
+  outside (an ACPI power-key event, 343 days after the previous boot). A pre-pm2 unit,
+  `ubair-website.service`, was still enabled and started `server/server.js` as `www-data` two
+  seconds before `pm2-root.service` resurrected `ubair-site`. That copy could not read `.env`
+  (root, 0600; dotenv says nothing) and could not write to five of the seven upload directories,
+  so **every upload answered 500 "API key not configured" for 24 hours**. Meanwhile pm2's copy
+  died on `EADDRINUSE :3000` about 2.5 times a second (222k restarts, CPU pinned, 570 MB of
+  logs), because the hand-started app had no restart backoff. Nothing alerted: `/api/health`
+  stayed `success:true`, `probe.py` said `RESULT: ok` because staleness only warned, and the
+  report email was never configured on prod. It also starved `.dev`: the producer's observations
+  job stops when its metadata push to the primary fails, so `.dev` lost observations too while
+  its other dataTypes kept arriving.
+
+  What now stops a repeat: the unit is deleted; prod runs from `ecosystem.config.cjs`
+  (`exp_backoff_restart_delay`); since 1.5.5 a copy that cannot read `.env` exits before
+  binding, `/api/health` carries `ingest.ready`, `/api/health/ingest` answers 503 when uploads
+  cannot succeed or none has landed for 30 minutes, and `probe.py` FAILs on observations older
+  than an hour. Point an external uptime monitor at `https://www.basinwx.com/api/health/ingest`,
+  because a monitor inside the box shares its failure. After any reboot, run step 6.2a.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
 - **nginx `client_max_body_size` (the silent-413 trap).** nginx's default body limit is **1 MB**. CHPC's forecast bundle is many ~1.5 MB run files *plus* a ~3 KB `<product>_index.json` that lists them. With the limit unset, nginx 413s every run file while passing the index — so `/api/filelist/forecasts` and the index both keep updating, `pipeline_summary.json` records "success", and the dataType looks merely *slightly* stale rather than dead. This is what happened on **linode-dev**: forecast run files stopped landing on **2026-04-27** and were not noticed until **2026-08-25**, because the index refreshed hourly the whole time. The uploads never reach Express, so nothing appears in pm2 logs either — only nginx's access log shows the 413. Confirm with a synthetic body rather than trusting a green `/api/health`:
 

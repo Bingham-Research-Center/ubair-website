@@ -18,6 +18,7 @@ import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from '
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
+import { envFileProblem, getIngestReadiness, processUser } from './ingestReadiness.js';
 import { generateOutlooksList } from './generateOutlooksList.js';
 import {
     getPreviewSkipLog,
@@ -258,6 +259,23 @@ const server = createServer(app);
 const isTestEnvironment = process.env.NODE_ENV === 'test';
 
 if (!isTestEnvironment) {
+    // A copy that cannot read .env has none of the secrets, so it must not hold the port. On
+    // 2026-10-26 a leftover systemd unit started one as www-data ahead of pm2: every upload
+    // answered 500 for a day while pm2's working copy crash-looped on EADDRINUSE behind it.
+    // Exiting here hands the port to whichever correctly configured copy starts next.
+    const envProblem = envFileProblem();
+    if (envProblem) {
+        console.error(`FATAL: ${envProblem} (running as ${processUser()} in ${process.cwd()}). ` +
+            'Refusing to start: this is probably the wrong service or user.');
+        process.exit(1);
+    }
+
+    const ingest = getIngestReadiness();
+    if (!ingest.ready && !previewMode) {
+        console.error(`⚠️  Ingest not ready (running as ${processUser()}): ` +
+            `${ingest.problems.join('; ')}. Every upload will fail.`);
+    }
+
     server.listen(PORT, () => {
         console.log(`Server running at http://localhost:${PORT}`);
         console.log('Data upload API available at /api/data/upload/:dataType');
