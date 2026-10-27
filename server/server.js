@@ -18,7 +18,7 @@ import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from '
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
-import { envFileProblem, getIngestReadiness, processUser } from './ingestReadiness.js';
+import { envFileProblem, getIngestReadiness, processUser, seedLastUploadFromDisk } from './ingestReadiness.js';
 import { generateOutlooksList } from './generateOutlooksList.js';
 import {
     getPreviewSkipLog,
@@ -270,6 +270,7 @@ if (!isTestEnvironment) {
         process.exit(1);
     }
 
+    seedLastUploadFromDisk();
     const ingest = getIngestReadiness();
     if (!ingest.ready && !previewMode) {
         console.error(`⚠️  Ingest not ready (running as ${processUser()}): ` +

@@ -8,7 +8,12 @@ import { fileURLToPath } from 'url';
 import { logPipelineEvent } from '../middleware/pipelineAnalytics.js';
 import { recordUploadAttempt } from '../monitoring/uploadAttempts.js';
 import { getBuildInfo } from '../buildInfo.js';
-import { getIngestReadiness, lastUploadAgeMinutes, UPLOAD_STALE_MINUTES } from '../ingestReadiness.js';
+import {
+    getIngestReadiness,
+    lastUploadAgeMinutes,
+    noteAcceptedUpload,
+    UPLOAD_STALE_MINUTES
+} from '../ingestReadiness.js';
 
 const reverseLookup = promisify(dns.reverse);
 
@@ -236,11 +241,6 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     const { dataType } = req.params;
     const { filename, size } = req.file;
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
-    // Fire-and-forget; logPipelineEvent swallows its own errors, and the .catch() is a
-    // second belt so upload analytics can never reject on the ingest path.
-    logPipelineEvent({ dataType, filename, size, success: true })
-        .catch(err => console.error('[Pipeline] log failed:', err.message));
-    noteAttempt(req, 200, 'accepted', filename);
 
     // Update file list for the observations directory (where obs files actually live)
     const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
@@ -252,6 +252,14 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
       fs.copyFileSync(req.file.path, latestPath);
       console.log(`[${new Date().toISOString()}] Road forecast latest.json updated`);
     }
+
+    // Counted as a success only now: either step above can still throw and turn this into a 500.
+    // Fire-and-forget; logPipelineEvent swallows its own errors, and the .catch() is a
+    // second belt so upload analytics can never reject on the ingest path.
+    logPipelineEvent({ dataType, filename, size, success: true })
+        .catch(err => console.error('[Pipeline] log failed:', err.message));
+    noteAttempt(req, 200, 'accepted', filename);
+    noteAcceptedUpload();
 
     res.status(200).json({
       success: true,
@@ -300,7 +308,7 @@ router.get('/health', (req, res) => {
 });
 
 // For an external uptime monitor, not for producers: 503 whenever uploads cannot succeed or
-// nothing has been accepted for UPLOAD_STALE_MINUTES. Either one would have paged someone on
+// none has fully succeeded for UPLOAD_STALE_MINUTES. Either one would have paged someone on
 // 2026-10-26, when /api/health stayed 200 through a day of rejected uploads.
 router.get('/health/ingest', (req, res) => {
     const { ready, problems } = getIngestReadiness();

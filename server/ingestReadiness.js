@@ -2,8 +2,7 @@
  * Ingest readiness for /api/health: can this process accept CHPC uploads at all?
  *
  * Checked once at startup and cached, like buildInfo.js. Producers call /api/health before
- * every upload, so nothing here may touch disk per request. The one per-request stat lives in
- * lastUploadAgeMinutes(), which only GET /api/health/ingest (for uptime monitors) calls.
+ * every upload, so nothing here may touch disk per request.
  *
  * Why this exists: after a Linode reboot on 2026-10-26 a leftover systemd unit started the
  * app as www-data two seconds before pm2 did. That copy could not read .env (root, 0600) and
@@ -28,6 +27,13 @@ export const UPLOAD_DATA_TYPES = [
     'road-forecast',
 ];
 
+// Files the upload route rewrites in place after the data file has landed. A read-only one
+// turns the upload into a 500 even though its directory is writable.
+export const REWRITTEN_FILES = [
+    'observations/filelist.json', // after every upload, whatever its dataType
+    'road-forecast/latest.json',  // after every road-forecast upload
+];
+
 // Observations and metadata each arrive every 10 minutes, so half an hour with no accepted
 // upload of any kind is an outage, not jitter.
 export const UPLOAD_STALE_MINUTES = 30;
@@ -37,17 +43,19 @@ export const UPLOAD_STALE_MINUTES = 30;
 const defaultEnvPath = () => path.resolve(process.cwd(), '.env');
 const defaultStaticRoot = () => path.resolve(process.cwd(), 'public', 'api', 'static');
 
-function accessible(p, mode) {
+// `access` has fs.accessSync's contract (throws when denied). It is injectable because root
+// passes every access() check, so tests cannot fake a denial with chmod.
+function allowed(access, p, mode) {
     try {
-        fs.accessSync(p, mode);
+        access(p, mode);
         return true;
     } catch {
         return false;
     }
 }
 
-const canReadPath = p => accessible(p, fs.constants.R_OK);
-const canWritePath = p => accessible(p, fs.constants.W_OK);
+// Creating or replacing a file needs search (X) as well as write permission on its directory.
+const DIR_WRITE = fs.constants.W_OK | fs.constants.X_OK;
 
 /** OS user this process runs as, for log lines. Never sent in an HTTP response. */
 export function processUser() {
@@ -65,29 +73,28 @@ export function processUser() {
 export function envFileProblem({
     envPath = defaultEnvPath(),
     exists = fs.existsSync,
-    canRead = canReadPath,
+    access = fs.accessSync,
 } = {}) {
     if (!exists(envPath)) return null;
-    return canRead(envPath) ? null : '.env exists but is not readable by this process';
+    return allowed(access, envPath, fs.constants.R_OK) ? null : '.env exists but is not readable by this process';
 }
 
 /**
  * `{ ready, problems }` for the process as configured right now. `ready: false` means every
- * upload will fail whatever the producer sends. The filesystem probes are injectable because
- * root passes every access() check, so tests cannot fake an unreadable file with chmod.
+ * upload (or every upload of some dataType) will fail whatever the producer sends.
  */
 export function checkIngestReadiness({
     env = process.env,
     envPath = defaultEnvPath(),
     staticRoot = defaultStaticRoot(),
     dataTypes = UPLOAD_DATA_TYPES,
+    rewrittenFiles = REWRITTEN_FILES,
     exists = fs.existsSync,
-    canRead = canReadPath,
-    canWrite = canWritePath,
+    access = fs.accessSync,
 } = {}) {
     const problems = [];
 
-    const envProblem = envFileProblem({ envPath, exists, canRead });
+    const envProblem = envFileProblem({ envPath, exists, access });
     if (envProblem) problems.push(envProblem);
 
     if (!env.DATA_UPLOAD_API_KEY) problems.push('DATA_UPLOAD_API_KEY is not set');
@@ -95,35 +102,27 @@ export function checkIngestReadiness({
     const unwritable = dataTypes.filter(dataType => {
         const dir = path.join(staticRoot, dataType);
         // The upload route creates a missing directory, so then only its parent must be writable.
-        return !canWrite(exists(dir) ? dir : staticRoot);
+        return !allowed(access, exists(dir) ? dir : staticRoot, DIR_WRITE);
     });
     if (unwritable.length > 0) {
         problems.push(`upload directories not writable: ${unwritable.join(', ')}`);
     }
 
+    // A missing file is created in a directory already checked above.
+    const readOnly = rewrittenFiles.filter(rel => {
+        const file = path.join(staticRoot, rel);
+        return exists(file) && !allowed(access, file, fs.constants.W_OK);
+    });
+    if (readOnly.length > 0) {
+        problems.push(`files rewritten on upload are not writable: ${readOnly.join(', ')}`);
+    }
+
     return { ready: problems.length === 0, problems };
 }
 
-/**
- * Minutes since the last accepted upload of any dataType, or null if there has never been one.
- * The upload route rewrites observations/filelist.json after every accepted upload, whatever
- * its dataType, so that file's mtime is the time of the last one. Per-dataType staleness is
- * /api/monitoring/freshness's job; this only answers "is anything arriving at all?".
- */
-export function lastUploadAgeMinutes({
-    staticRoot = defaultStaticRoot(),
-    now = Date.now(),
-    stat = fs.statSync,
-} = {}) {
-    try {
-        const { mtimeMs } = stat(path.join(staticRoot, 'observations', 'filelist.json'));
-        return Math.round((now - mtimeMs) / 60000);
-    } catch {
-        return null;
-    }
-}
-
 let cached = null;
+let lastAcceptedAtMs = null;
+let seededAtMs = null;
 
 /** The block /api/health embeds. Computed on first call, then frozen for the process lifetime. */
 export function getIngestReadiness() {
@@ -134,7 +133,34 @@ export function getIngestReadiness() {
     return cached;
 }
 
+/** The upload route calls this once an upload has fully succeeded, just before it answers 200. */
+export function noteAcceptedUpload(at = Date.now()) {
+    lastAcceptedAtMs = at;
+}
+
+/**
+ * Startup only: seed "last accepted upload" from the mtime of observations/filelist.json, which
+ * the upload route rewrites after every upload, so a restart does not read as an outage. It is
+ * read once: after startup only noteAcceptedUpload() moves the time, because that file is also
+ * rewritten by uploads that go on to fail.
+ */
+export function seedLastUploadFromDisk({ staticRoot = defaultStaticRoot(), stat = fs.statSync } = {}) {
+    try {
+        seededAtMs = stat(path.join(staticRoot, 'observations', 'filelist.json')).mtimeMs;
+    } catch {
+        seededAtMs = null;
+    }
+}
+
+/** Minutes since the last fully successful upload of any dataType, or null if none is known. */
+export function lastUploadAgeMinutes(now = Date.now()) {
+    const at = lastAcceptedAtMs ?? seededAtMs;
+    return at === null ? null : Math.round((now - at) / 60000);
+}
+
 /** Test hook. */
 export function _resetIngestReadinessForTests() {
     cached = null;
+    lastAcceptedAtMs = null;
+    seededAtMs = null;
 }
