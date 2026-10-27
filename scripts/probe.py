@@ -10,8 +10,9 @@ Per host it reports:
   dns      addresses; WARN if the apex domain also points somewhere that is not this box
   tls      certificate days remaining (FAIL under 14)
   health   version, manifest, commit, branch, startedAt, vendorAssets (the last four need >= 1.5.5)
+  ingest   whether this process can accept an upload at all: key loaded, dirs writable (>= 1.5.5)
   vendor   HEAD of a file served out of node_modules -- tells you whether `npm install` ran
-  fresh    /api/monitoring/freshness, one line per dataType
+  fresh    /api/monitoring/freshness, one line per dataType (FAIL if observations are missing or > 60 min old)
   uploads  /api/monitoring/uploads, last 5 attempts (only with the key)
   release  the newest v* tag in this checkout, if run inside the repo, against the version served
 
@@ -32,6 +33,7 @@ from datetime import datetime, timezone
 DEFAULT_HOSTS = ["www.basinwx.com", "www.basinwx.dev"]
 VENDOR_FILE = "/vendor/leaflet.markercluster/leaflet.markercluster.js"
 TIMEOUT = float(os.environ.get("PROBE_TIMEOUT", "15"))
+OBS_DEAD_MINUTES = 60
 FAILED = False
 
 
@@ -118,6 +120,15 @@ def probe(host, tag):
     else:
         say("WARN", "build    this server does not report commit/startedAt/vendorAssets yet (added in 1.5.5)")
 
+    ingest = h.get("ingest")
+    if ingest is None:
+        say("WARN", "ingest   this server does not report ingest readiness yet (added in 1.5.5)")
+    elif ingest.get("ready"):
+        say("ok", "ingest   ready: upload key loaded, upload directories writable")
+    else:
+        say("FAIL", f"ingest   every upload will fail: {'; '.join(ingest.get('problems', []))} "
+                    "-> is the right process on the port? (docs/DEPLOYMENT.md section 8)")
+
     vt = version_tuple(version)
     vcode, _ = fetch(base + VENDOR_FILE, method="HEAD")
     if vcode == 200:
@@ -142,6 +153,12 @@ def probe(host, tag):
             st = f.get("status")
             age = f.get("ageMinutes")
             lvl = "ok" if st == "fresh" else "WARN"
+            # Most dataTypes are seasonal or six-hourly, so stale alone only warns. Observations
+            # flow every 10 minutes all year: an hour without them means ingest is down, and on
+            # 2026-10-27 this script said "RESULT: ok" a full day into exactly that. No usable
+            # age at all (missing, no_data, error) is no better.
+            if name == "observations" and (age is None or age > OBS_DEAD_MINUTES):
+                lvl = "FAIL"
             detail = f"{age} min old, expected every {f.get('expectedFreqMinutes')}" if age is not None else f.get("message", "")
             say(lvl, f"fresh    {name:<14} {st:<8} {detail}")
     else:
