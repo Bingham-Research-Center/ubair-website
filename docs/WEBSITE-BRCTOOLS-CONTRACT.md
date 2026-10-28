@@ -27,16 +27,19 @@ re-verified against `dev` on 2026-08-26, but trust the symbol, not the number.
 Both accept identical uploads. **brc-tools is the single source of truth; both websites are
 downstream receivers that never pull.** Fan-out is the producer's responsibility.
 
-**The two ingest paths are not alike.** Prod's uploads arrive on loopback over an SSH tunnel
-(`::ffff:127.0.0.1`, `x-client-hostname: notchpeak1.int.chpc.utah.edu`); dev's arrive as
-ordinary public HTTPS from notchpeak1's real IP through nginx. Consequences:
+**Both boxes ingest over public HTTPS from notchpeak1**, through nginx, into the app. Prod logs
+`::ffff:127.0.0.1` only because its proxy does not pass `X-Forwarded-For`; there is no SSH
+tunnel (corrected 2026-09-23, `docs/DEPLOYMENT.md` §1a). Consequences:
 
-- A green `https://www.basinwx.com/api/health` proves **nothing** about prod ingest — the paths
-  are independent. If prod uploads stop, check the SSH path first (`docs/DEPLOYMENT.md` §1a).
-- On dev the public path **is** the ingest path, so nginx sits in front of it and its body
-  limit applies. This is what caused the four-month outage; see `docs/DEPLOYMENT.md` §8.
+- nginx's body limit applies on **both** boxes. It caused the four-month outage on dev
+  (`docs/DEPLOYMENT.md` §8); prod's nginx passed a 1.5 MB probe on 2026-08-25.
+- A green `/api/health` means the box is reachable, not that a push landed. Ask
+  `/api/monitoring/freshness`, or `/api/monitoring/uploads` with the key (1.5.5+).
+- POST to `https://www.basinwx.com`, not the bare domain, which also resolves to a Namecheap
+  forwarding host (`docs/DEPLOYMENT.md` §8).
 
-**Pre-flight check.** `GET /api/health` returns `version` + `manifestVersion`. Use it to
+**Pre-flight check.** `GET /api/health` returns `version` + `manifestVersion` (and, since
+1.5.5, `commit`, `startedAt` and `vendorAssets`, so a half-finished deploy is visible too). Use it to
 confirm which box and which contract you are talking to before uploading anything — the two
 boxes deliberately never report the same version.
 
@@ -292,8 +295,9 @@ that is "never uploaded here", distinguishable from a 500 since v1.5.2.
 - **Do not emit Kelvin for `temp_2m`.** See §6.
 - **Do not drop `--validate-only` / `--dry-run` support.** The website team needs to seed test
   fixtures when you are not around.
-- **Do not put the API key in any file in either repo.** It leaked into `chpc-deployment/`
-  once and the repo is public.
+- **Do not put the API key in any file in either repo.** It leaked into the old CHPC
+  deployment helpers once (scrubbed 2026-08-13, directory deleted 2026-09-28, value still in
+  git history) and the repo is public.
 
 ---
 

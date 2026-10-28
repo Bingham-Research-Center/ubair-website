@@ -166,3 +166,27 @@ describe('isGeneratedIndex', () => {
         expect(isGeneratedIndex('outlook_20240205_1115.md')).toBe(false);
     });
 });
+
+describe('checkDataFreshness — images cadence from the real manifest', () => {
+    // 2026-09-28: the manifest said images arrive every 30 min, so the box reported
+    // "stale" 73 min after a perfectly normal upload. What actually lands is one batch of
+    // GEFS meteograms per 6-hourly cycle, ~9.5 h after 00/06/12/18Z. Both boxes agreed,
+    // and the real gap turned out to be Clyfar's plot job hanging on a Herbie download.
+    // With a 6 h interval the 2x rule flags at 12 h, i.e. exactly one missed cycle.
+    const realManifestPath = path.resolve(
+        path.dirname(new URL(import.meta.url).pathname), '../../DATA_MANIFEST.json'
+    );
+
+    test('a normal inter-cycle gap is fresh and one missed cycle is stale', async () => {
+        const real = JSON.parse(fs.readFileSync(realManifestPath, 'utf8'));
+        monitor = await makeMonitor({ images: real.dataTypes.images });
+
+        expect(monitor.parseFrequency(real.dataTypes.images.schedule.frequency)).toBe(360);
+
+        writeFile(monitor, 'images', 'meteogram_UB-repr_wind_20260928-0000_GEFS.png', 7 * HOUR);
+        expect(monitor.checkDataFreshness().images.status).toBe('fresh');
+
+        writeFile(monitor, 'images', 'meteogram_UB-repr_wind_20260928-0000_GEFS.png', 13 * HOUR);
+        expect(monitor.checkDataFreshness().images.status).toBe('stale');
+    });
+});
