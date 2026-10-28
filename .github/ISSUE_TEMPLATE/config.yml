@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Not scheduled yet? Post an idea
+    url: https://github.com/Bingham-Research-Center/ubair-website/discussions/categories/ideas
+    about: Wishlists live in Discussions › Ideas, one thread per area. An issue is opened only once the work gets a milestone.
+  - name: Stuck? Ask in Q&A
+    url: https://github.com/Bingham-Research-Center/ubair-website/discussions/categories/q-a
+    about: How-do-I questions about the code, the boxes or the workflow.

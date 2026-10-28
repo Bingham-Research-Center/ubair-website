@@ -330,8 +330,8 @@ Factors contributing to confidence:
 
 We created three documents:
 1. **CONFIDENCE_TAXONOMY.md** - Technical details for developers
-2. **ROAD_WEATHER_IMPROVEMENTS.md** - What we built and how to use it
-3. **TEST_RESULTS.md** - Detailed test analysis
+2. **ROAD_WEATHER_IMPROVEMENTS.md** - What we built and how to use it (deleted from the tree 2026-09-28; recover via `docs/AGENT-INDEX.md` § History)
+3. **TEST_RESULTS.md** - Detailed test analysis (deleted from the tree 2026-09-28; same recovery)
 4. **HOW_IT_WORKS.md** - This document (for everyone!)
 
 ---

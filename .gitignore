@@ -2,7 +2,9 @@
 logs/
 
 # Dependencies
-node_modules/
+# No trailing slash: `node_modules/` matches only a directory, and a symlink named
+# node_modules (used to run Jest in a worktree) was committed to dev on 2026-09-28 (#255).
+node_modules
 package-lock.json
 
 # Environment variables

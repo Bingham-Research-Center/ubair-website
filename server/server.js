@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { promises as fs } from 'fs';
+import { promises as fs, readdirSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 
@@ -18,12 +18,27 @@ import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from '
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
+import { envFileProblem, getIngestReadiness, processUser, seedLastUploadFromDisk } from './ingestReadiness.js';
+import { generateOutlooksList } from './generateOutlooksList.js';
+import {
+    getPreviewSkipLog,
+    initializeOutlookRefresh,
+    isPreviewMode,
+    startRuntimeBackgroundJobs
+} from './startup/backgroundJobs.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const aboutPagesDir = path.join(__dirname, '../views/about');
+const aboutPageAllowlist = new Set(
+    readdirSync(aboutPagesDir, { withFileTypes: true })
+        .filter(entry => entry.isFile() && path.extname(entry.name) === '.html')
+        .map(entry => path.basename(entry.name, '.html'))
+);
 
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
@@ -161,7 +176,13 @@ app.get('/test-viz', (req, res) => {
 });
 
 app.get('/about/:page', (req, res) => {
-    res.sendFile(path.join(__dirname, `../views/about/${req.params.page}.html`));
+    const { page } = req.params;
+
+    if (!aboutPageAllowlist.has(page)) {
+        return res.status(404).send('Not Found');
+    }
+
+    res.sendFile(path.join(aboutPagesDir, `${page}.html`));
 });
 
 // NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
@@ -235,20 +256,40 @@ app.get('/api/live-observations', async (req, res) => {
 
 // Create HTTP server
 const server = createServer(app);
+const isTestEnvironment = process.env.NODE_ENV === 'test';
 
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-    console.log('Data upload API available at /api/data/upload/:dataType');
-    console.log('');
-
-    // Skip background jobs for preview instances (feature-branch worktrees)
-    if (process.env.PREVIEW_MODE === 'true') {
-        console.log('PREVIEW_MODE=true — background refresh and report emails disabled.');
-    } else {
-        backgroundRefresh.start();
-        reportEmailService.start();
+if (!isTestEnvironment) {
+    // A copy that cannot read .env has none of the secrets, so it must not hold the port. On
+    // 2026-10-26 a leftover systemd unit started one as www-data ahead of pm2: every upload
+    // answered 500 for a day while pm2's working copy crash-looped on EADDRINUSE behind it.
+    // Exiting here hands the port to whichever correctly configured copy starts next.
+    const envProblem = envFileProblem();
+    if (envProblem) {
+        console.error(`FATAL: ${envProblem} (running as ${processUser()} in ${process.cwd()}). ` +
+            'Refusing to start: this is probably the wrong service or user.');
+        process.exit(1);
     }
-});
+
+    seedLastUploadFromDisk();
+    const ingest = getIngestReadiness();
+    if (!ingest.ready && !previewMode) {
+        console.error(`⚠️  Ingest not ready (running as ${processUser()}): ` +
+            `${ingest.problems.join('; ')}. Every upload will fail.`);
+    }
+
+    server.listen(PORT, () => {
+        console.log(`Server running at http://localhost:${PORT}`);
+        console.log('Data upload API available at /api/data/upload/:dataType');
+        console.log('');
+
+        // Skip background jobs for preview instances (feature-branch worktrees)
+        if (previewMode) {
+            console.log(getPreviewSkipLog());
+        } else {
+            startRuntimeBackgroundJobs({ backgroundRefresh, reportEmailService });
+        }
+    });
+}
 
 let isShuttingDown = false;
 const shutdown = async (signal, options = {}) => {
@@ -292,32 +333,34 @@ const shutdown = async (signal, options = {}) => {
     }, 10000).unref();
 };
 
-process.on('SIGINT', () => {
-    void shutdown('SIGINT', { reason: 'interrupt_signal', exitCode: 0 });
-});
-
-process.on('SIGTERM', () => {
-    void shutdown('SIGTERM', { reason: 'terminate_signal', exitCode: 0 });
-});
-
-process.on('uncaughtException', (error) => {
-    console.error('Uncaught exception:', error);
-    void shutdown('uncaughtException', {
-        reason: 'uncaught_exception',
-        error,
-        exitCode: 1
+if (!isTestEnvironment) {
+    process.on('SIGINT', () => {
+        void shutdown('SIGINT', { reason: 'interrupt_signal', exitCode: 0 });
     });
-});
 
-process.on('unhandledRejection', (reason) => {
-    const rejectionError = reason instanceof Error ? reason : new Error(String(reason));
-    console.error('Unhandled rejection:', rejectionError);
-    void shutdown('unhandledRejection', {
-        reason: 'unhandled_rejection',
-        error: rejectionError,
-        exitCode: 1
+    process.on('SIGTERM', () => {
+        void shutdown('SIGTERM', { reason: 'terminate_signal', exitCode: 0 });
     });
-});
+
+    process.on('uncaughtException', (error) => {
+        console.error('Uncaught exception:', error);
+        void shutdown('uncaughtException', {
+            reason: 'uncaught_exception',
+            error,
+            exitCode: 1
+        });
+    });
+
+    process.on('unhandledRejection', (reason) => {
+        const rejectionError = reason instanceof Error ? reason : new Error(String(reason));
+        console.error('Unhandled rejection:', rejectionError);
+        void shutdown('unhandledRejection', {
+            reason: 'unhandled_rejection',
+            error: rejectionError,
+            exitCode: 1
+        });
+    });
+}
 
 // Error handling middleware.
 //
@@ -367,52 +410,20 @@ async function checkDirectoryStructure() {
     }
 }
 
-// Start server
-async function generateOutlooksList() {
-    try {
-        const directory = path.join(__dirname, '../public/api/static/outlooks');
-        const files = await fs.readdir(directory);
-
-        const outlooks = files
-            .filter(file => /^outlook_\d{8}_\d{4}\.md$/.test(file))  // Only outlook_YYYYMMDD_HHMM.md
-            .map(filename => {
-                // Extract date from filename (format: outlook_YYYYMMDD_HHMM.md)
-                const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-                const [_, year, month, day, hour, minute] = match;
-                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                const formattedDate = new Date(date).toLocaleString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                    hour12: true
-                });
-                return { filename, date, formattedDate };
-            })
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-
-        // Write to outlooks_list.json (not file_list.json)
-        await fs.writeFile(
-            path.join(directory, 'outlooks_list.json'),
-            JSON.stringify(outlooks, null, 2)
-        );
-
-        return outlooks;
-    } catch (error) {
-        console.error('Error generating outlooks list:', error);
-        return [];
-    }
+// Update the server startup and intervals
+if (!isTestEnvironment) {
+    checkDirectoryStructure()
+        .then(async () => {
+            await initializeOutlookRefresh({
+                generateOutlooksList,
+                env: process.env
+            });
+        })
+        .catch(err => {
+            console.error('Failed to verify directory structure:', err);
+            process.exit(1);
+        });
 }
 
-// Update the server startup and intervals
-checkDirectoryStructure()
-    .then(() => {
-        generateOutlooksList(); // Initial generation
-        // Refresh every 5 minutes (300000ms) instead of 1 hour
-        setInterval(generateOutlooksList, 300000);
-    })
-    .catch(err => {
-        console.error('Failed to verify directory structure:', err);
-        process.exit(1);
-    });
+export { server };
+export default app;

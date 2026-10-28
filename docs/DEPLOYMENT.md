@@ -22,9 +22,15 @@ the other — every difference below was a real surprise.
 
 Divergences from the target layout (§1b), on production:
 
-- pm2 app is a **hand-started process named `ubair-site`**, not `basinwx-ops`.
-  `ecosystem.config.cjs` is **not in use** on that box. Renaming a live pm2 app is a deliberate
-  migration, not a side effect of a deploy — see §1c.
+- pm2 app is named **`ubair-site`**, not `basinwx-ops`. Since 2026-10-27 it is started from
+  `ecosystem.config.cjs` with `PM2_APP_NAME=ubair-site` (§1c's first step), so it has the
+  config's restart backoff, `NODE_ENV=production`, memory ceiling and timestamped logs; before
+  that it was hand-started with none of them. Renaming it is still a deliberate migration, not
+  a side effect of a deploy — see §1c.
+- **pm2 is the only thing that may start the app.** A pre-pm2 systemd unit,
+  `ubair-website.service` (`User=www-data`, no `EnvironmentFile`), stayed enabled until
+  2026-10-27 and took port 3000 after a reboot (§8). It has been removed; `pm2-root.service`
+  is the only unit that should launch `server/server.js`.
 - Repo lives at `/var/www/ubair-website`, owned and run by `root`, not `deploy` under `/srv`.
 
 nginx **is** configured and matches §4's intent, just under different vhost filenames:
@@ -37,33 +43,44 @@ nginx **is** configured and matches §4's intent, just under different vhost fil
 Both proxy to `upstream ubair_app { server 127.0.0.1:3000; }`. Verified end to end:
 `https://www.basinwx.com/api/health` → 200.
 
-**The two boxes ingest over completely different paths.** This is the single most misleading
-difference between them — verified on both, 2026-08-13, by reading the upload log lines each box
-writes (`Access attempt from IP: <ip>, Hostname: <host>`):
+**Both boxes ingest over the same path: public HTTPS from notchpeak1.** The upload log lines
+each box writes (`Access attempt from IP: <ip>, Hostname: <host>`) look different, and on
+2026-08-13 that difference was read as two transports. It is not. Corrected 2026-09-23 from the
+producer side:
 
-| Box | Logged source IP | What it means |
+| Box | Logged source IP | Why |
 |---|---|---|
-| linode-prod | `::ffff:127.0.0.1` | loopback — CHPC reaches port 3000 through an **SSH session/tunnel**, *not* by POSTing to `https://www.basinwx.com` |
-| linode-dev | `155.101.26.78` | notchpeak1's **real public IP** — CHPC POSTs straight to `https://www.basinwx.dev`, in through nginx → 3001 |
+| linode-prod | `::ffff:127.0.0.1` until 2026-10-27, `155.101.26.78` since | the `ubair` vhost predated the §4 template and did not pass `X-Forwarded-For`, so the app saw its own loopback peer; the §4 headers were added on 2026-10-27 |
+| linode-dev | `155.101.26.78` | nginx sets `X-Forwarded-For` per §4, so the app sees notchpeak1's real address |
+
+Evidence: brc-tools' own log on notchpeak1 shows every primary upload as a POST to
+`https://basinwx.com/api/upload/...`; notchpeak1 has no SSH private keys at all, so nothing there
+can open a tunnel; and `dataUpload.js` logs the first `X-Forwarded-For` hop when present and the
+socket peer otherwise. The 2026-08-25 measurement in §8 (a 1.5 MB multipart probe to `.com`
+public answered 401, i.e. it reached the app) already showed the public path carrying prod's
+traffic.
 
 Both are accepted by the same rule: `server/routes/dataUpload.js` grants access when
-`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`), so
-the transport underneath never had to match.
+`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`).
 
-Consequences, and they point in opposite directions:
+Consequences, the same on both boxes:
 
-- **On prod, a green public `/api/health` proves nothing about ingest** — the two paths are
-  unrelated. When uploads stop there, check the SSH path before touching nginx or the app.
-- **On dev, the public path *is* the ingest path.** If `https://www.basinwx.dev` is unreachable
-  from the outside — expired cert, nginx down, firewall — ingest stops with it. Dev has no SSH
-  ingest to fall back on: the `deploy` user has no `authorized_keys` at all, so nothing from
-  CHPC is logging in.
+- **If uploads stop, the public path is the whole path**: DNS, certificate, nginx (body limit,
+  §8), then the app. There is no SSH path to check on prod. A green public `/api/health` says
+  the box is reachable, not that the last push landed; `/api/monitoring/freshness` and, from
+  1.5.5, `/api/monitoring/uploads` answer that.
+- **If `https://www.basinwx.com` or `https://www.basinwx.dev` is unreachable from outside**
+  (expired cert, nginx down, firewall), ingest to that box stops with it. The `deploy` user on
+  dev has no `authorized_keys`; nothing from CHPC logs in to either box.
+- Both boxes now log the producer's real address (prod since its vhost gained the §4
+  `proxy_set_header` lines on 2026-10-27). Access is still granted on `x-client-hostname`.
 
-Don't "fix" dev to match prod, or vice versa, without asking why. Ozone-season fan-out currently
-depends on dev's public path staying up.
+Ozone-season fan-out depends on both public paths staying up.
 
-nginx on dev **is** populated (unlike prod, where `sites-enabled/` is empty and how traffic
-reaches port 3000 is still undocumented):
+nginx on dev is laid out like prod's (the vhost table above; checked with
+`ls -l /etc/nginx/sites-enabled/` on 2026-10-27, which settles the old claim that prod's
+`sites-enabled/` was empty), under its own names. Prod's `/etc/nginx/nginx.conf` also carried a
+stray catch-all `server_name _` block proxying to an unused `:3001`; it was removed the same day:
 
 | Vhost (`sites-enabled/`) | `server_name` | Proxies to |
 |---|---|---|
@@ -252,12 +269,24 @@ sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/nginx-reload
 
 Run these top-to-bottom when the browser shows an unexpected response. First failing step is the diagnosis.
 
+**Step 0, from anywhere with python3:** `scripts/probe.py` (defaults to both boxes) prints DNS,
+certificate days left, version/commit/start time, whether `npm install` ran, per-dataType
+freshness and, with `DATA_UPLOAD_API_KEY` in the environment, the last upload attempts. It is
+the outside view only; the steps below need a shell on the box.
+
 ```bash
 # 6.1  Right branch?
 cd /srv/ubair-website && git branch --show-current
 
 # 6.2  pm2 process online and named correctly?
 pm2 list                                       # expect: basinwx-<branch>, status online
+
+# 6.2a Is the pm2 process the one holding the port? A second launcher can win the boot race
+#      and serve the site without .env while pm2 crash-loops behind it (§8).
+PORT=$(grep -E '^PORT=' /srv/ubair-website/.env | cut -d= -f2)
+ss -ltnp "sport = :${PORT}"                    # expect: one node, started by pm2, as deploy
+pm2 describe basinwx-<branch> | grep -E 'restarts|uptime'   # expect: restarts not climbing
+curl -fsS http://127.0.0.1:${PORT}/api/health/ingest        # expect: 200, "ok":true
 
 # 6.3  pm2 survives reboot?
 systemctl list-unit-files | grep pm2           # expect: pm2-deploy.service  enabled
@@ -304,7 +333,7 @@ pm2 logs basinwx-$(git -C /srv/ubair-website branch --show-current) --lines 50 -
 
 ## 7. CHPC data fan-out
 
-CHPC runs `scripts/chpc_uploader.py` and the shell helpers in `chpc-deployment/`. The uploader consumes **`BASINWX_API_URLS`** (comma-separated). First URL is **primary** — its failure fails the job. Remaining URLs are **best-effort mirrors** — failures emit a loud WARN but the job still exits 0.
+CHPC runs `scripts/chpc_uploader.py` and the brc-tools producers (`brc_tools/download/push_data.py` and the scripts built on it; cron lines, env exports and pitfalls live in that repo's `docs/CHPC-REFERENCE.md` and `docs/WEBSITE-INTEGRATION.md`). The uploader consumes **`BASINWX_API_URLS`** (comma-separated). First URL is **primary** — its failure fails the job. Remaining URLs are **best-effort mirrors** — failures emit a loud WARN but the job still exits 0.
 
 Recommended CHPC env:
 
@@ -366,9 +395,18 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.3"     (tag v1.5.3)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.4-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.4"     (tag v1.5.4)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.5-dev"
 ```
+
+Since 1.5.5 the same response also carries `commit`, `branch`, `startedAt` and
+`vendorAssets`, which together verify a deploy from outside: `version` is what
+`package.json` claims, `commit` is what `git pull` actually landed, `startedAt` moves only
+when pm2 restarted, and `vendorAssets.ok: false` means `npm install` was skipped (the
+roads page serves Leaflet, markercluster and Font Awesome out of `node_modules`). For
+"did my push land?", `GET /api/monitoring/uploads` with the upload key in `x-api-key`
+lists the last attempts the app saw, rejected ones included, with source IP and
+`x-client-hostname`. `scripts/probe.py` runs all of this for both boxes.
 
 `dev` always carries the *next* version with a `-dev` suffix. The dev→ops
 promotion PR strips the suffix, `ops` gets tagged `v<version>`, and `dev`
@@ -411,6 +449,25 @@ quotas — see §9.
 - **`.dev` TLDs are HSTS-preloaded.** Browsers refuse plain HTTP. The nginx template above returns 301 → HTTPS which is required, not a nice-to-have.
 - **`deploy` vs. `sudo` user.** pm2's state (`~/.pm2/`) lives in `deploy`'s home. Never run pm2 as root or any other user, or you end up with two separate daemons and mystifying "process not found" behaviour.
 - **pm2 startup unit.** Without it, a reboot silently loses the site. Step 3.7 is not optional.
+- **A second launcher wins the boot race (prod, 2026-10-26 → 27).** Linode rebooted prod from
+  outside (an ACPI power-key event, 343 days after the previous boot). A pre-pm2 unit,
+  `ubair-website.service`, was still enabled and started `server/server.js` as `www-data` two
+  seconds before `pm2-root.service` resurrected `ubair-site`. That copy could not read `.env`
+  (root, 0600; dotenv says nothing) and could not write to five of the seven upload directories,
+  so **every upload answered 500 "API key not configured" for 24 hours**. Meanwhile pm2's copy
+  died on `EADDRINUSE :3000` about 2.5 times a second (222k restarts, CPU pinned, 570 MB of
+  logs), because the hand-started app had no restart backoff. Nothing alerted: `/api/health`
+  stayed `success:true`, `probe.py` said `RESULT: ok` because staleness only warned, and the
+  report email was never configured on prod. It also starved `.dev`: the producer's observations
+  job stops when its metadata push to the primary fails, so `.dev` lost observations too while
+  its other dataTypes kept arriving.
+
+  What now stops a repeat: the unit is deleted; prod runs from `ecosystem.config.cjs`
+  (`exp_backoff_restart_delay`); since 1.5.5 a copy that cannot read `.env` exits before
+  binding, `/api/health` carries `ingest.ready`, `/api/health/ingest` answers 503 when uploads
+  cannot succeed or none has landed for 30 minutes, and `probe.py` FAILs on observations older
+  than an hour. Point an external uptime monitor at `https://www.basinwx.com/api/health/ingest`,
+  because a monitor inside the box shares its failure. After any reboot, run step 6.2a.
 - **Heap default.** Node defaults to ~1.5 GB old-space but Linode boxes can OOM under concurrent loads. `ecosystem.config.cjs` sets `max_memory_restart: 512M` as a guardrail; if you see repeated restarts, investigate logs before raising the ceiling.
 - **nginx `client_max_body_size` (the silent-413 trap).** nginx's default body limit is **1 MB**. CHPC's forecast bundle is many ~1.5 MB run files *plus* a ~3 KB `<product>_index.json` that lists them. With the limit unset, nginx 413s every run file while passing the index — so `/api/filelist/forecasts` and the index both keep updating, `pipeline_summary.json` records "success", and the dataType looks merely *slightly* stale rather than dead. This is what happened on **linode-dev**: forecast run files stopped landing on **2026-04-27** and were not noticed until **2026-08-25**, because the index refreshed hourly the whole time. The uploads never reach Express, so nothing appears in pm2 logs either — only nginx's access log shows the 413. Confirm with a synthetic body rather than trusting a green `/api/health`:
 
@@ -448,6 +505,14 @@ quotas — see §9.
 
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
 - **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
+
+- **The bare `basinwx.com` resolves to two addresses.** Besides the Linode box, Namecheap's
+  URL-forwarding host `192.64.119.30` is in the A record set, and it does not answer HTTPS at
+  all (observed 2026-09-23 from notchpeak1; `www.basinwx.com` has the one correct record).
+  brc-tools targets the bare domain. `requests` falls through to the next address on a refused
+  connection, which is why no upload has failed on it yet, but a slow refusal would burn the
+  30 s upload timeout. Either point producers at `https://www.basinwx.com` or remove the stray
+  record at Namecheap. `scripts/probe.py` warns while it is present.
 
 ## 9. Per-user branch previews
 

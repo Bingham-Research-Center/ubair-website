@@ -1,0 +1,21 @@
+name: Chore
+description: Refactor, cleanup, deps, CI; no user-visible change
+labels: ["type:chore"]
+body:
+  - type: textarea
+    id: what-why
+    attributes:
+      label: What and why
+    validations:
+      required: true
+  - type: input
+    id: verification
+    attributes:
+      label: Verification command
+      placeholder: "npm test / curl …"
+  - type: checkboxes
+    id: copilot
+    attributes:
+      label: Automation
+      options:
+        - label: Candidate for the Copilot coding agent (single concern, testable, no ingest path or secrets)

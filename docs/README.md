@@ -1,20 +1,9 @@
-# Documentation
+# docs/
 
-This folder contains operational documentation for the BasinWx project.
+Runbooks and contracts for running and deploying the site — nothing else. Humans start at the
+[project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki); AI agents start at
+`AGENT-INDEX.md`. Outstanding work is GitHub Issues + the "BasinWx Winter 2026/27" Project, not files here.
 
-## Current Documents
-
-- **AGENT-INDEX.md** — map of everything in this folder; start there
-- **SOP-outlook-upload.md** — standard operating procedure for uploading forecast outlooks
-
-Superseded docs live in `archive/` (pending wiki migration — see `archive/README.md`).
-
-## Future Plans
-
-> **TODO**: Migrate SOPs and "getting started" guides to the GitHub Wiki for better discoverability and collaborative editing. The Wiki will be the canonical source for:
-> - Standard Operating Procedures (SOPs)
-> - Getting started guides for new team members
-> - Architecture decisions and rationale
-> - Troubleshooting guides
-
-For now, markdown files in this folder serve as interim documentation.
+- **Runbooks:** `DEPLOYMENT.md` (bring-up, certs, gotchas, release train §7a), `SOP-outlook-upload.md`, `howto/`
+- **Contracts:** `WEBSITE-BRCTOOLS-CONTRACT.md` and `DATA_MANIFEST.json` (repo root); the producer side lives in
+  [brc-tools](https://github.com/Bingham-Research-Center/brc-tools)

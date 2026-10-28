@@ -34,31 +34,36 @@ feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins 
 ## Documentation
 | Audience | Start here |
 |---|---|
+| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — Home ("what do I do today?"), How-We-Work, Definition-of-Done, Roadmap, Team, Glossary |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
-| **Human devs** | `docs/README.md` → `docs/QUICK-START.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
-| **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
+| **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json`; producer side in [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) |
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
-A current docs triage with consolidation TODOs is in `REVIEW-DOCS-apr27.md` (root).
+Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
+(labels `student-ready`, `copilot-ok`) on the "BasinWx Winter 2026/27" project, not in docs files.
 
 ## Contributing
 Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
 and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
-audience-appropriate. PRs welcome. Use GitHub Issues for bugs.
+audience-appropriate. Open bugs and tasks with the issue templates; PRs go into `dev`.
 
 - **Style:** low verbosity; prune bloat
 - **Tests:** TDD where practical (`npm test`)
 - **AI authorship:** every commit involving AI assistance must list the agent as a co-author
-- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md`
+- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki's How-We-Work page
 
 ## Quick health checks
 ```bash
-curl -s https://basinwx.com/api/live-observations | jq '.totalObservations'
-curl -s https://basinwx.com/api/filelist/forecasts | jq 'length'
-ssh deploy@www.basinwx.com "pm2 logs --lines 50"
-ssh deploy@www.basinwx.dev "pm2 logs --lines 50"
+scripts/probe.py                                    # both boxes: cert, version/commit, ingest, freshness
+curl -s https://www.basinwx.com/api/health/ingest   # 200 = uploads landing; 503 + reasons otherwise
+curl -s https://www.basinwx.com/api/live-observations | jq '.totalObservations'
+pm2 logs ubair-site --lines 50 --nostream           # on prod, as root
+pm2 logs basinwx-dev --lines 50 --nostream          # on dev, as deploy
 ```
+
+A green `/api/health` only says the box answers; `/api/health/ingest` says uploads can land.
+After a reboot, check that pm2 holds the port (`docs/DEPLOYMENT.md` §6.2a, §8).
 
 If the site appears down: check from a phone hotspot first. `.dev` TLDs trip some campus/ISP
 networks (HSTS-preload + SNI filtering); cellular working but wifi not = not the server. Full
@@ -74,6 +79,7 @@ triage in `docs/DEPLOYMENT.md`.
 [Team page](https://jrl.ac/team). Primary developers:
 - Dr. John R. Lawson (lead)
 - Michael Davies (undergraduate RA)
+- Derek Meanea (UX/UI, video)
 - Quinten Baldwin, Braxton Wilcken-Pond (sports & viz contributors)
 - Luke Neilson (high-school RA, onboarding)
 - Elspeth Montague (former high-school RA)

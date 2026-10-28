@@ -134,7 +134,7 @@ python chpc_uploader.py --health-check
 | **metadata** | Every 6 hours | JSON | Station locations and info |
 | **timeseries** | Every hour | JSON | Historical/forecast time series |
 | **outlooks** | Twice daily (6am, 6pm) | Markdown | Weather forecast text |
-| **images** | Every 30 min | PNG/JPG | Satellite, radar, model output |
+| **images** | Every 6 hours (GEFS cycles, ~9.5 h lag) | PNG | GEFS meteograms: wind, temp, solar, snow, MSLP |
 
 ## Data Formats
 
@@ -363,8 +363,8 @@ Set up cron job to check status and send email alerts:
 | `scripts/chpc_uploader.py` | CHPC upload script with validation |
 | `server/routes/dataUpload.js` | Server-side upload endpoint |
 | `server/monitoring/dataMonitor.js` | Monitoring service |
-| `docs/PYTHON-DEVELOPER-GUIDE.md` | Detailed Python developer guide |
-| `docs/CHPC-DEPLOYMENT.md` | CHPC deployment instructions |
+| brc-tools `README.md` + `docs/walkthroughs/upload.md` | Python producer guide (lives in the [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) repo) |
+| brc-tools `docs/CHPC-REFERENCE.md` | CHPC cron, env and deployment notes |
 | `docs/API-KEY-SETUP.md` | API key generation guide |
 
 ## Testing
@@ -403,7 +403,7 @@ python chpc_uploader.py --health-check
 ## Next Steps
 
 1. **Review manifest:** Ensure all data types are defined correctly
-2. **Deploy to CHPC:** Follow CHPC-DEPLOYMENT.md guide
+2. **Deploy to CHPC:** Follow brc-tools `docs/CHPC-REFERENCE.md`
 3. **Set up monitoring:** Configure alert emails
 4. **Test thoroughly:** Run for 24 hours with monitoring
 5. **Document customizations:** Add notes for team-specific modifications
