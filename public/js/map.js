@@ -242,7 +242,7 @@ function getPopupPanPadding() {
         '.map-controls-stack',
         '.study-area-toggle',
         '.overlay-container',
-        '.warning-levels-overlay',
+        '#live-aq-legend-panel',
         '.main-footer',
         '.usu-logo'
     ];
@@ -264,8 +264,8 @@ function getPopupPanPadding() {
     applyRightInset(insets, elements['.overlay-container'], mapRect);
     applyTopInset(insets, elements['.overlay-container'], mapRect);
 
-    applyRightInset(insets, elements['.warning-levels-overlay'], mapRect);
-    applyBottomInset(insets, elements['.warning-levels-overlay'], mapRect);
+    applyRightInset(insets, elements['#live-aq-legend-panel'], mapRect);
+    applyBottomInset(insets, elements['#live-aq-legend-panel'], mapRect);
 
     applyBottomInset(insets, elements['.main-footer'], mapRect);
 

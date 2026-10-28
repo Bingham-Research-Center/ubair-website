@@ -74,24 +74,73 @@ body[data-page-type="live_aq"] .overlay-container {
     transform: translateY(-2px);
 }
 
-/* Warning levels overlay */
-.warning-levels-overlay {
+.live-aq-legend {
     position: fixed;
-    bottom: 140px; /* Adjusted to avoid footer overlap */
     right: 20px;
+    bottom: 140px;
     z-index: 1000;
-    background-color: rgba(255, 255, 255, 0.95);
-    padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-    border: 2px solid var(--usu-blue);
+    color: var(--usu-blue);
 }
 
-#image-overlay1 {
-    height: 25vh; /* Slightly smaller */
-    width: auto;
-    display: block;
-    border-radius: 4px;
+.live-aq-legend-toggle {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.9rem;
+    border: 2px solid var(--usu-blue);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.97);
+    color: var(--usu-blue);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.live-aq-legend-panel {
+    width: 290px;
+    padding: 0.9rem 1rem;
+    border: 2px solid var(--usu-blue);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.97);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    font-size: 1rem;
+    line-height: 1.4;
+}
+
+.live-aq-legend-section-title {
+    margin-bottom: 0.45rem;
+    padding-bottom: 0.35rem;
+    border-bottom: 1px solid rgba(0, 38, 58, 0.2);
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.live-aq-legend-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    margin-top: 0.35rem;
+}
+
+.live-aq-legend-swatch {
+    flex: 0 0 0.85rem;
+    width: 0.85rem;
+    height: 0.85rem;
+    margin-top: 0.2rem;
+    border: 1px solid rgba(0, 0, 0, 0.25);
+    border-radius: 50%;
+}
+
+.live-aq-legend-swatch--green { background: green; }
+.live-aq-legend-swatch--orange { background: orange; }
+.live-aq-legend-swatch--red { background: red; }
+.live-aq-legend-swatch--blue { background: #4A90D2; }
+.live-aq-legend-swatch--gray { background: gray; }
+
+.live-aq-legend-panel[hidden] {
+    display: none;
 }
 
 /* USU Logo positioning */
@@ -284,13 +333,24 @@ body[data-page-type="live_aq"] .overlay-container {
         bottom: 120px; /* More space on mobile */
     }
 
-    .warning-levels-overlay {
-        bottom: 160px;
+    .live-aq-legend {
         right: 10px;
+        bottom: 12px;
     }
 
-    #image-overlay1 {
-        height: 20vh;
+    .live-aq-legend-toggle {
+        display: flex;
+        min-height: 44px;
+    }
+
+    .live-aq-legend-panel {
+        position: absolute;
+        right: 0;
+        bottom: calc(100% + 8px);
+        width: min(320px, calc(100vw - 20px));
+        max-height: 48vh;
+        overflow-y: auto;
+        font-size: 0.95rem;
     }
 
     .kiosk-control-bottom {

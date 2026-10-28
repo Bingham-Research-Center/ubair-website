@@ -197,7 +197,7 @@ body[data-page-type="sports"] .observation-stamp {
 }
 
 .prediction-game:hover {
-    transform: translateY(-4px);
+    transform: translateY(-6px);
     box-shadow: 0 8px 30px rgba(80, 22, 22, 0.15);
     border-color: rgba(80, 22, 22, 0.2);
 }
