@@ -5,6 +5,7 @@ import {
     normalizeHRRRForecastResponse,
     selectForecastDisplayIndices
 } from './HRRRForecastModel.js';
+import { CorridorTable } from './CorridorTable.js';
 
 const HRRR_ENDPOINT = '/api/road-weather/forecast';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -25,11 +26,13 @@ const mountainHourFormatter = new Intl.DateTimeFormat('en-US', {
 });
 
 function formatMountainTime(value) {
+    if (!value) return 'time unavailable';
     const date = new Date(value);
     return Number.isFinite(date.getTime()) ? mountainTimeFormatter.format(date) : 'time unavailable';
 }
 
 function formatMountainHour(value) {
+    if (!value) return '--';
     const date = new Date(value);
     return Number.isFinite(date.getTime()) ? mountainHourFormatter.format(date) : '--';
 }
@@ -90,20 +93,6 @@ function hazardIconClass(level) {
     return 'fas fa-circle-question';
 }
 
-function createMetaItem(iconClass, text) {
-    const item = document.createElement('span');
-    const icon = document.createElement('i');
-    icon.className = iconClass;
-    icon.setAttribute('aria-hidden', 'true');
-    item.append(icon, document.createTextNode(text));
-    return item;
-}
-
-function countForecastPoints(forecast) {
-    if (Array.isArray(forecast.points)) return forecast.points.length;
-    return Object.values(forecast.routes || {}).reduce((total, route) => total + (route.waypoints?.length || 0), 0);
-}
-
 export class HRRRRoadForecastController {
     constructor({ endpoint = HRRR_ENDPOINT, refreshIntervalMs = REFRESH_INTERVAL_MS } = {}) {
         this.endpoint = endpoint;
@@ -123,6 +112,7 @@ export class HRRRRoadForecastController {
         this.mapMode = 'observed';
         this.selectedForecastIndex = 0;
         this.forecastLayerGroup = null;
+        this.corridorTable = new CorridorTable(period => this.createPeriodCard(period));
 
         this.handleUnitsToggle = () => {
             this.renderRouteForecasts();
@@ -145,7 +135,7 @@ export class HRRRRoadForecastController {
         this.mapModeButtons.forEach(button => button.addEventListener('click', this.handleMapModeClick));
         this.mapHours?.addEventListener('click', this.handleForecastHourClick);
         window.addEventListener('roads-map:layers-rendered', this.handleMapLayersRendered);
-        await this.load();
+        await Promise.all([this.corridorTable.init(), this.load()]);
         document.getElementById('units-toggle')?.addEventListener('click', this.handleUnitsToggle);
         this.refreshTimer = window.setInterval(() => this.load({ isRefresh: true }), this.refreshIntervalMs);
         window.addEventListener('pagehide', () => this.destroy(), { once: true });
@@ -181,15 +171,12 @@ export class HRRRRoadForecastController {
         this.panel.dataset.state = 'loading';
         this.statusElement.className = 'hrrr-guidance-status is-loading';
         this.statusElement.textContent = 'Checking the latest model run…';
-        this.metaElement.textContent = 'Forecast initialization and coverage will appear here.';
+        this.metaElement.textContent = 'Checking HRRR initialization…';
     }
 
     renderForecast() {
         const freshness = getForecastFreshness(this.forecast.init_time);
         const model = String(this.forecast.model || 'HRRR').toUpperCase();
-        const pointCount = countForecastPoints(this.forecast);
-        const hourCount = this.forecast.forecast_hours.length;
-        const routeCount = Object.keys(this.forecast.routes).length;
 
         this.panel.dataset.state = freshness.level;
         this.statusElement.className = `hrrr-guidance-status is-${freshness.level}`;
@@ -197,11 +184,7 @@ export class HRRRRoadForecastController {
             ? 'Current model run available'
             : freshness.label;
 
-        this.metaElement.replaceChildren(
-            createMetaItem('fas fa-clock', `${model} initialized ${formatMountainTime(this.forecast.init_time)}`),
-            createMetaItem('fas fa-route', `${pointCount} forecast points across ${routeCount} route groups`),
-            createMetaItem('fas fa-forward', `${hourCount}-hour guidance through ${formatMountainTime(this.forecast.valid_times.at(-1))}`)
-        );
+        this.metaElement.textContent = `${model} initialized ${formatMountainTime(this.forecast.init_time)}`;
 
         this.renderRouteForecasts();
         this.renderMapHourButtons();
@@ -215,8 +198,8 @@ export class HRRRRoadForecastController {
             ? 'Latest update delayed'
             : 'HRRR guidance unavailable';
         this.metaElement.textContent = retainingPreviousRun
-            ? `The previously loaded run remains visible. ${message}`
-            : message;
+            ? `HRRR initialized ${formatMountainTime(this.forecast.init_time)} · Latest update delayed; showing the previous run`
+            : 'HRRR initialization unavailable';
 
         if (!retainingPreviousRun) {
             this.renderRouteUnavailable(message);
@@ -415,6 +398,7 @@ export class HRRRRoadForecastController {
     }
 
     renderRouteForecasts() {
+        this.corridorTable.setForecast(this.forecast);
         if (!this.forecast) return;
 
         document.querySelectorAll('[data-hrrr-route]').forEach(container => {
@@ -492,7 +476,7 @@ export class HRRRRoadForecastController {
             ['Low', formatTemperatureFromCelsius(period.metrics?.minTemperature)],
             ['Gust', formatWindFromMetersPerSecond(period.metrics?.maxWindGust)],
             ['Vis', formatVisibilityFromKm(period.metrics?.minVisibility)],
-            ['Precip', precipitationSummary(period.metrics || {})]
+            ['Precip', period.hazard.level === 'unavailable' ? '--' : precipitationSummary(period.metrics || {})]
         ];
 
         metricValues.forEach(([label, value]) => {
@@ -506,6 +490,7 @@ export class HRRRRoadForecastController {
     }
 
     renderRouteUnavailable(message) {
+        this.corridorTable.setForecast(null);
         document.querySelectorAll('[data-hrrr-route]').forEach(container => {
             this.renderSingleRouteUnavailable(container, message);
         });
@@ -521,6 +506,7 @@ export class HRRRRoadForecastController {
     }
 
     destroy() {
+        this.corridorTable.destroy();
         this.clearForecastMapLayer();
         this.showCurrentRoadLayers();
         this.setCurrentMapChromeVisible(true);
