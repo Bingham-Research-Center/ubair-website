@@ -141,6 +141,7 @@ async function smartRefreshRoutes() {
 
     // Get cached data (or refresh if needed)
     const data = await routeDataCache.getData();
+    window.dispatchEvent(new CustomEvent('roads-route-data:updated', { detail: { data } }));
     if (!data || !Array.isArray(data.stations) || !data.events) {
         console.error('Failed to get route data for units refresh');
         return;

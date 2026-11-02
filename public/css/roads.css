@@ -3206,4 +3206,263 @@ body[data-page-type="roads"] .weather-station-marker {
     display: flex;
     align-items: center;
     justify-content: center;
+
+/* Corridor summary: scoped so kiosk maps and legacy cards keep their styles. */
+body[data-page-type="roads"] .hrrr-guidance-panel {
+    margin-bottom: 1.25rem;
+    background: #fff;
+    border: 1px solid #d8dee5;
+    box-shadow: none;
+}
+
+body[data-page-type="roads"] .hrrr-guidance-status {
+    color: #374151;
+    background: #f5f6f7;
+    border-color: #d8dee5;
+}
+
+body[data-page-type="roads"] .corridor-summary {
+    margin-bottom: 2rem;
+    color: #27313d;
+    background: #fff;
+    border: 1px solid #d8dee5;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.corridor-summary-heading {
+    padding: 1.25rem 1.25rem 1rem;
+}
+
+.corridor-summary-heading h2 {
+    margin: 0 0 0.4rem;
+    color: #27313d;
+    font-size: 1.25rem;
+}
+
+.corridor-summary-heading p,
+.corridor-point-note,
+.corridor-incident-note {
+    margin: 0;
+    color: #58616b;
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.corridor-table-scroll {
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+}
+
+.corridor-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.82rem;
+    text-align: left;
+}
+
+.corridor-table th,
+.corridor-table td {
+    padding: 0.95rem 0.8rem;
+    border-top: 1px solid #e2e5e9;
+    vertical-align: middle;
+}
+
+.corridor-table thead th {
+    color: #58616b;
+    background: #f5f6f7;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.corridor-table thead th:first-child,
+.corridor-row > th {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    width: 20%;
+    min-width: 165px;
+    max-width: 215px;
+}
+
+.corridor-row {
+    cursor: pointer;
+}
+
+.corridor-row > th,
+.corridor-row > td {
+    background: #fff;
+}
+
+.corridor-row:hover > *,
+.corridor-row:focus-within > * {
+    background: #f5f6f7;
+}
+
+.corridor-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 30px;
+    padding: 0;
+    border: 0;
+    color: inherit;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: left;
+    cursor: pointer;
+}
+
+.corridor-toggle:focus-visible,
+.corridor-table-scroll:focus-visible {
+    outline: 2px solid #334155;
+    outline-offset: -2px;
+    border-radius: 3px;
+}
+
+.corridor-chevron {
+    display: inline-block;
+    font-size: 1.35rem;
+    line-height: 1;
+}
+
+.corridor-toggle[aria-expanded="true"] .corridor-chevron {
+    transform: rotate(90deg);
+}
+
+.corridor-status {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: #27313d;
+    white-space: nowrap;
+    font-weight: 400;
+}
+
+.corridor-status-dot {
+    display: inline-block;
+    flex: 0 0 7px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #8b929a;
+}
+
+.corridor-status-dot.is-clear { background: #249653; }
+.corridor-status-dot.is-caution { background: #e6b522; }
+.corridor-status-dot.is-danger { background: #cf3d3d; }
+
+.corridor-sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.corridor-detail-row[hidden] { display: none; }
+
+.corridor-detail-row > td {
+    padding: 0;
+    background: #f7f8f9;
+}
+
+.corridor-detail {
+    padding: 1.25rem;
+}
+
+.corridor-detail h3 {
+    margin: 0 0 0.85rem;
+    color: #27313d;
+    font-size: 1rem;
+}
+
+.corridor-summary .hrrr-period-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-auto-flow: row;
+    overflow: visible;
+}
+
+.corridor-summary .hrrr-period-card {
+    background: #fff;
+    border: 1px solid #d8dee5;
+    border-radius: 6px;
+    box-shadow: none;
+}
+
+.corridor-summary .hrrr-period-hazard,
+.corridor-summary .hrrr-period-time strong {
+    color: #27313d;
+}
+
+.corridor-summary .hrrr-period-metric dt {
+    color: #58616b;
+}
+
+.corridor-point-note {
+    margin-top: 0.65rem;
+}
+
+.corridor-current-details {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 1rem 0 0;
+    padding: 1rem 0 0;
+    border-top: 1px solid #d8dee5;
+}
+
+.corridor-current-details dt {
+    font-size: 0.75rem;
+    color: #58616b;
+}
+
+.corridor-current-details dd {
+    margin: 0.3rem 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.corridor-incident-note { margin-top: 1rem; }
+.corridor-incident-note a { color: inherit; }
+
+.corridor-forecast-note {
+    margin: 0;
+    padding: 0.9rem 1.25rem;
+    border-top: 1px solid #e2e5e9;
+    color: #58616b;
+    font-size: 0.75rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+    .corridor-table thead th:first-child,
+    .corridor-row > th {
+        min-width: 130px;
+        width: 145px;
+    }
+
+    .corridor-detail {
+        position: sticky;
+        left: 0;
+        box-sizing: border-box;
+        width: calc(100vw - 42px);
+        max-width: 100%;
+        padding: 1rem;
+    }
+
+    .corridor-summary .hrrr-period-grid,
+    .corridor-current-details {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
