@@ -147,78 +147,38 @@
                     Checking the latest model run…
                 </div>
             </div>
-            <div class="hrrr-guidance-meta" id="hrrr-guidance-meta">
-                Forecast initialization and coverage will appear here.
-            </div>
             <p class="hrrr-map-status" id="hrrr-map-status" role="status" aria-live="polite">
                 Map showing the current UDOT, station, camera, and model blend.
             </p>
-            <p class="hrrr-guidance-disclaimer">
-                <i class="fas fa-info-circle" aria-hidden="true"></i>
-                Atmospheric model guidance—not an observed pavement condition. Confirm critical travel decisions with UDOT reports and cameras.
+        </section>
+
+        <section class="corridor-summary" aria-labelledby="corridor-summary-title">
+            <div class="corridor-summary-heading">
+                <h2 id="corridor-summary-title">Corridor summary</h2>
+                <p id="corridor-summary-help">Worst current conditions first. Select a road for details.</p>
+            </div>
+            <div class="corridor-table-scroll" role="region" aria-label="Corridor conditions; scroll horizontally for all hours" tabindex="0">
+                <table class="corridor-table" aria-describedby="corridor-summary-help corridor-forecast-note">
+                    <thead>
+                        <tr>
+                            <th scope="col">Corridor / road</th>
+                            <th scope="col" aria-sort="descending">Now</th>
+                            <th scope="col">+1h</th>
+                            <th scope="col">+3h</th>
+                            <th scope="col">+6h</th>
+                            <th scope="col">+12h</th>
+                            <th scope="col">Incidents</th>
+                        </tr>
+                    </thead>
+                    <tbody id="corridor-summary-body">
+                        <tr><td colspan="7">Loading corridor conditions…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <p class="corridor-forecast-note" id="corridor-forecast-note">
+                <span id="hrrr-guidance-meta" aria-live="polite">Checking HRRR initialization…</span>
+                · Atmospheric model guidance, not an observed pavement condition. Confirm critical travel decisions with UDOT reports and cameras.
             </p>
-        </section>
-
-        <!-- Route-Specific Forecasts -->
-        <!-- US-40 Corridor -->
-        <section class="route-section" id="us40-section">
-            <h2>US-40 Corridor</h2>
-            <p class="route-description"><strong>Roosevelt to Vernal:</strong> Primary east-west route through Basin</p>
-            <div class="hrrr-route-forecast" data-hrrr-route="us40" aria-live="polite">
-                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-            </div>
-            <div class="route-conditions" id="us40-conditions">
-                <div class="conditions-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading current conditions...</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- US-191 North-South -->
-        <section class="route-section" id="us191-section">
-            <h2>US-191 North-South</h2>
-            <p class="route-description"><strong>Vernal to Duchesne:</strong> Major north-south connector with elevation changes</p>
-            <div class="hrrr-route-forecast" data-hrrr-route="us191" aria-live="polite">
-                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-            </div>
-            <div class="route-conditions" id="us191-conditions">
-                <div class="conditions-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading current conditions...</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- Local Basin Roads -->
-        <section class="route-section" id="basin-roads-section">
-            <div class="route-section-heading">
-                <h2>Local Basin Roads</h2>
-                <div class="road-carousel-header">
-                    <span class="current-road-name" id="current-road-name">Loading...</span>
-                    <div class="carousel-controls">
-                        <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
-                            <i class="fas fa-chevron-left"></i>
-                        </button>
-                        <div class="carousel-indicators" id="carousel-indicators">
-                            <!-- Indicators will be dynamically added -->
-                        </div>
-                        <button class="carousel-btn next-btn" id="next-road" title="Next road">
-                            <i class="fas fa-chevron-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            <p class="route-description"><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
-            <div class="hrrr-route-forecast" data-hrrr-route="basin_roads" aria-live="polite">
-                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-            </div>
-            <div class="route-conditions carousel-container" id="basin-roads-conditions">
-                <div class="conditions-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading current conditions...</p>
-                </div>
-            </div>
         </section>
 
         <!-- Travel Advisory Section -->
