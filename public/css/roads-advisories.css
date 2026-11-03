@@ -1,0 +1,121 @@
+/* Only the /roads advisory list uses these styles. */
+body[data-page-type="roads"] #travel-advisories .traffic-events-container {
+    overflow: visible;
+    margin-bottom: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+}
+
+body[data-page-type="roads"] #travel-advisories .events-content { min-height: 0; }
+body[data-page-type="roads"] #travel-advisories .tab-content { padding: 1rem 0 0; }
+body[data-page-type="roads"] #travel-advisories .events-tabs {
+    flex-direction: row;
+    background: none;
+    border-color: #d9dde3;
+}
+body[data-page-type="roads"] #travel-advisories .tab-btn { color: #4b5563; }
+body[data-page-type="roads"] #travel-advisories .tab-btn.active::after { background: #4b5563; }
+
+body[data-page-type="roads"] #travel-advisories :is(.events-list, .advisory-rest) {
+    display: grid;
+    gap: 1rem;
+    max-height: none;
+    overflow: visible;
+}
+
+body[data-page-type="roads"] #travel-advisories .event-card {
+    min-width: 0;
+    margin: 0 !important;
+    padding: 1rem;
+    border: 1px solid #d9dde3;
+    border-radius: 6px;
+    background: white;
+    color: #374151;
+    box-shadow: none !important;
+    transform: none;
+    transition: none;
+}
+
+body[data-page-type="roads"] #travel-advisories .event-title {
+    margin: 0;
+    color: #30343b;
+    font-size: 1.05rem;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+body[data-page-type="roads"] #travel-advisories .advisory-dates {
+    margin: 0.35rem 0 0;
+    color: #626872;
+    font-size: 0.82rem;
+    line-height: 1.4;
+}
+
+body[data-page-type="roads"] #travel-advisories .event-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    margin-top: 0.4rem;
+    font-size: 0.78rem;
+}
+body[data-page-type="roads"] #travel-advisories .event-details:empty { display: none; }
+body[data-page-type="roads"] #travel-advisories .event-description { margin-top: 0.75rem; }
+body[data-page-type="roads"] #travel-advisories .advisory-description {
+    margin: 0;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+body[data-page-type="roads"] #travel-advisories .advisory-description.is-collapsed {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    max-height: 4.5em;
+    overflow: hidden;
+}
+
+body[data-page-type="roads"] #travel-advisories .advisory-link {
+    padding: 0;
+    min-height: 32px;
+    border: 0;
+    background: none;
+    box-shadow: none;
+    color: #374151;
+    font: inherit;
+    font-size: 0.85rem;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+body[data-page-type="roads"] #travel-advisories :is(.advisory-link, .event-comment a):focus-visible {
+    outline: 2px solid #4b5563;
+    outline-offset: 3px;
+}
+
+body[data-page-type="roads"] #travel-advisories .event-comment { margin-top: 0.75rem; }
+body[data-page-type="roads"] #travel-advisories .event-comment h4 {
+    margin: 0 0 0.3rem;
+    color: #626872;
+    font-size: 0.78rem;
+    font-weight: 600;
+}
+body[data-page-type="roads"] #travel-advisories .event-comment ul {
+    margin: 0;
+    padding-left: 1.2rem;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+body[data-page-type="roads"] #travel-advisories .event-comment li + li { margin-top: 0.3rem; }
+body[data-page-type="roads"] #travel-advisories .event-comment a { color: #374151; text-decoration: underline; }
+body[data-page-type="roads"] #travel-advisories .advisory-list-toggle {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.75rem;
+}
+body[data-page-type="roads"] #travel-advisories .advisory-list-toggle span { color: #626872; font-size: 0.78rem; }
+body[data-page-type="roads"] #travel-advisories [hidden] { display: none !important; }
