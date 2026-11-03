@@ -12,6 +12,9 @@ function browser() {
     const manager = vm.runInContext('Object.create(TrafficEventsManager.prototype)', context);
     manager.currentTab = 'active';
     manager.eventsData = { active: [] };
+    // Constructor state that #334's advisory cards read (the constructor is skipped here).
+    manager.expandedLists = new Set();
+    manager.expandedDescriptions = new Set();
     return { manager, container };
 }
 
@@ -21,7 +24,7 @@ describe('traffic fallback presentation', () => {
         await manager.loadAllEventsData();
         expect(container.innerHTML).toContain('Error Loading Events');
         manager.displayEvents('active');
-        expect(container.innerHTML).toContain('No traffic events were reported');
+        expect(container.innerHTML).toContain('No active advisories');
         expect(container.innerHTML).not.toMatch(/all clear/i);
         manager.displayAlerts([]);
         expect(container.innerHTML).not.toMatch(/all clear/i);
