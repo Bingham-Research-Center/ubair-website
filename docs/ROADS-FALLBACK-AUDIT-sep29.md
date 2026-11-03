@@ -1,3 +1,10 @@
+# Roads fallback audit (Sept 29, 2026)
+
+> **Status 2026-11-03.** Written by Michael on a local `fix/road-fallback` branch cut from
+> `ops` v1.5.4, and first published inside PR #330. Rebased onto `dev` as batch A of the roads
+> work. Moved here from `FALLBACK_FIX.md` at the repo root; the direct-to-production deploy
+> steps were removed. Everything below is the original record as of Sept 29–30.
+
 The Roads fallback fix is on `fix/road-fallback`, based on production's `ops` release lineage at `c3e5525023e6f66c37a0da1a1e162be216e043fa`. No merge to `ops`, tag, push, or deployment was performed.
 
 The map now keeps its last successfully loaded road snapshot when the road feed fails or returns no segments. It shows an unavailable notice and the snapshot's age. Without a previous snapshot it draws no road-condition segments. Camera, station, traffic, pass, plow, and rest-area layers have independent lifecycles. Retained roads are held in the current page's memory, not persisted across a page reload.
@@ -13,7 +20,7 @@ The branch comparison was made on September 29, 2026 Mountain time, after fetchi
 
 The [live map file](https://basinwx.com/public/js/roads/RoadWeatherMap.js) was 80,672 bytes, with SHA-256 `4bfb2fff02927b4e3bcd70cb362fd755c68189ce434212df8076b21d3e8e9642`. Both current branches contain the shared data cache and the same broken fallback. The file alone cannot distinguish them.
 
-The [production health endpoint](https://basinwx.com/api/health) reported `1.5.4`, matching `origin/ops`. `origin/dev` reports `1.5.5-dev` in its package file. [The deployment runbook](docs/DEPLOYMENT.md) identifies production as `ops`, at `/var/www/ubair-website`, running as `root` under the PM2 name `ubair-site`. These agree on the production lineage. A read-only SSH attempt on September 30 stopped at host-key verification, so the current server checkout's branch name and HEAD were not independently read over SSH. The deployment steps below verify both before changing the server.
+The [production health endpoint](https://basinwx.com/api/health) reported `1.5.4`, matching `origin/ops`. `origin/dev` reports `1.5.5-dev` in its package file. [The deployment runbook](docs/DEPLOYMENT.md) identifies production as `ops`, at `/var/www/ubair-website`, running as `root` under the PM2 name `ubair-site`. These agree on the production lineage. A read-only SSH attempt on September 30 stopped at host-key verification, so the current server checkout's branch name and HEAD were not independently read over SSH.
 
 The audit covered `public/js/roads/`, its Roads and kiosk consumers, `server/roadWeatherService.js`, traffic-event services and routes, and background refresh. These are the fallback paths found:
 
@@ -54,9 +61,7 @@ The API's top-level `status` describes the observed road feed: `available`, `cac
 To install and test from the repository root:
 
 ```sh
-# The inherited ops lockfile is missing declared dependencies. npm ci fails on it.
-# This installs the declared packages without changing package.json or package-lock.json.
-npm install --ignore-scripts --no-save --package-lock=false --no-audit --no-fund
+npm install
 
 npm test -- --runInBand
 
@@ -107,62 +112,10 @@ Browser verification was performed in a real local Edge browser through its debu
 
 Screenshots from this session were saved outside the repository at `/private/tmp/road-fallback-failed.png`, `/private/tmp/road-fallback-empty.png`, `/private/tmp/road-fallback-retained.png`, and `/private/tmp/road-fallback-mobile.png`.
 
-To deploy, perform these steps yourself in order. The proposed new tag below is `v1.5.4-road-fallback`. Stop on any command failure or unexpected branch/process identity. This fix does not bump the package version, so `/api/health` will still report `1.5.4` after deployment.
-
-1. On your workstation, publish the fix branch and merge it into an up-to-date `ops`. Run the tests on the resulting merge.
-
-   ```sh
-   git switch fix/road-fallback
-   git push origin fix/road-fallback
-   git fetch origin
-   git switch ops
-   git pull --ff-only origin ops
-   git merge --no-ff fix/road-fallback -m "Merge road fallback fix into ops"
-   npm install --ignore-scripts --no-save --package-lock=false --no-audit --no-fund
-   npm test -- --runInBand
-   ```
-
-2. Tag the tested merge and push `ops` and the new tag. If that tag already exists, choose a new tag name and use it consistently in the remaining steps.
-
-   ```sh
-   git tag -a v1.5.4-road-fallback -m "Remove placeholder road data and report feed outages"
-   git push origin ops
-   git push origin v1.5.4-road-fallback
-   ```
-
-3. Connect to production with your trusted SSH configuration. The host in the runbook is `172.234.249.49`; use the verified host identity for that server. Check the current branch, working tree, and PM2 process before pulling.
-
-   ```sh
-   ssh root@172.234.249.49
-   cd /var/www/ubair-website
-   git branch --show-current
-   git status --short
-   pm2 describe ubair-site
-   ```
-
-   Expect `ops`, no local tracked changes, and `ubair-site` serving this repository. Do not switch branches in the live checkout to investigate a mismatch. Public files are served directly from the working tree, so the pull itself starts serving the new frontend.
-
-4. Pull the tested release into the existing server checkout and install its dependencies. Verify that HEAD is the tagged merge before restarting.
-
-   ```sh
-   git fetch origin ops --tags
-   git pull --ff-only origin ops
-   test "$(git rev-parse HEAD)" = "$(git rev-parse 'v1.5.4-road-fallback^{commit}')"
-   npm install --omit=dev --ignore-scripts --no-save --package-lock=false --no-audit --no-fund
-   ```
-
-5. Restart the existing production PM2 process and verify the result.
-
-   ```sh
-   pm2 restart ubair-site --update-env
-   pm2 save
-   pm2 status ubair-site
-   pm2 logs ubair-site --lines 50 --nostream
-   curl -fsS https://basinwx.com/api/health
-   curl -fsS https://basinwx.com/api/road-weather | node -e 'let s="";process.stdin.on("data",c=>s+=c);process.stdin.on("end",()=>{const d=JSON.parse(s);console.log({status:d.status,lastUpdated:d.lastUpdated,sources:d.sources,roads:d.segments?.length,cameras:d.cameras?.length,stations:d.stations?.length});});'
-   ```
-
-   Open `/roads`, inspect the source and age in a road popup, and confirm the feed status. A real upstream outage should produce the unavailable state. Do not use the local failure harness on production.
+Deployment: this work ships through the normal release train, as batch A of the roads
+rebase (PR into `dev`, then promotion to `ops`; `docs/DEPLOYMENT.md` §7a). An earlier draft of
+this file proposed a direct `ops` hotfix tagged `v1.5.4-road-fallback`. It was never run and
+has been removed: `ops` takes changes only by promotion from `dev`.
 
 The changed files are listed below. `server/snowDetectionService.js`, `server/confidenceThresholds.js`, the confidence presentation/calculation code, ensemble weights, the HRRR frontend modules, and all polling intervals are unchanged. Existing unrelated untracked files were left alone.
 
@@ -188,4 +141,4 @@ The changed files are listed below. `server/snowDetectionService.js`, `server/co
 - `public/js/__tests__/roadMissingData.test.js`
 - `public/js/__tests__/conditionCards.fallback.test.js`
 - `public/js/__tests__/trafficEvents.fallback.test.js`
-- `FALLBACK_FIX.md`
+- `docs/ROADS-FALLBACK-AUDIT-sep29.md` (was `FALLBACK_FIX.md` at the repo root)
