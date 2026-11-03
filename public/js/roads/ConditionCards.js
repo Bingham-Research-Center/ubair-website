@@ -1,22 +1,50 @@
 /**
  * Condition Cards Module
  * Driving conditions summary bar for the roads page
- * Shows worst-case road condition, visibility range, precip type, and max wind
+ * Shows road surface reports, visibility, precipitation, and wind separately
  * Includes fallback to Open-Meteo API when primary data unavailable
  */
 
 const CONDITION_PRIORITY = { red: 3, yellow: 2, green: 1 };
-const CONDITION_LABELS = { red: 'Dangerous', yellow: 'Caution', green: 'Clear' };
 const UNAVAILABLE_VALUE = 'Not reported';
+let selectedConditionsLocation = null;
+
+function updateConditionsSource(text) {
+    const source = document.getElementById('conditions-source');
+    if (source) source.textContent = text;
+}
+
+/** Overall station status can describe wind or visibility, not pavement. */
+function getSurfaceReport(data) {
+    const missing = /^(unknown|none|n\/?a|not reported|no data)$/i;
+    const wind = /\b(wind|winds|windy|gusts?|mph)\b|km\/?h|m\/s/i;
+    let text = [data.surfaceStatus, data.roadCondition]
+        .find(value => typeof value === 'string' && value.trim() && !missing.test(value.trim()) && !wind.test(value));
+
+    if (!text) {
+        text = { none: 'No snow detected', light: 'Light snow', moderate: 'Moderate snow', heavy: 'Heavy snow' }[data.snowLevel];
+    }
+    if (!text) return { text: UNAVAILABLE_VALUE, level: null };
+
+    text = ({ clear_temp: 'No snow detected', snow_light: 'Light snow', snow_moderate: 'Moderate snow', snow_heavy: 'Heavy snow' })[text] || text.trim();
+    text = text.charAt(0).toUpperCase() + text.slice(1);
+    let level = null;
+    if (/ice|icy|frost|closed|heavy snow/i.test(text)) level = 'red';
+    else if (/^no snow detected$|dry|clear/i.test(text)) level = 'green';
+    else if (/snow|slush|wet|damp/i.test(text)) level = 'yellow';
+    return { text, level };
+}
 
 function updateConditionsFreshness(timestamp, label = 'Station data updated') {
     const freshnessElement = document.getElementById('conditions-updated');
     if (!freshnessElement) return;
+    const compact = freshnessElement.dataset?.format === 'compact';
 
     const updatedAt = timestamp ? new Date(timestamp) : null;
     if (!updatedAt || Number.isNaN(updatedAt.getTime())) {
-        freshnessElement.textContent = 'Data update time unavailable';
+        freshnessElement.textContent = compact ? 'Updated: unavailable' : 'Data update time unavailable';
         freshnessElement.removeAttribute('title');
+        freshnessElement.removeAttribute('datetime');
         return;
     }
 
@@ -28,8 +56,9 @@ function updateConditionsFreshness(timestamp, label = 'Station data updated') {
         timeZoneName: 'short'
     }).format(updatedAt);
 
-    freshnessElement.textContent = `${label} ${formattedTime}`;
-    freshnessElement.title = updatedAt.toLocaleString();
+    freshnessElement.textContent = `${compact ? 'Updated' : label} ${formattedTime}`;
+    freshnessElement.title = compact ? `${label} ${updatedAt.toLocaleString()}` : updatedAt.toLocaleString();
+    if (compact) freshnessElement.dateTime = updatedAt.toISOString();
 }
 
 function getLatestStationUpdate(stations) {
@@ -43,14 +72,24 @@ function getLatestStationUpdate(stations) {
 /**
  * Update condition cards with location-specific data when a station is clicked
  */
-function updateConditionCardsWithLocation(locationData) {
-    // Road conditions card — show this station's condition
+function updateConditionCardsWithLocation(locationData, { refresh = false } = {}) {
+    // A slower camera/road request must not overwrite a newer selection.
+    if (refresh && selectedConditionsLocation !== locationData) return;
+    selectedConditionsLocation = locationData;
+    updateConditionsSource(`${locationData.sourceType || 'Location'} · ${locationData.name || 'Unknown location'}`);
+    updateConditionsFreshness(locationData.lastUpdated, `${locationData.sourceType || 'Location'} data updated`);
+    for (const type of ['road-conditions', 'visibility', 'precipitation', 'wind']) {
+        document.querySelector(`.condition-card-compact.${type} .value`)?.removeAttribute('title');
+    }
+
+    // Road surface is an explicit field, never the overall weather status.
     const condCard = document.querySelector('.condition-card-compact.road-conditions');
     const condValue = condCard?.querySelector('.value');
     if (condCard && condValue) {
-        const condition = locationData.condition || UNAVAILABLE_VALUE;
-        condValue.textContent = condition;
+        const surface = getSurfaceReport(locationData);
+        condValue.textContent = surface.text;
         condCard.classList.remove('level-green', 'level-yellow', 'level-red');
+        if (surface.level) condCard.classList.add(`level-${surface.level}`);
     }
 
     // Visibility
@@ -84,7 +123,7 @@ function updateConditionCardsWithLocation(locationData) {
     // Precipitation
     const precipCard = document.querySelector('.condition-card-compact.precipitation .value');
     if (precipCard) {
-        const precip = locationData.precipitation ?? locationData.snowLevel;
+        const precip = locationData.precipitation;
         if (precip !== null && precip !== undefined && precip !== '') {
             if (typeof precip === 'string') {
                 precipCard.textContent = precip === 'none' ? 'Dry' : precip;
@@ -101,7 +140,9 @@ function updateConditionCardsWithLocation(locationData) {
     if (windCard) {
         const wind = locationData.windSpeed ?? locationData.windGust;
         if (wind !== null && wind !== undefined && wind !== '' && !isNaN(wind) && wind >= 0) {
-            windCard.textContent = unitsSystem.formatWindSpeed(wind);
+            windCard.textContent = locationData.windSpeedUnit === 'km/h'
+                ? unitsSystem.formatWindSpeedFromKmh(wind)
+                : unitsSystem.formatWindSpeed(wind);
         } else {
             windCard.textContent = UNAVAILABLE_VALUE;
         }
@@ -111,39 +152,45 @@ function updateConditionCardsWithLocation(locationData) {
 /**
  * Update condition cards with summary data from all stations
  */
-async function updateConditionCards() {
+async function updateConditionCards({ resetSelection = false } = {}) {
+    if (resetSelection) selectedConditionsLocation = null;
+    if (selectedConditionsLocation) {
+        updateConditionCardsWithLocation(selectedConditionsLocation);
+        return;
+    }
     try {
         const data = await roadWeatherDataCache.getData();
+        if (selectedConditionsLocation) return;
         const stations = data.stations;
         if (!Array.isArray(stations) || stations.length === 0) {
             await updateCardsWithFallback();
             return;
         }
 
+        updateConditionsSource(`Basin summary · ${stations.length} ${stations.length === 1 ? 'station' : 'stations'}`);
         updateConditionsFreshness(getLatestStationUpdate(stations));
         const cameraSnowDetected = (data.cameraDetections || []).some(
             d => d.snowDetected === true && d.confidence >= 0.5
         );
 
-        // --- Road Conditions: worst-case across all stations ---
+        // --- Road Surface: worst reported surface, independent of wind ---
         const condCard = document.querySelector('.condition-card-compact.road-conditions');
         const condValue = condCard?.querySelector('.value');
         if (condCard && condValue) {
             let worstLevel = null;
             let worstStatus = UNAVAILABLE_VALUE;
             for (const s of stations) {
-                if (!s.condition) continue;
-                const level = s.condition.condition;
-                if (!CONDITION_PRIORITY[level]) continue;
-                if (!worstLevel || (CONDITION_PRIORITY[level] || 0) > (CONDITION_PRIORITY[worstLevel] || 0)) {
-                    worstLevel = level;
-                    worstStatus = s.condition.status || CONDITION_LABELS[level] || UNAVAILABLE_VALUE;
+                const surface = getSurfaceReport(s);
+                if (surface.text === UNAVAILABLE_VALUE) continue;
+                if (worstStatus === UNAVAILABLE_VALUE || (CONDITION_PRIORITY[surface.level] || 0) > (CONDITION_PRIORITY[worstLevel] || 0)) {
+                    worstLevel = surface.level;
+                    worstStatus = surface.text;
                 }
             }
             // Escalate to at least yellow if cameras detect snow
             if (cameraSnowDetected && (CONDITION_PRIORITY[worstLevel] || 0) < CONDITION_PRIORITY.yellow) {
                 worstLevel = 'yellow';
-                worstStatus = 'Caution';
+                worstStatus = 'Snow detected by camera';
             }
             condValue.textContent = worstStatus;
             condCard.classList.remove('level-green', 'level-yellow', 'level-red');
@@ -240,6 +287,7 @@ async function updateConditionCards() {
             }
         }
     } catch (error) {
+        if (selectedConditionsLocation) return;
         console.error('Error updating condition cards:', error);
         await updateCardsWithFallback();
     }
@@ -249,6 +297,8 @@ async function updateConditionCards() {
  * Update cards with fallback data from Open-Meteo API
  */
 async function updateCardsWithFallback() {
+    if (selectedConditionsLocation) return;
+    updateConditionsSource('Basin summary · weather data unavailable');
     // Backup weather only supplies wind; remove values from an older station snapshot.
     for (const type of ['road-conditions', 'visibility', 'precipitation', 'wind']) {
         const card = document.querySelector(`.condition-card-compact.${type}`);
@@ -265,12 +315,21 @@ async function updateCardsWithFallback() {
         const response = await fetch('/api/road-weather/openmeteo/40.3033/-109.7');
         if (response.ok) {
             const data = await response.json();
+            if (selectedConditionsLocation) return;
             const windKmh = data?.current?.windSpeed;
             if (Number.isFinite(windKmh) && windKmh >= 0) {
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
                 if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
+                updateConditionsSource('Basin summary · backup forecast');
                 const freshnessElement = document.getElementById('conditions-updated');
-                if (freshnessElement) freshnessElement.textContent = 'Backup wind data; update time unavailable';
+                if (freshnessElement) {
+                    if (freshnessElement.dataset?.format === 'compact') {
+                        freshnessElement.textContent = 'Updated: unavailable';
+                        freshnessElement.title = 'Backup wind data; update time unavailable';
+                    } else {
+                        freshnessElement.textContent = 'Backup wind data; update time unavailable';
+                    }
+                }
             }
         }
     } catch (error) {
