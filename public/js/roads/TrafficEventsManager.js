@@ -10,9 +10,21 @@
  * Traffic Events Manager Class
  * Handles loading, displaying, and managing traffic events and alerts
  */
+function trafficFeedNotice(state, label, hasRecords = false) {
+    if (!state || (state.status !== 'cached' && state.status !== 'unavailable' && !state.feedUnavailable)) return '';
+    const unavailable = state.status === 'unavailable' || state.feedUnavailable;
+    const message = unavailable ? `${label} feed unavailable.` : `${label}: showing cached reports.`;
+    const provenance = state.status === 'cached' || state.lastUpdated
+        ? formatUDOTReportAge({ cached: true, lastUpdated: state.lastUpdated }) : '';
+    return `<p class="advisories-status" role="status">${escapeHtml(message)}${unavailable && hasRecords ? ' Showing last received reports.' : ''} ${escapeHtml(provenance)}</p>`;
+}
+
 class TrafficEventsManager {
     constructor() {
         this.currentTab = 'active';
+        this.eventsFeedStatus = {};
+        this.alertsFeedStatus = null;
+        this.alertsData = [];
         this.eventsData = {
             active: [],
             upcoming: [],
@@ -56,6 +68,7 @@ class TrafficEventsManager {
     }
 
     async loadAllEventsData() {
+        this.eventsFeedStatus ??= {};
         try {
             const [activeResponse, upcomingResponse, allResponse] = await Promise.all([
                 fetch('/api/traffic-events/active'),
@@ -70,18 +83,22 @@ class TrafficEventsManager {
             if (activeResponse.ok) {
                 const activeData = await activeResponse.json();
                 this.eventsData.active = activeData.events || [];
+                this.eventsFeedStatus.active = activeData;
             }
 
             if (upcomingResponse.ok) {
                 const upcomingData = await upcomingResponse.json();
                 this.eventsData.upcoming = upcomingData.events || [];
+                this.eventsFeedStatus.upcoming = upcomingData;
             }
 
             if (allResponse.ok) {
                 const allData = await allResponse.json();
                 this.eventsData.all = allData.events || [];
+                this.eventsFeedStatus.all = allData;
             }
 
+            this.eventsError = null;
             this.displayEvents(this.currentTab);
         } catch (error) {
             console.error('Error loading traffic events data:', error);
@@ -91,7 +108,9 @@ class TrafficEventsManager {
 
     displayEvents(tabName) {
         const container = document.getElementById(`${tabName}-events`);
-        const events = this.eventsData[tabName];
+        const events = this.eventsData[tabName] || [];
+        const feed = this.eventsFeedStatus?.[tabName] || {};
+        const notice = trafficFeedNotice(this.eventsError ? { ...feed, status: 'unavailable' } : feed, 'Traffic events', events.length > 0);
 
         if (!container) {
             console.error(`TrafficEventsManager: Container not found for tab: ${tabName}`);
@@ -99,7 +118,7 @@ class TrafficEventsManager {
         }
 
         if (events.length === 0) {
-            container.innerHTML = `
+            container.innerHTML = notice || `
                 <div class="no-events" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 16px; color: #10b981;"></i>
                     <h3 style="margin: 0 0 8px 0;">No ${tabName} events</h3>
@@ -110,7 +129,7 @@ class TrafficEventsManager {
         }
 
         const eventsHtml = events.map(event => this.createEventCard(event)).join('');
-        container.innerHTML = `<div class="events-list">${eventsHtml}</div>`;
+        container.innerHTML = `${notice}<div class="events-list">${eventsHtml}</div>`;
     }
 
     createEventCard(event) {
@@ -210,20 +229,8 @@ class TrafficEventsManager {
     }
 
     showError(message) {
-        const activeContainer = document.getElementById('active-events');
-        if (activeContainer) {
-            activeContainer.innerHTML = `
-                <div class="events-error" style="text-align: center; padding: 40px; color: #dc2626;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                    <h3 style="margin: 0 0 8px 0;">Error Loading Events</h3>
-                    <p style="margin: 0;">${escapeHtml(message)}</p>
-                    <button onclick="trafficEventsManager.loadAllEventsData()"
-                            style="margin-top: 16px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Retry
-                    </button>
-                </div>
-            `;
-        }
+        this.eventsError = message;
+        for (const tab of ['active', 'upcoming', 'all']) this.displayEvents(tab);
     }
 
     async loadAlerts() {
@@ -237,6 +244,7 @@ class TrafficEventsManager {
             const alertsData = await alertsResponse.json();
 
             if (alertsData.success && alertsData.alerts) {
+                this.alertsFeedStatus = alertsData;
                 this.displayAlerts(alertsData.alerts);
             } else {
                 throw new Error('Invalid response format');
@@ -248,6 +256,8 @@ class TrafficEventsManager {
     }
 
     displayAlerts(alerts) {
+        this.alertsData = alerts;
+        const notice = trafficFeedNotice(this.alertsFeedStatus, 'UDOT alerts', alerts.length > 0);
         const container = document.getElementById('alerts-container');
         if (!container) {
             console.error('TrafficEventsManager: Alerts container not found');
@@ -255,7 +265,7 @@ class TrafficEventsManager {
         }
 
         if (alerts.length === 0) {
-            container.innerHTML = `
+            container.innerHTML = notice || `
                 <div class="no-alerts">
                     <i class="fas fa-check-circle"></i>
                     <h4>No Active Alerts</h4>
@@ -266,7 +276,7 @@ class TrafficEventsManager {
         }
 
         const alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
-        container.innerHTML = `<div class="alerts-list">${alertsHtml}</div>`;
+        container.innerHTML = `${notice}<div class="alerts-list">${alertsHtml}</div>`;
     }
 
     createAlertCard(alert) {
@@ -314,16 +324,8 @@ class TrafficEventsManager {
     }
 
     showAlertsError(message) {
-        const container = document.getElementById('alerts-container');
-        if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #dc2626;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <h4 style="margin: 0 0 0.5rem 0;">Error Loading Alerts</h4>
-                    <p style="margin: 0;">${escapeHtml(message)}</p>
-                </div>
-            `;
-        }
+        this.alertsFeedStatus = { ...this.alertsFeedStatus, status: 'unavailable' };
+        this.displayAlerts(this.alertsData || []);
     }
 
     startAutoRefresh() {
