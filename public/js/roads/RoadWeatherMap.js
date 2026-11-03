@@ -950,7 +950,7 @@ class RoadWeatherMap {
         };
 
         if (this.controlActions) {
-            this.controlActions.insertBefore(legend.onAdd(this.map), this.controlActions.querySelector('.units-toggle-container'));
+            this.controlActions.insertBefore(legend.onAdd(this.map), this.controlActions.querySelector('.map-reset-container'));
         } else {
             legend.addTo(this.map);
         }
