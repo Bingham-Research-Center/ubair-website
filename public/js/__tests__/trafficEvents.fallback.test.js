@@ -5,7 +5,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 function browser() {
     const container = { innerHTML: '' };
     const context = vm.createContext({ document: { getElementById: () => container },
-        fetch: jest.fn().mockResolvedValue({ ok: false, status: 503 }), console: { error: jest.fn() } });
+        fetch: jest.fn().mockResolvedValue({ ok: false, status: 503 }), console: { error: jest.fn() },
+        requestAnimationFrame: () => 0 });
     for (const name of ['utils', 'TrafficEventsManager']) {
         vm.runInContext(readFileSync(new URL(`../roads/${name}.js`, import.meta.url), 'utf8'), context);
     }
@@ -15,6 +16,10 @@ function browser() {
     // Constructor state that #334's advisory cards read (the constructor is skipped here).
     manager.expandedLists = new Set();
     manager.expandedDescriptions = new Set();
+    // Per-feed state from #335: alerts and advisories load and fail independently.
+    manager.alertsData = [];
+    manager.alertsStatus = 'ready';
+    manager.eventsStatus = { active: 'loading', upcoming: 'loading', all: 'loading' };
     return { manager, container };
 }
 
@@ -22,7 +27,9 @@ describe('traffic fallback presentation', () => {
     it('shows an error for failed HTTP responses and makes no all-clear claim for empty lists', async () => {
         const { manager, container } = browser();
         await manager.loadAllEventsData();
-        expect(container.innerHTML).toContain('Error Loading Events');
+        expect(container.innerHTML).toContain('Travel advisories could not be updated');
+        expect(container.innerHTML).not.toMatch(/all clear/i);
+        manager.eventsStatus.active = 'ready';
         manager.displayEvents('active');
         expect(container.innerHTML).toContain('No active advisories');
         expect(container.innerHTML).not.toMatch(/all clear/i);
