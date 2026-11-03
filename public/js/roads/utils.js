@@ -54,6 +54,18 @@ function sanitizeHexColor(value, fallback = '#6c757d') {
     return fallback;
 }
 
+/** Choose a bundled Font Awesome icon instead of the feed's emoji displayIcon. */
+function getTrafficEventIconClass(event) {
+    const type = String(event.eventType || '').toLowerCase();
+    const category = String(event.eventCategory || '').toLowerCase();
+    if (event.isFullClosure || type === 'closures') return 'fas fa-ban';
+    if (type === 'accidentsandincidents') return 'fas fa-car-crash';
+    if (type === 'roadwork' || category.includes('construction')) return 'fas fa-hard-hat';
+    if (category.includes('weather')) return 'fas fa-cloud-rain';
+    if (category.includes('maintenance')) return 'fas fa-wrench';
+    return 'fas fa-exclamation-triangle';
+}
+
 /**
  * Restrict dynamic URLs to http/https
  * @param {*} value - Candidate URL
@@ -102,7 +114,7 @@ function createRouteIncidentSummary(routeName, events) {
         return `
             <div class="route-incidents">
                 <div class="route-incident-summary none">
-                    <span class="no-incidents">✅ No current incidents reported on ${safeRouteName}</span>
+                    <span class="no-incidents">No current incidents reported on ${safeRouteName}</span>
                 </div>
             </div>
         `;
@@ -153,31 +165,23 @@ function displayRouteConditions(container, data) {
     const html = `
         <div class="route-summary">
             <div class="route-metric temperature">
-                <div class="metric-icon">🌡️</div>
                 <div class="metric-value">${avgTemp !== '--' ? unitsSystem.formatTemperature(avgTemp) : `--${unitsSystem.getTempUnit()}`}</div>
                 <div class="metric-label">Air Temperature</div>
-                <div class="metric-status ${getTemperatureStatus(avgTemp)}">${getTemperatureStatusText(avgTemp)}</div>
             </div>
 
             <div class="route-metric surface">
-                <div class="metric-icon">🛣️</div>
                 <div class="metric-value">${surfaceCondition.text}</div>
                 <div class="metric-label">Surface Condition</div>
-                <div class="metric-status ${surfaceCondition.status}">${surfaceCondition.statusText}</div>
             </div>
 
             <div class="route-metric incidents">
-                <div class="metric-icon">🚧</div>
                 <div class="metric-value">${incidentCount}</div>
                 <div class="metric-label">Active Incidents</div>
-                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'Clear' : 'Active'}</div>
             </div>
 
             <div class="route-metric travel-time">
-                <div class="metric-icon">⏱️</div>
                 <div class="metric-value">${travelStatus.text}</div>
                 <div class="metric-label">Travel Status</div>
-                <div class="metric-status ${travelStatus.status}">${travelStatus.statusText}</div>
             </div>
         </div>
 

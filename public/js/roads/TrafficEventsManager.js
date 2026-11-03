@@ -128,7 +128,6 @@ class TrafficEventsManager {
         const descriptionText = typeof event.description === 'string' ? event.description : '';
         const titleText = event.name || (descriptionText ? descriptionText.substring(0, 60) : 'Traffic Event');
         const safeDisplayColor = sanitizeHexColor(event.displayColor, '#6c757d');
-        const safeDisplayIcon = escapeHtml(event.displayIcon || '🚧');
         const safeTitleText = escapeHtml(titleText);
         const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown roadway');
         const safeDescriptionText = escapeHtml(descriptionText || 'No description available.');
@@ -148,8 +147,8 @@ class TrafficEventsManager {
                 <div class="event-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                     <div class="event-title" style="flex: 1;">
                         <h4 style="margin: 0 0 4px 0; color: ${safeDisplayColor}; display: flex; align-items: center; gap: 8px;">
-                            ${safeDisplayIcon} ${safeTitleText}
-                            ${event.isFullClosure ? '<span style="background: #dc2626; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">CLOSURE</span>' : ''}
+                            ${safeTitleText}
+                            ${event.isFullClosure ? '<span class="event-closure" style="background: #dc2626; color: white; font-size: 10px; padding: 2px 6px; border-radius: 12px; margin-left: 8px;">CLOSURE</span>' : ''}
                         </h4>
                         <p style="margin: 0; color: #666; font-size: 14px;">${safeRoadwayName}</p>
                     </div>

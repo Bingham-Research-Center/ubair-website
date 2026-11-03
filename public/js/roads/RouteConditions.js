@@ -112,48 +112,42 @@ const basinRoads = [
         shortName: 'SR-87',
         description: 'Connects Duchesne to Price via Nine Mile Canyon',
         keywords: ['sr-87', 'state route 87', 'nine mile', 'duchesne', 'price'],
-        coordinates: { lat: 40.1, lng: -110.4 },
-        icon: '🏔️'
+        coordinates: { lat: 40.1, lng: -110.4 }
     },
     {
         name: 'SR-121 (Randlett-Neola)',
         shortName: 'SR-121',
         description: 'Local connector through Randlett and Neola areas',
         keywords: ['sr-121', 'state route 121', 'randlett', 'neola'],
-        coordinates: { lat: 40.2, lng: -109.8 },
-        icon: '🛤️'
+        coordinates: { lat: 40.2, lng: -109.8 }
     },
     {
         name: 'US-45 (Dinosaur Access)',
         shortName: 'US-45',
         description: 'Access route to Dinosaur National Monument',
         keywords: ['us-45', 'dinosaur', 'monument'],
-        coordinates: { lat: 40.4, lng: -109.0 },
-        icon: '🦕'
+        coordinates: { lat: 40.4, lng: -109.0 }
     },
     {
         name: 'Naples-Jensen Road',
         shortName: 'Naples Rd',
         description: 'Local route connecting Naples to Jensen area',
         keywords: ['naples', 'jensen', 'local'],
-        coordinates: { lat: 40.4, lng: -109.4 },
-        icon: '🏘️'
+        coordinates: { lat: 40.4, lng: -109.4 }
     },
     {
         name: 'Red Canyon Road',
         shortName: 'Red Canyon',
         description: 'Scenic route through Red Canyon area',
         keywords: ['red canyon', 'scenic', 'local'],
-        coordinates: { lat: 40.3, lng: -109.6 },
-        icon: '🏞️'
+        coordinates: { lat: 40.3, lng: -109.6 }
     },
     {
         name: 'Strawberry Reservoir Access',
         shortName: 'Strawberry',
         description: 'Mountain access to Strawberry Reservoir',
         keywords: ['strawberry', 'reservoir', 'mountain'],
-        coordinates: { lat: 40.2, lng: -111.0 },
-        icon: '🎣'
+        coordinates: { lat: 40.2, lng: -111.0 }
     }
 ];
 
@@ -332,31 +326,23 @@ function createRoadSlideContent(road, stations, events) {
     return `
         <div class="route-summary">
             <div class="route-metric temperature">
-                <div class="metric-icon">🌡️</div>
                 <div class="metric-value">${avgTemp !== '--' ? unitsSystem.formatTemperature(avgTemp) : `--${unitsSystem.getTempUnit()}`}</div>
                 <div class="metric-label">Air Temperature</div>
-                <div class="metric-status ${getTemperatureStatus(avgTemp)}">${getTemperatureStatusText(avgTemp)}</div>
             </div>
 
             <div class="route-metric surface">
-                <div class="metric-icon">${road.icon}</div>
                 <div class="metric-value">${surfaceCondition.text}</div>
                 <div class="metric-label">Surface Condition</div>
-                <div class="metric-status ${surfaceCondition.status}">${surfaceCondition.statusText}</div>
             </div>
 
             <div class="route-metric incidents">
-                <div class="metric-icon">🚧</div>
                 <div class="metric-value">${incidentCount}</div>
                 <div class="metric-label">Active Incidents</div>
-                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'Clear' : 'Active'}</div>
             </div>
 
             <div class="route-metric travel-time">
-                <div class="metric-icon">⏱️</div>
                 <div class="metric-value">${stations.length}</div>
                 <div class="metric-label">Nearby Stations</div>
-                <div class="metric-status ${stations.length > 0 ? 'good' : 'caution'}">${stations.length > 0 ? 'Monitored' : 'Limited Data'}</div>
             </div>
         </div>
 
