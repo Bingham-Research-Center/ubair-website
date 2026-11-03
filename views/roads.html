@@ -20,6 +20,8 @@
     <link rel="stylesheet" href="/public/css/roads.css">
     <link rel="stylesheet" href="/public/css/roads-page.css">
     <link rel="stylesheet" href="/public/css/roads-map.css">
+    <link rel="stylesheet" href="/public/css/roads-advisories.css">
+    <link rel="stylesheet" href="/public/css/roads-alerts.css">
 </head>
 <body data-page-type="roads">
     <!-- Sidebar Container -->
@@ -181,21 +183,21 @@
             </p>
         </section>
 
-        <!-- Travel Advisory Section -->
+        <!-- Combined travel advisories and Basin alerts -->
         <section class="advisory-section" id="travel-advisories">
-            <h2>Travel Advisories</h2>
+            <h2>Advisories and Alerts</h2>
             <!-- Traffic Events Dashboard -->
             <div class="events-tabs">
-                <button class="tab-btn active" data-tab="active">Active Events</button>
+                <button class="tab-btn active" data-tab="active">Active</button>
                 <button class="tab-btn" data-tab="upcoming">Upcoming</button>
-                <button class="tab-btn" data-tab="all">All Events</button>
+                <button class="tab-btn" data-tab="all">All</button>
             </div>
 
             <div class="events-content">
                 <div class="tab-content active" id="active-events">
                     <div class="events-loading">
                         <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading active traffic events...</p>
+                        <p>Loading advisories and alerts...</p>
                     </div>
                 </div>
 
@@ -211,17 +213,6 @@
                         <i class="fas fa-spinner fa-spin"></i>
                         <p>Loading all traffic events...</p>
                     </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- UDOT Alerts Section -->
-        <section class="udot-alerts-section">
-            <h2>UDOT Alerts</h2>
-            <div id="alerts-container">
-                <div class="alerts-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading UDOT alerts...</p>
                 </div>
             </div>
         </section>

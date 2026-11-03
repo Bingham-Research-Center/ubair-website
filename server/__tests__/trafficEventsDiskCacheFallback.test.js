@@ -63,7 +63,7 @@ describe('UDOT rate-limit disk-cache fallback', () => {
     });
 
     it('still returns the cached rows when the 24h disk cache is warm', async () => {
-        const stored = [{ id: 1, startDate: '2026-08-31T00:00:00Z' }];
+        const stored = [{ id: 1, regions: ['Uintah County'], startTime: '2026-08-31T00:00:00Z' }];
         service.loadFromDiskCache = warmOnlyAtTwentyFourHours(stored);
         await expect(service.fetchUDOTAlerts()).resolves.toEqual(stored);
     });
