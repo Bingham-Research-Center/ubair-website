@@ -2,6 +2,7 @@ import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
 import fs from 'fs/promises';
 import path from 'path';
+import { alertLocation, filterBasinAlerts, isAlertRelevantToBasin } from './basinAlertFilter.js';
 
 // Aggressive caching: 2 hours for API data
 const cache = new NodeCache({ stdTTL: 7200 }); // 2 hours instead of 5 minutes
@@ -37,13 +38,13 @@ class TrafficEventsService {
 
         // Check memory cache first
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return filterBasinAlerts(cached);
 
         // Check persistent file cache
         const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
         if (diskCached) {
             cache.set(cacheKey, diskCached); // Restore to memory
-            return diskCached;
+            return filterBasinAlerts(diskCached);
         }
 
         // Rate limiting check
@@ -51,7 +52,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
-            return (await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000)) || []; // Fallback to 24h old cache
+            return filterBasinAlerts(await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000));
         }
 
         try {
@@ -78,7 +79,7 @@ class TrafficEventsService {
                 notes: alert.Notes,
                 startTime: new Date(alert.StartTime * 1000).toISOString(),
                 endTime: alert.EndTime ? new Date(alert.EndTime * 1000).toISOString() : null,
-                regions: alert.Regions || [],
+                ...alertLocation(alert),
                 highImportance: alert.HighImportance,
                 sendNotification: alert.SendNotification,
                 isActive: this.isAlertActive(alert),
@@ -86,9 +87,7 @@ class TrafficEventsService {
             }));
 
             // Filter for active alerts relevant to Uintah Basin
-            const relevantAlerts = processedAlerts.filter(alert =>
-                alert.isActive && this.isAlertRelevantToBasin(alert)
-            );
+            const relevantAlerts = filterBasinAlerts(processedAlerts);
 
             // Save to both memory and disk cache
             cache.set(cacheKey, relevantAlerts);
@@ -101,37 +100,7 @@ class TrafficEventsService {
     }
 
     isAlertRelevantToBasin(alert) {
-        // Check if alert regions contain Uintah Basin counties or cities
-        const regions = alert.regions || [];
-        const message = (alert.message || '').toLowerCase();
-        const notes = (alert.notes || '').toLowerCase();
-        
-        // Uintah Basin regions and cities to check for
-        const basinKeywords = [
-            'duchesne', 'uintah', 'vernal', 'roosevelt', 'ballard', 
-            'manila', 'altamont', 'us-40', 'us-191', 'sr-87', 'sr-121',
-            'uintah basin', 'duchesne county', 'uintah county'
-        ];
-
-        // Check regions array
-        const hasBasinRegion = regions.some(region => 
-            basinKeywords.some(keyword => 
-                region.toLowerCase().includes(keyword)
-            )
-        );
-
-        // Check message and notes content
-        const mentionsBasin = basinKeywords.some(keyword => 
-            message.includes(keyword) || notes.includes(keyword)
-        );
-
-        // Also check for major highways that pass through the basin
-        const basinHighways = ['us-40', 'us-191', 'highway 40', 'highway 191', 'route 40', 'route 191'];
-        const mentionsBasinHighway = basinHighways.some(highway => 
-            message.includes(highway) || notes.includes(highway)
-        );
-
-        return hasBasinRegion || mentionsBasin || mentionsBasinHighway;
+        return isAlertRelevantToBasin(alert);
     }
 
     isAlertActive(alert) {

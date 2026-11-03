@@ -13,6 +13,9 @@
 class TrafficEventsManager {
     constructor() {
         this.currentTab = 'active';
+        this.alertsData = [];
+        this.alertsStatus = 'loading';
+        this.eventsStatus = { active: 'loading', upcoming: 'loading', all: 'loading' };
         this.eventsData = {
             active: [],
             upcoming: [],
@@ -32,7 +35,7 @@ class TrafficEventsManager {
         const tabButtons = document.querySelectorAll('.tab-btn');
         tabButtons.forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const tabName = e.target.dataset.tab;
+                const tabName = e.currentTarget.dataset.tab;
                 this.switchTab(tabName);
             });
         });
@@ -56,33 +59,21 @@ class TrafficEventsManager {
     }
 
     async loadAllEventsData() {
-        try {
-            const [activeResponse, upcomingResponse, allResponse] = await Promise.all([
-                fetch('/api/traffic-events/active'),
-                fetch('/api/traffic-events/upcoming'),
-                fetch('/api/traffic-events')
-            ]);
-
-            if (activeResponse.ok) {
-                const activeData = await activeResponse.json();
-                this.eventsData.active = activeData.events || [];
-            }
-
-            if (upcomingResponse.ok) {
-                const upcomingData = await upcomingResponse.json();
-                this.eventsData.upcoming = upcomingData.events || [];
-            }
-
-            if (allResponse.ok) {
-                const allData = await allResponse.json();
-                this.eventsData.all = allData.events || [];
-            }
-
-            this.displayEvents(this.currentTab);
-        } catch (error) {
-            console.error('Error loading traffic events data:', error);
-            this.showError('Failed to load traffic events');
-        }
+        const tabs = ['active', 'upcoming', 'all'];
+        const responses = await Promise.allSettled(tabs.map(async tab => {
+            const response = await fetch(`/api/traffic-events${tab === 'all' ? '' : `/${tab}`}`);
+            if (!response.ok) throw new Error(`Traffic events HTTP ${response.status}`);
+            const data = await response.json();
+            if (!data.success || !Array.isArray(data.events)) throw new Error('Invalid traffic events response');
+            return data.events;
+        }));
+        responses.forEach((result, index) => {
+            const tab = tabs[index];
+            this.eventsStatus[tab] = result.status === 'fulfilled' ? 'ready' : 'error';
+            if (result.status === 'fulfilled') this.eventsData[tab] = result.value;
+            else console.error(`Error loading ${tab} traffic events:`, result.reason);
+        });
+        this.displayEvents(this.currentTab);
     }
 
     displayEvents(tabName) {
@@ -94,19 +85,25 @@ class TrafficEventsManager {
             return;
         }
 
-        if (events.length === 0) {
-            container.innerHTML = `
-                <div class="no-events" style="text-align: center; padding: 40px; color: #666;">
-                    <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 16px; color: #10b981;"></i>
-                    <h3 style="margin: 0 0 8px 0;">No ${tabName} events</h3>
-                    <p style="margin: 0;">All clear on Uintah Basin roads!</p>
-                </div>
-            `;
-            return;
+        let alertsHtml = '';
+        if (tabName !== 'upcoming') {
+            const now = Date.now();
+            const severityOrder = { high: 3, medium: 2, low: 1 };
+            const alerts = this.alertsData.filter(alert =>
+                (!alert.startTime || Date.parse(alert.startTime) <= now) &&
+                (!alert.endTime || Date.parse(alert.endTime) >= now)
+            ).sort((a, b) => (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0));
+            alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
+            if (this.alertsStatus === 'loading') alertsHtml += '<p class="advisories-status">Loading UDOT alerts…</p>';
+            else if (this.alertsStatus === 'error') alertsHtml += '<p class="advisories-status" role="status">UDOT alerts could not be updated. Please try again later.</p>';
+            else if (!alerts.length) alertsHtml = '<p class="advisories-status">No UDOT alerts for the Basin right now.</p>';
         }
 
-        const eventsHtml = events.map(event => this.createEventCard(event)).join('');
-        container.innerHTML = `<div class="events-list">${eventsHtml}</div>`;
+        let eventsHtml = events.map(event => this.createEventCard(event)).join('');
+        if (this.eventsStatus[tabName] === 'loading') eventsHtml += '<p class="advisories-status">Loading travel advisories…</p>';
+        else if (this.eventsStatus[tabName] === 'error') eventsHtml += '<p class="advisories-status" role="status">Travel advisories could not be updated. Please try again later.</p>';
+        else if (!events.length) eventsHtml = `<p class="advisories-status">No ${tabName === 'all' ? '' : `${tabName} `}travel advisories.</p>`;
+        container.innerHTML = `<div class="events-list advisories-list">${alertsHtml}${eventsHtml}</div>`;
     }
 
     createEventCard(event) {
@@ -204,23 +201,6 @@ class TrafficEventsManager {
         `;
     }
 
-    showError(message) {
-        const activeContainer = document.getElementById('active-events');
-        if (activeContainer) {
-            activeContainer.innerHTML = `
-                <div class="events-error" style="text-align: center; padding: 40px; color: #dc2626;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                    <h3 style="margin: 0 0 8px 0;">Error Loading Events</h3>
-                    <p style="margin: 0;">${escapeHtml(message)}</p>
-                    <button onclick="trafficEventsManager.loadAllEventsData()"
-                            style="margin-top: 16px; padding: 8px 16px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">
-                        Retry
-                    </button>
-                </div>
-            `;
-        }
-    }
-
     async loadAlerts() {
         try {
             const alertsResponse = await fetch('/api/alerts');
@@ -231,7 +211,7 @@ class TrafficEventsManager {
 
             const alertsData = await alertsResponse.json();
 
-            if (alertsData.success && alertsData.alerts) {
+            if (alertsData.success && Array.isArray(alertsData.alerts)) {
                 this.displayAlerts(alertsData.alerts);
             } else {
                 throw new Error('Invalid response format');
@@ -243,30 +223,18 @@ class TrafficEventsManager {
     }
 
     displayAlerts(alerts) {
-        const container = document.getElementById('alerts-container');
-        if (!container) {
-            console.error('TrafficEventsManager: Alerts container not found');
-            return;
-        }
-
-        if (alerts.length === 0) {
-            container.innerHTML = `
-                <div class="no-alerts">
-                    <i class="fas fa-check-circle"></i>
-                    <h4>No Active Alerts</h4>
-                    <p>All clear - no UDOT alerts for the region.</p>
-                </div>
-            `;
-            return;
-        }
-
-        const alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
-        container.innerHTML = `<div class="alerts-list">${alertsHtml}</div>`;
+        this.alertsData = alerts;
+        this.alertsStatus = 'ready';
+        this.displayEvents(this.currentTab);
     }
 
     createAlertCard(alert) {
-        const startDate = new Date(alert.startTime);
-        const endDate = alert.endTime ? new Date(alert.endTime) : null;
+        const dateFormat = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Denver', month: 'short', day: 'numeric', year: 'numeric'
+        });
+        const formatDate = value => value && Number.isFinite(Date.parse(value)) ? dateFormat.format(new Date(value)) : '';
+        const startDate = formatDate(alert.startTime);
+        const endDate = formatDate(alert.endTime);
         const severityToken = sanitizeClassToken(alert.severity || 'unknown');
         const safeSeverity = escapeHtml(alert.severity || 'unknown');
         const safeMessage = escapeHtml(alert.message || '');
@@ -277,9 +245,8 @@ class TrafficEventsManager {
             <div class="alert-card ${severityToken}-importance">
                 <div class="alert-header">
                     <div class="alert-info">
+                        <span class="alert-source">UDOT alert</span>
                         <span class="alert-severity ${severityToken}">${safeSeverity}</span>
-                        ${alert.highImportance ? '<i class="fas fa-exclamation-triangle" style="color: #dc2626; margin-left: 8px;" title="High Importance"></i>' : ''}
-                        ${alert.sendNotification ? '<i class="fas fa-bell" style="color: #f59e0b; margin-left: 4px;" title="Notification Alert"></i>' : ''}
                     </div>
                 </div>
 
@@ -294,8 +261,8 @@ class TrafficEventsManager {
                 ` : ''}
 
                 <div class="alert-times">
-                    <span><strong>Started:</strong> ${startDate.toLocaleString()}</span>
-                    ${endDate ? `<span><strong>Ends:</strong> ${endDate.toLocaleString()}</span>` : '<span><strong>End:</strong> TBD</span>'}
+                    ${startDate ? `<span><strong>Started:</strong> ${startDate}</span>` : ''}
+                    ${endDate ? `<span><strong>Ends:</strong> ${endDate}</span>` : ''}
                 </div>
 
                 ${alert.regions && alert.regions.length > 0 ? `
@@ -308,16 +275,9 @@ class TrafficEventsManager {
     }
 
     showAlertsError(message) {
-        const container = document.getElementById('alerts-container');
-        if (container) {
-            container.innerHTML = `
-                <div style="text-align: center; padding: 2rem; color: #dc2626;">
-                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-                    <h4 style="margin: 0 0 0.5rem 0;">Error Loading Alerts</h4>
-                    <p style="margin: 0;">${escapeHtml(message)}</p>
-                </div>
-            `;
-        }
+        console.error(message);
+        this.alertsStatus = 'error';
+        this.displayEvents(this.currentTab);
     }
 
     startAutoRefresh() {
