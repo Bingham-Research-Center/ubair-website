@@ -105,6 +105,29 @@ describe('road weather availability', () => {
 });
 
 describe('missing readings', () => {
+    it.each([
+        [{ temperature: -2, precipitation: 1 }, 'red'],
+        [{ temperature: 1, precipitation: 1 }, 'yellow'],
+        [{ snowfall: 1 }, 'yellow'],
+        [{ visibility: 0 }, 'yellow'],
+        [{ windSpeed: 20 }, 'yellow']
+    ])('retains hazards supported by partial weather: %j', (readings, color) => {
+        const weather = { temperature: null, precipitation: null, snowfall: null, windSpeed: null, visibility: null, ...readings };
+        expect(service.estimateRoadCondition({ route: 'US-40', name: 'US-40' }, weather).condition).toBe(color);
+    });
+
+    it('keeps a freezing HRRR contribution when visibility is missing', () => {
+        const forecast = { points: [{ lat: 40.3, lon: -110, temp_2m: -2, precip_1hr: 1, precip_type: 'rain', wind_speed_10m: 0 }] };
+        expect(service.gatherSourcesForSegment(road, forecast, [], [])).toContainEqual(
+            expect.objectContaining({ name: 'hrrr', condition: 'red' }));
+    });
+
+    it('does not interpret missing temperature or visibility as zero', () => {
+        const weather = { temperature: null, precipitation: 1, snowfall: 0, windSpeed: 0, visibility: null };
+        expect(service.estimateRoadCondition({ route: 'US-40', name: 'US-40' }, weather).condition).toBe('gray');
+        expect(service.estimateRoadCondition({ route: 'US-40', name: 'US-40' }, { ...weather, temperature: 10, visibility: 10000 }).condition).toBe('green');
+    });
+
     it('does not turn missing rest-area capacity into zero or an invented total', async () => {
         fetch.mockResolvedValue({ ok: true, json: async () => [
             { Id: 1, Latitude: 40.3, Longitude: -110, CarStalls: null, TruckStalls: '4' },

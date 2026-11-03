@@ -770,14 +770,16 @@ class RoadWeatherService {
     }
 
     estimateRoadCondition(road, weather) {
-        if (!weather || !['temperature', 'precipitation', 'snowfall', 'windSpeed', 'visibility'].every(key => Number.isFinite(weather[key]))) {
+        if (!weather) {
             return { condition: 'gray', status: 'No Data', reason: 'Weather data unavailable or incomplete' };
         }
-        const temp = weather.temperature;
-        const precip = weather.precipitation;
-        const snow = weather.snowfall;
-        const wind = weather.windSpeed;
-        const visibility = weather.visibility;
+        // Missing readings must neither suppress known hazards nor compare as zero.
+        const reading = key => Number.isFinite(weather[key]) ? weather[key] : NaN;
+        const temp = reading('temperature');
+        const precip = reading('precipitation');
+        const snow = reading('snowfall');
+        const wind = reading('windSpeed');
+        const visibility = reading('visibility');
 
         // Estimate based on weather conditions and road type
         let condition = 'green';
@@ -813,9 +815,9 @@ class RoadWeatherService {
         }
 
         // Mountain/forest roads are more susceptible
-        if (road.route.toLowerCase().includes('forest') ||
-            road.route.toLowerCase().includes('mountain') ||
-            road.name.toLowerCase().includes('canyon')) {
+        if ((road.route || '').toLowerCase().includes('forest') ||
+            (road.route || '').toLowerCase().includes('mountain') ||
+            (road.name || '').toLowerCase().includes('canyon')) {
             if (condition === 'green' && (temp < 5 || precip > 0)) {
                 condition = 'yellow';
                 status = 'Mountain Road Caution';
@@ -823,6 +825,9 @@ class RoadWeatherService {
             }
         }
 
+        if (condition === 'green' && ![temp, precip, snow, wind, visibility].every(Number.isFinite)) {
+            return { condition: 'gray', status: 'No Data', reason: 'Weather data unavailable or incomplete' };
+        }
         return { condition, status, reason };
     }
 
