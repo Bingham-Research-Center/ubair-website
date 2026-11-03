@@ -3129,3 +3129,81 @@ body[data-page-type="roads"] .leaflet-drag-target {
         scroll-snap-align: start;
     }
 }
+
+/* Roads-only icon and label cleanup. The kiosk also uses this stylesheet. */
+body[data-page-type="roads"] .content .fas {
+    color: #4b5563 !important;
+    font-size: 0.875rem !important;
+}
+
+body[data-page-type="roads"] .content :is(button, a, .click-overlay) > .fas {
+    color: inherit !important;
+}
+
+body[data-page-type="roads"] .card-icon-small {
+    background: none !important;
+    color: #4b5563;
+}
+
+body[data-page-type="roads"] :is(.no-events, .no-alerts, .events-error) > .fas,
+body[data-page-type="roads"] :is(.metric-status, .monitored-badge, .camera-monitored-badge, .estimated-badge, .event-status) {
+    display: none;
+}
+
+/* Preserve useful condition and confidence text without a badge around it.
+   Alert severity and corridor table status dots are deliberately excluded. */
+body[data-page-type="roads"] :is(
+    .road-status, .station-status, .confidence-badge, .map-condition-status,
+    .event-closure, .hrrr-guidance-status, .hrrr-hazard-onset,
+    .hrrr-map-popup-hazard, .weather-station-info .status-badge
+) {
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: none !important;
+    box-shadow: none !important;
+    color: inherit !important;
+    text-transform: none;
+}
+
+body[data-page-type="roads"] .confidence-badge:hover {
+    transform: none;
+}
+
+body[data-page-type="roads"] .hrrr-guidance-status {
+    white-space: normal;
+    font-weight: 400;
+}
+
+body[data-page-type="roads"] .hrrr-guidance-status::before {
+    content: none;
+}
+
+body[data-page-type="roads"] .hrrr-guidance-status[hidden] {
+    display: none;
+}
+
+/* Keep map symbols readable, with condition colors confined to their rings. */
+body[data-page-type="roads"] :is(
+    .traffic-event-marker > div,
+    .snow-plow-marker > div > div:first-child,
+    .mountain-pass-marker > div > div:first-child,
+    .rest-area-marker > div > div:first-child
+) {
+    background: white !important;
+    border-color: var(--marker-status-color, #d1d5db) !important;
+}
+
+body[data-page-type="roads"] :is(.mountain-pass-marker, .rest-area-marker) > div > div + div {
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+    color: #4b5563 !important;
+}
+
+body[data-page-type="roads"] .weather-station-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
