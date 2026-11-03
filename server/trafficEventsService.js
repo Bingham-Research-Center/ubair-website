@@ -30,20 +30,45 @@ class TrafficEventsService {
         // Rate limiting - track last API call times
         this.lastApiCalls = new Map();
         this.minCallInterval = 60000; // Minimum 1 minute between API calls of same type
+        this.feedStatus = {};
+        this.pendingFeeds = {};
     }
 
-    async fetchUDOTAlerts() {
+    recordFeedStatus(feed, records, status, feedUnavailable = false) {
+        const cacheKey = feed === 'alerts' ? 'udot_alerts' : 'udot_traffic_events';
+        if (status === 'available') cache.set(`${cacheKey}_retrieved_at`, new Date().toISOString());
+        const times = records.map(record => record.lastUpdated || record.retrievedAt).filter(value => Number.isFinite(Date.parse(value)));
+        this.feedStatus[feed] = {
+            status, feedUnavailable,
+            lastUpdated: times.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) || cache.get(`${cacheKey}_retrieved_at`) || null
+        };
+        return status === 'cached' ? records.map(record => ({ ...record, cached: true })) : records;
+    }
+
+    async unavailableFeed(feed, cacheKey, cause) {
+        const snapshot = await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000);
+        if (snapshot !== null) return this.recordFeedStatus(feed, snapshot, 'cached', true);
+        this.recordFeedStatus(feed, [], 'unavailable', true);
+        throw Object.assign(new Error(`UDOT ${feed} feed unavailable`, { cause }), { statusCode: 503 });
+    }
+
+    fetchUDOTAlerts() {
+        // The page requests several views together; they must share the same refresh.
+        return this.pendingFeeds.alerts ??= this.loadUDOTAlerts().finally(() => { delete this.pendingFeeds.alerts; });
+    }
+
+    async loadUDOTAlerts() {
         const cacheKey = 'udot_alerts';
 
         // Check memory cache first
         const cached = cache.get(cacheKey);
-        if (cached) return cached.map(record => ({ ...record, cached: true }));
+        if (cached) return this.recordFeedStatus('alerts', cached, 'cached');
 
         // Check persistent file cache
         const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
         if (diskCached) {
             cache.set(cacheKey, diskCached); // Restore to memory
-            return diskCached;
+            return this.recordFeedStatus('alerts', diskCached, 'cached');
         }
 
         // Rate limiting check
@@ -51,7 +76,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT alerts API call (too recent)');
-            return (await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000)) || []; // Fallback to 24h old cache
+            return this.unavailableFeed('alerts', cacheKey);
         }
 
         try {
@@ -95,10 +120,10 @@ class TrafficEventsService {
             // Save to both memory and disk cache
             cache.set(cacheKey, relevantAlerts);
             await this.saveToDiskCache(cacheKey, relevantAlerts);
-            return relevantAlerts;
+            return this.recordFeedStatus('alerts', relevantAlerts, 'available');
         } catch (error) {
             console.error('Error fetching UDOT alerts:', error);
-            return [];
+            return this.unavailableFeed('alerts', cacheKey, error);
         }
     }
 
@@ -153,18 +178,22 @@ class TrafficEventsService {
         return 'low';
     }
 
-    async fetchUDOTTrafficEvents() {
+    fetchUDOTTrafficEvents() {
+        return this.pendingFeeds.events ??= this.loadUDOTTrafficEvents().finally(() => { delete this.pendingFeeds.events; });
+    }
+
+    async loadUDOTTrafficEvents() {
         const cacheKey = 'udot_traffic_events';
 
         // Check memory cache first
         const cached = cache.get(cacheKey);
-        if (cached) return cached.map(record => ({ ...record, cached: true }));
+        if (cached) return this.recordFeedStatus('events', cached, 'cached');
 
         // Check persistent file cache
         const diskCached = await this.loadFromDiskCache(cacheKey, 2 * 60 * 60 * 1000); // 2 hours
         if (diskCached) {
             cache.set(cacheKey, diskCached); // Restore to memory
-            return diskCached;
+            return this.recordFeedStatus('events', diskCached, 'cached');
         }
 
         // Rate limiting check
@@ -172,7 +201,7 @@ class TrafficEventsService {
         const lastCall = this.lastApiCalls.get(apiCallKey);
         if (lastCall && (Date.now() - lastCall) < this.minCallInterval) {
             console.log('Rate limiting: Skipping UDOT events API call (too recent)');
-            return (await this.loadFromDiskCache(cacheKey, 24 * 60 * 60 * 1000)) || []; // Fallback to 24h old cache
+            return this.unavailableFeed('events', cacheKey);
         }
 
         try {
@@ -245,10 +274,10 @@ class TrafficEventsService {
             // Save to both memory and disk cache
             cache.set(cacheKey, sortedEvents);
             await this.saveToDiskCache(cacheKey, sortedEvents);
-            return sortedEvents;
+            return this.recordFeedStatus('events', sortedEvents, 'available');
         } catch (error) {
             console.error('Error fetching UDOT traffic events:', error);
-            return [];
+            return this.unavailableFeed('events', cacheKey, error);
         }
     }
 
@@ -367,7 +396,7 @@ class TrafficEventsService {
             return activeEvents;
         } catch (error) {
             console.error('Error getting active events:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -387,7 +416,7 @@ class TrafficEventsService {
             return upcomingEvents;
         } catch (error) {
             console.error('Error getting upcoming events:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -402,7 +431,7 @@ class TrafficEventsService {
             return filteredEvents;
         } catch (error) {
             console.error('Error getting events by type:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -421,6 +450,7 @@ class TrafficEventsService {
                 activeEvents,
                 upcomingEvents,
                 alerts,
+                sources: this.feedStatus,
                 totalEvents: allEvents.length,
                 activeCount: activeEvents.length,
                 upcomingCount: upcomingEvents.length,
@@ -484,14 +514,15 @@ class TrafficEventsService {
 
             if (age < maxAge) {
                 console.log(`Loading ${key} from disk cache (age: ${Math.round(age / 1000 / 60)} minutes)`);
+                cache.set(`${key}_retrieved_at`, new Date(cacheData.timestamp).toISOString());
                 return cacheData.data.map(record => ({
                     ...record, cached: true,
                     retrievedAt: record.retrievedAt || new Date(cacheData.timestamp).toISOString()
                 }));
             } else {
                 console.log(`Disk cache for ${key} expired (age: ${Math.round(age / 1000 / 60)} minutes)`);
-                // Clean up expired cache file
-                await fs.unlink(filePath).catch(() => {});
+                // A failed fresh lookup must leave the last-good outage fallback intact.
+                if (age >= 24 * 60 * 60 * 1000) await fs.unlink(filePath).catch(() => {});
                 return null;
             }
         } catch (error) {

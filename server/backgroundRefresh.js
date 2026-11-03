@@ -173,6 +173,9 @@ class BackgroundRefreshService {
             if (cameras.status === 'fulfilled') {
                 this.cameraAnalysisScheduler.updateCameraList(cameras.value,
                     weatherStations.status === 'fulfilled' ? weatherStations.value : []);
+            } else if (weatherStations.status === 'fulfilled') {
+                this.cameraAnalysisScheduler.updateCameraList(this.cameraAnalysisScheduler.cameraQueue,
+                    weatherStations.value);
             }
             const failed = [roads, cameras, weatherStations].find(result => result.status === 'rejected');
             if (failed) throw failed.reason;

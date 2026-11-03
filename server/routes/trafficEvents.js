@@ -14,14 +14,16 @@ router.get('/traffic-events', async (req, res) => {
         const events = await trafficEventsService.fetchUDOTTrafficEvents();
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.events,
             timestamp: new Date().toISOString(),
             totalEvents: events.length,
             events: events
         });
     } catch (error) {
         console.error('Error fetching traffic events:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch traffic events',
             message: error.message
         });
@@ -34,14 +36,16 @@ router.get('/traffic-events/active', async (req, res) => {
         const activeEvents = await trafficEventsService.getActiveEvents();
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.events,
             timestamp: new Date().toISOString(),
             activeCount: activeEvents.length,
             events: activeEvents
         });
     } catch (error) {
         console.error('Error fetching active traffic events:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch active traffic events',
             message: error.message
         });
@@ -55,6 +59,7 @@ router.get('/traffic-events/upcoming', async (req, res) => {
         const upcomingEvents = await trafficEventsService.getUpcomingEvents(days);
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.events,
             timestamp: new Date().toISOString(),
             daysAhead: days,
             upcomingCount: upcomingEvents.length,
@@ -62,8 +67,9 @@ router.get('/traffic-events/upcoming', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching upcoming traffic events:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch upcoming traffic events',
             message: error.message
         });
@@ -87,6 +93,7 @@ router.get('/traffic-events/type/:eventType', async (req, res) => {
         const events = await trafficEventsService.getEventsByType(eventType);
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.events,
             timestamp: new Date().toISOString(),
             eventType: eventType,
             count: events.length,
@@ -94,8 +101,9 @@ router.get('/traffic-events/type/:eventType', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching traffic events by type:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch traffic events by type',
             message: error.message
         });
@@ -108,14 +116,16 @@ router.get('/alerts', async (req, res) => {
         const alerts = await trafficEventsService.fetchUDOTAlerts();
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.alerts,
             timestamp: new Date().toISOString(),
             alertsCount: alerts.length,
             alerts: alerts
         });
     } catch (error) {
         console.error('Error fetching UDOT alerts:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch UDOT alerts',
             message: error.message
         });
@@ -132,8 +142,9 @@ router.get('/traffic-events/summary', async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching traffic events summary:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch traffic events summary',
             message: error.message
         });
@@ -168,14 +179,16 @@ router.get('/traffic-events/map', async (req, res) => {
 
         res.json({
             success: true,
+            ...trafficEventsService.feedStatus?.events,
             timestamp: new Date().toISOString(),
             totalEvents: mapEvents.length,
             events: mapEvents
         });
     } catch (error) {
         console.error('Error fetching traffic events for map:', error);
-        res.status(500).json({
+        res.status(error.statusCode || 500).json({
             success: false,
+            status: 'unavailable',
             error: 'Failed to fetch traffic events for map',
             message: error.message
         });
