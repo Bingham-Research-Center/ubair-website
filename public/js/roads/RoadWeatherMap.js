@@ -607,14 +607,12 @@ class RoadWeatherMap {
             // Popup opens include the camera tour, not just marker clicks.
             marker.on('popupopen', async () => {
                 // Combine camera data with detection data
-                const rwis = detection?.rwisData;
-                const nearbySurface = rwis && !rwis.tooDistant && Number(rwis.distance) <= 10
-                    ? rwis.surfaceStatus : null;
                 const locationData = {
                     name: camera.name,
                     sourceType: 'Camera',
                     lastUpdated: detection?.timestamp,
-                    surfaceStatus: nearbySurface,
+                    // Detection distances are rounded; accept pavement only after the precise lookup.
+                    surfaceStatus: null,
                     temperature: detection?.temperature,
                     snowLevel: detection?.snowLevel,
                     confidence: detection?.confidence,
@@ -657,7 +655,7 @@ class RoadWeatherMap {
 
                         if (nearestStation && minDistance <= 10) {
                             locationData.roadTemp = nearestStation.surfaceTemp;
-                            locationData.surfaceStatus ??= nearestStation.surfaceStatus;
+                            locationData.surfaceStatus = nearestStation.surfaceStatus;
                             locationData.airTemp ??= nearestStation.airTemperature;
                             if (locationData.windSpeed == null && locationData.windGust == null) {
                                 locationData.windSpeed = nearestStation.windSpeedAvg;
