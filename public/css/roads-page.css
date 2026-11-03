@@ -1,0 +1,362 @@
+/* Presentation for /roads only. The kiosk continues to use roads.css. */
+body[data-page-type="roads"] {
+    --roads-primary: #30343b;
+    --roads-secondary: #626872;
+    --roads-accent: #d9dde3;
+    --roads-border: #d9dde3;
+    --roads-muted: #626872;
+    --roads-soft: #f5f6f7;
+    background: #fff;
+    color: var(--roads-primary);
+}
+
+body[data-page-type="roads"] .content {
+    padding-top: 1.25rem !important;
+}
+
+/* Include inline popup and advisory styles in the no-shadow rule. */
+body[data-page-type="roads"] .content,
+body[data-page-type="roads"] .content *,
+body[data-page-type="roads"] .content :is(.leaflet-popup-content-wrapper, .leaflet-popup-tip) {
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+body[data-page-type="roads"] .content :is(h1, h2, h3, h4, h5, h6) {
+    color: var(--roads-primary) !important;
+    border-color: var(--roads-border) !important;
+}
+
+body[data-page-type="roads"] .content :is(h1, h2, h3, h4, h5, h6) > i {
+    color: inherit;
+}
+
+body[data-page-type="roads"] .roads-page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.65rem 1.5rem;
+    margin-bottom: 1.25rem;
+}
+
+body[data-page-type="roads"] .roads-page-header h1 {
+    margin: 0;
+    padding: 0;
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    font-size: 1.35rem;
+    font-weight: 650;
+    line-height: 1.3;
+    text-align: left;
+    letter-spacing: normal;
+}
+
+body[data-page-type="roads"] .roads-page-header h1::after {
+    content: none;
+}
+
+body[data-page-type="roads"] .roads-header-meta {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.85rem;
+    margin-left: auto;
+}
+
+body[data-page-type="roads"] .roads-header-updated {
+    color: var(--roads-muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
+body[data-page-type="roads"] .roads-page-header .units-toggle {
+    min-width: 0;
+    min-height: 36px;
+    padding: 0.4rem 0.65rem;
+    font-size: 0.78rem;
+    backdrop-filter: none;
+}
+
+/* Sections and layout wrappers are whitespace, not additional panels. */
+body[data-page-type="roads"] :is(
+    .road-weather-dashboard, .route-section, .hrrr-guidance-panel,
+    .advisory-section, .udot-alerts-section, .resources-section,
+    .route-conditions, .route-summary, .hrrr-route-forecast,
+    .hrrr-map-controls, .hrrr-map-legend, .hrrr-map-toggle, .hrrr-map-hours,
+    .resource-card, .roads-data-notice, .camera-detection-info,
+    .hrrr-route-loading, .hrrr-route-unavailable
+) {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+}
+
+body[data-page-type="roads"] .content > section {
+    margin: 0 0 2.75rem;
+    overflow: visible;
+}
+
+body[data-page-type="roads"] .route-section::before,
+body[data-page-type="roads"] .route-section::after {
+    content: none;
+}
+
+body[data-page-type="roads"] .content > section > h2,
+body[data-page-type="roads"] .route-section-heading h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.85rem;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+body[data-page-type="roads"] .route-description {
+    margin: 0 0 1.25rem;
+    color: var(--roads-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+body[data-page-type="roads"] .route-section-heading {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem 1rem;
+}
+
+body[data-page-type="roads"] .route-section-heading .road-carousel-header {
+    flex: 1;
+    margin-left: 0;
+}
+
+body[data-page-type="roads"] .current-road-name {
+    padding: 0;
+    color: var(--roads-primary);
+    background: none;
+    border: 0;
+}
+
+/* A consistent frame for actual units and controls, including inline styles. */
+body[data-page-type="roads"] .content :is(
+    .hrrr-period-card, .route-metric, .condition-card-compact,
+    .route-incident-summary, .event-card, .alert-card,
+    .leaflet-popup-content-wrapper, .leaflet-tooltip,
+    .road-legend-collapsible, .camera-cycle-container, .leaflet-bar,
+    .units-toggle, .map-reset-view, .carousel-btn,
+    .hrrr-map-toggle button, .hrrr-map-hours button, .tab-btn, .events-error button
+) {
+    border: 1px solid var(--roads-border) !important;
+    border-radius: 6px !important;
+    background: #fff !important;
+}
+
+body[data-page-type="roads"] :is(
+    .hrrr-guidance-status, .hrrr-hazard-onset, .hrrr-map-popup-hazard,
+    .metric-status, .road-status, .station-status, .confidence-badge,
+    .alert-severity, .event-status > span, .event-title h4 > span,
+    .camera-monitored-badge, .monitored-badge, .estimated-badge,
+    .experimental-toggle-container, .click-overlay,
+    .leaflet-popup-content span[style*="border-radius"]
+) {
+    box-sizing: border-box;
+    border: 1px solid var(--roads-border) !important;
+    border-radius: 6px !important;
+}
+
+body[data-page-type="roads"] :is(
+    .route-section, .route-metric, .condition-card-compact, .resource-card,
+    .event-card, .alert-card, .units-toggle
+):hover {
+    transform: none;
+}
+
+body[data-page-type="roads"] :is(.units-toggle, .map-reset-view, .carousel-btn, .tab-btn, .events-error button) {
+    color: var(--roads-primary) !important;
+}
+
+body[data-page-type="roads"] :is(
+    .hrrr-map-toggle button, .hrrr-map-hours button, .tab-btn
+):is(.is-active, .active),
+body[data-page-type="roads"] :is(.units-toggle, .carousel-btn, .tab-btn):hover {
+    background: var(--roads-soft) !important;
+    color: var(--roads-primary);
+}
+
+body[data-page-type="roads"] .content :focus-visible {
+    outline: 2px solid #626872;
+    outline-offset: 3px;
+}
+
+/* Keep one map surface; its summaries have no additional outer panel. */
+body[data-page-type="roads"] .map-container-fullscreen {
+    border: 0;
+    border-radius: 0;
+    background: none;
+}
+
+body[data-page-type="roads"] .road-network-map {
+    box-sizing: border-box;
+    border: 1px solid var(--roads-border);
+    border-radius: 6px;
+}
+
+body[data-page-type="roads"] .conditions-overlay {
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    backdrop-filter: none;
+}
+
+body[data-page-type="roads"] .card-icon-small {
+    color: var(--roads-muted);
+    background: none !important;
+}
+
+body[data-page-type="roads"] .condition-card-compact.level-green .value { color: #187644; }
+body[data-page-type="roads"] .condition-card-compact.level-yellow .value { color: #946200; }
+body[data-page-type="roads"] .condition-card-compact.level-red .value { color: #b42323; }
+
+body[data-page-type="roads"] .map-reset-container {
+    top: 15px;
+    right: 15px;
+}
+
+body[data-page-type="roads"] :is(.legend-toggle, .legend-toggle:hover) {
+    color: var(--roads-primary);
+    background: #fff;
+}
+
+body[data-page-type="roads"] .leaflet-bar { overflow: hidden; }
+body[data-page-type="roads"] .leaflet-bar a { border-radius: 0; border-color: var(--roads-border); }
+body[data-page-type="roads"] .camera-cycle-control {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none !important;
+    backdrop-filter: none;
+}
+body[data-page-type="roads"] .camera-cycle-button { padding: 0.4rem 0.65rem; }
+body[data-page-type="roads"] .camera-cycle-switch {
+    border: 1px solid var(--roads-border);
+    border-radius: 6px;
+}
+
+body[data-page-type="roads"] :is(
+    .legend-section h5, .weather-station-info h4,
+    .camera-popup h4, .camera-popup h5, .road-popup h4
+) {
+    border: 0;
+}
+
+body[data-page-type="roads"] :is(.camera-image-container, .camera-image-container img) {
+    border: 0;
+    border-radius: 6px !important;
+}
+
+/* Legacy popup templates also contain inline panels and image placeholders. */
+body[data-page-type="roads"] .leaflet-popup-content div[style*="border-radius"] {
+    background: none !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+}
+
+body[data-page-type="roads"] .camera-image-container { background: none; }
+
+body[data-page-type="roads"] :is(.leaflet-popup-tip, .data-source, .per-view-breakdown) {
+    border-color: var(--roads-border) !important;
+}
+
+body[data-page-type="roads"] .content .leaflet-popup-tip {
+    border-color: var(--roads-border) !important;
+}
+
+body[data-page-type="roads"] .weather-station-marker:hover { filter: none; }
+body[data-page-type="roads"] .carousel-indicator { background: var(--roads-border); }
+body[data-page-type="roads"] .carousel-indicator.active { background: var(--roads-muted); }
+
+body[data-page-type="roads"] .weather-details :is(.temperature, .wind, .humidity) {
+    color: var(--roads-primary);
+}
+
+/* Forecast cells and stat tiles are the only frames within a corridor. */
+body[data-page-type="roads"] .hrrr-route-forecast { margin: 1.25rem 0; }
+body[data-page-type="roads"] .hrrr-map-controls { margin-top: 1rem; }
+body[data-page-type="roads"] .hrrr-map-control-group { min-width: 0; }
+body[data-page-type="roads"] :is(.hrrr-map-toggle, .hrrr-map-hours) { flex-wrap: wrap; gap: 0.4rem; }
+body[data-page-type="roads"] .hrrr-map-hours button { min-width: 3.4rem; }
+body[data-page-type="roads"] .hrrr-period-time strong { color: var(--roads-primary); }
+body[data-page-type="roads"] .hrrr-period-metric dt { color: var(--roads-muted); }
+body[data-page-type="roads"] :is(.hrrr-route-title, .hrrr-period-metric dd, .hrrr-period-reason) { color: var(--roads-primary); }
+body[data-page-type="roads"] .route-summary { gap: 0.75rem; }
+body[data-page-type="roads"] .route-metric { padding: 1rem; }
+body[data-page-type="roads"] .metric-icon { display: none; }
+body[data-page-type="roads"] .metric-value { margin-top: 0; font-size: 1.25rem; }
+body[data-page-type="roads"] .metric-status.good { color: #187644; background: #eef8f1; }
+body[data-page-type="roads"] .metric-status.caution { color: #946200; background: #fff8e6; }
+body[data-page-type="roads"] .metric-status.poor { color: #b42323; background: #fff1f0; }
+body[data-page-type="roads"] .route-incidents { padding: 0; margin-top: 1rem; }
+
+/* Advisories retain individual item frames, not a frame around the list. */
+body[data-page-type="roads"] .events-tabs {
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    background: none;
+    border: 0;
+}
+
+body[data-page-type="roads"] .tab-btn { flex: 0 1 auto; padding: 0.55rem 0.85rem; }
+body[data-page-type="roads"] .tab-btn.active::after { content: none; }
+body[data-page-type="roads"] .tab-content { padding: 0; }
+body[data-page-type="roads"] .event-header { gap: 0.75rem; flex-wrap: wrap; }
+body[data-page-type="roads"] .event-title { min-width: 0; }
+body[data-page-type="roads"] .event-title h4 { flex-wrap: wrap; }
+body[data-page-type="roads"] .event-comment {
+    padding: 0.5rem 0 0 !important;
+    background: none !important;
+    border: 0;
+    border-radius: 0 !important;
+}
+
+body[data-page-type="roads"] .no-alerts { color: var(--roads-muted); }
+body[data-page-type="roads"] .no-alerts > i { color: var(--roads-good); }
+
+body[data-page-type="roads"] .resource-card a {
+    padding: 0;
+    color: var(--roads-primary);
+    background: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transform: none;
+}
+
+body[data-page-type="roads"] .roads-data-notice { color: var(--roads-muted); }
+body[data-page-type="roads"] .main-footer {
+    color: var(--roads-muted);
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    body[data-page-type="roads"] .condition-cards-horizontal {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    body[data-page-type="roads"] .condition-card-compact { padding: 0.65rem; }
+    body[data-page-type="roads"] .card-data .value { font-size: 0.9rem; }
+    body[data-page-type="roads"] .route-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    body[data-page-type="roads"] .resources-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 480px) {
+    body[data-page-type="roads"] .roads-page-header h1 { font-size: 1.15rem; }
+    body[data-page-type="roads"] .roads-header-updated { font-size: 0.72rem; }
+    body[data-page-type="roads"] .content > section { margin-bottom: 2.25rem; }
+}

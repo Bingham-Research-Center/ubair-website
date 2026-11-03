@@ -18,11 +18,9 @@
     <!-- Site CSS loads last so page-specific overrides remain authoritative. -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
+    <link rel="stylesheet" href="/public/css/roads-page.css">
 </head>
 <body data-page-type="roads">
-    <!-- Colored Bar -->
-    <div class="colored-bar"></div>
-
     <!-- Sidebar Container -->
     <div class="sidebar_container">
         <!-- Sidebar will be loaded here via loadSidebar.js -->
@@ -30,7 +28,16 @@
 
     <!-- Main Content -->
     <main class="content">
-        <h1>Road Weather Conditions</h1>
+        <header class="roads-page-header">
+            <h1>Road Weather</h1>
+            <div class="roads-header-meta">
+                <time id="conditions-updated" class="roads-header-updated" data-format="compact" role="status" aria-live="polite">Checking updates…</time>
+                <button class="units-toggle" id="units-toggle" type="button" title="Toggle between Imperial and Metric units">
+                    <span id="units-label">Imperial</span>
+                    <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                </button>
+            </div>
+        </header>
 
         <!-- Full-Screen Map with Bottom Condition Cards -->
         <section class="road-weather-dashboard">
@@ -83,18 +90,6 @@
                             </div>
                         </div>
                     </div>
-                    <p class="conditions-updated" id="conditions-updated" role="status" aria-live="polite">
-                        Checking data freshness…
-                    </p>
-                </div>
-
-                <!-- Units Toggle -->
-                <div class="units-toggle-container">
-                    <button class="units-toggle" id="units-toggle" title="Toggle between Imperial and Metric units">
-                        <i class="fas fa-thermometer-half"></i>
-                        <span id="units-label">Imperial</span>
-                        <i class="fas fa-exchange-alt"></i>
-                    </button>
                 </div>
 
                 <div class="map-reset-container">
@@ -164,112 +159,96 @@
         </section>
 
         <!-- Route-Specific Forecasts -->
-        <div class="routes-container">
-            <!-- US-40 Corridor -->
-            <section class="route-section" id="us40-section">
-                <h2><i class="fas fa-route"></i> US-40 Corridor</h2>
-                <div class="route-content">
-                    <div class="route-details">
-                        <p><strong>Roosevelt to Vernal:</strong> Primary east-west route through Basin</p>
-                        <div class="hrrr-route-forecast" data-hrrr-route="us40" aria-live="polite">
-                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-                        </div>
-                        <div class="route-conditions" id="us40-conditions">
-                            <div class="conditions-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <p>Loading current conditions...</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- US-40 Corridor -->
+        <section class="route-section" id="us40-section">
+            <h2><i class="fas fa-route"></i> US-40 Corridor</h2>
+            <p class="route-description"><strong>Roosevelt to Vernal:</strong> Primary east-west route through Basin</p>
+            <div class="hrrr-route-forecast" data-hrrr-route="us40" aria-live="polite">
+                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+            </div>
+            <div class="route-conditions" id="us40-conditions">
+                <div class="conditions-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading current conditions...</p>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- US-191 North-South -->
-            <section class="route-section" id="us191-section">
-                <h2><i class="fas fa-route"></i> US-191 North-South</h2>
-                <div class="route-content">
-                    <div class="route-details">
-                        <p><strong>Vernal to Duchesne:</strong> Major north-south connector with elevation changes</p>
-                        <div class="hrrr-route-forecast" data-hrrr-route="us191" aria-live="polite">
-                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-                        </div>
-                        <div class="route-conditions" id="us191-conditions">
-                            <div class="conditions-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <p>Loading current conditions...</p>
-                            </div>
-                        </div>
-                    </div>
+        <!-- US-191 North-South -->
+        <section class="route-section" id="us191-section">
+            <h2><i class="fas fa-route"></i> US-191 North-South</h2>
+            <p class="route-description"><strong>Vernal to Duchesne:</strong> Major north-south connector with elevation changes</p>
+            <div class="hrrr-route-forecast" data-hrrr-route="us191" aria-live="polite">
+                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+            </div>
+            <div class="route-conditions" id="us191-conditions">
+                <div class="conditions-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading current conditions...</p>
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <!-- Local Basin Roads -->
-            <section class="route-section" id="basin-roads-section">
-                <h2>
-                    <i class="fas fa-map-signs"></i> Local Basin Roads
-                    <div class="road-carousel-header">
-                        <span class="current-road-name" id="current-road-name">Loading...</span>
-                        <div class="carousel-controls">
-                            <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
-                                <i class="fas fa-chevron-left"></i>
-                            </button>
-                            <div class="carousel-indicators" id="carousel-indicators">
-                                <!-- Indicators will be dynamically added -->
-                            </div>
-                            <button class="carousel-btn next-btn" id="next-road" title="Next road">
-                                <i class="fas fa-chevron-right"></i>
-                            </button>
+        <!-- Local Basin Roads -->
+        <section class="route-section" id="basin-roads-section">
+            <div class="route-section-heading">
+                <h2><i class="fas fa-map-signs"></i> Local Basin Roads</h2>
+                <div class="road-carousel-header">
+                    <span class="current-road-name" id="current-road-name">Loading...</span>
+                    <div class="carousel-controls">
+                        <button class="carousel-btn prev-btn" id="prev-road" title="Previous road">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="carousel-indicators" id="carousel-indicators">
+                            <!-- Indicators will be dynamically added -->
                         </div>
-                    </div>
-                </h2>
-                <div class="route-content">
-                    <div class="route-details">
-                        <p><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
-                        <div class="hrrr-route-forecast" data-hrrr-route="basin_roads" aria-live="polite">
-                            <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
-                        </div>
-                        <div class="route-conditions carousel-container" id="basin-roads-conditions">
-                            <div class="conditions-loading">
-                                <i class="fas fa-spinner fa-spin"></i>
-                                <p>Loading current conditions...</p>
-                            </div>
-                        </div>
+                        <button class="carousel-btn next-btn" id="next-road" title="Next road">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
                     </div>
                 </div>
-            </section>
-        </div>
+            </div>
+            <p class="route-description"><strong>Auto-rotating display:</strong> <span class="road-description" id="road-description">Secondary routes and local access roads</span></p>
+            <div class="hrrr-route-forecast" data-hrrr-route="basin_roads" aria-live="polite">
+                <p class="hrrr-route-loading"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i> Loading HRRR route guidance…</p>
+            </div>
+            <div class="route-conditions carousel-container" id="basin-roads-conditions">
+                <div class="conditions-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading current conditions...</p>
+                </div>
+            </div>
+        </section>
 
         <!-- Travel Advisory Section -->
         <section class="advisory-section" id="travel-advisories">
             <h2><i class="fas fa-exclamation-triangle"></i> Travel Advisories</h2>
             <!-- Traffic Events Dashboard -->
-            <div class="traffic-events-container">
-                <div class="events-tabs">
-                    <button class="tab-btn active" data-tab="active">Active Events</button>
-                    <button class="tab-btn" data-tab="upcoming">Upcoming</button>
-                    <button class="tab-btn" data-tab="all">All Events</button>
+            <div class="events-tabs">
+                <button class="tab-btn active" data-tab="active">Active Events</button>
+                <button class="tab-btn" data-tab="upcoming">Upcoming</button>
+                <button class="tab-btn" data-tab="all">All Events</button>
+            </div>
+
+            <div class="events-content">
+                <div class="tab-content active" id="active-events">
+                    <div class="events-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading active traffic events...</p>
+                    </div>
                 </div>
 
-                <div class="events-content">
-                    <div class="tab-content active" id="active-events">
-                        <div class="events-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading active traffic events...</p>
-                        </div>
+                <div class="tab-content" id="upcoming-events">
+                    <div class="events-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading upcoming events...</p>
                     </div>
+                </div>
 
-                    <div class="tab-content" id="upcoming-events">
-                        <div class="events-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading upcoming events...</p>
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="all-events">
-                        <div class="events-loading">
-                            <i class="fas fa-spinner fa-spin"></i>
-                            <p>Loading all traffic events...</p>
-                        </div>
+                <div class="tab-content" id="all-events">
+                    <div class="events-loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Loading all traffic events...</p>
                     </div>
                 </div>
             </div>
@@ -277,13 +256,11 @@
 
         <!-- UDOT Alerts Section -->
         <section class="udot-alerts-section">
-            <div class="udot-alerts">
-                <h3><i class="fas fa-bell"></i> UDOT Alerts</h3>
-                <div id="alerts-container">
-                    <div class="alerts-loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading UDOT alerts...</p>
-                    </div>
+            <h2><i class="fas fa-bell"></i> UDOT Alerts</h2>
+            <div id="alerts-container">
+                <div class="alerts-loading">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading UDOT alerts...</p>
                 </div>
             </div>
         </section>
