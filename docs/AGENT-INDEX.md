@@ -26,6 +26,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
 | Finish or review the HRRR weather-map integration | `docs/HRRR-NWP-HANDOFF-apr16.md` — cold-start handoff written 2026-04-16 against commit `b051513`; check what has landed on `dev` since before trusting its file list |
 | Fix a road weather bug | `docs/HOW_IT_WORKS.md` + `gh issue list --label area:roads` (the former `ROADS_AUDIT.md` findings live there) |
+| Touch roads missing-data / feed-outage behaviour | `docs/ROADS-FALLBACK-AUDIT-sep29.md` — Michael's audit of every fallback path in `public/js/roads/` and the road/traffic services (what was removed, kept, and why), plus the local UDOT failure harness `scripts/dev-road-fallback.js` |
 
 ## Reference docs (cite, don't reread)
 | Topic | File | Notes |

@@ -84,7 +84,7 @@ function updateConditionCardsWithLocation(locationData) {
     // Precipitation
     const precipCard = document.querySelector('.condition-card-compact.precipitation .value');
     if (precipCard) {
-        const precip = locationData.precipitation ?? locationData.snowLevel ?? locationData.condition;
+        const precip = locationData.precipitation ?? locationData.snowLevel;
         if (precip !== null && precip !== undefined && precip !== '') {
             if (typeof precip === 'string') {
                 precipCard.textContent = precip === 'none' ? 'Dry' : precip;
@@ -183,12 +183,12 @@ async function updateConditionCards() {
             let hasSnow = cameraSnowDetected;
             let hasRain = false;
             let hasWet = false;
-            let hasSurfaceReport = false;
+            let hasDryReport = false;
 
             for (const s of stations) {
                 const surface = (s.surfaceStatus || '').toLowerCase();
                 const precip = (s.precipitation || '').toLowerCase();
-                if (surface || precip) hasSurfaceReport = true;
+                if (surface.includes('dry') || precip === 'none' || precip === 'no precipitation') hasDryReport = true;
 
                 if (surface.includes('snow') || precip.includes('snow')) hasSnow = true;
                 if (surface.includes('rain') || precip.includes('rain')) hasRain = true;
@@ -203,7 +203,7 @@ async function updateConditionCards() {
                 precipCard.textContent = 'Rain';
             } else if (hasWet) {
                 precipCard.textContent = 'Wet';
-            } else if (hasSurfaceReport) {
+            } else if (hasDryReport) {
                 precipCard.textContent = 'Dry';
             } else {
                 precipCard.textContent = UNAVAILABLE_VALUE;

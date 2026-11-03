@@ -128,6 +128,7 @@ function createRouteIncidentSummary(routeName, events) {
                 <span class="incident-summary-text">
                     <strong>${escapeHtml(eventType)}:</strong> ${escapeHtml(shortDescription)}
                 </span>
+                <span class="data-source">${escapeHtml(formatUDOTReportAge(firstEvent))}</span>
                 <a class="incident-details-link" href="#travel-advisories">View details</a>
             </div>
         </div>
@@ -139,12 +140,24 @@ function createRouteIncidentSummary(routeName, events) {
  * @param {HTMLElement} container - Container element to render into
  * @param {Object} data - Route data object
  */
+function formatUDOTReportAge(record) {
+    const source = record.cached ? 'Cached UDOT report' : 'UDOT report';
+    const timestamp = Date.parse(record.lastUpdated || record.retrievedAt);
+    if (!Number.isFinite(timestamp)) return `${source}; update time unavailable`;
+    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
+    return `${source}; ${record.lastUpdated ? 'updated' : 'retrieved'} ${minutes} min ago`;
+}
+
+function averageReportedTemperature(stations) {
+    const temperatures = stations.map(station => parseFloat(station.airTemperature)).filter(Number.isFinite);
+    return temperatures.length ? Math.round(temperatures.reduce((sum, value) => sum + value, 0) / temperatures.length) : '--';
+}
+
 function displayRouteConditions(container, data) {
     const { routeName, stations, events, cities } = data;
 
     // Calculate metrics
-    const avgTemp = stations.length > 0 ?
-        Math.round(stations.reduce((sum, s) => sum + (parseFloat(s.airTemperature) || 0), 0) / stations.length) : '--';
+    const avgTemp = averageReportedTemperature(stations);
 
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
@@ -170,7 +183,7 @@ function displayRouteConditions(container, data) {
                 <div class="metric-icon">🚧</div>
                 <div class="metric-value">${incidentCount}</div>
                 <div class="metric-label">Active Incidents</div>
-                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'Clear' : 'Active'}</div>
+                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'None reported' : 'Reported'}</div>
             </div>
 
             <div class="route-metric travel-time">

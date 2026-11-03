@@ -18,6 +18,9 @@ class RoadWeatherMap {
 
         this.map = null;
         this.roadLayers = new Map();
+        this.lastGoodRoadData = null;
+        this.roadFeedUnavailable = false;
+        this.roadDataCached = false;
         this.stationMarkers = new Map();
         this.cameraMarkers = new Map();
         this.cameraClusterGroup = null;
@@ -110,100 +113,99 @@ class RoadWeatherMap {
     async loadRoadWeatherData() {
         try {
             const data = await roadWeatherDataCache.getData();
-            this.clearLayers();
-            this.renderRoadSegments(data.segments);
-            this.renderWeatherStations(data.stations);
-            this.renderTrafficCameras(data.cameras, data.cameraDetections);
-            window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
+            const available = data.sources?.roads?.status !== 'unavailable' &&
+                data.status !== 'unavailable' && Array.isArray(data.segments) && data.segments.length > 0;
 
+            if (available) {
+                this.lastGoodRoadData = {
+                    segments: data.segments,
+                    lastUpdated: data.sources?.roads?.lastUpdated || data.lastUpdated || null
+                };
+                this.roadFeedUnavailable = false;
+                this.roadDataCached = data.cached === true || data.status === 'cached';
+                this.clearRoadLayers();
+                this.renderRoadSegments(data.segments);
+                this.updateRoadFeedStatus();
+            } else {
+                this.showRoadFeedUnavailable();
+            }
+
+            // Each layer has its own lifecycle. A road outage must not clear the other feeds.
+            if (Array.isArray(data.stations)) {
+                this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+                this.stationMarkers.clear();
+                this.renderWeatherStations(data.stations);
+            }
+            if (Array.isArray(data.cameras)) {
+                this.clearCameraLayers();
+                this.renderTrafficCameras(data.cameras, data.cameraDetections);
+            }
         } catch (error) {
             console.error('Error loading road weather data:', error);
-            this.loadStaticRoadData();
+            this.showRoadFeedUnavailable();
         }
-    }
-
-    loadStaticRoadData() {
-        // Default road segments for Uintah Basin
-        const segments = [
-            {
-                id: 'us40',
-                name: 'US-40: Vernal to Roosevelt',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.4200, -109.7000],
-                    [40.3200, -109.9000],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            },
-            {
-                id: 'us191',
-                name: 'US-191: Vernal to Duchesne',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.3500, -109.8000],
-                    [40.2500, -110.2000],
-                    [40.1632, -110.4026]
-                ],
-                condition: 'yellow',
-                status: 'Use Caution'
-            },
-            {
-                id: 'sr87',
-                name: 'SR-87: Duchesne to Roosevelt',
-                coordinates: [
-                    [40.1632, -110.4026],
-                    [40.2500, -110.1500],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            }
-        ];
-
-        this.clearLayers();
-        segments.forEach(segment => {
-            this.renderRoadSegment(segment);
-        });
-
-        // Add default weather stations
-        const stations = [
-            { name: 'Vernal', lat: 40.4555, lng: -109.5287, temp: 45, condition: 'good' },
-            { name: 'Roosevelt', lat: 40.2999, lng: -109.9890, temp: 42, condition: 'good' },
-            { name: 'Duchesne', lat: 40.1632, lng: -110.4026, temp: 40, condition: 'caution' }
-        ];
-
-        stations.forEach(station => {
-            this.renderWeatherStation(station);
-        });
-
         window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
     }
 
-    renderRoadSegments(segments) {
-        if (!segments || segments.length === 0) {
-            this.loadStaticRoadData();
-            return;
-        }
+    showRoadFeedUnavailable() {
+        this.roadFeedUnavailable = true;
+        this.roadDataCached = true;
+        this.clearRoadLayers();
+        if (this.lastGoodRoadData) this.renderRoadSegments(this.lastGoodRoadData.segments);
+        this.updateRoadFeedStatus();
+    }
 
+    formatRoadDataAge(timestamp) {
+        const time = Date.parse(timestamp);
+        if (!Number.isFinite(time)) return 'update time unavailable';
+        const minutes = Math.max(0, Math.floor((Date.now() - time) / 60000));
+        return `last updated ${minutes} min ago`;
+    }
+
+    updateRoadFeedStatus() {
+        const age = this.formatRoadDataAge(this.lastGoodRoadData?.lastUpdated);
+        const text = this.roadFeedUnavailable
+            ? `Road conditions feed unavailable. ${this.lastGoodRoadData ? `Road conditions ${age}. Showing cached road conditions.` : 'No road conditions are available.'}`
+            : `Road conditions ${age}.${this.roadDataCached ? ' Cached road data.' : ''}`;
+        const notice = document.getElementById('road-feed-status');
+        if (notice) {
+            notice.dataset.state = this.roadFeedUnavailable ? 'unavailable' : 'available';
+            notice.textContent = text;
+        }
+        const legend = document.getElementById('road-legend-source');
+        if (legend) legend.textContent = `${text} See each road popup for its source and age.`;
+    }
+
+    getRoadSourceLabel(segment) {
+        const cached = this.roadDataCached || this.roadFeedUnavailable || segment.cached === true;
+        let source = 'Source unavailable';
+        if (segment.type === 'hrrr_estimated' || segment.source === 'HRRR') source = 'HRRR model estimate';
+        else if (segment.type === 'estimated') source = 'Estimated from regional weather';
+        else if (segment.type === 'camera_monitored') source = 'Camera analysis';
+        else if (segment.source === 'UDOT') {
+            source = segment.cached === false && !cached && this.lastGoodRoadData
+                ? 'Real-time UDOT data' : 'UDOT data';
+        } else if (segment.source) source = String(segment.source);
+        const contributors = (segment.overallCondition?.sources || []).map(item => item.name).filter(name => name !== 'udot');
+        const blend = contributors.length ? `; condition blended with ${contributors.join(', ')}` : '';
+        const age = this.formatRoadDataAge(segment.lastUpdated || segment.detectionData?.timestamp);
+        return `${cached ? 'Cached ' : ''}${source}${blend}; ${age}`;
+    }
+
+    renderRoadSegments(segments) {
+        if (!Array.isArray(segments)) return;
         segments.forEach(segment => {
             this.renderRoadSegment({
-                id: segment.id,
-                name: segment.name,
-                coordinates: segment.coordinates,
+                ...segment,
                 condition: segment.overallCondition?.condition || 'gray',
-                status: segment.overallCondition?.status || 'No Data',
-                type: segment.type,
-                detectionData: segment.detectionData,
-                temperatureInfo: segment.temperatureInfo
+                status: segment.overallCondition?.status || 'No Data'
             });
         });
     }
 
     renderRoadSegment(segment) {
         const color = this.getSegmentColor(segment.condition);
-        const isEstimated = segment.type === 'estimated';
+        const isEstimated = segment.type === 'estimated' || segment.type === 'hrrr_estimated';
         const isCameraMonitored = segment.type === 'camera_monitored';
 
         let lineStyle = {
@@ -214,18 +216,16 @@ class RoadWeatherMap {
             dashArray: null
         };
 
-        let dataSource = 'Real-time UDOT data';
+        const dataSource = this.getRoadSourceLabel(segment);
         let badgeClass = 'monitored-badge';
 
         // Adjust styling based on monitoring type
         if (isCameraMonitored) {
-            dataSource = '📹 Camera Analysis';
             badgeClass = 'camera-monitored-badge';
             lineStyle.weight = 8;
             lineStyle.opacity = 0.9;
             lineStyle.dashArray = '15, 8'; // Distinctive dash pattern for camera monitoring
         } else if (isEstimated) {
-            dataSource = 'Estimated from regional weather';
             badgeClass = 'estimated-badge';
             lineStyle.weight = 4;
             lineStyle.opacity = 0.6;
@@ -247,7 +247,7 @@ class RoadWeatherMap {
                     Status: ${safeStatus}
                 </div>
                 <div class="${safeBadgeClass}">
-                    ${isCameraMonitored ? '📹 Camera Monitored' : (isEstimated ? '📊 Estimated' : '🛰️ Monitored')}
+                    ${isCameraMonitored ? '📹 Camera Monitored' : (isEstimated ? '📊 Estimated' : (segment.source === 'UDOT' ? '🛰️ UDOT' : 'Source unavailable'))}
                 </div>`;
 
         // Add camera-specific information with confidence taxonomy
@@ -710,7 +710,7 @@ class RoadWeatherMap {
         } else if (surfaceStatus.includes('snow') || (temp && temp <= 32)) {
             return 'caution';
         }
-        return 'good';
+        return surfaceStatus.includes('dry') ? 'good' : 'unknown';
     }
 
     getSegmentColor(condition) {
@@ -832,6 +832,7 @@ class RoadWeatherMap {
                     <div class="legend-items">
                         <div class="legend-section">
                             <h5>Road Conditions</h5>
+                            <p id="road-legend-source">See each road popup for its source and age.</p>
                             <div class="legend-item">
                                 <span class="color-box" style="background: #28a745;"></span>
                                 <span>Clear</span>
@@ -917,19 +918,27 @@ class RoadWeatherMap {
         });
     }
 
-    clearLayers() {
+    clearRoadLayers() {
         this.roadLayers.forEach(layer => this.map.removeLayer(layer));
-        this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.roadLayers.clear();
+    }
+
+    clearCameraLayers() {
         if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
             this.map.removeLayer(this.cameraClusterGroup);
             this.cameraClusterGroup = null;
         } else {
             this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
         }
-        this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
-        this.roadLayers.clear();
-        this.stationMarkers.clear();
         this.cameraMarkers.clear();
+    }
+
+    clearLayers() {
+        this.clearRoadLayers();
+        this.clearCameraLayers();
+        this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.stationMarkers.clear();
+        this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
         this.restAreaMarkers.clear();
 
         // Note: Traffic event markers and closure overlays are intentionally NOT cleared here
@@ -1061,6 +1070,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
             // Create popup content
             const popupContent = `
                 <div class="traffic-event-popup" style="max-width: 300px;">
+                    <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                     <h4 style="margin: 0 0 10px 0; color: ${safeDisplayColor};">
                         ${safeDisplayIcon} ${safeEventName}
                     </h4>
@@ -1136,6 +1146,7 @@ RoadWeatherMap.prototype.addRoadClosureOverlays = function(events) {
                     // Add popup with closure information
                     const popupContent = `
                         <div class="closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚫 Road Closure
                             </h4>
@@ -1248,6 +1259,7 @@ RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
 
                     const popupContent = `
                         <div class="alert-closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(alert))}. Approximate closure location.</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
                                 🚨 UDOT Alert: Road Closure
                             </h4>
@@ -1487,10 +1499,15 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                 statusEmoji = '💨';
                 statusText = 'WINDY';
                 break;
-            default:
+            case 'open':
                 iconColor = '#10b981'; // Green
                 statusEmoji = '✅';
                 statusText = 'OPEN';
+                break;
+            default:
+                iconColor = '#6c757d';
+                statusEmoji = '❔';
+                statusText = 'NOT REPORTED';
         }
         const safeStatusEmoji = escapeHtml(statusEmoji);
         const safeStatusText = escapeHtml(statusText);
@@ -1638,9 +1655,9 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const safeLocation = escapeHtml(restArea.location || 'Unknown');
         const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
         const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
-        const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
-        const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
-        const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
+        const safeTotalStalls = Number.isFinite(restArea.totalStalls) ? Math.max(0, Math.round(restArea.totalStalls)) : null;
+        const safeCarStalls = Number.isFinite(restArea.carStalls) ? Math.max(0, Math.round(restArea.carStalls)) : null;
+        const safeTruckStalls = Number.isFinite(restArea.truckStalls) ? Math.max(0, Math.round(restArea.truckStalls)) : null;
         const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
         // Create rest area icon with stall count indicator
         const iconHtml = `
@@ -1694,7 +1711,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Parking Facilities</h5>
                     ${safeCarStalls > 0 ? `<div><strong>Car Stalls:</strong> ${safeCarStalls}</div>` : ''}
                     ${safeTruckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${safeTruckStalls}</div>` : ''}
-                    <div><strong>Total:</strong> ${safeTotalStalls} stalls</div>
+                    <div><strong>Total:</strong> ${safeTotalStalls === null ? 'Not reported' : `${safeTotalStalls} stalls`}</div>
                 </div>
             `;
         }
