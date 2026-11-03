@@ -19,7 +19,10 @@ describe('traffic fallback presentation', () => {
     it('shows an error for failed HTTP responses and makes no all-clear claim for empty lists', async () => {
         const { manager, container } = browser();
         await manager.loadAllEventsData();
-        expect(container.innerHTML).toContain('Error Loading Events');
+        expect(container.innerHTML).toContain('Traffic events feed unavailable');
+        manager.displayEvents('active');
+        expect(container.innerHTML).toContain('Traffic events feed unavailable');
+        manager.eventsError = null;
         manager.displayEvents('active');
         expect(container.innerHTML).toContain('No traffic events were reported');
         expect(container.innerHTML).not.toMatch(/all clear/i);

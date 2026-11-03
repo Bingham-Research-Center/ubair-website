@@ -1,22 +1,4 @@
-/**
- * Regression tests for the UDOT rate-limit disk-cache fallback.
- *
- * Context: the production error log on 2026-08-31 was dominated by two throws --
- *   TypeError: Cannot read properties of null (reading 'length')
- *     at server/routes/trafficEvents.js:18
- *   TypeError: Cannot read properties of null (reading 'filter')
- *     at TrafficEventsService.getUpcomingEvents (server/trafficEventsService.js:378)
- *
- * Both fetchUDOTAlerts() and fetchUDOTTrafficEvents() guarded their rate-limit branch with
- *   return this.loadFromDiskCache(key, 24h) || [];
- * loadFromDiskCache is `async`, so the `||` was testing a *Promise* -- always truthy -- and the
- * `[]` fallback was unreachable. Whenever a call was rate-limited while the 24h disk cache was
- * cold or expired, the method resolved to null, and every caller that dereferenced .length or
- * .filter threw. /api/traffic-events and /api/alerts returned 500 intermittently.
- *
- * The failure only appears when the memory cache misses AND the 2h disk cache misses AND the
- * call is inside minCallInterval -- which is why it was intermittent rather than constant.
- */
+/** A cold rate-limited feed is unavailable; a usable last-good snapshot stays marked cached. */
 
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import TrafficEventsService from '../trafficEventsService.js';
@@ -42,34 +24,24 @@ describe('UDOT rate-limit disk-cache fallback', () => {
         service.lastApiCalls.set('alerts', Date.now());
     });
 
-    it('fetchUDOTTrafficEvents resolves to [] when the disk cache is cold', async () => {
+    it('fetchUDOTTrafficEvents rejects as unavailable when the disk cache is cold', async () => {
         service.loadFromDiskCache = coldDiskCache;
-        await expect(service.fetchUDOTTrafficEvents()).resolves.toEqual([]);
+        await expect(service.fetchUDOTTrafficEvents()).rejects.toMatchObject({ statusCode: 503 });
     });
 
-    it('fetchUDOTAlerts resolves to [] when the disk cache is cold', async () => {
+    it('fetchUDOTAlerts rejects as unavailable when the disk cache is cold', async () => {
         service.loadFromDiskCache = coldDiskCache;
-        await expect(service.fetchUDOTAlerts()).resolves.toEqual([]);
-    });
-
-    it('hands callers something they can safely dereference', async () => {
-        service.loadFromDiskCache = coldDiskCache;
-        const events = await service.fetchUDOTTrafficEvents();
-
-        expect(events).not.toBeNull();
-        // routes/trafficEvents.js reads .length; getUpcomingEvents reads .filter.
-        expect(events.length).toBe(0);
-        expect(typeof events.filter).toBe('function');
+        await expect(service.fetchUDOTAlerts()).rejects.toMatchObject({ statusCode: 503 });
     });
 
     it('still returns the cached rows when the 24h disk cache is warm', async () => {
         const stored = [{ id: 1, startDate: '2026-08-31T00:00:00Z' }];
         service.loadFromDiskCache = warmOnlyAtTwentyFourHours(stored);
-        await expect(service.fetchUDOTAlerts()).resolves.toEqual(stored);
+        await expect(service.fetchUDOTAlerts()).resolves.toEqual(stored.map(row => ({ ...row, cached: true })));
     });
 
-    it('getUpcomingEvents survives a cold cache instead of throwing on .filter', async () => {
+    it('getUpcomingEvents propagates unavailable instead of throwing on .filter', async () => {
         service.loadFromDiskCache = coldDiskCache;
-        await expect(service.getUpcomingEvents()).resolves.toEqual([]);
+        await expect(service.getUpcomingEvents()).rejects.toMatchObject({ statusCode: 503 });
     });
 });
