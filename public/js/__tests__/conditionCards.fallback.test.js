@@ -88,6 +88,26 @@ describe('condition card fallback', () => {
 });
 
 describe('condition strip source and surface fields', () => {
+    it.each(['Wet', 'Snow'])('keeps freezing %s pavement red in the Basin summary and selection', async surfaceStatus => {
+        const { data, cards, update, select } = browser();
+        data.stations[0].surfaceStatus = surfaceStatus;
+        for (const temperature of [28, 32, 0]) {
+            data.stations[0].surfaceTemp = temperature;
+            await update({ resetSelection: true });
+            expect(cards['road-conditions'].classes.has('level-red')).toBe(true);
+            select({ surfaceStatus, roadTemp: temperature });
+            expect(cards['road-conditions'].classes.has('level-red')).toBe(true);
+        }
+    });
+
+    it.each([33, null, undefined, '', 'Unknown'])('does not invent freezing pavement from temperature %j', surfaceTemp => {
+        const { cards, select } = browser();
+        select({ surfaceStatus: 'Wet', surfaceTemp });
+        expect(cards['road-conditions'].classes.has('level-yellow')).toBe(true);
+        select({ surfaceStatus: 'Dry', surfaceTemp: 28, windSpeed: 45 });
+        expect(cards['road-conditions'].classes.has('level-green')).toBe(true);
+    });
+
     it('summarizes reported surfaces independently of high wind warnings', async () => {
         const { data, cards, sourceLabel, update } = browser();
         data.stations[0].condition = { condition: 'red', status: 'High Winds (45 mph)' };
