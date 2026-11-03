@@ -38,6 +38,7 @@ class RoadWeatherMap {
 
     init() {
         this.initMap();
+        this.setupMapControlCluster();
         this.setupCameraCycleControl();
         this.addLegend();
         this.loadRoadWeatherData();
@@ -105,6 +106,7 @@ class RoadWeatherMap {
         window.mapStateManager?.clearMapState();
         window.mapStateManager?.clearRestoreIntent();
         this.map.setView(this.options.center, this.options.zoom, { animate: true });
+        updateConditionCards({ resetSelection: true });
     }
 
     async loadRoadWeatherData() {
@@ -194,6 +196,8 @@ class RoadWeatherMap {
                 coordinates: segment.coordinates,
                 condition: segment.overallCondition?.condition || 'gray',
                 status: segment.overallCondition?.status || 'No Data',
+                roadCondition: segment.roadCondition,
+                lastUpdated: segment.lastUpdated,
                 type: segment.type,
                 detectionData: segment.detectionData,
                 temperatureInfo: segment.temperatureInfo
@@ -295,9 +299,12 @@ class RoadWeatherMap {
         roadLayer.on('click', async function(e) {
             const locationData = {
                 name: segment.name,
-                condition: segment.status,
-                roadCondition: segment.roadCondition
+                sourceType: 'Road',
+                roadCondition: segment.roadCondition,
+                snowLevel: segment.detectionData?.snowLevel,
+                lastUpdated: segment.lastUpdated
             };
+            updateConditionCardsWithLocation(locationData);
 
             // Try to fetch weather data for the clicked point
             const clickLat = e.latlng.lat;
@@ -309,6 +316,7 @@ class RoadWeatherMap {
                     const weatherData = await weatherResponse.json();
                     if (weatherData && weatherData.current) {
                         locationData.windSpeed = weatherData.current.windSpeed;
+                        locationData.windSpeedUnit = 'km/h';
                         locationData.precipitation = weatherData.current.precipitation;
                         if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
                             locationData.visibility = weatherData.current.visibility;
@@ -321,7 +329,7 @@ class RoadWeatherMap {
                 console.error('Error fetching road weather:', error);
             }
 
-            updateConditionCardsWithLocation(locationData);
+            updateConditionCardsWithLocation(locationData, { refresh: true });
         });
 
         roadLayer.on('mouseover', function(e) {
@@ -413,17 +421,19 @@ class RoadWeatherMap {
         });
 
         // Add click handler for weather station marker
-        marker.on('click', (e) => {
+        marker.on('popupopen', () => {
             const locationData = {
                 name: station.name,
+                sourceType: 'Station',
+                lastUpdated: station.lastUpdated,
                 roadTemp: station.surfaceTemp,
                 airTemp: station.airTemperature,
                 temperature: station.airTemperature,
                 windSpeed: station.windSpeedAvg,
                 windGust: station.windSpeedGust,
                 visibility: station.visibility,
-                precipitation: station.precipitation || station.surfaceStatus,
-                condition: station.condition.status,
+                precipitation: station.precipitation,
+                surfaceStatus: station.surfaceStatus,
                 lat: station.lat,
                 lng: station.lng
             };
@@ -565,9 +575,9 @@ class RoadWeatherMap {
 
                 // RWIS station context line
                 const rwisLine = detection.rwisData
-                    ? (detection.rwisData.tooDistant
+                    ? (detection.rwisData.tooDistant || Number(detection.rwisData.distance) > 10
                         ? `<p class="rwis-info" style="font-size: 0.85em; color: #999; margin-top: 4px;">
-                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi) — too distant
+                               No RWIS within 10 mi
                            </p>`
                         : `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
                                <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
@@ -597,17 +607,23 @@ class RoadWeatherMap {
                     </div>`;
             }
 
-            // Add click event to update condition cards
-            marker.on('click', async () => {
+            // Popup opens include the camera tour, not just marker clicks.
+            marker.on('popupopen', async () => {
                 // Combine camera data with detection data
+                const rwis = detection?.rwisData;
+                const nearbySurface = rwis && !rwis.tooDistant && Number(rwis.distance) <= 10
+                    ? rwis.surfaceStatus : null;
                 const locationData = {
                     name: camera.name,
+                    sourceType: 'Camera',
+                    lastUpdated: detection?.timestamp,
+                    surfaceStatus: nearbySurface,
                     temperature: detection?.temperature,
                     snowLevel: detection?.snowLevel,
                     confidence: detection?.confidence,
-                    temperatureOverride: detection?.temperatureOverride,
-                    condition: conditionText
+                    temperatureOverride: detection?.temperatureOverride
                 };
+                updateConditionCardsWithLocation(locationData);
 
                 // Try to fetch weather data for this location
                 try {
@@ -617,6 +633,7 @@ class RoadWeatherMap {
                         if (weatherData && weatherData.current) {
                             locationData.windSpeed = weatherData.current.windSpeed;
                             locationData.windGust = weatherData.current.windGust;
+                            locationData.windSpeedUnit = 'km/h';
                             locationData.precipitation = weatherData.current.precipitation;
                             if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
                                 locationData.visibility = weatherData.current.visibility;
@@ -634,20 +651,22 @@ class RoadWeatherMap {
                         let nearestStation = null;
                         let minDistance = Infinity;
                         stations.forEach(station => {
-                            const distance = Math.sqrt(
-                                Math.pow(station.lat - camera.lat, 2) +
-                                Math.pow(station.lng - camera.lng, 2)
-                            );
+                            const distance = calculateDistance(camera.lat, camera.lng, station.lat, station.lng);
                             if (distance < minDistance) {
                                 minDistance = distance;
                                 nearestStation = station;
                             }
                         });
 
-                        if (nearestStation && minDistance < 0.5) { // Within ~30 miles
-                            locationData.roadTemp = nearestStation.roadTemp;
-                            locationData.airTemp = locationData.airTemp || nearestStation.airTemp;
-                            locationData.windSpeed = locationData.windSpeed || nearestStation.windSpeed;
+                        if (nearestStation && minDistance <= 10) {
+                            locationData.roadTemp = nearestStation.surfaceTemp;
+                            locationData.surfaceStatus ??= nearestStation.surfaceStatus;
+                            locationData.airTemp ??= nearestStation.airTemperature;
+                            if (locationData.windSpeed == null && locationData.windGust == null) {
+                                locationData.windSpeed = nearestStation.windSpeedAvg;
+                                locationData.windGust = nearestStation.windSpeedGust;
+                                locationData.windSpeedUnit = 'mph';
+                            }
                         }
                     }
                 } catch (error) {
@@ -655,7 +674,7 @@ class RoadWeatherMap {
                 }
 
                 // Update the condition cards
-                updateConditionCardsWithLocation(locationData);
+                updateConditionCardsWithLocation(locationData, { refresh: true });
             });
 
             // Minimal popup - just camera feed and analysis
@@ -666,16 +685,27 @@ class RoadWeatherMap {
                     ${analysisInfo}
                 </div>
             `, {
-                maxWidth: 260,
+                maxWidth: this.controlActions ? 320 : 260,
                 minWidth: 220,
                 className: 'camera-popup-marker',
                 closeButton: true,
-                autoPan: false,
+                autoPan: Boolean(this.controlActions),
                 keepInView: false
             });
 
             // Simple solution: wait for images to load then adjust position
             marker.on('popupopen', () => {
+                if (this.controlActions) {
+                    const popup = marker.getPopup();
+                    const top = document.getElementById('roads-map-controls').offsetHeight + 24;
+                    const strip = document.querySelector('.conditions-overlay');
+                    const bottom = strip && !strip.hidden ? strip.offsetHeight + 42 : 30;
+                    popup.options.autoPanPaddingTopLeft = [12, top];
+                    popup.options.autoPanPaddingBottomRight = [12, bottom];
+                    popup.options.maxHeight = Math.max(100, this.map.getSize().y - top - bottom - 52);
+                    popup.update();
+                    return;
+                }
                 setTimeout(() => {
                     // Pan map to ensure popup is visible after images load
                     this.map.panTo(marker.getLatLng(), {
@@ -750,6 +780,18 @@ class RoadWeatherMap {
         return weatherCodes[code] || 'Unknown';
     }
 
+    setupMapControlCluster() {
+        const cluster = document.getElementById('roads-map-controls');
+        this.controlActions = document.getElementById('roads-map-actions');
+        if (!cluster || !this.controlActions) return;
+
+        L.DomEvent.disableClickPropagation(cluster);
+        L.DomEvent.disableScrollPropagation(cluster);
+        L.DomEvent.on(cluster, 'keydown', L.DomEvent.stopPropagation);
+        const zoom = this.map.zoomControl?.getContainer();
+        if (zoom) this.controlActions.append(zoom);
+    }
+
     setupCameraCycleControl() {
         const control = L.control({ position: 'topleft' });
 
@@ -771,7 +813,8 @@ class RoadWeatherMap {
             return div;
         };
 
-        control.addTo(this.map);
+        if (this.controlActions) this.controlActions.prepend(control.onAdd(this.map));
+        else control.addTo(this.map);
 
         const toggle = document.getElementById('camera-cycle-toggle');
         const timerFill = document.getElementById('camera-cycle-timer-fill');
@@ -830,7 +873,7 @@ class RoadWeatherMap {
                 </button>
                 <div class="legend-content" id="legend-content" aria-hidden="true" inert>
                     <div class="legend-items">
-                        <div class="legend-section">
+                        <div class="legend-section road-legend-current">
                             <h5>Road Conditions</h5>
                             <div class="legend-item">
                                 <span class="color-box" style="background: #28a745;"></span>
@@ -875,6 +918,11 @@ class RoadWeatherMap {
                 </div>
             `;
 
+            const forecastLegend = document.getElementById('hrrr-map-legend');
+            if (this.controlActions && forecastLegend) {
+                div.querySelector('.legend-items').prepend(forecastLegend);
+            }
+
             // Add click event for toggle
             setTimeout(() => {
                 const toggle = document.getElementById('legend-toggle');
@@ -903,7 +951,11 @@ class RoadWeatherMap {
             return div;
         };
 
-        legend.addTo(this.map);
+        if (this.controlActions) {
+            this.controlActions.insertBefore(legend.onAdd(this.map), this.controlActions.querySelector('.units-toggle-container'));
+        } else {
+            legend.addTo(this.map);
+        }
     }
 
     toggleWeatherStations(visible) {
