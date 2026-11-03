@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/roads.css">
     <link rel="stylesheet" href="/public/css/roads-page.css">
+    <link rel="stylesheet" href="/public/css/roads-map.css">
 </head>
 <body data-page-type="roads">
     <!-- Sidebar Container -->
@@ -45,10 +46,47 @@
             <div class="map-container-fullscreen">
                 <div id="road-map" class="road-network-map"></div>
 
-                <!-- Instructions removed to prevent blocking map interaction -->
+                <div class="roads-map-control-cluster" id="roads-map-controls" role="group" aria-label="Map controls">
+                    <div class="hrrr-map-controls" id="hrrr-map-controls">
+                        <div class="hrrr-map-control-group">
+                            <span class="hrrr-map-control-label">Map layer</span>
+                            <div class="hrrr-map-toggle" role="group" aria-label="Road map layer">
+                                <button type="button" class="is-active" data-hrrr-map-mode="observed" aria-pressed="true">Current conditions</button>
+                                <button type="button" data-hrrr-map-mode="forecast" aria-pressed="false" disabled>HRRR forecast</button>
+                            </div>
+                        </div>
+                        <div class="hrrr-map-control-group hrrr-map-hour-control" id="hrrr-map-hour-control" aria-disabled="true">
+                            <span class="hrrr-map-control-label">Forecast time</span>
+                            <div class="hrrr-map-hours" id="hrrr-map-hours" role="group" aria-label="HRRR forecast time">
+                                <span class="hrrr-map-hours-loading">Loading…</span>
+                            </div>
+                        </div>
+                        <div class="hrrr-map-legend" id="hrrr-map-legend" aria-label="HRRR forecast concern levels" hidden>
+                            <span><i class="is-clear" aria-hidden="true"></i> Low concern</span>
+                            <span><i class="is-caution" aria-hidden="true"></i> Caution</span>
+                            <span><i class="is-danger" aria-hidden="true"></i> High concern</span>
+                        </div>
+                    </div>
+                    <div class="roads-map-actions" id="roads-map-actions">
+                        <!-- Camera tour, Legend, and zoom controls are attached here by the map. -->
+                        <div class="units-toggle-container">
+                            <button class="units-toggle" id="units-toggle" type="button" title="Toggle between Imperial and Metric units">
+                                <span id="units-label">Imperial</span>
+                                <i class="fas fa-exchange-alt" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                        <div class="map-reset-container">
+                            <button class="map-reset-view" id="reset-map-view" type="button" title="Return to the default Basin view">
+                                <i class="fas fa-crosshairs" aria-hidden="true"></i>
+                                <span>Reset view</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Bottom driving conditions summary overlay -->
                 <div class="conditions-overlay">
+                    <p class="conditions-source" id="conditions-source" role="status" aria-live="polite">Basin summary</p>
                     <div class="condition-cards-horizontal">
                         <div class="condition-card-compact road-conditions">
                             <div class="card-icon-small">
@@ -92,13 +130,6 @@
                     </div>
                 </div>
 
-                <div class="map-reset-container">
-                    <button class="map-reset-view" id="reset-map-view" type="button" title="Return to the default Basin view">
-                        <i class="fas fa-crosshairs" aria-hidden="true"></i>
-                        <span>Reset view</span>
-                    </button>
-                </div>
-
                 <div class="experimental-toggle-container" hidden>
                     <label class="experimental-toggle-label" for="experimental-road-toggle">
                         <input type="checkbox" id="experimental-road-toggle">
@@ -124,30 +155,6 @@
             </div>
             <div class="hrrr-guidance-meta" id="hrrr-guidance-meta">
                 Forecast initialization and coverage will appear here.
-            </div>
-            <div class="hrrr-map-controls" id="hrrr-map-controls">
-                <div class="hrrr-map-control-group">
-                    <span class="hrrr-map-control-label">Map layer</span>
-                    <div class="hrrr-map-toggle" role="group" aria-label="Road map layer">
-                        <button type="button" class="is-active" data-hrrr-map-mode="observed" aria-pressed="true">
-                            <i class="fas fa-satellite-dish" aria-hidden="true"></i> Current conditions
-                        </button>
-                        <button type="button" data-hrrr-map-mode="forecast" aria-pressed="false" disabled>
-                            <i class="fas fa-forward" aria-hidden="true"></i> HRRR forecast
-                        </button>
-                    </div>
-                </div>
-                <div class="hrrr-map-control-group hrrr-map-hour-control" id="hrrr-map-hour-control" aria-disabled="true">
-                    <span class="hrrr-map-control-label">Forecast time</span>
-                    <div class="hrrr-map-hours" id="hrrr-map-hours" role="group" aria-label="HRRR forecast time">
-                        <span class="hrrr-map-hours-loading">Loading…</span>
-                    </div>
-                </div>
-                <div class="hrrr-map-legend" id="hrrr-map-legend" aria-label="HRRR forecast concern levels" hidden>
-                    <span><i class="is-clear" aria-hidden="true"></i> Low concern</span>
-                    <span><i class="is-caution" aria-hidden="true"></i> Caution</span>
-                    <span><i class="is-danger" aria-hidden="true"></i> High concern</span>
-                </div>
             </div>
             <p class="hrrr-map-status" id="hrrr-map-status" role="status" aria-live="polite">
                 Map showing the current UDOT, station, camera, and model blend.

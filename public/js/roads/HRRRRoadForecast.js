@@ -312,7 +312,7 @@ export class HRRRRoadForecastController {
     setCurrentMapChromeVisible(visible) {
         [
             document.querySelector('.conditions-overlay'),
-            document.querySelector('.road-legend-collapsible')
+            document.querySelector('.road-legend-current') || document.querySelector('.road-legend-collapsible')
         ].filter(Boolean).forEach(element => {
             element.hidden = !visible;
             element.setAttribute('aria-hidden', String(!visible));
