@@ -26,6 +26,23 @@ function otherFeeds() {
 }
 
 describe('road weather availability', () => {
+    it('updates station evidence during a camera outage without replacing the queue', async () => {
+        const { default: BackgroundRefreshService } = await import('../backgroundRefresh.js');
+        const cameras = [{ id: 'existing-camera' }];
+        const stations = [{ id: 'station', surfaceTemp: 28, surfaceStatus: 'Wet' }];
+        jest.spyOn(service, 'fetchUDOTRoadConditions').mockResolvedValue([]);
+        jest.spyOn(service, 'fetchUDOTCameras').mockRejectedValue(new Error('offline'));
+        jest.spyOn(service, 'fetchUDOTWeatherStations').mockResolvedValue(stations);
+        const scheduler = { cameraQueue: cameras, currentBatch: 2, weatherStations: [{ surfaceTemp: 50 }],
+            updateCameraList: jest.fn(function(queue, readings) { this.cameraQueue = queue; this.weatherStations = readings; }) };
+        await BackgroundRefreshService.prototype.refreshEssentialData.call({ roadWeatherService: service,
+            cameraAnalysisScheduler: scheduler,
+            stats: { errors: { essential: 0 }, lastRefresh: {}, refreshCount: { essential: 0 } } });
+        expect(scheduler.weatherStations).toBe(stations);
+        expect(scheduler.cameraQueue).toBe(cameras);
+        expect(scheduler.currentBatch).toBe(2);
+    });
+
     it('keeps successful camera refreshes when the background road fetch fails', async () => {
         const { default: BackgroundRefreshService } = await import('../backgroundRefresh.js');
         otherFeeds();
