@@ -12,11 +12,13 @@ const UNAVAILABLE_VALUE = 'Not reported';
 function updateConditionsFreshness(timestamp, label = 'Station data updated') {
     const freshnessElement = document.getElementById('conditions-updated');
     if (!freshnessElement) return;
+    const compact = freshnessElement.dataset?.format === 'compact';
 
     const updatedAt = timestamp ? new Date(timestamp) : null;
     if (!updatedAt || Number.isNaN(updatedAt.getTime())) {
-        freshnessElement.textContent = 'Data update time unavailable';
+        freshnessElement.textContent = compact ? 'Updated: unavailable' : 'Data update time unavailable';
         freshnessElement.removeAttribute('title');
+        freshnessElement.removeAttribute('datetime');
         return;
     }
 
@@ -28,8 +30,9 @@ function updateConditionsFreshness(timestamp, label = 'Station data updated') {
         timeZoneName: 'short'
     }).format(updatedAt);
 
-    freshnessElement.textContent = `${label} ${formattedTime}`;
-    freshnessElement.title = updatedAt.toLocaleString();
+    freshnessElement.textContent = `${compact ? 'Updated' : label} ${formattedTime}`;
+    freshnessElement.title = compact ? `${label} ${updatedAt.toLocaleString()}` : updatedAt.toLocaleString();
+    if (compact) freshnessElement.dateTime = updatedAt.toISOString();
 }
 
 function getLatestStationUpdate(stations) {
@@ -270,7 +273,14 @@ async function updateCardsWithFallback() {
                 const windCard = document.querySelector('.condition-card-compact.wind .value');
                 if (windCard) windCard.textContent = unitsSystem.formatWindSpeedFromKmh(windKmh);
                 const freshnessElement = document.getElementById('conditions-updated');
-                if (freshnessElement) freshnessElement.textContent = 'Backup wind data; update time unavailable';
+                if (freshnessElement) {
+                    if (freshnessElement.dataset?.format === 'compact') {
+                        freshnessElement.textContent = 'Updated: unavailable';
+                        freshnessElement.title = 'Backup wind data; update time unavailable';
+                    } else {
+                        freshnessElement.textContent = 'Backup wind data; update time unavailable';
+                    }
+                }
             }
         }
     } catch (error) {
