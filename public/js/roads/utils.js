@@ -140,12 +140,21 @@ function createRouteIncidentSummary(routeName, events) {
  * @param {HTMLElement} container - Container element to render into
  * @param {Object} data - Route data object
  */
+function formatRoadReportTime(value) {
+    if (value === null || value === undefined || value === '') return null;
+    const time = new Date(value);
+    if (!Number.isFinite(time.getTime())) return null;
+    return new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/Denver', year: 'numeric', month: 'short', day: 'numeric',
+        hour: 'numeric', minute: '2-digit', timeZoneName: 'short'
+    }).format(time);
+}
+
 function formatUDOTReportAge(record) {
     const source = record.cached ? 'Cached UDOT report' : 'UDOT report';
-    const timestamp = Date.parse(record.lastUpdated || record.retrievedAt);
-    if (!Number.isFinite(timestamp)) return `${source}; update time unavailable`;
-    const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60000));
-    return `${source}; ${record.lastUpdated ? 'updated' : 'retrieved'} ${minutes} min ago`;
+    const timestamp = formatRoadReportTime(record.lastUpdated || record.retrievedAt);
+    if (!timestamp) return `${source}; update time unavailable`;
+    return `${source}; ${record.lastUpdated ? 'updated' : 'retrieved'} ${timestamp}`;
 }
 
 function averageReportedTemperature(stations) {
