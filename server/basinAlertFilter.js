@@ -89,18 +89,18 @@ export function isAlertRelevantToBasin(alert) {
                 (route === null || name === `US-${route}` || (route === 6 && name === 'US-191')) && nearPath(point, path)));
     }
 
-    if (basinCounty.test(county)) return true;
-    if (outsidePlace.test([county, detail].join(' '))) return false;
-    if (basinCounty.test(regions) || basinPlace.test(regions) || basinPlace.test(detail)) return true;
+    if (basinCounty.test(county) || basinCounty.test(regions) || basinPlace.test(regions)) return true;
+    const outside = outsidePlace.test([county, detail].join(' '));
+    if (!outside && basinPlace.test(detail)) return true;
 
     // UDOT labels the shared Price–Helper approach as US-6 in some alerts.
-    if (route === 6 && /\b(?:price|helper|castle gate)\b/i.test(detail)) return true;
+    if (!outside && route === 6 && /\b(?:price|helper|castle gate)\b/i.test(detail)) return true;
 
     if (route === 40 || route === 191) {
         // Only Wasatch's US-40 and Carbon's US-191 approaches extend beyond the two counties.
         if (county && !(route === 40 ? /\bwasatch\b/i : /\bcarbon\b/i).test(county)) return false;
         const approach = route === 40 ? westernApproach : southernApproach;
-        if (approach.test(detail)) return true;
+        if (!outside && approach.test(detail)) return true;
 
         // Mileposts apply to the primary route, stopping before any junction route.
         const routeText = routeSource === road ? `${road} ${message} ${notes}` : routeSource.slice(routes[0].index + routes[0][0].length, routes[1]?.index);
@@ -114,6 +114,8 @@ export function isAlertRelevantToBasin(alert) {
             return Math.max(start, end) >= minimum && Math.min(start, end) <= maximum;
         }
 
+        // A primary-route milepost locates the restriction even when notes name a detour.
+        if (outside) return false;
         // A broad southeastern region alone cannot locate US-191 near the Basin.
         if (regions && !northeasternRegion.test(regions) &&
             !(route === 40 ? westernApproach : southernApproach).test(regions) &&
@@ -121,11 +123,12 @@ export function isAlertRelevantToBasin(alert) {
         return true;
     }
 
-    if (county) return false;
+    if (outside || county) return false;
     // These state routes lie in the Basin; SR-121 is explicitly part of the requested area.
     if ([45, 87, 88, 121].includes(route)) return true;
     // Regions are useful when the feed has no more precise road/location information.
-    return northeasternRegion.test(regions);
+    // Retain regional SR-35 reports, but not known unrelated primary roads such as I-80.
+    return (route === null || route === 35) && northeasternRegion.test(regions);
 }
 
 function timestamp(value) {

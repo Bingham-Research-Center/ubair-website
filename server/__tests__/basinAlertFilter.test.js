@@ -43,7 +43,9 @@ describe('Basin alert coverage', () => {
         [{ message: 'SR 121 lane closure.' }],
         [{ roadwayName: 'State Route 121', message: 'Road work.' }],
         [{ routeName: 'US-191', message: 'Chain restrictions.' }],
-        [{ message: 'US-40 winter driving conditions.' }]
+        [{ message: 'US-40 winter driving conditions.' }],
+        [{ regions: ['Uintah County'], message: 'US-40 closed from Jensen to the Colorado state line.' }],
+        [{ roadwayName: 'US-40', county: 'Wasatch', message: 'Closed at MP 30.', notes: 'Detour through Provo.' }]
     ])('includes Basin counties and supported approaches: %j', alert => {
         expect(isAlertRelevantToBasin(alert)).toBe(true);
     });
@@ -60,6 +62,9 @@ describe('Basin alert coverage', () => {
         [{ message: 'US-40 closed near Park City.' }],
         [{ message: 'US-40 closed.', county: 'Summit' }],
         [{ message: 'I-80 at the US-40 junction is closed.' }],
+        [{ message: 'I-80 at the US-40 junction is closed.', regions: ['Northeastern Utah'] }],
+        [{ roadwayName: 'I-80', message: 'Closed at the US-40 junction.', regions: ['Northeastern Utah'] }],
+        [{ roadwayName: 'US-40', county: 'Wasatch', message: 'Closed at MP 4.', notes: 'Detour through Provo.' }],
         [{ message: 'US-6 closed at Soldier Summit.', regions: ['Central Utah'] }],
         [{ message: 'SR-1210 road work.' }],
         [{ message: 'SR-162 reopened in Montezuma Creek.', regions: ['Southeastern Utah'] }],
@@ -125,6 +130,25 @@ describe('Basin filtering on every alert cache path', () => {
     });
 
     afterEach(() => jest.restoreAllMocks());
+
+    it.each(['fresh', 'memory', 'disk', 'rate limit', 'outage'])('preserves covered closures and excludes junction-only routes on %s feeds', async mode => {
+        const records = [
+            { id: 71, regions: ['Uintah County'], message: 'US-40 closed from Jensen to the Colorado state line.' },
+            { id: 72, roadwayName: 'US-40', county: 'Wasatch', message: 'Closed at MP 30.', notes: 'Detour through Provo.' },
+            { id: 73, message: 'I-80 at the US-40 junction is closed.', regions: ['Northeastern Utah'] }
+        ];
+        if (mode === 'memory') memoryCache.set('udot_alerts', records);
+        else if (mode === 'disk') service.loadFromDiskCache.mockResolvedValue(records);
+        else if (mode === 'rate limit' || mode === 'outage') {
+            if (mode === 'rate limit') service.lastApiCalls.set('alerts', now);
+            service.loadFromDiskCache.mockResolvedValueOnce(null).mockResolvedValueOnce(records);
+            fetchMock.mockResolvedValue({ ok: false, status: 503 });
+        } else fetchMock.mockResolvedValue({ ok: true, json: async () => records.map(record => ({
+            Id: record.id, Message: record.message, Notes: record.notes, Regions: record.regions,
+            RoadwayName: record.roadwayName, County: record.county, StartTime: now / 1000 - 60
+        })) });
+        expect((await service.fetchUDOTAlerts()).map(alert => alert.id)).toEqual([71, 72]);
+    });
 
     it('filters memory cache hits', async () => {
         memoryCache.set('udot_alerts', cached);
