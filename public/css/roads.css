@@ -3206,6 +3206,7 @@ body[data-page-type="roads"] .weather-station-marker {
     display: flex;
     align-items: center;
     justify-content: center;
+}
 
 /* Corridor summary: scoped so kiosk maps and legacy cards keep their styles. */
 body[data-page-type="roads"] .hrrr-guidance-panel {
