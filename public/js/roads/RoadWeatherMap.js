@@ -158,10 +158,8 @@ class RoadWeatherMap {
     }
 
     formatRoadDataAge(timestamp) {
-        const time = Date.parse(timestamp);
-        if (!Number.isFinite(time)) return 'update time unavailable';
-        const minutes = Math.max(0, Math.floor((Date.now() - time) / 60000));
-        return `last updated ${minutes} min ago`;
+        const time = formatRoadReportTime(timestamp);
+        return time ? `last updated ${time}` : 'update time unavailable';
     }
 
     updateRoadFeedStatus() {
@@ -184,14 +182,13 @@ class RoadWeatherMap {
         if (segment.type === 'hrrr_estimated' || segment.source === 'HRRR') source = 'HRRR model estimate';
         else if (segment.type === 'estimated') source = 'Estimated from regional weather';
         else if (segment.type === 'camera_monitored') source = 'Camera analysis';
-        else if (segment.source === 'UDOT') {
-            source = segment.cached === false && !cached && this.lastGoodRoadData
-                ? 'Real-time UDOT data' : 'UDOT data';
-        } else if (segment.source) source = String(segment.source);
-        const contributors = (segment.overallCondition?.sources || []).map(item => item.name).filter(name => name !== 'udot');
-        const blend = contributors.length ? `; condition blended with ${contributors.join(', ')}` : '';
+        else if (segment.source === 'UDOT') source = 'UDOT road record';
+        else if (segment.source) source = String(segment.source);
+        const names = { udot: 'UDOT road report', hrrr: 'HRRR model estimate', camera: 'camera analysis', station: 'weather stations' };
+        const contributors = (segment.overallCondition?.sources || []).map(item => names[item.name] || item.name).filter(Boolean);
+        const evidence = contributors.length ? `Condition: ${contributors.join(', ')}` : 'Condition source unavailable';
         const age = this.formatRoadDataAge(segment.lastUpdated || segment.detectionData?.timestamp);
-        return `${cached ? 'Cached ' : ''}${source}${blend}; ${age}`;
+        return `${evidence}; ${cached ? 'Cached ' : ''}${source}; ${age}`;
     }
 
     renderRoadSegments(segments) {

@@ -32,8 +32,8 @@ describe('traffic fallback presentation', () => {
 
     it('labels cached events and alerts with their real age', () => {
         const { manager } = browser();
-        const record = { cached: true, lastUpdated: new Date(Date.now() - 12 * 60000).toISOString() };
-        expect(manager.createEventCard(record)).toContain('Cached UDOT report; updated 12 min ago');
+        const record = { cached: true, lastUpdated: '2026-11-03T18:00:00Z' };
+        expect(manager.createEventCard(record)).toContain('Cached UDOT report; updated Nov 3, 2026, 11:00 AM MST');
         expect(manager.createAlertCard({ cached: true })).toContain('Cached UDOT report; update time unavailable');
     });
 });
