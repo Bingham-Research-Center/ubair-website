@@ -50,6 +50,7 @@
     "@jest/globals": "^29.7.0",
     "jest": "^29.7.0",
     "nodemon": "^3.1.7",
+    "postcss": "^8.5.28",
     "supertest": "^7.3.0"
   }
 }

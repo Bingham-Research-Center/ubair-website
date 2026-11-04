@@ -31,7 +31,7 @@ function browser() {
     return { map, notice, legend, lines, fetch, cache };
 }
 
-const updated = new Date(Date.now() - 12 * 60000).toISOString();
+const updated = '2026-11-03T18:00:00.000Z';
 const road = { id: 'real-udot-road', name: 'Reported US-40 segment', source: 'UDOT', cached: false,
     lastUpdated: updated, coordinates: [[40.3, -110], [40.4, -110]],
     overallCondition: { condition: 'yellow', status: 'Wet Roads' } };
@@ -39,6 +39,25 @@ const good = { status: 'available', lastUpdated: updated, segments: [road], stat
 const reply = data => ({ ok: true, json: async () => data });
 
 describe('road map feed fallback', () => {
+    it('names actual condition contributors separately from the UDOT road record', async () => {
+        const { map, fetch } = browser();
+        fetch.mockResolvedValue(reply({ ...good, segments: [{ ...road, overallCondition: {
+            condition: 'red', status: 'Freezing Wet', sources: [{ name: 'station', condition: 'red', weight: 1 }]
+        } }] }));
+        await map.loadRoadWeatherData();
+        const html = map.roadLayers.get(road.id).popup;
+        expect(html).toContain('Condition: weather stations');
+        expect(html).toContain('UDOT road record');
+        expect(html).not.toContain('Real-time UDOT data');
+        expect(html).not.toContain('blended with');
+    });
+
+    it('does not invent a condition source for an unknown UDOT record', () => {
+        const { map } = browser();
+        expect(map.getRoadSourceLabel({ ...road, overallCondition: { condition: 'gray', sources: [] } }))
+            .toContain('Condition source unavailable');
+    });
+
     it.each(['HTTP failure', 'network failure', 'empty segments', 'backend unavailable'])(
         'draws no placeholder roads or stations on %s and shows the notice', async mode => {
             const { map, fetch, lines, notice, legend } = browser();
@@ -60,16 +79,16 @@ describe('road map feed fallback', () => {
         const { map, fetch, cache, notice } = browser();
         fetch.mockResolvedValueOnce(reply(good));
         await map.loadRoadWeatherData();
-        expect(map.roadLayers.get(road.id).popup).toContain('Real-time UDOT data');
+        expect(map.roadLayers.get(road.id).popup).toContain('UDOT road record');
         cache.lastUpdated -= 300001;
         fetch.mockResolvedValueOnce(mode === 'HTTP failure' ? { ok: false, status: 503 } : reply({ ...good, segments: [] }));
         await map.loadRoadWeatherData();
         expect(map.roadLayers.size).toBe(1);
         const retained = map.roadLayers.get(road.id);
         expect(retained.coordinates).toEqual(road.coordinates);
-        expect(retained.popup).toContain('Cached UDOT data');
+        expect(retained.popup).toContain('Cached UDOT road record');
         expect(retained.popup).not.toContain('Real-time');
-        expect(notice.textContent).toContain('Road conditions last updated 12 min ago');
+        expect(notice.textContent).toContain('Road conditions last updated Nov 3, 2026, 11:00 AM MST');
         expect(notice.textContent).toContain('feed unavailable');
         cache.lastUpdated -= 300001;
         fetch.mockResolvedValueOnce(reply(good));
@@ -98,7 +117,7 @@ describe('road map feed fallback', () => {
         fetch.mockResolvedValue(reply(good));
         await map.loadRoadWeatherData();
         await map.loadRoadWeatherData();
-        expect(map.roadLayers.get(road.id).popup).toContain('Cached UDOT data');
+        expect(map.roadLayers.get(road.id).popup).toContain('Cached UDOT road record');
         map.roadDataCached = false;
         for (const segment of [
             { ...road, source: undefined, type: undefined },
@@ -108,7 +127,7 @@ describe('road map feed fallback', () => {
         ]) {
             map.renderRoadSegment(segment);
             expect(map.roadLayers.get(road.id).popup).not.toContain('Real-time UDOT');
-            expect(map.roadLayers.get(road.id).popup).toContain('last updated 12 min ago');
+            expect(map.roadLayers.get(road.id).popup).toContain('last updated Nov 3, 2026, 11:00 AM MST');
         }
         expect(map.getRoadSourceLabel({ type: 'hrrr_estimated' })).toContain('HRRR model estimate; update time unavailable');
     });

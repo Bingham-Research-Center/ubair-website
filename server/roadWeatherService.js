@@ -159,14 +159,13 @@ class RoadWeatherService {
             return { condition: 'yellow', status: 'Use Caution', reason: `${roadCondition} - ${weatherCondition}` };
         }
 
-        // Green conditions - good
-        if (road.includes('dry') && weather.includes('fair')) {
-            return { condition: 'green', status: 'Clear', reason: 'Normal conditions' };
-        }
-
         // Default to yellow for wet conditions
         if (road.includes('wet')) {
             return { condition: 'yellow', status: 'Wet Roads', reason: 'Use caution on wet pavement' };
+        }
+
+        if (road.includes('dry')) {
+            return { condition: 'green', status: 'Clear', reason: 'Dry road surface reported' };
         }
 
         return { condition: 'gray', status: 'No Data', reason: 'Road condition not reported or not recognized' };
@@ -470,7 +469,8 @@ class RoadWeatherService {
                     segment.coordinates
                 );
                 if (dist < 15) {
-                    nearbyCameraConditions.push(this.cameraSnowLevelToCondition(det.snowLevel));
+                    const condition = this.cameraSnowLevelToCondition(det.snowLevel);
+                    if (condition.condition !== 'gray') nearbyCameraConditions.push(condition);
                 }
             }
             if (nearbyCameraConditions.length > 0) {

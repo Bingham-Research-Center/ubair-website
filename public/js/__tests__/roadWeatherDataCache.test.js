@@ -10,7 +10,7 @@ function browser(fetch) {
         window: { dispatchEvent: jest.fn() },
         CustomEvent: class { constructor(type) { this.type = type; } }
     });
-    for (const name of ['DataCache', 'RoadWeatherMap', 'ConditionCards']) {
+    for (const name of ['utils', 'DataCache', 'RoadWeatherMap', 'ConditionCards']) {
         const source = readFileSync(new URL(`../roads/${name}.js`, import.meta.url), 'utf8');
         vm.runInContext(source, context);
     }
