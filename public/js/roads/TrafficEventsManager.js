@@ -113,9 +113,20 @@ function formatAdvisoryInfo(event) {
  * Traffic Events Manager Class
  * Handles loading, displaying, and managing traffic events and alerts
  */
+function trafficFeedNotice(state, label, hasRecords = false) {
+    if (!state || (state.status !== 'cached' && state.status !== 'unavailable' && !state.feedUnavailable)) return '';
+    const unavailable = state.status === 'unavailable' || state.feedUnavailable;
+    const message = unavailable ? `${label} feed unavailable.` : `${label}: showing cached reports.`;
+    const provenance = state.status === 'cached' || state.lastUpdated
+        ? formatUDOTReportAge({ cached: true, lastUpdated: state.lastUpdated }) : '';
+    return `<p class="advisories-status" role="status">${escapeHtml(message)}${unavailable && hasRecords ? ' Showing last received reports.' : ''} ${escapeHtml(provenance)}</p>`;
+}
+
 class TrafficEventsManager {
     constructor() {
         this.currentTab = 'active';
+        this.eventsFeedStatus = {};
+        this.alertsFeedStatus = null;
         this.expandedLists = new Set();
         this.expandedDescriptions = new Set();
         this.alertsData = [];
@@ -215,18 +226,22 @@ class TrafficEventsManager {
     }
 
     async loadAllEventsData() {
+        this.eventsFeedStatus ??= {};
         const tabs = ['active', 'upcoming', 'all'];
         const responses = await Promise.allSettled(tabs.map(async tab => {
             const response = await fetch(`/api/traffic-events${tab === 'all' ? '' : `/${tab}`}`);
             if (!response.ok) throw new Error(`Traffic events HTTP ${response.status}`);
             const data = await response.json();
             if (!data.success || !Array.isArray(data.events)) throw new Error('Invalid traffic events response');
-            return data.events;
+            return data;
         }));
         responses.forEach((result, index) => {
             const tab = tabs[index];
             this.eventsStatus[tab] = result.status === 'fulfilled' ? 'ready' : 'error';
-            if (result.status === 'fulfilled') this.eventsData[tab] = result.value;
+            if (result.status === 'fulfilled') {
+                this.eventsData[tab] = result.value.events;
+                this.eventsFeedStatus[tab] = result.value;
+            }
             else console.error(`Error loading ${tab} traffic events:`, result.reason);
         });
         this.displayEvents(this.currentTab);
@@ -252,14 +267,15 @@ class TrafficEventsManager {
             alertsHtml = alerts.map(alert => this.createAlertCard(alert)).join('');
             if (this.alertsStatus === 'loading') alertsHtml += '<p class="advisories-status">Loading UDOT alerts…</p>';
             else if (this.alertsStatus === 'error') alertsHtml += '<p class="advisories-status" role="status">UDOT alerts could not be updated. Please try again later.</p>';
+            else if (trafficFeedNotice(this.alertsFeedStatus, 'UDOT alerts', alerts.length > 0)) alertsHtml += trafficFeedNotice(this.alertsFeedStatus, 'UDOT alerts', alerts.length > 0);
             else if (!alerts.length) alertsHtml = '<p class="advisories-status">No UDOT alerts for the Basin right now.</p>';
         }
 
         // Travel advisories: the three highest-priority first, the rest behind "Show all" (#334).
-        let statusHtml = '';
+        let statusHtml = trafficFeedNotice(this.eventsFeedStatus?.[tabName], 'Traffic events', events.length > 0);
         if (this.eventsStatus[tabName] === 'loading') statusHtml = '<p class="advisories-status">Loading travel advisories…</p>';
         else if (this.eventsStatus[tabName] === 'error') statusHtml = '<p class="advisories-status" role="status">Travel advisories could not be updated. Please try again later.</p>';
-        else if (!events.length) statusHtml = `<p class="advisories-status no-events">${tabName === 'all' ? 'No current or upcoming advisories.' : `No ${tabName} advisories.`}</p>`;
+        else if (!events.length && !statusHtml) statusHtml = `<p class="advisories-status no-events">${tabName === 'all' ? 'No current or upcoming advisories.' : `No ${tabName} advisories.`}</p>`;
 
         const cards = events.map((event, index) => this.createEventCard(event, `${tabName}-${index}`));
         const expanded = this.expandedLists.has(tabName);
@@ -316,6 +332,7 @@ class TrafficEventsManager {
             const alertsData = await alertsResponse.json();
 
             if (alertsData.success && Array.isArray(alertsData.alerts)) {
+                this.alertsFeedStatus = alertsData;
                 this.displayAlerts(alertsData.alerts);
             } else {
                 throw new Error('Invalid response format');

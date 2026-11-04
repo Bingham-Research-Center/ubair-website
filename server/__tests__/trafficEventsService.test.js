@@ -13,12 +13,12 @@ describe('TrafficEventsService rate-limit fallbacks', () => {
         jest.restoreAllMocks();
     });
 
-    test('traffic events resolve to an empty array when no stale cache exists', async () => {
+    test('traffic events reject as unavailable when no stale cache exists', async () => {
         const service = new TrafficEventsService();
         service.lastApiCalls.set('events', Date.now());
         jest.spyOn(service, 'loadFromDiskCache').mockResolvedValue(null);
 
-        await expect(service.fetchUDOTTrafficEvents()).resolves.toEqual([]);
+        await expect(service.fetchUDOTTrafficEvents()).rejects.toMatchObject({ statusCode: 503 });
     });
 
     test('traffic events use an available stale cache while rate limited', async () => {
@@ -29,15 +29,15 @@ describe('TrafficEventsService rate-limit fallbacks', () => {
             .mockResolvedValueOnce(null)
             .mockResolvedValueOnce(staleEvents);
 
-        await expect(service.fetchUDOTTrafficEvents()).resolves.toEqual(staleEvents);
+        await expect(service.fetchUDOTTrafficEvents()).resolves.toEqual(staleEvents.map(row => ({ ...row, cached: true })));
     });
 
-    test('traffic alerts resolve to an empty array when no stale cache exists', async () => {
+    test('traffic alerts reject as unavailable when no stale cache exists', async () => {
         const service = new TrafficEventsService();
         service.lastApiCalls.set('alerts', Date.now());
         jest.spyOn(service, 'loadFromDiskCache').mockResolvedValue(null);
 
-        await expect(service.fetchUDOTAlerts()).resolves.toEqual([]);
+        await expect(service.fetchUDOTAlerts()).rejects.toMatchObject({ statusCode: 503 });
     });
 
     test('traffic alerts use an available stale cache while rate limited', async () => {
@@ -48,6 +48,6 @@ describe('TrafficEventsService rate-limit fallbacks', () => {
             .mockResolvedValueOnce(null)
             .mockResolvedValueOnce(staleAlerts);
 
-        await expect(service.fetchUDOTAlerts()).resolves.toEqual(staleAlerts);
+        await expect(service.fetchUDOTAlerts()).resolves.toEqual(staleAlerts.map(row => ({ ...row, cached: true })));
     });
 });

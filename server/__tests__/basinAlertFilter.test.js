@@ -135,14 +135,14 @@ describe('Basin filtering on every alert cache path', () => {
 
     it('filters disk cache hits', async () => {
         service.loadFromDiskCache.mockResolvedValue(cached);
-        expect(await service.fetchUDOTAlerts()).toEqual([basin]);
+        expect(await service.fetchUDOTAlerts()).toEqual([{ ...basin, cached: true }]);
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('filters the stale cache used during rate limiting', async () => {
         service.lastApiCalls.set('alerts', now);
         service.loadFromDiskCache.mockResolvedValueOnce(null).mockResolvedValueOnce(cached);
-        expect(await service.fetchUDOTAlerts()).toEqual([basin]);
+        expect(await service.fetchUDOTAlerts()).toEqual([{ ...basin, cached: true }]);
         expect(fetchMock).not.toHaveBeenCalled();
     });
 

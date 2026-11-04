@@ -29,6 +29,8 @@ describe('traffic fallback presentation', () => {
         await manager.loadAllEventsData();
         expect(container.innerHTML).toContain('Travel advisories could not be updated');
         expect(container.innerHTML).not.toMatch(/all clear/i);
+        manager.displayEvents('active');
+        expect(container.innerHTML).toContain('Travel advisories could not be updated');
         manager.eventsStatus.active = 'ready';
         manager.displayEvents('active');
         expect(container.innerHTML).toContain('No active advisories');

@@ -28,10 +28,13 @@ function getSurfaceReport(data) {
 
     text = ({ clear_temp: 'No snow detected', snow_light: 'Light snow', snow_moderate: 'Moderate snow', snow_heavy: 'Heavy snow' })[text] || text.trim();
     text = text.charAt(0).toUpperCase() + text.slice(1);
+    const surfaceTemp = parseFloat(data.surfaceTemp ?? data.roadTemp);
     let level = null;
     if (/ice|icy|frost|closed|heavy snow/i.test(text)) level = 'red';
     else if (/^no snow detected$|dry|clear/i.test(text)) level = 'green';
-    else if (/snow|slush|wet|damp/i.test(text)) level = 'yellow';
+    else if (/snow|slush|wet|damp/i.test(text)) {
+        level = /snow|wet/i.test(text) && Number.isFinite(surfaceTemp) && surfaceTemp <= 32 ? 'red' : 'yellow';
+    }
     return { text, level };
 }
 
