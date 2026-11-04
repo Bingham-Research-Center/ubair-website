@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
-import { beforeEach, describe, expect, it } from '@jest/globals';
+import { beforeEach, afterEach, describe, expect, it, jest } from '@jest/globals';
 import { buildCorridorRows, corridorRoads, corridorForecast, forecastStatus } from '../roads/CorridorTable.js';
 
 // Exercise the table against the same classic-script helpers used by the page.
@@ -37,8 +37,40 @@ function forecast() {
 }
 
 beforeEach(() => { unitsSystem.isMetric = false; });
+afterEach(() => jest.restoreAllMocks());
 
 describe('corridor summary presentation', () => {
+    it('excludes future and expired cached events before computing status, counts and order', () => {
+        jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-03T18:00:00Z'));
+        const active = { roadwayName: 'US-40', eventType: 'Construction', startDate: '2026-11-03T17:00:00Z' };
+        const data = { stations: [{ name: 'Vernal', lat: 40.46, lng: -109.53, surfaceTemp: 50 }], events: { events: [
+            { roadwayName: 'US-40', isFullClosure: true, startDate: '2026-11-04T18:00:00Z' },
+            { roadwayName: 'US-40', isFullClosure: true, cached: true, startDate: '2026-11-01T18:00:00Z', plannedEndDate: '2026-11-02T18:00:00Z' },
+            active,
+            { roadwayName: 'US-191', isFullClosure: true, startDate: '2026-11-03T17:00:00Z' }
+        ] } };
+        const before = JSON.stringify(data);
+        const rows = buildCorridorRows(data, null);
+        expect(rows[0].road.id).toBe('us191');
+        const us40 = rows.find(row => row.road.id === 'us40');
+        expect(us40.events).toEqual([active]);
+        expect(us40.now.text).toBe('Travel caution');
+        expect(us40.incidents.text).toBe('1 roadwork');
+        expect(JSON.stringify(data)).toBe(before);
+    });
+
+    it.each([
+        [{ startDate: '2026-11-03T18:00:00Z' }, 1],
+        [{ startDate: '2026-11-03T18:00:00.001Z' }, 0],
+        [{ startDate: '2026-11-01T18:00:00Z', plannedEndDate: '2026-11-03T18:00:00Z' }, 1],
+        [{ plannedEndDate: '2026-11-03T17:59:59.999Z' }, 0],
+        [{}, 1]
+    ])('respects event boundaries without hiding an undated closure: %j', (dates, count) => {
+        jest.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-11-03T18:00:00Z'));
+        const rows = buildCorridorRows({ stations: [], events: { events: [{ roadwayName: 'US-40', isFullClosure: true, ...dates }] } }, null);
+        expect(rows.find(row => row.road.id === 'us40').events).toHaveLength(count);
+    });
+
     it('keeps all eight roads visible with no feeds and does not label missing data clear', () => {
         const rows = buildCorridorRows(null, null);
         expect(rows.map(row => row.road.shortName)).toEqual([

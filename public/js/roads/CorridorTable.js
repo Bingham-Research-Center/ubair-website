@@ -86,8 +86,15 @@ export function incidentStatus(events, available) {
 
 export function buildCorridorRows(data, forecast) {
     const available = Array.isArray(data?.stations) && Array.isArray(data?.events?.events) && data.events.success !== false;
+    const now = Date.now();
     return corridorRoads().map(road => {
-        const { stations, events } = getCorridorConditions(road, available ? data : null);
+        const { stations, events: reportedEvents } = getCorridorConditions(road, available ? data : null);
+        const events = reportedEvents.filter(event => {
+            const start = Date.parse(event.startDate);
+            const end = Date.parse(event.plannedEndDate);
+            // Undated reports remain visible; explicit future/expired windows do not.
+            return (!Number.isFinite(start) || start <= now) && (!Number.isFinite(end) || end >= now);
+        });
         const source = corridorForecast(forecast, road);
         const summary = source ? buildRouteForecastSummary(source, road.id) : null;
         // Fixed column labels must never silently display a different lead hour.
