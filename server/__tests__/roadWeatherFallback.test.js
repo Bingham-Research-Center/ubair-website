@@ -122,6 +122,27 @@ describe('road weather availability', () => {
 });
 
 describe('missing readings', () => {
+    it.each([null, '', 'Cloudy', 'Fair'])('retains a Dry surface with weather %j', weather => {
+        expect(service.mapUDOTConditionToColor('Dry', weather, '').condition).toBe('green');
+    });
+
+    it.each([
+        ['Dry', 'Snow', '', 'yellow'], ['Dry', 'Fair', 'Closed', 'red'],
+        ['Dry', 'Fair', 'Chains required', 'yellow'], ['Dry with wet patches', 'Cloudy', '', 'yellow'],
+        ['Dry with ice', 'Fair', '', 'red']
+    ])('keeps hazards ahead of Dry: %s / %s / %s', (surface, weather, restriction, color) => {
+        expect(service.mapUDOTConditionToColor(surface, weather, restriction).condition).toBe(color);
+    });
+
+    it.each([
+        [['unknown', 'none'], 'green'], [['none', 'unknown'], 'green'],
+        [['unknown', 'heavy'], 'red'], [['unknown', 'light'], 'yellow'], [['unknown'], undefined]
+    ])('uses known camera evidence independently of order: %j', (levels, expected) => {
+        const detections = levels.map(snowLevel => ({ snowLevel, cameraLocation: { lat: 40.3, lng: -110 } }));
+        const sources = service.gatherSourcesForSegment(road, null, detections, []);
+        expect(sources.find(source => source.name === 'camera')?.condition).toBe(expected);
+    });
+
     it.each([
         [{ temperature: -2, precipitation: 1 }, 'red'],
         [{ temperature: 1, precipitation: 1 }, 'yellow'],
