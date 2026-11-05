@@ -211,7 +211,7 @@
     font-size: 0.8em;
 }
 
-.nav-dropdown:hover .dropdown-arrow {
+.nav-dropdown.is-open .dropdown-arrow {
     transform: rotate(180deg);
 }
 
@@ -227,7 +227,7 @@
     z-index: 1000;
 }
 
-.nav-dropdown:hover .dropdown-menu {
+.nav-dropdown.is-open .dropdown-menu {
     display: block;
 }
 
