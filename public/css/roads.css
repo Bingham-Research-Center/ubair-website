@@ -79,6 +79,21 @@ body[data-page-type="roads"] h1::after {
     position: relative;
 }
 
+.road-feed-status {
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 0.9rem;
+}
+
+.road-feed-status[data-state="unavailable"] {
+    background: #fff3cd;
+    color: #664d03;
+    border-left: 4px solid #b58105;
+    font-weight: 600;
+}
+
 .map-container-fullscreen {
     position: relative;
     height: 600px;
@@ -1148,7 +1163,14 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .legend-content.expanded {
     max-height: 300px;
+    overflow-y: auto;
     transition: max-height 0.4s ease-in;
+}
+
+#road-legend-source {
+    max-width: min(16rem, 60vw);
+    white-space: normal;
+    line-height: 1.4;
 }
 
 .legend-items {

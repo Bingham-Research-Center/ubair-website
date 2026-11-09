@@ -75,12 +75,15 @@ const roadWeatherDataCache = {
     pending: null,
 
     async getData() {
-        if (this.data && Date.now() - this.lastUpdated < 300000) return this.data;
+        if (this.data && Date.now() - this.lastUpdated < 300000) return { ...this.data, cached: true };
         if (!this.pending) {
             this.pending = (async () => {
                 const response = await fetch('/api/road-weather');
                 if (!response.ok) throw new Error(`Road weather request failed: ${response.status}`);
                 const data = await response.json();
+                if (!data || typeof data !== 'object' || Array.isArray(data)) {
+                    throw new Error('Road weather response is invalid');
+                }
                 this.data = data;
                 this.lastUpdated = Date.now();
                 return data;

@@ -63,6 +63,10 @@ class TrafficEventsManager {
                 fetch('/api/traffic-events')
             ]);
 
+            if (!activeResponse.ok || !upcomingResponse.ok || !allResponse.ok) {
+                throw new Error('Traffic events feed unavailable');
+            }
+
             if (activeResponse.ok) {
                 const activeData = await activeResponse.json();
                 this.eventsData.active = activeData.events || [];
@@ -99,7 +103,7 @@ class TrafficEventsManager {
                 <div class="no-events" style="text-align: center; padding: 40px; color: #666;">
                     <i class="fas fa-check-circle" style="font-size: 48px; margin-bottom: 16px; color: #10b981;"></i>
                     <h3 style="margin: 0 0 8px 0;">No ${tabName} events</h3>
-                    <p style="margin: 0;">All clear on Uintah Basin roads!</p>
+                    <p style="margin: 0;">No traffic events were reported. Road conditions may still be unavailable.</p>
                 </div>
             `;
             return;
@@ -137,6 +141,7 @@ class TrafficEventsManager {
         const safeComment = escapeHtml(event.comment || '');
 
         return `
+            <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
             <div class="event-card" style="
                 border: 1px solid #e5e7eb;
                 border-radius: 8px;
@@ -254,7 +259,7 @@ class TrafficEventsManager {
                 <div class="no-alerts">
                     <i class="fas fa-check-circle"></i>
                     <h4>No Active Alerts</h4>
-                    <p>All clear - no UDOT alerts for the region.</p>
+                    <p>No UDOT alerts were reported for the region.</p>
                 </div>
             `;
             return;
@@ -274,6 +279,7 @@ class TrafficEventsManager {
         const safeRegions = Array.isArray(alert.regions) ? alert.regions.map(region => escapeHtml(region)).join(', ') : '';
 
         return `
+            <p class="data-source">${escapeHtml(formatUDOTReportAge(alert))}</p>
             <div class="alert-card ${severityToken}-importance">
                 <div class="alert-header">
                     <div class="alert-info">
