@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from '@jest/globals';
-import { addLine } from '../../scripts/count-visitors.js';
+import { addLine, orderLogFiles } from '../../scripts/count-visitors.js';
 
 const CHROME = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36';
 
@@ -46,6 +46,34 @@ describe('count-visitors replay', () => {
         const asLogged = new Map();
         addLine(asLogged, curlLoggedAsHuman, { asLogged: true });
         expect(asLogged.get('2026-11-09').counts().uniqueVisitors.not_declared_bot.address).toBe(1);
+    });
+
+    it('trusts the logged bot verdict when the UA was truncated (PR #341 review)', () => {
+        // Live saw the full UA, with its bot marker past the 300-character cap.
+        const truncated = line({ ua_raw: `Mozilla/5.0 ${'X'.repeat(288)}`, ua_truncated: true, declared_bot: true });
+        const tallies = new Map();
+        addLine(tallies, truncated);
+        expect(tallies.get('2026-11-09').counts().uniqueVisitors.not_declared_bot.address).toBe(0);
+    });
+
+    it('ignores a beacon read before any request from that browser, as live does', () => {
+        const beacon = { timestamp: '2026-11-09T14:00:00.000Z', type: 'engagement', visitor_id: 'aaaaaaaaaaaaaaaa', visitor_ua_id: 'bbbbbbbbbbbbbbbb', network_id: 'cccccccccccccccc', path: '/', duration_s: 9 };
+        const tallies = new Map();
+        addLine(tallies, beacon);
+        addLine(tallies, line());
+        expect(tallies.get('2026-11-09').counts().uniqueVisitors.js_confirmed.address).toBe(0);
+    });
+
+    it('reads rotated files oldest first and the live access.log last', () => {
+        expect(orderLogFiles([
+            '/x/access.log',
+            '/x/access_2026-11-05T14-57-45-293Z.log',
+            '/x/access_2026-10-30T15-38-09-153Z.log',
+        ])).toEqual([
+            '/x/access_2026-10-30T15-38-09-153Z.log',
+            '/x/access_2026-11-05T14-57-45-293Z.log',
+            '/x/access.log',
+        ]);
     });
 
     it('counts unresolved lines as unresolved and skips lines from before #340', () => {

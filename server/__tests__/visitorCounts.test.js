@@ -177,6 +177,25 @@ describe('VisitorTally: edge rules', () => {
         expect(t.counts().uniqueVisitors.js_confirmed.address_ua).toBe(0);
     });
 
+    it('keeps a beacon-only client out of every tier (PR #341 review)', () => {
+        // The engagement route bypasses the middleware, so a beacon alone has no bot verdict.
+        const t = new VisitorTally();
+        t.addBeacon(id('curl', 'n', 'curl/8.5.0'));
+        t.addBeacon(id('none', 'n', ''));
+        const c = t.counts();
+        expect(c.uniqueVisitors.any).toEqual({ network: 0, address: 0, address_ua: 0 });
+        expect(c.clientAddress.requests).toBe(0);
+    });
+
+    it('lets a beacon from a declared bot raise it no higher than `any`', () => {
+        const t = new VisitorTally();
+        t.addRequest(id('B', 'n', 'bot'), { ...human, declaredBot: true });
+        t.addBeacon(id('B', 'n', 'bot'));
+        const c = t.counts();
+        expect(c.uniqueVisitors.any.address).toBe(1);
+        expect(c.uniqueVisitors.not_declared_bot.address).toBe(0);
+    });
+
     it('stops adding visitors past maxRecords and says so', () => {
         const t = new VisitorTally({ maxRecords: 2 });
         t.addRequest(id('A', 'n', 'x'), human);
@@ -292,6 +311,17 @@ describe('VisitorStore', () => {
         }
         expect((await s.history(2)).map(l => l.date)).toEqual(['2026-11-10', '2026-11-11']);
         expect(await s.history(0)).toEqual([]);
+    });
+
+    it('never lets an in-flight flush overwrite the shutdown checkpoint (PR #341 review)', async () => {
+        const s1 = open();
+        s1.recordRequest(s1.idsFor('203.0.113.1', CHROME), human);
+        const pending = s1.flush();                         // payload: one visitor
+        s1.recordRequest(s1.idsFor('203.0.113.2', CHROME), human);
+        s1.flushSync();                                     // shutdown: two visitors
+        await pending;
+        expect(open().snapshot().uniqueVisitors.page_viewer.address).toBe(2);
+        expect(existsSync(path.join(dir, 'visitors_today.json.tmp'))).toBe(false);
     });
 
     it('flushes asynchronously and reloads what it wrote', async () => {

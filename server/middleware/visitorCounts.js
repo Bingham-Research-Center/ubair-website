@@ -202,9 +202,15 @@ export class VisitorTally {
 
     // A beacon proves JavaScript ran, but not that a page was served: a caller can POST one
     // directly. So it never sets the page flag; js_confirmed needs both.
+    //
+    // It also only marks a browser a request has already classified, and never creates a
+    // record. The engagement route bypasses the middleware, so a beacon carries no bot verdict
+    // and is not a counted request: a record made here would let `curl`, or a client with no
+    // User-Agent, POST one beacon and land in not_declared_bot. A real page view always comes
+    // first, so nothing is lost; the replay script reads files oldest first to keep that order.
     addBeacon(ids) {
         if (!ids) return;
-        const r = this._record(ids);
+        const r = this.records.get(ids.addressUa);
         if (r) r.f |= F_BEACON;
     }
 
@@ -340,6 +346,9 @@ export class VisitorStore {
         this.maxRecords = maxRecords;
         this.dirty = false;
         this.flushing = null;
+        // Bumped by every successful flushSync, so an async flush that started earlier knows its
+        // payload is older than what is on disk and discards it instead of renaming it over.
+        this.generation = 0;
         try {
             mkdirSync(dir, { recursive: true });
         } catch (err) {
@@ -478,10 +487,18 @@ export class VisitorStore {
         this.dirty = false;
         const file = path.join(this.dir, TODAY_FILE);
         const tmp = `${file}.tmp`;
+        const generation = this.generation;
         this.flushing = (async () => {
             try {
                 await fs.writeFile(tmp, this._payload());
-                await fs.rename(tmp, file);
+                // Check and rename in one synchronous step. flushSync runs on this same thread,
+                // so it cannot land between the two, and a shutdown checkpoint written while the
+                // write above was in flight is never replaced by this older payload.
+                if (generation !== this.generation) {
+                    await fs.unlink(tmp).catch(() => {});
+                    return;
+                }
+                renameSync(tmp, file);
             } catch (err) {
                 this.dirty = true;
                 console.error('[Visitors] Could not save tally:', err.message);
@@ -497,6 +514,7 @@ export class VisitorStore {
         try {
             this._roll();
             writeFileAtomicSync(path.join(this.dir, TODAY_FILE), this._payload(), 0o644);
+            this.generation++;
             this.dirty = false;
         } catch (err) {
             console.error('[Visitors] Could not save tally at shutdown:', err.message);

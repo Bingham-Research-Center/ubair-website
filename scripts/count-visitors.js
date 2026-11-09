@@ -9,6 +9,7 @@
  * the flags as they were logged instead.
  *
  * Only lines written since #340 carry the ids it needs; older lines are skipped and counted.
+ * Files are read oldest first whatever order they are given in (see orderLogFiles).
  *
  *   node scripts/count-visitors.js                      # logs/analytics/access*.log
  *   node scripts/count-visitors.js --json FILE...       # one JSON object per day
@@ -43,8 +44,11 @@ export function addLine(tallies, e, { asLogged = false } = {}) {
     }
 
     const derived = classifyRequest({ userAgent: e.ua_raw, method: e.method, path: e.path, status: e.status });
+    // A truncated UA may have lost the very marker that made it a bot, so its logged verdict,
+    // made from the full string, is the only faithful one.
+    const uaComplete = e.ua_truncated !== true;
     tally.addRequest(ids, {
-        declaredBot: asLogged ? e.declared_bot === true : derived.declaredBot,
+        declaredBot: asLogged || !uaComplete ? e.declared_bot === true : derived.declaredBot,
         probe: asLogged ? e.probe === true : derived.probe,
         // Content-Type is not logged, so the page flag is always taken as logged.
         page: e.page === true,
@@ -66,6 +70,16 @@ function printTable(date, c) {
     console.log(`  page-viewer addresses with several browsers: ${s.withSeveralUserAgents} of ${s.pageViewerAddresses} (most at one: ${s.mostUserAgentsAtOneAddress})`);
 }
 
+/**
+ * Oldest first: rotated files are named access_<ISO time>.log, so they sort by name, and the
+ * live access.log is newest. Order matters because a beacon only marks a browser that a
+ * request has already classified, exactly as it does live. Exported for tests.
+ */
+export function orderLogFiles(files) {
+    const key = f => (path.basename(f) === 'access.log' ? '\uffff' : path.basename(f));
+    return [...files].sort((a, b) => (key(a) < key(b) ? -1 : key(a) > key(b) ? 1 : 0));
+}
+
 async function main(argv) {
     const json = argv.includes('--json');
     const asLogged = argv.includes('--as-logged');
@@ -76,6 +90,7 @@ async function main(argv) {
             .map(f => path.join(DEFAULT_DIR, f));
     }
 
+    files = orderLogFiles(files);
     const tallies = new Map();
     let used = 0;
     let skipped = 0;

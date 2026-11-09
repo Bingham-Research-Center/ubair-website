@@ -48,6 +48,8 @@ await fs.mkdir(LOG_DIR, { recursive: true });
 
 const isBot = cls => cls.declaredBot || cls.probe;
 
+const UA_LOG_CAP = 300;
+
 // ── Unique visitors (issue #340) ───────────────────────────────────────
 
 export const visitors = new VisitorStore({
@@ -486,7 +488,11 @@ export default function analyticsMiddleware(req, res, next) {
             referrer_label: referrer.label,
             referrer_domain: referrer.domain,
             user_agent: ua,
-            ua_raw: rawUA.slice(0, 300),
+            // Capped so a hostile client cannot bloat the log. When the cap bites, the replay
+            // script cannot re-derive the bot verdict from what is left (a marker can sit past
+            // the cut), so it takes declared_bot as logged instead.
+            ua_raw: rawUA.slice(0, UA_LOG_CAP),
+            ua_truncated: rawUA.length > UA_LOG_CAP,
         };
 
         // Only track sessions for real humans on page routes
