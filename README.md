@@ -34,24 +34,25 @@ feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins 
 ## Documentation
 | Audience | Start here |
 |---|---|
-| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — Home ("what do I do today?"), How-We-Work, Definition-of-Done, Roadmap, Team, Glossary |
+| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — one page: what to work on and how a change gets merged |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
 | **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json`; producer side in [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) |
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
 Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
-(labels `student-ready`, `copilot-ok`) on the "BasinWx Winter 2026/27" project, not in docs files.
+on two milestones (`v1.6.0 Beta relaunch`, `v2.0.0 Ozone season open`), not in docs files.
+Unscheduled ideas live in one thread, [Ideas parking lot](https://github.com/Bingham-Research-Center/ubair-website/discussions/342).
 
 ## Contributing
 Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
 and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
-audience-appropriate. Open bugs and tasks with the issue templates; PRs go into `dev`.
+audience-appropriate. PRs go into `dev`.
 
 - **Style:** low verbosity; prune bloat
 - **Tests:** TDD where practical (`npm test`)
 - **AI authorship:** every commit involving AI assistance must list the agent as a co-author
-- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki's How-We-Work page
+- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki
 
 ## Quick health checks
 ```bash
