@@ -196,3 +196,13 @@ function showDevModeMessage(message) {
 
 // Load the sidebar when the document is ready
 document.addEventListener('DOMContentLoaded', loadSidebar);
+
+// Time-on-page beacon. Loaded from here because every page with the sidebar runs this file,
+// so no page can forget it; kiosk pages have no sidebar and so send none, which is right for
+// an unattended display. The beacon guards itself against loading twice.
+(function loadEngagementBeacon() {
+    const script = document.createElement('script');
+    script.src = '/public/js/engagement-beacon.js';
+    script.async = true;
+    (document.head || document.documentElement).appendChild(script);
+})();
