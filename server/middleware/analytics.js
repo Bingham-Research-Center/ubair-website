@@ -3,61 +3,68 @@
  *
  * Tracks:
  * - Page visits with bot filtering (URL, timestamp, referrer)
+ * - Unique visitors under several stated definitions (visitorCounts.js, issue #340)
  * - Session journeys (pages-per-session, entry page)
  * - Referrer sources (search, government, university, direct, etc.)
  * - Hourly traffic distribution
  * - Response times (server performance)
- * - User agent (browser/OS for compatibility)
+ * - User agent (browser/OS for compatibility; raw string kept so bots can be reclassified)
  * - Client engagement beacons (time-on-page)
  *
  * Does NOT track:
- * - IP addresses (hashed with daily salt)
+ * - IP addresses: only HMACs under a random salt that is replaced every UTC day, after which
+ *   a stored hash can no longer be linked to an address
  * - Personal information
  * - Cookies or persistent identifiers
  *
- * Logs to: /logs/analytics/
+ * Logs to: /logs/analytics/ (ANALYTICS_LOG_DIR overrides; tests use a temp dir so a test run
+ * in a live checkout cannot write into that box's analytics)
  */
 
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import crypto from 'crypto';
+import os from 'os';
+import {
+    VisitorStore, classifyRequest, describeDefinitions,
+} from './visitorCounts.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const LOG_DIR = path.join(__dirname, '../../logs/analytics');
+const LOG_DIR = process.env.ANALYTICS_LOG_DIR ||
+    (process.env.NODE_ENV === 'test'
+        ? path.join(os.tmpdir(), `ubair-analytics-test-${process.pid}`)
+        : path.join(__dirname, '../../logs/analytics'));
 const LOG_FILE = path.join(LOG_DIR, 'access.log');
 const DAILY_SUMMARY_FILE = path.join(LOG_DIR, 'daily_summary.json');
 
 await fs.mkdir(LOG_DIR, { recursive: true });
 
 // ── Bot / scanner detection ────────────────────────────────────────────
+// The patterns and the rules live in visitorCounts.js so the visitor tiers and the legacy
+// `is_bot` flag can never disagree. `is_bot` is exactly what it always was: declared bot
+// (no UA, or a bot/script UA) or probe (scanner path, or a POST to a page route).
 
-const BOT_UA_PATTERNS = [
-    /bot\b/i, /crawl/i, /spider/i, /slurp/i, /mediapartners/i,
-    /wget/i, /curl/i, /python-requests/i, /go-http-client/i,
-    /scrapy/i, /httpclient/i, /java\//i, /libwww/i, /nutch/i,
-    /apache-httpclient/i, /okhttp/i, /node-fetch/i, /axios/i,
-    /headlesschrome/i, /phantomjs/i, /selenium/i,
-];
+const isBot = cls => cls.declaredBot || cls.probe;
 
-// Paths that only scanners/bots hit — never real users
-const SCANNER_PATHS = [
-    /^\/wp-/, /^\/wordpress/i, /\.php$/i, /\.asp$/i, /\.aspx$/i,
-    /\.cgi$/i, /\.env$/i, /\.git/i, /\/admin\b/i, /\/login/i,
-    /\/owa\//i, /\/cgi-bin/i, /\/config/i, /\.xml$/i, /\.exe$/i,
-    /^\/\./, /\/{3,}/,
-];
+// ── Unique visitors (issue #340) ───────────────────────────────────────
 
-function isBot(ua, rawUA, method, pathStr) {
-    if (!rawUA) return true;
-    if (ua.browser === 'unknown' && ua.os === 'unknown') return true;
-    if (BOT_UA_PATTERNS.some(p => p.test(rawUA))) return true;
-    if (SCANNER_PATHS.some(p => p.test(pathStr))) return true;
-    // POST to page routes is almost always a scanner
-    if (method === 'POST' && !pathStr.startsWith('/api')) return true;
-    return false;
+export const visitors = new VisitorStore({
+    dir: LOG_DIR,
+    flushMs: process.env.NODE_ENV === 'test' ? 0 : 30_000,
+});
+
+/** Called first thing in server shutdown; pm2 kills the process too soon for async work. */
+export function flushVisitorsSync() {
+    visitors.flushSync();
+}
+
+// The client address as Express resolved it. server.js sets `trust proxy` to loopback, so
+// behind nginx this is the address nginx appended to X-Forwarded-For — not the first hop,
+// which the client controls.
+function clientIP(req) {
+    return req.ip || req.socket?.remoteAddress || 'unknown';
 }
 
 // ── Session tracking (in-memory, resets on restart) ────────────────────
@@ -126,14 +133,6 @@ function parseReferrer(referrer) {
     } catch {
         return { source: 'other', label: 'Unknown', domain: null };
     }
-}
-
-// ── IP anonymization ───────────────────────────────────────────────────
-
-function anonymizeIP(ip) {
-    const salt = new Date().toISOString().split('T')[0];
-    const hash = crypto.createHash('sha256').update(ip + salt).digest('hex');
-    return hash.substring(0, 16);
 }
 
 // ── User-agent parsing ─────────────────────────────────────────────────
@@ -381,10 +380,10 @@ function beaconRateLimited(ip) {
 
 export async function handleEngagementBeacon(req, res) {
     try {
-        const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+        const ip = clientIP(req);
         if (beaconRateLimited(ip)) return res.status(429).end();
 
-        const { path: pagePath, duration_s, visitor_id } = req.body || {};
+        const { path: pagePath, duration_s } = req.body || {};
         if (typeof pagePath !== 'string' || !pagePath || duration_s == null) {
             return res.status(400).json({ error: 'Missing path or duration_s' });
         }
@@ -397,10 +396,17 @@ export async function handleEngagementBeacon(req, res) {
             return res.status(400).json({ error: 'Invalid duration_s' });
         }
 
+        // Ids are computed here, never taken from the body: the client cannot be trusted to
+        // say who it is, and the page script has never sent one.
+        const who = visitors.idsFor(ip, req.headers['user-agent'] || '');
+        visitors.recordBeacon(who);
+
         const entry = {
             timestamp: new Date().toISOString(),
             type: 'engagement',
-            visitor_id: String(visitor_id || 'unknown').slice(0, 64),
+            visitor_id: who.visitorId,
+            visitor_ua_id: who.ids?.addressUa ?? null,
+            network_id: who.ids?.network ?? null,
             path: pagePath,
             duration_s: Math.min(duration, 3600),
         };
@@ -434,40 +440,58 @@ export default function analyticsMiddleware(req, res, next) {
     }
 
     const startTime = Date.now();
+    // Read the path now, not in 'finish': a router mounted at '/api' strips its prefix from
+    // req.path for the rest of the request, so at finish /api/health reads as '/health' — and
+    // a 304 from an /api router would then look like an extensionless page route.
+    const reqPath = req.path;
 
     res.on('finish', async () => {
         const responseTime = Date.now() - startTime;
         const rawUA = req.headers['user-agent'] || '';
         const ua = parseUserAgent(rawUA);
 
-        const rawIP = req.ip ||
-                      req.headers['x-forwarded-for']?.split(',')[0] ||
-                      req.connection.remoteAddress ||
-                      'unknown';
-        const visitorID = anonymizeIP(rawIP);
+        const who = visitors.idsFor(clientIP(req), rawUA);
+        const visitorID = who.visitorId;
+        const cls = classifyRequest({
+            userAgent: rawUA,
+            method: req.method,
+            path: reqPath,
+            status: res.statusCode,
+            contentType: res.getHeader('content-type'),
+        });
+        visitors.recordRequest(who, cls);
 
         const rawReferrer = req.headers['referer'] || req.headers['referrer'] || 'direct';
         const referrer = parseReferrer(rawReferrer);
-        const bot = isBot(ua, rawUA, req.method, req.path);
+        const bot = isBot(cls);
 
+        // The ids and flags below are everything the visitor tiers are computed from, so a
+        // definition changed later can be replayed over old logs (scripts/count-visitors.js).
         const entry = {
             timestamp: new Date().toISOString(),
             visitor_id: visitorID,
-            path: req.path,
+            visitor_ua_id: who.ids?.addressUa ?? null,
+            network_id: who.ids?.network ?? null,
+            address_resolved: who.resolved,
+            path: reqPath,
             method: req.method,
             status: res.statusCode,
             response_time_ms: responseTime,
             is_bot: bot,
+            declared_bot: cls.declaredBot,
+            probe: cls.probe,
+            page: cls.page,
             referrer: rawReferrer,
             referrer_source: referrer.source,
             referrer_label: referrer.label,
             referrer_domain: referrer.domain,
             user_agent: ua,
+            ua_raw: rawUA.slice(0, 300),
         };
 
         // Only track sessions for real humans on page routes
         if (!bot && req.method === 'GET') {
-            entry.session = getSessionInfo(visitorID, req.path);
+            entry.session = getSessionInfo(visitorID, reqPath);
         }
 
         // Fire-and-forget, but never unhandled: an async throw here becomes an
@@ -504,5 +528,27 @@ export async function getAnalyticsStats(req, res) {
         });
     } catch {
         res.status(404).json({ error: 'No analytics data available' });
+    }
+}
+
+// ── Unique visitors API ────────────────────────────────────────────────
+
+/**
+ * GET /api/analytics/visitors[?days=N]
+ * Definitions, today's counts so far, and up to N finished days (default 30, max 366).
+ * Counts only: no hash ever leaves the box.
+ */
+export async function getVisitorStats(req, res) {
+    try {
+        const n = Number.parseInt(req.query.days, 10);
+        const days = Number.isFinite(n) ? Math.min(Math.max(n, 0), 366) : 30;
+        res.json({
+            definitions: describeDefinitions(),
+            today: visitors.snapshot(),
+            history: await visitors.history(days),
+        });
+    } catch (err) {
+        console.error('[Analytics] visitor stats failed:', err.message);
+        res.status(500).json({ error: 'Visitor stats unavailable' });
     }
 }

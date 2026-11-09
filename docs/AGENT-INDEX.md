@@ -25,6 +25,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
 | Finish or review the HRRR weather-map integration | `docs/HRRR-NWP-HANDOFF-apr16.md` — cold-start handoff written 2026-04-16 against commit `b051513`; check what has landed on `dev` since before trusting its file list |
+| Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |
 | Fix a road weather bug | `docs/HOW_IT_WORKS.md` + `gh issue list --label area:roads` (the former `ROADS_AUDIT.md` findings live there) |
 
 ## Reference docs (cite, don't reread)

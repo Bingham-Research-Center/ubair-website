@@ -14,7 +14,9 @@ import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
-import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from './middleware/analytics.js';
+import analyticsMiddleware, {
+    flushVisitorsSync, getAnalyticsStats, getVisitorStats, handleEngagementBeacon
+} from './middleware/analytics.js';
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
@@ -28,6 +30,13 @@ import {
 } from './startup/backgroundJobs.js';
 
 const app = express();
+
+// nginx terminates TLS on both boxes and proxies from loopback, appending the real client to
+// X-Forwarded-For. Trusting loopback (and only loopback) makes req.ip that appended address:
+// the rightmost hop, which a client cannot forge, rather than the first, which it can. Without
+// this every request's req.ip was nginx itself, so analytics counted one visitor a day (#340).
+// It also makes req.protocol honour X-Forwarded-Proto; nothing in the app reads it today.
+app.set('trust proxy', 'loopback');
 const PORT = process.env.PORT || 3000;
 const previewMode = isPreviewMode();
 
@@ -79,10 +88,14 @@ app.use('/api/static', express.static(path.join(__dirname, '../public/api/static
 // Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
 app.get('/api/analytics/pipeline', getPipelineStats);
+app.get('/api/analytics/visitors', getVisitorStats);
 // Unauthenticated by necessity (called from every visitor's browser). Cap the body hard —
 // the handler rate-limits per IP and validates every field, but there is no reason to parse
-// more than a few hundred bytes here.
-app.post('/api/analytics/engagement', express.json({ limit: '2kb' }), handleEngagementBeacon);
+// more than a few hundred bytes here. navigator.sendBeacon sends a string body as
+// text/plain, so that type must be parsed as JSON too, or every beacon is a 400.
+app.post('/api/analytics/engagement',
+    express.json({ limit: '2kb', type: ['application/json', 'text/plain'] }),
+    handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -297,6 +310,9 @@ const shutdown = async (signal, options = {}) => {
     isShuttingDown = true;
 
     console.log(`\nReceived ${signal}. Shutting down services...`);
+
+    // Before anything async: pm2 sends SIGKILL 1.6 s after SIGINT by default.
+    flushVisitorsSync();
 
     const shutdownContext = {
         signal,

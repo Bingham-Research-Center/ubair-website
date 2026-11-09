@@ -51,6 +51,9 @@ in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
   `GET /api/monitoring/uploads` with the key in `x-api-key` → the
   last 200 attempts the app saw, rejected ones included, with source IP and `x-client-hostname`.
   `GET /api/monitoring/freshness` → age of the newest file per dataType.
+  `GET /api/analytics/visitors` → unique visitors per UTC day under 3 identities × 5 bot/human
+  tiers, each with its stated assumption (#340); `clientAddress.unresolvedShare` near 1 means
+  the vhost stopped passing `X-Forwarded-For` and every count collapses to nginx.
 - **Only pm2 may hold the app's port.** After a Linode reboot on 2026-10-26 a leftover
   pre-pm2 unit, `ubair-website.service` (www-data, no `.env`), took prod's port 3000 first:
   every upload 500ed for a day while `/api/health` stayed green and pm2 crash-looped 222k times
