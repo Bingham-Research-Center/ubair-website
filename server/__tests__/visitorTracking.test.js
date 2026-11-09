@@ -74,6 +74,22 @@ describe('visitor tracking through the app', () => {
         expect(delta(after, before, 'clean', 'address')).toBe(0);
     });
 
+    it('does not mistake a served asset named like a probe for one (PR #341 review)', async () => {
+        // The homepage loads /public/js/config.js, which matches the /config scanner pattern.
+        const xff = '203.0.113.120';
+        const before = await counts();
+        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        const first = await request(app).get('/public/js/config.js')
+            .set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/public/js/config.js')
+            .set('User-Agent', UA).set('X-Forwarded-For', xff)
+            .set('If-None-Match', first.headers.etag).expect(304);
+        const after = await counts();
+
+        expect(delta(after, before, 'clean', 'address')).toBe(1);
+        expect(after.clientAddress.requests - before.clientAddress.requests).toBe(1);
+    });
+
     it('still ignores real assets, and their 404s do not push a reader over the miss limit', async () => {
         const xff = '198.51.100.88';
         const before = await counts();

@@ -441,11 +441,13 @@ export default function analyticsMiddleware(req, res, next) {
     }
 
     // Static assets (CSS/JS/images) are not interesting for page analytics and are dropped at
-    // finish — unless the request turns out to be a scanner probe. Probes often look like
-    // assets ('/config.json' contains '.js'), and a probe is what keeps its address out of the
-    // `clean` tier, so it must be tallied and logged. Asset 404s are not counted as misses: a
-    // 404 on an asset path is as likely our own missing file (root /favicon.ico 404s, #309) as
-    // a scanner, and ten of them would push a real reader out of `clean`.
+    // finish — unless the request turns out to be a failed scanner probe. Probes often look
+    // like assets ('/config.json' contains '.js'), and a probe is what keeps its address out of
+    // the `clean` tier, so it must be tallied and logged. Only a *failed* one counts: a file we
+    // served or revalidated exists, so asking for it is not probing — the homepage itself loads
+    // /public/js/config.js, which matches the /config pattern. Asset 404s are not counted as
+    // misses: a 404 on an asset path is as likely our own missing file (root /favicon.ico 404s,
+    // #309) as a scanner, and ten of them would push a real reader out of `clean`.
     const staticAsset = isStaticAssetPath(req.path);
 
     const startTime = Date.now();
@@ -467,7 +469,7 @@ export default function analyticsMiddleware(req, res, next) {
             contentType: res.getHeader('content-type'),
         });
         if (staticAsset) {
-            if (!cls.probe) return;
+            if (!cls.probe || res.statusCode < 400) return;
             cls.miss = false;
         }
         const who = visitors.idsFor(clientIP(req), rawUA);
