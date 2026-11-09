@@ -122,6 +122,14 @@ export function addressKeys(ip) {
     }
     if (net.isIPv6(s)) {
         const g = expandIPv6(s);
+        // IPv4-mapped in hex form (::ffff:cb00:7109) is the same client as 203.0.113.9. nginx
+        // writes the dotted form, but both are valid, and without this every hex-form client
+        // would share one bogus /64 and mapped loopback would count as a visitor.
+        if (g.slice(0, 5).every(x => x === '0') && g[5] === 'ffff') {
+            const hi = parseInt(g[6], 16);
+            const lo = parseInt(g[7], 16);
+            return addressKeys(`${hi >> 8}.${hi & 255}.${lo >> 8}.${lo & 255}`);
+        }
         if (g.slice(0, 7).every(x => x === '0') && (g[7] === '1' || g[7] === '0')) return null;
         return { address: `${g.slice(0, 4).join(':')}::/64`, network: `${g.slice(0, 3).join(':')}::/48` };
     }

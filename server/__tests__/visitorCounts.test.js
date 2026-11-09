@@ -23,6 +23,13 @@ describe('addressKeys', () => {
         expect(addressKeys('::ffff:203.0.113.9')).toEqual(addressKeys('203.0.113.9'));
     });
 
+    it('reads hex-form IPv4-mapped addresses as the IPv4 client (PR #341 review)', () => {
+        expect(addressKeys('::ffff:cb00:7109')).toEqual(addressKeys('203.0.113.9'));
+        expect(addressKeys('::ffff:c633:6407')).toEqual(addressKeys('198.51.100.7'));
+        expect(addressKeys('0:0:0:0:0:ffff:cb00:7109')).toEqual(addressKeys('203.0.113.9'));
+        expect(addressKeys('::ffff:7f00:1')).toBeNull();
+    });
+
     it('returns null for loopback and junk, which say nothing about the visitor', () => {
         for (const ip of ['127.0.0.1', '127.8.8.8', '::ffff:127.0.0.1', '::1', '::', 'unknown', '', undefined, null]) {
             expect(addressKeys(ip)).toBeNull();

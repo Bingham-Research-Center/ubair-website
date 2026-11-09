@@ -422,24 +422,31 @@ export async function handleEngagementBeacon(req, res) {
 
 // ── Main middleware ─────────────────────────────────────────────────────
 
-export default function analyticsMiddleware(req, res, next) {
-    // Skip static assets (CSS/JS/images are not interesting for page analytics)
-    if (req.path.startsWith('/public') ||
-        req.path.includes('.css') ||
-        req.path.includes('.js') ||
-        req.path.includes('.png') ||
-        req.path.includes('.jpg') ||
-        req.path.includes('.ico') ||
-        req.path.includes('.woff') ||
-        req.path.includes('.svg')) {
-        return next();
-    }
+function isStaticAssetPath(p) {
+    return p.startsWith('/public') ||
+        p.includes('.css') ||
+        p.includes('.js') ||
+        p.includes('.png') ||
+        p.includes('.jpg') ||
+        p.includes('.ico') ||
+        p.includes('.woff') ||
+        p.includes('.svg');
+}
 
+export default function analyticsMiddleware(req, res, next) {
     // Skip analytics-own endpoints and data API (pipeline has its own logger)
     if (req.path.startsWith('/api/analytics') ||
         req.path.startsWith('/api/upload')) {
         return next();
     }
+
+    // Static assets (CSS/JS/images) are not interesting for page analytics and are dropped at
+    // finish — unless the request turns out to be a scanner probe. Probes often look like
+    // assets ('/config.json' contains '.js'), and a probe is what keeps its address out of the
+    // `clean` tier, so it must be tallied and logged. Asset 404s are not counted as misses: a
+    // 404 on an asset path is as likely our own missing file (root /favicon.ico 404s, #309) as
+    // a scanner, and ten of them would push a real reader out of `clean`.
+    const staticAsset = isStaticAssetPath(req.path);
 
     const startTime = Date.now();
     // Read the path now, not in 'finish': a router mounted at '/api' strips its prefix from
@@ -452,8 +459,6 @@ export default function analyticsMiddleware(req, res, next) {
         const rawUA = req.headers['user-agent'] || '';
         const ua = parseUserAgent(rawUA);
 
-        const who = visitors.idsFor(clientIP(req), rawUA);
-        const visitorID = who.visitorId;
         const cls = classifyRequest({
             userAgent: rawUA,
             method: req.method,
@@ -461,6 +466,12 @@ export default function analyticsMiddleware(req, res, next) {
             status: res.statusCode,
             contentType: res.getHeader('content-type'),
         });
+        if (staticAsset) {
+            if (!cls.probe) return;
+            cls.miss = false;
+        }
+        const who = visitors.idsFor(clientIP(req), rawUA);
+        const visitorID = who.visitorId;
         visitors.recordRequest(who, cls);
 
         const rawReferrer = req.headers['referer'] || req.headers['referrer'] || 'direct';

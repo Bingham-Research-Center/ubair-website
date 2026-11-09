@@ -62,6 +62,33 @@ describe('visitor tracking through the app', () => {
         expect(delta(after, before, 'page_viewer', 'address')).toBe(0);
     });
 
+    it('sees a scanner probe that looks like an asset, and drops it from clean (PR #341 review)', async () => {
+        // '/config.json' contains '.js', so the static-asset skip used to hide it entirely.
+        const xff = '192.0.2.88';
+        const before = await counts();
+        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/config.json').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(404);
+        const after = await counts();
+
+        expect(delta(after, before, 'page_viewer', 'address')).toBe(1);
+        expect(delta(after, before, 'clean', 'address')).toBe(0);
+    });
+
+    it('still ignores real assets, and their 404s do not push a reader over the miss limit', async () => {
+        const xff = '198.51.100.88';
+        const before = await counts();
+        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/public/js/loadSidebar.js').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        // Root /favicon.ico 404s on the live site today (#309); a reader's browser asks for it.
+        for (let i = 0; i < 12; i++) {
+            await request(app).get('/favicon.ico').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(404);
+        }
+        const after = await counts();
+
+        expect(after.clientAddress.requests - before.clientAddress.requests).toBe(1);
+        expect(delta(after, before, 'clean', 'address')).toBe(1);
+    });
+
     it('accepts a sendBeacon-style text/plain beacon and js-confirms that visitor', async () => {
         const ua = `${UA} beacon-test`;
         const xff = '203.0.113.77';
