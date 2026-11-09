@@ -140,8 +140,9 @@ password manager.
 - `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there before opening others
 - `docs/DEPLOYMENT.md` — bring-up runbook + chronic gotchas
 - Issue #253 (pinned) — ops follow-ups that need a box, an account or a decision
-- Outstanding work is GitHub Issues (`student-ready`, `copilot-ok` labels) on the "BasinWx
-  Winter 2026/27" Project; humans read the wiki, agents read `docs/`
+- Outstanding work is GitHub Issues on two milestones (`v1.6.0 Beta relaunch`, `v2.0.0 Ozone
+  season open`); ideas without a milestone go in Discussions #342, not new issues. Humans read
+  the one-page wiki, agents read `docs/`
 - `DATA_MANIFEST.json` — forecast schemas
 - `git log --oneline -30` — recent merges; do not duplicate here
 
