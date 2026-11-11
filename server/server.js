@@ -172,16 +172,11 @@ app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));
 });
 
-app.get('/kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk.html'));
-});
-
-app.get('/portrait-kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
-});
-
-app.get('/kiosk-portrait', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
+// The dedicated kiosk pages were retired on 2026-11-11 (parked at tag
+// parked/pre-cleanup-2026-11-11). Their URLs go to the homepage in display mode so a wall
+// screen still pointed at one keeps showing something; 302 so the target can change.
+app.get(['/kiosk', '/kiosk-portrait', '/portrait-kiosk'], (req, res) => {
+    res.redirect(302, '/?display=1');
 });
 
 app.get('/test-viz', (req, res) => {
