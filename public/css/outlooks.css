@@ -349,10 +349,6 @@
         width: 100%;
         max-width: 100%;
     }
-
-    .archive-list {
-        max-height: 2px;
-    }
 }
 
 /* Loading states */
