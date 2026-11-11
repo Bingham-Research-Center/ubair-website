@@ -21,7 +21,7 @@
 
 /* Override main header for weather theme */
 body[data-page-type="forecast_weather"] h1 {
-    background: linear-gradient(135deg, var(--weather-primary), var(--weather-secondary));
+    background: var(--weather-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -36,17 +36,17 @@ body[data-page-type="forecast_weather"] h1::after {
     transform: translateX(-50%);
     width: 100px;
     height: 3px;
-    background: linear-gradient(90deg, var(--weather-primary), var(--weather-accent));
-    border-radius: 2px;
+    background: var(--weather-primary);
+    border-radius: var(--radius-sm);
 }
 
 /* Control Panel */
 .control-panel {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-overlay);
     border: 1px solid rgba(47, 79, 79, 0.1);
     position: relative;
     overflow: hidden;
@@ -60,7 +60,7 @@ body[data-page-type="forecast_weather"] h1::after {
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, var(--weather-primary), var(--weather-secondary), var(--weather-accent));
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .controls-row {
@@ -89,7 +89,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .control-select {
     padding: 0.75rem;
     border: 2px solid rgba(47, 79, 79, 0.2);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: white;
     color: var(--weather-primary);
     font-size: 0.9rem;
@@ -156,7 +156,7 @@ body[data-page-type="forecast_weather"] h1::after {
     background: var(--weather-secondary);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -165,8 +165,7 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .kiosk-button:hover {
     background: var(--weather-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(47, 79, 79, 0.3);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .kiosk-button.active {
@@ -204,16 +203,16 @@ body[data-page-type="forecast_weather"] h1::after {
 .map-container {
     position: relative;
     background: white;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 8px 30px rgba(47, 79, 79, 0.12);
+    box-shadow: var(--shadow-card);
     border: 2px solid rgba(47, 79, 79, 0.1);
 }
 
 .weather-map {
     width: 100%;
     height: 500px;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
 }
 
 .map-overlay {
@@ -232,8 +231,8 @@ body[data-page-type="forecast_weather"] h1::after {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     padding: 1rem 1.5rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(255, 255, 255, 0.2);
     pointer-events: auto;
 }
@@ -256,8 +255,8 @@ body[data-page-type="forecast_weather"] h1::after {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(10px);
     padding: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 1px solid rgba(255, 255, 255, 0.2);
     max-width: 200px;
     pointer-events: auto;
@@ -291,7 +290,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .legend-swatch {
     width: 18px;
     height: 18px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(47, 79, 79, 0.12);
 }
 
@@ -341,9 +340,9 @@ body[data-page-type="forecast_weather"] h1::after {
 .conditions-panel,
 .model-panel {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(47, 79, 79, 0.1);
     transition: all 0.3s ease;
     position: relative;
@@ -358,7 +357,7 @@ body[data-page-type="forecast_weather"] h1::after {
     width: 4px;
     height: 100%;
     background: var(--earth-green);
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
 .forecast-panel::before {
@@ -369,7 +368,7 @@ body[data-page-type="forecast_weather"] h1::after {
     width: 4px;
     height: 100%;
     background: var(--sky-blue);
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
 .conditions-panel::before {
@@ -380,7 +379,7 @@ body[data-page-type="forecast_weather"] h1::after {
     width: 4px;
     height: 100%;
     background: var(--sun-gold);
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
 .model-panel::before {
@@ -391,7 +390,7 @@ body[data-page-type="forecast_weather"] h1::after {
     width: 4px;
     height: 100%;
     background: var(--cloud-gray);
-    border-radius: 0 16px 16px 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
 .panel-header {
@@ -431,7 +430,7 @@ body[data-page-type="forecast_weather"] h1::after {
     margin-top: 1rem;
     padding: 1rem;
     background: var(--weather-background);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 3px solid var(--earth-green);
 }
 
@@ -467,7 +466,7 @@ body[data-page-type="forecast_weather"] h1::after {
     align-items: center;
     padding: 0.75rem;
     background: var(--weather-background);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 3px solid var(--sky-blue);
 }
 
@@ -496,7 +495,7 @@ body[data-page-type="forecast_weather"] h1::after {
     gap: 1rem;
     padding: 1rem;
     margin-bottom: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
 }
 
 .condition-alert {
@@ -550,7 +549,7 @@ body[data-page-type="forecast_weather"] h1::after {
     margin-bottom: 1rem;
     padding: 1rem;
     background: var(--weather-background);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 3px solid var(--cloud-gray);
 }
 
@@ -578,7 +577,7 @@ body[data-page-type="forecast_weather"] h1::after {
     align-items: center;
     padding: 0.5rem;
     background: rgba(112, 128, 144, 0.1);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
 }
 
 .metric-label {
@@ -603,7 +602,6 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .info-icon:hover {
     color: var(--weather-secondary);
-    transform: scale(1.1);
 }
 
 .tooltip {
@@ -611,14 +609,14 @@ body[data-page-type="forecast_weather"] h1::after {
     background: var(--weather-primary);
     color: white;
     padding: 0.75rem 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.9rem;
     max-width: 250px;
     z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
 }
 
 .tooltip::before {
@@ -644,8 +642,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .forecast-panel:hover,
 .conditions-panel:hover,
 .model-panel:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 35px rgba(47, 79, 79, 0.12);
+    box-shadow: var(--shadow-card-hover);
 }
 
 /* Responsive Design */
@@ -739,10 +736,10 @@ body[data-page-type="forecast_weather"] h1::after {
 
 @keyframes pulse-weather {
     0%, 100% { 
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-card);
     }
     50% { 
-        box-shadow: 0 6px 30px rgba(70, 130, 180, 0.3);
+        box-shadow: var(--shadow-card);
     }
 }
 
@@ -780,7 +777,7 @@ body[data-page-type="forecast_weather"] h1::after {
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
     z-index: 2000;
 }
 
@@ -826,7 +823,7 @@ body[data-page-type="forecast_weather"] h1::after {
 
 /* Special weather condition indicators */
 .severe-weather {
-    background: linear-gradient(135deg, #ff6b6b, #ee5a24) !important;
+    background: #ff6b6b !important;
     color: white !important;
 }
 
@@ -836,7 +833,7 @@ body[data-page-type="forecast_weather"] h1::after {
 }
 
 .winter-weather {
-    background: linear-gradient(135deg, #74b9ff, #0984e3) !important;
+    background: #74b9ff !important;
     color: white !important;
 }
 
@@ -846,7 +843,7 @@ body[data-page-type="forecast_weather"] h1::after {
 }
 
 .fair-weather {
-    background: linear-gradient(135deg, #fdcb6e, #e17055) !important;
+    background: #fdcb6e !important;
     color: white !important;
 }
 
@@ -857,22 +854,21 @@ body[data-page-type="forecast_weather"] h1::after {
 
 /* Enhanced interactive elements */
 .panel-header h3:hover i {
-    transform: scale(1.2);
     transition: transform 0.2s ease;
 }
 
 .stat-item:hover {
     background: rgba(70, 130, 180, 0.1);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     transition: background 0.2s ease;
 }
 
 /* Map legend styling */
 .weather-legend {
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1rem;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-overlay);
 }
 
 .legend-title {
@@ -898,7 +894,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .legend-color {
     width: 20px;
     height: 12px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
@@ -908,7 +904,7 @@ body[data-page-type="forecast_weather"] h1::after {
     align-items: center;
     gap: 0.3rem;
     padding: 0.25rem 0.5rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 0.75rem;
     font-weight: 600;
 }
@@ -942,10 +938,10 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .weather-summaries-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid var(--weather-primary);
     max-width: 100%;
     box-sizing: border-box;
@@ -965,7 +961,7 @@ body[data-page-type="forecast_weather"] h1::after {
     color: var(--weather-primary);
     font-weight: 500;
     cursor: pointer;
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     transition: all 0.3s ease;
 }
 
@@ -997,10 +993,10 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .meteogram-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin: 2rem 0;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
@@ -1037,7 +1033,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .meteogram-controls .control-select {
     padding: 0.5rem 1rem;
     border: 1px solid var(--weather-secondary);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: white;
     font-size: 1rem;
     cursor: pointer;
@@ -1070,7 +1066,7 @@ body[data-page-type="forecast_weather"] h1::after {
     padding: 0.75rem 1.25rem;
     background: transparent;
     border: 2px solid transparent;
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     color: var(--weather-primary);
     font-weight: 500;
     font-size: 0.95rem;
@@ -1097,7 +1093,7 @@ body[data-page-type="forecast_weather"] h1::after {
 .meteogram-display {
     position: relative;
     background: var(--weather-background);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     border: 1px solid rgba(47, 79, 79, 0.1);
     min-height: 400px;
@@ -1114,14 +1110,10 @@ body[data-page-type="forecast_weather"] h1::after {
     max-width: 100%;
     max-height: 600px;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: transform 0.2s ease;
-}
-
-.meteogram-image-large .meteogram-img:hover {
-    transform: scale(1.01);
 }
 
 .meteogram-image-large .chart-loading,
@@ -1154,7 +1146,7 @@ body[data-page-type="forecast_weather"] h1::after {
     background: var(--weather-primary);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -1165,7 +1157,6 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .fullscreen-btn:hover {
     background: var(--weather-secondary);
-    transform: scale(1.1);
 }
 
 /* Fullscreen Modal */
@@ -1205,7 +1196,6 @@ body[data-page-type="forecast_weather"] h1::after {
 
 .modal-close:hover {
     background: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
 }
 
 .modal-content {
@@ -1220,7 +1210,7 @@ body[data-page-type="forecast_weather"] h1::after {
     max-width: 100%;
     max-height: 90vh;
     object-fit: contain;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
 }
 
 /* Responsive adjustments for meteograms */

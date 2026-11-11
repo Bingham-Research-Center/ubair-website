@@ -1,7 +1,7 @@
 /* Map Styles */
 #map {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     position: relative;
     z-index: 1;
     height: 70vh;
@@ -13,7 +13,7 @@ body[data-page-type="index"] #map {
     width: 100% !important;
     height: 100% !important;
     margin: 0 !important;
-    border-radius: 8px !important;
+    border-radius: var(--radius-lg) !important;
     pointer-events: none;
 }
 
@@ -48,8 +48,8 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) #map {
     width: 100% !important;
     height: 300px !important;
     margin: 20px 0 !important;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     pointer-events: none;
 }
 
@@ -60,8 +60,8 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-po
 
 /* Home map specific class */
 .home-map {
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     pointer-events: none;
 }
 
@@ -93,7 +93,7 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-po
     background: #888;
     transform: rotate(45deg);
     border: 2px solid white;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-card);
 }
 
 /* Basemap tone follows the theme (theme/tokens.css) */

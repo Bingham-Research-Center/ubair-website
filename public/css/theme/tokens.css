@@ -137,6 +137,7 @@
 
     /* A card is separated by a hairline, not a drop shadow; only floating things cast one. */
     --shadow-card: 0 0 0 1px var(--color-border);
+    --shadow-card-hover: 0 0 0 1px var(--color-brand-soft);
     --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.14);
 
     --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;

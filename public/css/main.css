@@ -35,7 +35,7 @@
     padding: 1.5rem;
     border-bottom: 3px solid var(--usu-light-gray);
     background: linear-gradient(135deg, rgba(0, 38, 58, 0.02) 0%, rgba(98, 124, 139, 0.02) 100%);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     position: relative;
     z-index: 2;
     gap: 2rem;
@@ -55,7 +55,7 @@
     width: clamp(180px, 20vw, 300px);
     height: auto;
     flex-shrink: 0;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     -webkit-mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
     mask-image: radial-gradient(ellipse 85% 75% at 50% 50%, black 40%, transparent 95%);
     filter: drop-shadow(0 4px 12px rgba(0, 38, 58, 0.15));
@@ -65,7 +65,7 @@
     position: relative;
     overflow: hidden;
     display: inline-block;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
 }
 .glade::before {
     content: "";
@@ -88,18 +88,15 @@
     left: 150%;
 }
 
-
-
-
 .headlines-dashboard {
     flex: 1;
     max-width: 650px;
     display: flex;
     flex-direction: column;
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 4px 15px rgba(0, 38, 58, 0.08);
+    box-shadow: var(--shadow-card);
 }
 
 .dashboard-header {
@@ -119,7 +116,6 @@
     padding-bottom: 0.5rem;
 }
 
-
 .dashboard-tabs .tab-button {
     padding: 0.6rem 1.2rem;
     background: transparent;
@@ -128,7 +124,7 @@
     font-weight: 500;
     font-size: 0.95rem;
     cursor: pointer;
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     transition: all 0.3s ease;
     position: relative;
     display: flex;
@@ -175,14 +171,13 @@
     gap: 0.875rem;
     padding: 0.875rem;
     background: #f9fafb;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 4px solid #94a3b8;
     transition: all 0.3s ease;
 }
 
 .headline-item:hover {
     background: #f1f5f9;
-    transform: translateX(2px);
 }
 
 .headline-item.good {
@@ -246,8 +241,8 @@
 }
 
 .ai-summary-box {
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-    border-radius: 8px;
+    background: #f0f9ff;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     border-left: 4px solid #0ea5e9;
 }
@@ -301,17 +296,13 @@
     transition: transform 0.3s ease;
 }
 
-.tab:hover {
-    transform: scale(1.1);
-}
-
 /* Latest Post Section */
 .post {
     margin: 20px auto;
     padding: 20px;
     max-width: 800px;
     background-color: #f5f5f5;
-    border-radius: 5px;
+    border-radius: var(--radius-md);
     z-index: 2;
     position: relative;
 }
@@ -324,7 +315,7 @@
     font-size: 0.75rem;
     color: var(--usu-light-gray);
     background-color: var(--usu-blue);
-    border-radius: 5px;
+    border-radius: var(--radius-md);
 }
 
 .overlay-container .disclaimer {
@@ -348,7 +339,7 @@
     padding: 8px 20px;
     min-height: 35px;
     z-index: 1000;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-card);
     transition: 0.4s ease-in all;
 }
 .main-footer:hover {
@@ -378,8 +369,8 @@
 /* Visualization Container */
 .visualization-container {
     background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     padding: 1.5rem;
     margin: 2rem 0;
     min-height: 500px;
@@ -406,8 +397,8 @@ main.content {
 /* Outlook Preview Styling */
 .outlook-preview {
     background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     padding: 1.5rem;
     margin-bottom: 2rem;
 }
@@ -447,7 +438,7 @@ main.content {
     text-align: center;
     padding: 0.5rem;
     background: rgba(0, 38, 58, 0.05);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
 }
 
 .outlook-preview-content {
@@ -456,7 +447,7 @@ main.content {
     color: var(--usu-blue);
     padding: 1rem;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 1px solid rgba(0, 38, 58, 0.1);
     overflow-y: auto;
 }
@@ -470,7 +461,7 @@ main.content {
     color: white;
     background-color: var(--usu-blue);
     padding: 8px 16px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     text-decoration: none;
     transition: background-color 0.2s;
 }
@@ -483,7 +474,7 @@ main.content {
 .risk-indicator {
     display: inline-block;
     padding: 3px 8px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     font-weight: bold;
     margin-right: 8px;
 }
@@ -514,7 +505,7 @@ main.content {
     border: 1px solid rgba(98, 124, 139, 0.3);
     color: var(--usu-blue);
     padding: 0.4rem 0.8rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
@@ -526,7 +517,6 @@ main.content {
 
 .forecast-tab:hover {
     background: rgba(98, 124, 139, 0.2);
-    transform: translateY(-1px);
 }
 
 .forecast-tab.active {
@@ -570,7 +560,7 @@ main.content {
     font-size: 0.85rem;
     font-weight: 500;
     padding: 0.4rem 0.8rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: rgba(98, 124, 139, 0.1);
     transition: all 0.2s ease;
 }
@@ -578,7 +568,6 @@ main.content {
 .forecast-link a:hover {
     background: var(--usu-light-blue);
     color: var(--usu-blue);
-    transform: translateY(-1px);
 }
 
 /* Compact Map Legend - Starts Visible, Collapsible */
@@ -592,7 +581,7 @@ main.content {
     border: 1px solid rgba(0, 38, 58, 0.2);
     color: var(--usu-blue);
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.85rem;
     font-weight: 500;
@@ -607,7 +596,6 @@ main.content {
 
 .legend-toggle:hover {
     background: rgba(0, 38, 58, 0.15);
-    transform: translateY(-1px);
 }
 
 .legend-dropdown {
@@ -616,8 +604,8 @@ main.content {
     padding: 0.75rem;
     background: white;
     border: 1px solid rgba(0, 38, 58, 0.2);
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
 }
 
 .legend-dropdown.active {

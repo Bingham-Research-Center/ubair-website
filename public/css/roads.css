@@ -40,7 +40,7 @@ body[data-page-type="roads"] .sidebar ul li {
     margin-top: 1rem;
     padding: 1rem 1.25rem;
     border: 1px solid #cbd5e1;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     background: rgba(255, 255, 255, 0.75);
     color: #475569;
     font-size: 0.8rem;
@@ -54,7 +54,7 @@ body[data-page-type="roads"] .sidebar ul li {
 
 /* Override main header for roads theme */
 body[data-page-type="roads"] h1 {
-    background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
+    background: var(--roads-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -144,7 +144,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
     pointer-events: auto !important;
 }
 
-
 /* Bottom conditions overlay - full width minus legend */
 .conditions-overlay {
     position: absolute;
@@ -155,8 +154,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     box-sizing: border-box;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
-    border-radius: 15px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     z-index: 1000;
     padding: 8px 16px;
     display: flex;
@@ -183,12 +182,12 @@ body[data-page-type="roads"] .leaflet-drag-target {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     border: none;
-    border-radius: 25px;
+    border-radius: var(--radius-pill);
     padding: 8px 16px;
     color: var(--roads-primary);
     font-weight: 500;
     font-size: 14px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
@@ -200,8 +199,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .units-toggle:hover {
     background: rgba(255, 255, 255, 1);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .units-toggle:active {
@@ -232,10 +230,10 @@ body[data-page-type="roads"] .leaflet-drag-target {
     min-height: 38px;
     padding: 7px 12px;
     border: 1px solid rgba(30, 58, 138, 0.18);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     background: rgba(255, 255, 255, 0.95);
     color: var(--roads-primary);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.14);
+    box-shadow: var(--shadow-card);
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
@@ -259,8 +257,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     max-width: 260px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
-    border-radius: 10px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-pill);
+    box-shadow: var(--shadow-card);
     border-left: 3px solid #fd7e14;
     padding: 8px 10px;
 }
@@ -315,9 +313,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .condition-card-compact {
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     padding: 8px 12px;
-    box-shadow: 0 2px 8px rgba(30, 58, 138, 0.1);
+    box-shadow: var(--shadow-card);
     border: 2px solid var(--roads-primary);
     transition: all 0.2s ease;
     display: flex;
@@ -328,8 +326,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact:hover {
-    transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(30, 58, 138, 0.2);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .card-icon-small {
@@ -338,7 +335,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     justify-content: center;
     width: 20px;
     height: 20px;
-    background: linear-gradient(135deg, var(--roads-primary), var(--roads-secondary));
+    background: var(--roads-primary);
     border-radius: 50%;
     color: white;
     font-size: 0.7rem;
@@ -379,7 +376,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.road-conditions .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-surface), #4b5563);
+    background: var(--roads-surface);
 }
 
 .condition-card-compact.road-conditions.level-green {
@@ -387,7 +384,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.road-conditions.level-green .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-good), #059669);
+    background: var(--roads-good);
 }
 
 .condition-card-compact.road-conditions.level-yellow {
@@ -395,7 +392,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.road-conditions.level-yellow .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-warning), #d97706);
+    background: var(--roads-warning);
 }
 
 .condition-card-compact.road-conditions.level-red {
@@ -403,7 +400,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.road-conditions.level-red .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-danger), #b91c1c);
+    background: var(--roads-danger);
 }
 
 .condition-card-compact.visibility {
@@ -411,7 +408,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.visibility .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-accent), var(--roads-secondary));
+    background: var(--roads-accent);
 }
 
 .condition-card-compact.precipitation {
@@ -419,7 +416,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.precipitation .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-warning), #f59e0b);
+    background: var(--roads-warning);
 }
 
 .condition-card-compact.wind {
@@ -427,10 +424,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .condition-card-compact.wind .card-icon-small {
-    background: linear-gradient(135deg, var(--roads-good), #059669);
+    background: var(--roads-good);
 }
-
-
 
 /* Routes Container */
 .routes-container {
@@ -441,9 +436,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .route-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 6px 25px rgba(30, 58, 138, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(30, 58, 138, 0.1);
     position: relative;
     overflow: hidden;
@@ -457,7 +452,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, var(--roads-primary), var(--roads-accent), var(--roads-secondary));
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .route-section::after {
@@ -504,9 +499,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* Route Conditions */
 .route-conditions {
     margin-top: 1rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: white;
-    box-shadow: 0 2px 12px rgba(30, 58, 138, 0.08);
+    box-shadow: var(--shadow-card);
 }
 
 .conditions-loading {
@@ -533,15 +528,11 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .route-metric {
     background: #f8fafc;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1rem;
     text-align: center;
     border-left: 4px solid var(--roads-accent);
     transition: transform 0.2s ease;
-}
-
-.route-metric:hover {
-    transform: translateY(-2px);
 }
 
 .route-metric.temperature {
@@ -582,7 +573,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     font-size: 0.8rem;
     margin-top: 0.5rem;
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-weight: 600;
     text-transform: uppercase;
 }
@@ -612,7 +603,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     gap: 0.75rem;
     padding: 0.75rem 1rem;
     border: 1px solid #fed7aa;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: #fffbeb;
     font-size: 0.9rem;
 }
@@ -669,7 +660,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     color: var(--roads-secondary);
     background: rgba(59, 130, 246, 0.1);
     padding: 4px 12px;
-    border-radius: 20px;
+    border-radius: var(--radius-lg);
     border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
@@ -696,7 +687,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .carousel-btn:hover {
     background: var(--roads-primary);
-    transform: scale(1.1);
 }
 
 .carousel-btn:active {
@@ -761,9 +751,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* Travel Advisory Section */
 .advisory-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 6px 25px rgba(245, 158, 11, 0.1);
+    box-shadow: var(--shadow-card);
     border-left: 5px solid var(--roads-warning);
     margin-bottom: 2rem;
 }
@@ -780,8 +770,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .advisory-placeholder {
     padding: 2rem;
-    background: linear-gradient(135deg, #fefce8, #fef3c7);
-    border-radius: 12px;
+    background: #fefce8;
+    border-radius: var(--radius-lg);
     border: 2px dashed var(--roads-warning);
     text-align: center;
     color: #92400e;
@@ -800,15 +790,11 @@ body[data-page-type="roads"] .leaflet-drag-target {
     align-items: center;
     gap: 0.5rem;
     padding: 1rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     background: white;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     transition: transform 0.2s ease;
     min-width: 120px;
-}
-
-.level-indicator:hover {
-    transform: translateY(-2px);
 }
 
 .level-indicator.good {
@@ -858,16 +844,15 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .resource-card {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(30, 58, 138, 0.1);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(30, 58, 138, 0.1);
     transition: all 0.3s ease;
 }
 
 .resource-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(30, 58, 138, 0.15);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .resource-card h3 {
@@ -891,7 +876,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     text-decoration: none;
     font-weight: 500;
     padding: 0.5rem 1rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: rgba(59, 130, 246, 0.1);
     transition: all 0.2s ease;
 }
@@ -908,7 +893,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .route-section:nth-child(1)::before {
-    background: linear-gradient(90deg, #f59e0b, var(--roads-warning));
+    background: #f59e0b;
 }
 
 .route-section:nth-child(2) {
@@ -916,7 +901,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .route-section:nth-child(2)::before {
-    background: linear-gradient(90deg, #10b981, var(--roads-good));
+    background: #10b981;
 }
 
 .route-section:nth-child(3) {
@@ -924,7 +909,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .route-section:nth-child(3)::before {
-    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+    background: #8b5cf6;
 }
 
 /* Responsive Design */
@@ -948,7 +933,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     body[data-page-type="roads"] .mobile-menu-toggle {
         right: -62px;
         padding: 10px 8px;
-        border-radius: 0 6px 6px 0;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
         font-size: 16px;
     }
 
@@ -1066,8 +1051,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 /* Hover effects for interactivity */
 .route-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 35px rgba(30, 58, 138, 0.12);
+    box-shadow: var(--shadow-card-hover);
     transition: all 0.3s ease;
 }
 
@@ -1081,8 +1065,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* Collapsible Legend Styles */
 .leaflet-control.road-legend-collapsible {
     background: rgba(255, 255, 255, 0.95);
-    border-radius: 12px;
-    box-shadow: 0 6px 20px rgba(30, 58, 138, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid rgba(30, 58, 138, 0.1);
     backdrop-filter: blur(10px);
     overflow: hidden;
@@ -1183,7 +1167,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .color-box {
     width: 12px;
     height: 12px;
-    border-radius: 3px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(0, 0, 0, 0.1);
     flex-shrink: 0;
 }
@@ -1250,7 +1234,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .weather-station-marker:hover {
-    transform: scale(1.2);
     filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
@@ -1311,7 +1294,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .weather-station-info .status-badge {
     display: inline-block;
     padding: 4px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1352,7 +1335,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 3px 8px;
     font-size: 10px;
     font-weight: bold;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: rgba(59, 130, 246, 0.1);
@@ -1365,7 +1348,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 3px 8px;
     font-size: 10px;
     font-weight: bold;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: rgba(16, 185, 129, 0.1);
@@ -1378,7 +1361,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 3px 8px;
     font-size: 10px;
     font-weight: bold;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     background: rgba(245, 158, 11, 0.1);
@@ -1396,7 +1379,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .camera-icon-with-condition:hover > div {
-    transform: scale(1.15);
     border-width: 4px !important;
 }
 
@@ -1423,8 +1405,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     .road-network-map {
         height: 440px;
         overflow: hidden;
-        border-radius: 12px;
-        box-shadow: 0 8px 32px rgba(30, 58, 138, 0.12);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-card);
     }
 
     /* Mobile units toggle */
@@ -1479,7 +1461,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
         margin-top: 0.75rem;
         padding: 6px 12px;
         gap: 10px;
-        border-radius: 12px;
+        border-radius: var(--radius-lg);
     }
 
     body[data-page-type="roads"] .leaflet-control-attribution {
@@ -1492,7 +1474,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
     .leaflet-control.road-legend-collapsible {
         min-width: 0;
-        border-radius: 8px;
+        border-radius: var(--radius-lg);
     }
 
     .legend-toggle {
@@ -1519,7 +1501,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
     .card-data .value {
         font-size: 0.75rem;
     }
-
 
     .summary-grid {
         grid-template-columns: 1fr 1fr;
@@ -1552,7 +1533,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
         max-width: none;
         padding: 5px 10px;
         gap: 8px;
-        border-radius: 10px;
+        border-radius: var(--radius-lg);
     }
 
     .condition-cards-horizontal {
@@ -1587,17 +1568,17 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* Traffic Events within Travel Advisories */
 .traffic-events-container {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    box-shadow: var(--shadow-card);
     margin-bottom: 2rem;
 }
 
 .general-advisories {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-card);
 }
 
 .general-advisories h3 {
@@ -1613,7 +1594,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     margin-top: 1rem;
     padding: 0.75rem;
     background: #f8fafc;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.9rem;
     color: #64748b;
     display: flex;
@@ -1628,9 +1609,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* UDOT Alerts */
 .udot-alerts {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    box-shadow: var(--shadow-card);
     margin-bottom: 2rem;
 }
 
@@ -1646,9 +1627,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 /* UDOT Alerts Section - Compact version */
 .udot-alerts-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 4px 16px rgba(30, 58, 138, 0.08);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid var(--roads-secondary);
     margin-bottom: 2rem;
 }
@@ -1683,7 +1664,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .alert-card {
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1rem;
     margin-bottom: 1rem;
     background: white;
@@ -1691,8 +1672,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .alert-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .alert-card.high-importance {
@@ -1719,7 +1699,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .alert-severity {
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1785,7 +1765,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .digital-sign-card {
     border: 1px solid #e5e7eb;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     padding: 1rem;
     margin-bottom: 0.75rem;
     background: white;
@@ -1793,8 +1773,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .digital-sign-card:hover {
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    transform: translateY(-1px);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .digital-sign-card.high-priority {
@@ -1828,7 +1807,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 .sign-priority {
     padding: 2px 8px;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
@@ -1859,7 +1838,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     font-weight: 500;
     padding: 8px;
     background: #f8fafc;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     border-left: 3px solid #1e40af;
 }
 
@@ -1953,8 +1932,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .event-card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important;
-    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover) !important;
 }
 
 .status-active {
@@ -1978,10 +1956,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
     transition: transform 0.2s ease;
 }
 
-.traffic-event-marker:hover {
-    transform: scale(1.1);
-}
-
 .traffic-event-popup {
     font-family: inherit;
 }
@@ -1996,10 +1970,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .rest-area-marker {
     cursor: pointer;
     transition: transform 0.2s ease;
-}
-
-.rest-area-marker:hover {
-    transform: scale(1.1);
 }
 
 .rest-area-popup {
@@ -2019,7 +1989,6 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .rest-area-image img:hover {
-    transform: scale(1.02);
     border-color: var(--roads-secondary);
 }
 
@@ -2118,9 +2087,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
     position: relative;
     display: block;
     margin: 0 auto;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     background: #f5f5f5;
     max-width: 200px;
     width: 100%;
@@ -2131,12 +2100,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     max-width: 200px !important;
     height: auto !important;
     display: block !important;
-    border-radius: 6px !important;
+    border-radius: var(--radius-md) !important;
     transition: transform 0.2s ease !important;
-}
-
-.camera-image-container:hover img {
-    transform: scale(1.02) !important;
 }
 
 .camera-image-container .click-overlay {
@@ -2146,7 +2111,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     background: rgba(0, 0, 0, 0.7) !important;
     color: white !important;
     padding: 2px 6px !important;
-    border-radius: 10px !important;
+    border-radius: var(--radius-lg) !important;
     font-size: 9px !important;
     font-weight: bold !important;
     pointer-events: none !important;
@@ -2227,8 +2192,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     max-width: 260px !important;
     min-width: 220px !important;
     padding: 8px !important;
-    border-radius: 8px !important;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15) !important;
+    border-radius: var(--radius-lg) !important;
+    box-shadow: var(--shadow-overlay) !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
 }
 
@@ -2241,7 +2206,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .leaflet-popup.camera-popup-marker .leaflet-popup-tip {
     background: white !important;
     border: 1px solid rgba(0, 0, 0, 0.1) !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: var(--shadow-overlay) !important;
 }
 
 /* Smart positioning override for camera popups */
@@ -2259,7 +2224,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .confidence-badge {
     display: inline-block;
     padding: 3px 10px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.85em;
     font-weight: 600;
     color: white;
@@ -2270,8 +2235,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .confidence-badge:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-card-hover);
 }
 
 /* Confidence level specific colors */
@@ -2295,7 +2259,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .camera-detection-info {
     background: #f8f9fa;
     border: 1px solid #e9ecef;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     padding: 10px;
     margin-top: 10px;
 }
@@ -2325,7 +2289,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .road-status {
     display: inline-block;
     padding: 4px 12px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-weight: 600;
     margin: 8px 0;
 }
@@ -2393,9 +2357,9 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .camera-cycle-control {
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(10px);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 0.25rem 0.6rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--roads-primary);
     margin-top: 10px;
     margin-left: 10px;
@@ -2430,7 +2394,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     height: 26px;
     min-height: 26px;
     background: #ddd;
-    border-radius: 13px;
+    border-radius: var(--radius-pill);
     position: relative;
     transition: background 0.3s ease;
     border: 2px solid var(--roads-primary);
@@ -2453,7 +2417,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     top: 1px;
     left: 1px;
     transition: transform 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
 }
 
@@ -2487,8 +2451,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
         linear-gradient(135deg, rgba(239, 246, 255, 0.98), rgba(255, 255, 255, 0.98));
     border: 1px solid #bfdbfe;
     border-left: 5px solid var(--roads-secondary);
-    border-radius: 14px;
-    box-shadow: 0 8px 24px rgba(30, 58, 138, 0.08);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .hrrr-guidance-header {
@@ -2528,7 +2492,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     color: #334155;
     background: #f1f5f9;
     border: 1px solid #cbd5e1;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.82rem;
     font-weight: 700;
     white-space: nowrap;
@@ -2627,7 +2591,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     gap: 0.25rem;
     padding: 0.22rem;
     background: #e2e8f0;
-    border-radius: 9px;
+    border-radius: var(--radius-lg);
 }
 
 .hrrr-map-toggle button,
@@ -2641,7 +2605,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     color: #475569;
     background: transparent;
     border: 0;
-    border-radius: 7px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     font: inherit;
     font-size: 0.75rem;
@@ -2659,7 +2623,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .hrrr-map-hours button.is-active {
     color: var(--roads-primary);
     background: #fff;
-    box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
+    box-shadow: var(--shadow-card);
 }
 
 .hrrr-map-toggle button:focus-visible,
@@ -2703,7 +2667,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     color: #475569;
     background: rgba(255, 255, 255, 0.72);
     border: 1px solid #dbeafe;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.68rem;
     font-weight: 700;
 }
@@ -2827,7 +2791,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 0.8rem 0.9rem;
     color: #64748b;
     background: #f8fafc;
-    border-radius: 9px;
+    border-radius: var(--radius-lg);
     font-size: 0.86rem;
 }
 
@@ -2872,7 +2836,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 0.45rem 0.65rem;
     color: #166534;
     background: #f0fdf4;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.76rem;
     font-weight: 600;
     line-height: 1.35;
@@ -2905,8 +2869,8 @@ body[data-page-type="roads"] .leaflet-drag-target {
     background: #fff;
     border: 1px solid #bbf7d0;
     border-top: 4px solid #16a34a;
-    border-radius: 10px;
-    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.05);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .hrrr-period-card.is-caution {
@@ -3032,7 +2996,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
     padding: 0.4rem 0.5rem;
     color: #166534;
     background: #f0fdf4;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.72rem;
     font-weight: 700;
 }

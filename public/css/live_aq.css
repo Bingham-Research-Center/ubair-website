@@ -53,10 +53,10 @@ body[data-page-type="live_aq"] .overlay-container {
     left: auto !important; /* Override overlays.css */
     background-color: rgba(255, 255, 255, 0.95);
     padding: 10px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     z-index: 999; /* Below button but above map */
     max-width: 150px; /* Reduced width */
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
     display: none; /* Start hidden */
 }
@@ -66,12 +66,11 @@ body[data-page-type="live_aq"] .overlay-container {
     max-width: 100%;
     height: auto;
     max-height: 120px; /* Reduced height - about half */
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .study-area-toggle:hover {
     background-color: var(--usu-light-blue);
-    transform: translateY(-2px);
 }
 
 .live-aq-legend {
@@ -89,10 +88,10 @@ body[data-page-type="live_aq"] .overlay-container {
     gap: 0.5rem;
     padding: 0.65rem 0.9rem;
     border: 2px solid var(--usu-blue);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: rgba(255, 255, 255, 0.97);
     color: var(--usu-blue);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     font: inherit;
     font-weight: 600;
     cursor: pointer;
@@ -102,9 +101,9 @@ body[data-page-type="live_aq"] .overlay-container {
     width: 290px;
     padding: 0.9rem 1rem;
     border: 2px solid var(--usu-blue);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: rgba(255, 255, 255, 0.97);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     font-size: 1rem;
     line-height: 1.4;
 }
@@ -175,7 +174,7 @@ body[data-page-type="live_aq"] .overlay-container {
 .measurement {
     margin: 5px 0;
     padding: 6px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: #f8f9fa;
     border-left: 3px solid #e9ecef;
     font-size: 13px;
@@ -197,9 +196,9 @@ body[data-page-type="live_aq"] .overlay-container {
 .kiosk-control-bottom {
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(10px);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1rem 1.5rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
     min-width: 200px;
     margin-bottom: 80px; /* Space from bottom for footer */
@@ -225,7 +224,7 @@ body[data-page-type="live_aq"] .overlay-container {
     width: 60px;
     height: 30px;
     background: #ddd;
-    border-radius: 15px;
+    border-radius: var(--radius-pill);
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -253,7 +252,7 @@ body[data-page-type="live_aq"] .overlay-container {
     top: 1px;
     left: 1px;
     transition: transform 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-card);
     overflow: hidden;
 }
 
@@ -293,8 +292,8 @@ body[data-page-type="live_aq"] .overlay-container {
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.95);
     padding: 6px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
     font-weight: 600;
     font-size: 0.9rem;
@@ -402,15 +401,14 @@ body[data-page-type="live_aq"] .overlay-container {
 /* Hover effect for markers */
 .leaflet-marker-icon:hover {
     filter: brightness(1.2);
-    transform: scale(1.1);
     transition: all 0.2s ease;
 }
 
 /* Station popup styling - Enhanced */
 .station-popup .leaflet-popup-content-wrapper {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 6px 25px rgba(0, 38, 58, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-light-gray);
 }
 
@@ -427,7 +425,7 @@ body[data-page-type="live_aq"] .overlay-container {
     transform: translate(-50%, -50%);
     background: rgba(255, 255, 255, 0.9);
     padding: 2rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     text-align: center;
     z-index: 2000;
 }
@@ -454,8 +452,8 @@ body[data-page-type="live_aq"] .overlay-container {
     gap: 6px;
     background: rgba(255, 255, 255, 0.95);
     padding: 6px 12px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
     font-weight: 600;
     font-size: 0.9rem;
@@ -466,7 +464,7 @@ body[data-page-type="live_aq"] .overlay-container {
     width: 44px;
     height: 22px;
     background: #ddd;
-    border-radius: 11px;
+    border-radius: var(--radius-pill);
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -490,7 +488,7 @@ body[data-page-type="live_aq"] .overlay-container {
     top: 1px;
     left: 1px;
     transition: transform 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-card);
 }
 
 .unit-toggle-switch.active .unit-switch-slider {
