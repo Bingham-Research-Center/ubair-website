@@ -308,13 +308,6 @@
         line-height: 1.4;
         padding: 1rem;
     }
-
-    .dutch-john-easter-egg {
-        top: 60px !important;
-        right: 10px !important;
-        max-width: calc(100vw - 20px) !important;
-        left: auto !important;
-    }
 }
 
 /* Large Tablet / Small Desktop (900px - 1024px) */

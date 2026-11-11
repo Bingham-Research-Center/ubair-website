@@ -40,7 +40,6 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Branching (day-to-day) | `CLAUDE.md` §Protected branches + wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) | the release train itself: `CLAUDE.md` + `DEPLOYMENT.md` §7a |
 | PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with `/code-review` |
 | Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | why the site exists |
-| Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
 
 ## Outstanding-work indices
 Outstanding work is **GitHub Issues on two milestones**, not files in this tree. The backlog was
