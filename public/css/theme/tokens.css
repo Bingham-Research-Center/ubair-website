@@ -1,0 +1,128 @@
+/*
+ * Design tokens: the one file where raw values live.
+ *
+ * Every colour, radius, shadow and font the site uses is meant to be named here and referenced
+ * with var() everywhere else. To retheme the site, change values in this file only.
+ * docs/STYLE-TOKEN-GUIDE.md explains the tiers; server/__tests__/styleRatchet.test.js stops raw
+ * values from spreading in other stylesheets.
+ *
+ * Tiers, top to bottom. Each tier refers only to the tier above it.
+ *   1. Primitives: raw values. Nothing outside this file should name a primitive.
+ *   2. Semantic:   what a value is for. This is what page and component CSS uses.
+ *   3. Component:  knobs a shared component reads, so a page can restyle it without new rules.
+ *   4. Dark mode:  re-points tier 2 only. Inert until <html data-mode="dark"> is set.
+ */
+
+:root {
+    /* 1. Primitives */
+
+    /* Neutral ramp. 900/600/300 are the greys Michael chose for the flat roads layout (#337). */
+    --grey-950: #1d2025;
+    --grey-850: #272b32;
+    --grey-900: #30343b;
+    --grey-700: #4b515b;
+    --grey-600: #626872;
+    --grey-400: #9aa1ac;
+    --grey-300: #d9dde3;
+    --grey-200: #e9ecf0;
+    --grey-100: #f5f6f7;
+    --white: #ffffff;
+
+    /* Brand anchor and its tints */
+    --anchor-900: #00263a;
+    --anchor-600: #627c8b;
+    --anchor-300: #9db7c6;
+
+    /* Legacy neutrals still referenced through the --usu-* shim in variables.css */
+    --neutral-500: #8b9299;
+    --neutral-400: #a7a9ac;
+    --neutral-200: #e6e7e8;
+
+    --signal-red: #c8102e;
+    --focus-blue: #1f6feb;
+
+    /* Status fills (the values most pages already use under their own names) */
+    --green-500: #10b981;
+    --amber-500: #f59e0b;
+    --red-600: #dc2626;
+    --blue-500: #3b82f6;
+
+    /* EPA AQI categories, in order. Decided for ozone markers in #194. */
+    --epa-good: #00e400;
+    --epa-moderate: #ffff00;
+    --epa-sensitive: #ff7e00;
+    --epa-unhealthy: #ff0000;
+    --epa-very-unhealthy: #8f3f97;
+    --epa-hazardous: #7e0023;
+
+    /* 2. Semantic */
+
+    --color-bg: var(--grey-100);
+    --color-surface: var(--white);
+    --color-text: var(--grey-900);
+    --color-text-muted: var(--grey-600);
+    --color-border: var(--grey-300);
+
+    --color-brand: var(--anchor-900);
+    --color-brand-soft: var(--anchor-600);
+    --color-on-brand: var(--white);
+    --color-accent: var(--signal-red);
+    --color-on-accent: var(--white);
+    --color-link: var(--anchor-900);
+    --color-focus: var(--focus-blue);
+
+    --color-neutral: var(--neutral-500);
+    --color-neutral-soft: var(--neutral-400);
+    --color-neutral-faint: var(--neutral-200);
+
+    --status-good: var(--green-500);
+    --status-warning: var(--amber-500);
+    --status-danger: var(--red-600);
+    --status-info: var(--blue-500);
+    --status-nodata: var(--grey-400);
+
+    --aqi-good: var(--epa-good);
+    --aqi-moderate: var(--epa-moderate);
+    --aqi-sensitive: var(--epa-sensitive);
+    --aqi-unhealthy: var(--epa-unhealthy);
+    --aqi-very-unhealthy: var(--epa-very-unhealthy);
+    --aqi-hazardous: var(--epa-hazardous);
+
+    /* Fixed by docs/CONFIDENCE_TAXONOMY.md ("must use these exact colors"). Do not retheme. */
+    --confidence-possible: #6c757d;
+    --confidence-likely: #ffc107;
+    --confidence-confirmed: #28a745;
+
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-pill: 999px;
+
+    /* A card is separated by a hairline, not a drop shadow; only floating things cast one. */
+    --shadow-card: 0 0 0 1px var(--color-border);
+    --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.14);
+
+    --font-sans: 'Roboto', Arial, sans-serif;
+    --font-mono: 'Courier New', monospace;
+
+    --motion-fast: 0.15s ease;
+    --sidebar-width: 250px;
+
+    /* 3. Component knobs. A page sets these; shared components read them. */
+
+    --page-accent: var(--color-accent);
+    --card-accent: var(--page-accent);
+    --card-text: var(--color-text);
+    --marker-status-color: var(--status-nodata);
+}
+
+/* 4. Dark mode: semantic tier only */
+html[data-mode="dark"] {
+    --color-bg: var(--grey-950);
+    --color-surface: var(--grey-850);
+    --color-text: var(--grey-100);
+    --color-text-muted: var(--grey-400);
+    --color-border: var(--grey-700);
+    --color-link: var(--anchor-300);
+    --shadow-overlay: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
