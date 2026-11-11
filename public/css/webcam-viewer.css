@@ -1,14 +1,15 @@
 /* Webcam Viewer Styles */
 :root {
-    --webcam-primary: #1e3a8a;         /* Match roads deep blue */
-    --webcam-secondary: #3b82f6;       /* Match roads medium blue */
-    --webcam-accent: #60a5fa;          /* Match roads light blue */
-    --webcam-success: #10b981;         /* Match roads good conditions */
-    --webcam-warning: #f59e0b;         /* Match roads warning */
-    --webcam-danger: #dc2626;          /* Match roads danger */
-    --webcam-surface: #374151;         /* Match roads surface */
-    --webcam-border: #e2e8f0;
-    --webcam-ice: #bfdbfe;             /* Match roads ice blue */
+    /* Same palette as the roads page; values come from theme/tokens.css */
+    --webcam-primary: var(--color-brand);
+    --webcam-secondary: var(--color-brand);
+    --webcam-accent: var(--color-accent);
+    --webcam-success: var(--status-good);
+    --webcam-warning: var(--status-warning);
+    --webcam-danger: var(--status-danger);
+    --webcam-surface: var(--color-text);
+    --webcam-border: var(--color-border);
+    --webcam-ice: var(--status-info-soft);
 }
 
 body[data-page-type="webcam"] {

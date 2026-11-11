@@ -1,17 +1,17 @@
 /* Roads-specific styles */
 :root {
-    --roads-primary: #1e3a8a;         /* Deep blue */
-    --roads-secondary: #3b82f6;       /* Medium blue */
-    --roads-accent: #60a5fa;          /* Light blue */
-    --roads-warning: #f59e0b;         /* Amber for caution */
-    --roads-danger: #dc2626;          /* Red for poor conditions */
-    --roads-good: #10b981;            /* Green for good conditions */
-    --roads-surface: #374151;         /* Asphalt gray */
-    --roads-ice: #bfdbfe;             /* Ice blue */
+    --roads-primary: var(--color-brand);
+    --roads-secondary: var(--color-brand);
+    --roads-accent: var(--color-accent);
+    --roads-warning: var(--status-warning);
+    --roads-danger: var(--status-danger);
+    --roads-good: var(--status-good);
+    --roads-surface: var(--color-text);
+    --roads-ice: var(--status-info-soft);
 }
 
 body[data-page-type="roads"] {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-family: var(--font-sans);
 }
 
 /* Keep the roads footer in normal document flow so it never covers content. */
@@ -1255,7 +1255,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 }
 
 .leaflet-popup-content .weather-station-info {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     line-height: 1.5;
 }
 
@@ -2077,7 +2077,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 /* Camera Popup Styles - Ultra-compact */
 .camera-popup {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     max-width: 240px !important;
     width: 100% !important;
 }
@@ -2312,7 +2312,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 /* Road popup styling enhancements */
 .road-popup {
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
 }
 
 .road-popup h4 {
@@ -3004,7 +3004,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 .hrrr-map-popup {
     min-width: 210px;
     color: #1e293b;
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-sans);
 }
 
 .hrrr-map-popup-kicker {

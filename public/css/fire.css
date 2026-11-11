@@ -1,11 +1,12 @@
 :root {
-    --fire-primary: #b22222;      /* Firebrick red */
-    --fire-secondary: #ff4500;    /* Orange red */
-    --fire-accent: #ff8c00;       /* Dark orange */
-    --fire-warning: #ff0000;      /* Bright red alerts */
-    --fire-ember: #ffa07a;        /* Ember glow */
-    --fire-smoke: #696969;        /* Smoke gray */
-    --fire-ash: #d3d3d3;          /* Ash light gray */
+    /* Page palette: names kept for the rules below, values come from theme/tokens.css */
+    --fire-primary: var(--color-brand);
+    --fire-secondary: var(--color-brand);
+    --fire-accent: var(--color-accent);
+    --fire-warning: var(--status-danger);
+    --fire-ember: var(--status-warning);
+    --fire-smoke: var(--color-text-muted);
+    --fire-ash: var(--color-border);
 }
 
 /* Header override for fire theme */

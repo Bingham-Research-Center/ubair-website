@@ -11,12 +11,12 @@
     --snow-white: #f8f8ff;          /* Ghost white */
     
     /* Weather specific colors */
-    --weather-primary: var(--storm-dark);
-    --weather-secondary: var(--sky-blue);
-    --weather-accent: var(--earth-green);
-    --weather-warning: var(--sun-gold);
-    --weather-background: var(--snow-white);
-    --weather-surface: var(--cloud-gray);
+    --weather-primary: var(--color-brand);
+    --weather-secondary: var(--color-brand);
+    --weather-accent: var(--color-accent);
+    --weather-warning: var(--status-warning);
+    --weather-background: var(--color-bg);
+    --weather-surface: var(--color-text-muted);
 }
 
 /* Override main header for weather theme */

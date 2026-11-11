@@ -95,3 +95,8 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-po
     border: 2px solid white;
     box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
+
+/* Basemap tone follows the theme (theme/tokens.css) */
+.leaflet-tile-pane {
+    filter: var(--basemap-filter);
+}

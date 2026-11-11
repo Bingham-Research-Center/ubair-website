@@ -38,7 +38,9 @@
     --neutral-400: #a7a9ac;
     --neutral-200: #e6e7e8;
 
-    --signal-red: #c8102e;
+    /* Accent: the one colour that is allowed to stand out */
+    --accent-600: #c8102e;
+    --accent-800: #7d0018;
     --focus-blue: #1f6feb;
 
     /* Status fills (the values most pages already use under their own names) */
@@ -46,6 +48,7 @@
     --amber-500: #f59e0b;
     --red-600: #dc2626;
     --blue-500: #3b82f6;
+    --blue-200: #bfdbfe;
 
     /* EPA AQI categories, in order. Decided for ozone markers in #194. */
     --epa-good: #00e400;
@@ -66,7 +69,8 @@
     --color-brand: var(--anchor-900);
     --color-brand-soft: var(--anchor-600);
     --color-on-brand: var(--white);
-    --color-accent: var(--signal-red);
+    --color-accent: var(--accent-600);
+    --color-accent-strong: var(--accent-800);
     --color-on-accent: var(--white);
     --color-link: var(--anchor-900);
     --color-focus: var(--focus-blue);
@@ -79,6 +83,7 @@
     --status-warning: var(--amber-500);
     --status-danger: var(--red-600);
     --status-info: var(--blue-500);
+    --status-info-soft: var(--blue-200);
     --status-nodata: var(--grey-400);
 
     --aqi-good: var(--epa-good);
@@ -106,6 +111,9 @@
     --font-mono: 'Courier New', monospace;
 
     --motion-fast: 0.15s ease;
+
+    /* Applied to Leaflet's tile pane; a theme can mute or darken the basemap here. */
+    --basemap-filter: none;
     --sidebar-width: 250px;
 
     /* 3. Component knobs. A page sets these; shared components read them.

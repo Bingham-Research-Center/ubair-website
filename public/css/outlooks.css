@@ -2,7 +2,7 @@
 .markdown-content {
     line-height: 1.7;
     color: var(--usu-blue);
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
     max-width: 100%;
     overflow-wrap: break-word;
     word-wrap: break-word;

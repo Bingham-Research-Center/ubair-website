@@ -1,12 +1,12 @@
 /* Forecast Air Quality (Clyfar) */
 :root {
     /* Page palette */
-    --air-primary: #2f4f4f;
-    --air-secondary: #006994;
-    --air-accent: #00a950;
-    --air-warning: #ffb612;
-    --air-danger: #c8102e;
-    --air-background: #e6f2ff;
+    --air-primary: var(--color-brand);
+    --air-secondary: var(--color-brand);
+    --air-accent: var(--status-good);
+    --air-warning: var(--status-warning);
+    --air-danger: var(--status-danger);
+    --air-background: var(--color-bg);
 
     /* Ozone level colors */
     --ozone-background: #4ade80;    /* Green */
