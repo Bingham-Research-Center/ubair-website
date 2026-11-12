@@ -18,6 +18,7 @@ so they cannot drift apart. Steps for changing the icon: docs/FAVICON-INSTALL-ST
 
 import argparse
 import math
+import re
 import struct
 import zlib
 from pathlib import Path
@@ -297,6 +298,11 @@ def main():
         colours['bg'] = args.bg
     if args.accent:
         colours['accent'] = args.accent
+    # Check every colour before writing anything: a bad one must not leave a new SVG beside
+    # an old .ico.
+    for role, colour in colours.items():
+        if not re.fullmatch(r'#[0-9a-fA-F]{6}', colour):
+            parser.error(f'{role} colour {colour!r} must be six hex digits, like #10283f')
     write_set(args.design, colours, Path(args.out))
 
 
