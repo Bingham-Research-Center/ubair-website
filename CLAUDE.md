@@ -69,12 +69,18 @@ in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
 - **Never plain-`pm2 restart` from a Claude Code shell.** pm2 copies the calling shell's
   environment, session token included, into the app and into `pm2 save`. Delete and start clean:
   `pm2 delete basinwx-dev && env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin bash -c 'cd /srv/ubair-website && pm2 start ecosystem.config.cjs'`
-  (about a second of downtime), then check `pm2 jlist` for stray `CLAUDE*` keys.
+  (about a second of downtime). Check for stray keys by name only, never by printing `pm2 jlist`
+  or `pm2 env` (they show values):
+  `pm2 jlist | python3 -c "import json,sys; [print(a['name'], [k for k in a['pm2_env'] if 'CLAUDE' in k]) for a in json.load(sys.stdin)]"`.
+  Do not `pm2 save` afterwards unless the reboot set is meant to change: it writes every running
+  app, previews included, and whatever environment they hold. The saved set is `regs-alpha` +
+  `basinwx-dev`, and the existing entry still starts the same app after a reboot.
 - **`npm install` is part of every deploy.** `package-lock.json` is gitignored and the roads
   page serves Leaflet, markercluster and Font Awesome out of `node_modules`; a pull without it
   404s those routes and `/api/health` reports `vendorAssets.ok: false`.
   Prod, as root: `cd /var/www/ubair-website && git pull --ff-only origin ops && npm install && pm2 restart ubair-site`.
-  Dev, as deploy: `cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev`.
+  Dev, as deploy: `cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev`
+  (from JRL's own shell; from a Claude Code session swap the last step for the clean restart below).
   Then re-run `probe.py`: `release matches newest tag` on prod, the new commit on dev.
 
 ## Data pipeline
