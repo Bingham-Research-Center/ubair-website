@@ -96,6 +96,14 @@ but **no current production observation file contains it**. That is a producer-s
 contract that never had the field — derive RH from temperature and dew point meanwhile, and
 check the actual payload rather than the manifest before relying on any variable.
 
+## Styling
+**Raw colours, radii, shadows, gradients and fonts live only in `public/css/theme/tokens.css`.**
+Everything else uses `var(--…)` semantic tokens (`--color-*`, `--status-*`, `--radius-*`,
+`--shadow-*`, `--font-sans`); a page restyles itself by setting knobs such as `--page-accent`,
+not by adding rules. `styleRatchet.test.js` holds a per-file ceiling that may fall but not rise
+(new stylesheets start at zero); lower it with `node scripts/style-scan.mjs --tighten`.
+Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
+
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
 direct push seems warranted, confirm with the user — then ask a **second time** before

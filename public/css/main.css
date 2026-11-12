@@ -1,5 +1,8 @@
 /* Main CSS - Import modular stylesheets */
 
+/* Design tokens first: every other sheet reads them (docs/STYLE-TOKEN-GUIDE.md) */
+@import url('theme/tokens.css');
+
 /* Core styles */
 @import url('variables.css');
 @import url('base.css');

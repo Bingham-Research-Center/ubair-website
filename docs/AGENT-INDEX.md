@@ -37,6 +37,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | API rate budget | `docs/API_RATE_CALCULATIONS_HYBRID.md` | matches the shipped staggered schedule |
 | API key + auth | `docs/API-KEY-SETUP.md` | sole doc for `scripts/generate-api-key.js`; systemd-era paths partially stale — refresh at next key rotation |
 | Secret sharing | `docs/SECRET-SHARING-GUIDE.md` | password-manager workflow |
+| Styling, theme, colours, fonts | `docs/STYLE-TOKEN-GUIDE.md` | raw values live only in `public/css/theme/tokens.css`; ratchet test enforces it |
 | Branching (day-to-day) | `CLAUDE.md` §Protected branches + wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) | the release train itself: `CLAUDE.md` + `DEPLOYMENT.md` §7a |
 | PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with `/code-review` |
 | Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | why the site exists |
