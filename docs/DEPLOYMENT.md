@@ -553,10 +553,10 @@ scripts/manage-previews.sh status
 
 ### Adding a new user / preview
 
-Add an entry to `preview-apps.json` (choose a port not used by any other process — ops=3000, dev=3001, existing previews listed there), then open a PR.
+Add an entry to `preview-apps.json` (choose a port not used by any other process — ops=3000, dev=3001, 3002 the parked roads stack, 3003 the `theme.basinwx.dev` spare slot), then open a PR.
 
 ```json
-{ "user": "julianna", "branch": "feature/julianna-aviation", "port": 3003, "subdomain": "aviation" }
+{ "user": "<name>", "branch": "feature/<name>-<topic>", "port": 3004, "subdomain": "<name>" }
 ```
 
 ### Notes
