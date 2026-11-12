@@ -82,6 +82,11 @@
     --blue-500: #3b82f6;
     --blue-200: #bfdbfe;
 
+    /* Fire-restriction stages, least to most severe: the colours the fire page shipped with */
+    --orange-500: #ff8c00;
+    --orange-700: #ff4500;
+    --brick-700: #b22222;
+
     /* EPA AQI categories, in order. Decided for ozone markers in #194. */
     --epa-good: #00e400;
     --epa-moderate: #ffff00;
@@ -101,6 +106,7 @@
     --color-brand: var(--anchor-900);
     --color-brand-soft: var(--anchor-600);
     --color-on-brand: var(--white);
+    --color-on-brand-muted: var(--anchor-300);    /* quieter text on the brand colour: footer, sidebar note */
     --color-accent: var(--accent-600);
     --color-accent-strong: var(--accent-800);
     --color-on-accent: var(--white);
@@ -117,6 +123,13 @@
     --status-info: var(--blue-500);
     --status-info-soft: var(--blue-200);
     --status-nodata: var(--grey-400);
+
+    /* Fire restrictions. These mean something, so they do not follow the page palette. */
+    --restriction-stage-1: var(--orange-500);
+    --restriction-stage-2: var(--orange-700);
+    --restriction-stage-3: var(--status-danger);
+    --restriction-prevention: var(--brick-700);
+    --color-on-warm: var(--anchor-900);    /* text on an orange fill, where white is too faint */
 
     --aqi-good: var(--epa-good);
     --aqi-moderate: var(--epa-moderate);

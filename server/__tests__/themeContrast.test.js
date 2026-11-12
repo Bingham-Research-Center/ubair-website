@@ -47,6 +47,9 @@ const PAIRS = [
     ['--color-text-muted', '--color-surface'],
     ['--color-link', '--color-surface'],
     ['--color-on-brand', '--color-brand'],
+    ['--color-on-brand-muted', '--color-brand'],
+    ['--color-on-warm', '--restriction-stage-1'],
+    ['--color-on-warm', '--restriction-stage-2'],
     ['--color-on-accent', '--color-accent'],
 ];
 
@@ -67,6 +70,18 @@ describe('token tiers', () => {
     test('confidence colours match docs/CONFIDENCE_TAXONOMY.md exactly', () => {
         expect([light['--confidence-possible'], light['--confidence-likely'], light['--confidence-confirmed']])
             .toEqual(['#6c757d', '#ffc107', '#28a745']);
+    });
+
+    test('fire-restriction stages keep their own colours, whatever the theme', () => {
+        // The first cut of the Ink + Teal look painted Stage 1 teal and Stage 2 near-black,
+        // because the pills borrowed the page's decorative palette (#351 review).
+        expect(['--restriction-stage-1', '--restriction-stage-2', '--restriction-stage-3',
+            '--restriction-prevention'].map((name) => resolve(light, name)))
+            .toEqual(['#ff8c00', '#ff4500', '#dc2626', '#b22222']);
+        const fire = fs.readFileSync(path.join(repoRoot, 'public/css/fire.css'), 'utf8');
+        const pills = fire.match(/\.restriction-type-pill\[data-type\^="(?:stage|prevention)[^\n]*/g);
+        expect(pills).toHaveLength(4);
+        for (const rule of pills) expect(rule).toMatch(/var\(--restriction-/);
     });
 
     test('the legacy --usu-* shim follows the theme', () => {

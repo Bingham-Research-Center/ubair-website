@@ -690,10 +690,11 @@ body[data-page-type="fire"] h1::after {
     background: var(--fire-smoke);
     white-space: nowrap;
 }
-.restriction-type-pill[data-type^="stage-1"] { background: var(--fire-accent); }
-.restriction-type-pill[data-type^="stage-2"] { background: var(--fire-secondary); }
-.restriction-type-pill[data-type^="stage-3"] { background: var(--fire-warning); }
-.restriction-type-pill[data-type^="prevention"]  { background: var(--fire-primary); }
+/* Severity colours, not page decoration: they must not change with the theme. */
+.restriction-type-pill[data-type^="stage-1"] { background: var(--restriction-stage-1); color: var(--color-on-warm); }
+.restriction-type-pill[data-type^="stage-2"] { background: var(--restriction-stage-2); color: var(--color-on-warm); }
+.restriction-type-pill[data-type^="stage-3"] { background: var(--restriction-stage-3); }
+.restriction-type-pill[data-type^="prevention"]  { background: var(--restriction-prevention); }
 .restriction-type-pill[data-type^="special"]     { background: var(--fire-smoke); }
 .restriction-type-pill[data-type^="ordinance"]   { background: var(--fire-smoke); }
 .restriction-area {

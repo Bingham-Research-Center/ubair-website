@@ -346,7 +346,7 @@
     left: 250px;
     width: calc(100% - 250px);
     background-color: var(--usu-blue);
-    color: var(--usu-light-blue);
+    color: var(--color-on-brand-muted);
     text-align: center;
     padding: 8px 20px;
     min-height: 35px;
@@ -723,7 +723,7 @@ main.content {
 }
 
 .sidebar-disclaimer {
-    color: var(--usu-light-blue);
+    color: var(--color-on-brand-muted);
 }
 
 /* Handles the timer-fill effect for the auto-cycle toggle */
