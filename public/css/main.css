@@ -7,7 +7,6 @@
 @import url('variables.css');
 @import url('base.css');
 @import url('sidebar.css');
-@import url('nineties-mode.css');
 @import url('map.css');
 @import url('overlays.css');
 @import url('dashboard.css');
@@ -721,79 +720,6 @@ main.content {
 /* Dashboard Section Spacing */
 .dashboard-section {
     margin-bottom: 1.5rem;
-}
-
-/* =================
-   EASTER EGGS
-   ================= */
-
-/* Base Easter Egg Styles */
-.easter-egg-toggle {
-    padding: 12px 16px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    transition: all 0.3s ease;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.easter-egg-toggle:hover {
-    background: rgba(255, 255, 255, 0.2);
-    transform: translateY(-1px);
-}
-
-.easter-egg-toggle i {
-    transition: transform 0.3s ease;
-    font-size: 0.8rem;
-}
-
-.easter-egg-toggle.active i {
-    transform: rotate(180deg);
-}
-
-.easter-egg-content {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease;
-    background: rgba(255, 255, 255, 0.95);
-}
-
-.easter-egg-content.active {
-    max-height: 120px;
-}
-
-.easter-egg-actions {
-    padding: 16px;
-    display: flex;
-    justify-content: center;
-}
-
-.toggle-button {
-    background: linear-gradient(135deg, #dc2626, #ef4444);
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
-}
-
-.toggle-button:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.4);
-    background: linear-gradient(135deg, #b91c1c, #dc2626);
-}
-
-.toggle-button:active {
-    transform: translateY(0);
 }
 
 .sidebar-disclaimer {
