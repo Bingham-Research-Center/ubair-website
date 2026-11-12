@@ -14,9 +14,10 @@ Leaflet/Plotly, vanilla JS frontend.
   (issue #253, item 4).
 - **`.dev` is not a toy.** It takes the same CHPC fan-out as `.com` and hosts stakeholder
   demos, so merging into `dev` is a real dry-run before promoting to `ops`.
-- **The app serves `public/` off the working tree:** `git checkout` changes what live traffic
-  sees at once, before any restart. Never check out a branch in a live repo; use
-  `git worktree add /tmp/staging <branch>`.
+- **The app serves `public/` and `views/` off the working tree, but loads routes at start.**
+  A `git checkout` or `git pull` in a live repo changes what traffic sees at once, and a new
+  route 404s until the restart. Never check out a branch there (use `git worktree add`), and
+  pull only as a whole deploy (below). To read `dev`, use `git show origin/dev:<path>`.
 - **Know where the session runs.** Working directory `/srv/ubair-website` as user `deploy` is
   **the dev box**: it can pull, restart dev and run previews when JRL asks, but has no sudo and
   no route to prod. From notchpeak1 (CHPC) neither box is reachable (no SSH keys): verify from
@@ -67,7 +68,7 @@ and start it from a scrubbed shell (about a second of downtime):
 pm2 delete basinwx-dev && env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin bash -c 'cd /srv/ubair-website && pm2 start ecosystem.config.cjs'
 ```
 
-- Check for stray keys by name only; `pm2 jlist` and `pm2 env` print values:
+- Check for stray keys by name only (`pm2 jlist` and `pm2 env` print values):
   `pm2 jlist | python3 -c "import json,sys; [print(a['name'], [k for k in a['pm2_env'] if 'CLAUDE' in k]) for a in json.load(sys.stdin)]"`
 - Do not `pm2 save` unless the reboot set is meant to change: it writes every running app,
   previews included, with the environment each holds. The saved set is `regs-alpha` +
@@ -76,8 +77,10 @@ pm2 delete basinwx-dev && env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SH
 ## Branch previews (dev box)
 One branch, its own worktree, a spare port, served at `<name>.basinwx.dev`.
 - **`theme.basinwx.dev` → `127.0.0.1:3003` is provisioned and kept as a spare slot:** start any
-  branch on port 3003 and it is live with no root work (502 while idle). The recipe, tested
-  2026-11-12, is README "Branch previews".
+  branch on port 3003 and it is live with no root work (502 while idle). The recipe is README
+  "Branch previews"; tear it down when the PR merges so the slot is free again.
+- Ports: 3000 prod, 3001 dev, 3002 the parked roads stack (#336–#339, local only, no vhost),
+  3003 the spare slot.
 - Any other name needs root: DNS is a wildcard but the certificate is not
   (`certbot certonly --nginx -d <name>.basinwx.dev`, then an nginx vhost).
 - `PREVIEW_MODE=true` in the preview's `.env` gates background jobs so previews don't
@@ -97,12 +100,16 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   `GET /api/health` before every upload.
 - **Observations arrive as raw SI and stay that way:** °C, m/s, Pa. `processObservationData`
   in `public/js/api.js` deliberately does not convert (its commented-out `convertUnits` call is
-  on purpose); each page converts at its display layer, reading `observations._units`. There
-  is no shared helper: eight files carry their own copy. A page that misses this prints
+  on purpose); each page converts at its display layer from the units the feed states. New code
+  uses `public/js/met.js` (pure converters that return null for a unit they do not know, plus RH
+  from dew point); older pages still carry their own copies. A page that misses this prints
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
-  derive RH from temperature and dew point meanwhile.
+  derive it with `met.js` meanwhile. KVEL in the obs feed has no gusts or visibility either.
+- **Never invent data.** A failed or missing fetch shows nothing, or says it is unavailable; it
+  never falls back to a plausible value. The homepage said "No significant snow expected" for
+  months from a file that had never been uploaded (`homepage.test.js` now guards it).
 
 ## Styling
 Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
@@ -111,17 +118,20 @@ Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
   restyles itself by setting knobs such as `--page-accent`, not by adding rules.
 - `styleRatchet.test.js` holds a per-file ceiling of raw values that may fall but not rise
   (new stylesheets start at zero); lower it with `node scripts/style-scan.mjs --tighten`.
-- The look since v1.6.0 is **Ink + Teal**: IBM Plex Sans from `public/fonts/` (no font CDN),
-  flat surfaces, a greyed basemap (`--basemap-filter`), hover that changes colour and never
-  moves. Since v1.6.2: hard edges, cards are `.pane` (square, hairline, short accent tab on the
-  top edge), and the whole UI is scaled to 85% by `--root-font-size` (write lengths in `rem`). Dark mode is a draft in the tokens (`html[data-mode="dark"]`), not switched on.
+- The look is **Ink + Teal** (v1.6.0): IBM Plex Sans from `public/fonts/` (no font CDN), flat
+  surfaces, a greyed basemap (`--basemap-filter`), hover that changes colour and never moves.
+  Since v1.6.2: hard edges (radius tokens 0); cards are `.pane` (square, hairline, short accent
+  tab on the top edge; other pages still move over one at a time); the UI is scaled to 85% by
+  `--root-font-size`, so write lengths in `rem`, never CSS `zoom` (it breaks Leaflet and Plotly
+  pointers). Dark mode is a draft in the tokens (`html[data-mode="dark"]`), not switched on.
 - **A colour that carries meaning never rides on a page's decorative palette.** Status, AQI,
   confidence and fire-restriction colours have their own tokens (`--status-*`, `--epa-*`,
   `--confidence-*`, `--restriction-*`); borrowing `--fire-accent` once turned Stage 1 fire
   restrictions teal (#353).
-- **Nothing unfinished on `dev`:** no "Coming Soon" overlays, badges or disabled links
-  (`removedPages.test.js`); a page that is not ready lives on a branch. The pages removed in
-  Nov 2026 are at tag `parked/pre-cleanup-2026-11-11` (branch `parked/unfinished-pages`).
+- **Nothing unfinished on `dev`:** no "Coming Soon" overlays, badges, disabled links or
+  placeholder text (`removedPages.test.js`, `homepage.test.js`); a page that is not ready lives
+  on a branch. Agriculture and water are parked at tag `parked/pre-cleanup-2026-11-11`
+  (aviation came back in 1.6.1 as KVEL runway winds).
 - **One icon and one wordmark,** from `scripts/make_favicon.py` and `scripts/make_wordmark.py`
   (`docs/FAVICON-INSTALL-STEPS.md`). `localAssets.test.js` fails if a page links a `/public`
   file that does not exist.
@@ -138,7 +148,8 @@ GitHub rulesets on all three branches require one approving review; self-approva
 impossible, so every merge is `gh pr merge <N> --admin`. Claude **may** run these, but only
 with JRL confirming **each merge individually** before it happens — never as a batch, and
 never inferred from earlier approval. Absent that, stage the PRs and hand over the one-liners.
-Merge commits should carry both of us as `Co-Authored-By` trailers.
+Merge commits carry both of us as `Co-Authored-By` trailers, and each admin merge gets a terse
+PR comment saying what was verified (CI, `merge-tree`, tests).
 
 ## Versioning & release train
 `dev` always carries the next version as `X.Y.Z-dev`; `ops` ships clean `X.Y.Z` with a
@@ -146,7 +157,8 @@ lightweight `vX.Y.Z` tag on its tip, so the two boxes never report the same vers
 Release order: strip-`-dev` PR into `dev` → promotion PR (head `dev`, base `ops`, merge
 commit `Merge dev into ops: vX.Y.Z`) → tag `ops`, `gh release create vX.Y.Z` → deploy prod →
 `Merge ops into main: vX.Y.Z release` → reopen `dev` at the next `-dev`
-(`docs/DEPLOYMENT.md` §7a).
+(`docs/DEPLOYMENT.md` §7a). Prod deploys need root, so `ops` can run ahead of what prod serves:
+`probe.py` says `deploy pending`, and the `main` merge waits for the deploy.
 
 **Stacking trap.** Branch from `dev`, never from another PR's head. Release-train chore PRs
 land as *squashes* (feature PRs as merge commits), so a branch stacked on one conflicts the
@@ -176,7 +188,7 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (427/427 across 33 suites as of 2026-11-12); any
+- `npm test` — Jest. **The suite is green (466/466 across 37 suites as of 2026-11-12); any
   failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** that rule holds only once the branch is current with `dev`.
   Run the same suite on `dev` and compare before blaming the change (PR #128 failed 4 tests
