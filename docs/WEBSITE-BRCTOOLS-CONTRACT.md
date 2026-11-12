@@ -200,7 +200,10 @@ difference is exactly what the nginx trap exploited — the index passed while e
 **Endpoint** `POST /api/upload/forecasts` (shared dataType, distinguished by filename prefix)
 **Filename** `forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json`
 **Manifest:** `dataTypes.forecasts.products.hrrr_kvel_crosswind` (manifest 2.0.0).
-Consumer of record: `public/js/aviation.js` `buildTable()` (~:32-50).
+Consumer of record: `public/js/aviation.js` `buildTable()` (~:32-50). **Parked since 12 Nov 2026:** the
+aviation page left `dev` with the other unfinished pages, so nothing on the site reads this
+product now. The consumer is at tag `parked/pre-cleanup-2026-11-11` (branch
+`parked/unfinished-pages`); the producer can keep uploading.
 
 ```jsonc
 {
@@ -316,7 +319,7 @@ Symbol-anchored; line numbers verified 2026-08-26 against `dev` and expected to 
 | `loadHRRRForecast` (~:336) | `server/roadWeatherService.js` | 3 h reject gate, 1 h cache |
 | `getHRRRConditionAtPoint` (~:367) | `server/roadWeatherService.js` | the five fields actually read |
 | `DEFAULT_WEIGHTS` (~:417) | `server/roadWeatherService.js` | source blend weights |
-| `buildTable` (~:32) | `public/js/aviation.js` | KVEL crosswind consumer (authoritative) |
+| `buildTable` (~:32) | `public/js/aviation.js` at tag `parked/pre-cleanup-2026-11-11` | KVEL crosswind consumer (authoritative; page parked, not on `dev`) |
 | `fetchSurfaceRunIndex` (~:371) | `public/js/forecast_weather.js` | index + filelist fallback |
 | `parseCronIntervalMinutes` (~:111) | `server/monitoring/dataMonitor.js` | staleness window derivation |
 | `parse_api_urls` (:192), `upload_file` (:241) | `scripts/chpc_uploader.py` | fan-out + upload with retries |

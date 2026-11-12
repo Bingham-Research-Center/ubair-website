@@ -157,20 +157,8 @@ app.get('/sports', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/sports.html'));
 });
 
-app.get('/agriculture', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/agriculture.html'));
-});
-
 app.get('/roads', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/roads.html'));
-});
-
-app.get('/aviation', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/aviation.html'));
-});
-
-app.get('/water', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/water.html'));
 });
 
 app.get('/fire', (req, res) => {

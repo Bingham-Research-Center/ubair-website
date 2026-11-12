@@ -16,14 +16,11 @@ const LINKS = [
     '<link rel="apple-touch-icon" href="/apple-touch-icon.png">',
 ];
 
-// The kiosk pages are being retired (#345) and keep whatever they had until then.
-const PENDING_REMOVAL = /^kiosk/;
-
 function views() {
     const list = [];
     for (const dir of ['views', 'views/about']) {
         for (const name of fs.readdirSync(path.join(repoRoot, dir))) {
-            if (name.endsWith('.html') && !PENDING_REMOVAL.test(name)) list.push(`${dir}/${name}`);
+            if (name.endsWith('.html')) list.push(`${dir}/${name}`);
         }
     }
     return list;
