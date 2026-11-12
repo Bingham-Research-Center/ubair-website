@@ -47,7 +47,6 @@ the index at 18:49:14Z — **run files first, index last, ordering already corre
 | A5 | brc-tools | **OPEN** | `llm_outlooks` + `images` have never reached `.dev` — find the hardcoded `.com` path |
 | A6 | brc-tools | **OPEN** | Prove failure is loud: the regression test for the whole incident |
 | A7 | brc-tools | **OPEN** | Are single missed cycles detected upstream? |
-| A8 | JRL | **OPEN** | Install the `55 * * * *` KVEL cron on notchpeak1 |
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
 | A10 | website | **OPEN** | Decide whether `timeseries` stays in `DATA_MANIFEST.json` |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
@@ -200,18 +199,6 @@ only notice when the job errors?
 
 ---
 
-## A8 — KVEL cron on notchpeak1 · JRL · OPEN
-
-Zero `forecast_hrrr_kvel_crosswind_*` files have ever been uploaded to either host. The website
-side is merged and waiting (#210, manifest 2.0.0, `Rwy17`/`Rwy35` labels), so the aviation
-table cannot be verified visually until the first file lands. The `55 * * * *` cron is JRL's to
-install. Schema: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c.
-
-**Reply:**
-> _(JRL: answer here)_
-
----
-
 ## A9 — Retention policy · JRL + brc-tools · OPEN
 
 `.com` carries 39,236 files under `forecasts` alone, with no pruning policy. Agree one before
@@ -262,6 +249,7 @@ silently falls back to **60 minutes**, which happens to match the observed `:22`
 | `filelist` 500 → 404 for a missing dir | 2026-08-25 | #215 — "never uploaded" now distinguishable from "server broke" |
 | Cron interval parsing (360 min, not 60) | 2026-08-25 | #216 |
 | Oversized/malformed JSON → 413/400, not 500 | 2026-08-25 | #216 |
+| A8 — KVEL cron on notchpeak1 | 2026-11-12 | Hourly since 2026-08-27 21Z: 1,818 files on `.dev`, 1,796 on `.com` by the 2026-11-12 03Z run, schema as in contract §5c. Read by `/aviation` from 1.6.1 |
 | KVEL runway headings | 2026-08-13 | FAA chart: 17/35, true `[179, 359]`; brc-tools #59 / v0.1.1 |
 | road-forecast cadence: hourly or 3-hourly? | 2026-08-26 | Answered by observation — hourly at `:22`, inside the 3 h gate |
 | Prod on manifest 1.2.0, rejects the KVEL contract | 2026-08-26 | `.com` deployed v1.5.2 / manifest 2.0.0 |

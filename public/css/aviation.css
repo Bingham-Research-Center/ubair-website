@@ -1,0 +1,150 @@
+/* Aviation page: KVEL runway winds.
+   Scoped to body[data-page-type="aviation"] so nothing here leaks into the injected sidebar
+   or footer. Tokens only (docs/STYLE-TOKEN-GUIDE.md); this file starts at a ratchet of zero. */
+
+body[data-page-type="aviation"] .aviation {
+    max-width: 980px;
+}
+
+body[data-page-type="aviation"] .aviation-subtitle {
+    color: var(--color-text-muted);
+    font-size: 1.05rem;
+    margin: 0.25rem 0 1.5rem;
+}
+
+body[data-page-type="aviation"] .aviation-panel {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+body[data-page-type="aviation"] .aviation-panel h2 {
+    color: var(--color-text);
+    font-size: 1.15rem;
+    margin: 0 0 0.35rem;
+}
+
+body[data-page-type="aviation"] .aviation-panel h2 i {
+    color: var(--page-accent);
+    margin-right: 0.4rem;
+}
+
+body[data-page-type="aviation"] .aviation-stamp {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin: 0 0 1rem;
+}
+
+/* Now: one figure per quantity */
+
+body[data-page-type="aviation"] .runway-now {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 1rem;
+}
+
+body[data-page-type="aviation"] .now-figure {
+    border-left: 3px solid var(--page-accent);
+    padding: 0.2rem 0 0.2rem 0.75rem;
+}
+
+body[data-page-type="aviation"] .now-label,
+body[data-page-type="aviation"] .now-detail {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+body[data-page-type="aviation"] .now-value {
+    display: block;
+    color: var(--color-text);
+    font-size: 1.6rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Forecast: chart, then table */
+
+body[data-page-type="aviation"] .crosswind-chart {
+    height: 280px;
+    margin-bottom: 1rem;
+}
+
+body[data-page-type="aviation"] .crosswind-chart[hidden] {
+    display: none;
+}
+
+body[data-page-type="aviation"] .table-scroll {
+    overflow-x: auto;
+}
+
+body[data-page-type="aviation"] .crosswind-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+    font-variant-numeric: tabular-nums;
+}
+
+body[data-page-type="aviation"] .crosswind-table th,
+body[data-page-type="aviation"] .crosswind-table td {
+    padding: 0.4rem 0.6rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: right;
+    white-space: nowrap;
+}
+
+body[data-page-type="aviation"] .crosswind-table th:first-child,
+body[data-page-type="aviation"] .crosswind-table td:first-child {
+    text-align: left;
+}
+
+body[data-page-type="aviation"] .crosswind-table thead th {
+    color: var(--color-text-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+body[data-page-type="aviation"] .crosswind-table thead th[scope="colgroup"] {
+    color: var(--color-text);
+    text-align: center;
+}
+
+body[data-page-type="aviation"] .crosswind-table tbody tr:hover {
+    background: var(--color-bg);
+}
+
+body[data-page-type="aviation"] .time-local,
+body[data-page-type="aviation"] .wind-gust {
+    display: block;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+/* Reading the numbers */
+
+body[data-page-type="aviation"] .aviation-about ul {
+    margin: 0.5rem 0 1rem;
+    padding-left: 1.2rem;
+}
+
+body[data-page-type="aviation"] .aviation-about li {
+    margin-bottom: 0.4rem;
+    line-height: 1.5;
+}
+
+body[data-page-type="aviation"] .aviation-caveat {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+body[data-page-type="aviation"] .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}

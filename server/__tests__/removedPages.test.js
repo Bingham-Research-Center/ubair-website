@@ -6,20 +6,21 @@ import app from '../server.js';
 
 // Rule since the v1.6.0 relaunch: a page that is not ready lives on a branch, not on dev behind
 // a "Coming Soon" overlay. Agriculture, aviation and water were parked on 12 Nov 2026 (tag
-// parked/pre-cleanup-2026-11-11, branch parked/unfinished-pages).
+// parked/pre-cleanup-2026-11-11, branch parked/unfinished-pages). Aviation came back in 1.6.1
+// as a finished page (aviationPage.test.js); the other two stay parked.
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const read = (file) => fs.readFileSync(path.join(repoRoot, file), 'utf8');
 
 describe('pages parked off dev', () => {
-    test.each(['/agriculture', '/aviation', '/water'])('%s is not served', async (url) => {
+    test.each(['/agriculture', '/water'])('%s is not served', async (url) => {
         await request(app).get(url).expect(404);
     });
 
     test('the sidebar offers nothing that is not ready', () => {
         const sidebar = read('public/partials/sidebar.html');
         expect(sidebar).not.toMatch(/coming[- ]soon|disabled-link/i);
-        expect(sidebar).not.toMatch(/href="\/(agriculture|aviation|water)"/);
+        expect(sidebar).not.toMatch(/href="\/(agriculture|water)"/);
         expect(sidebar).toContain('href="https://jrl.ac/team"');
     });
 
