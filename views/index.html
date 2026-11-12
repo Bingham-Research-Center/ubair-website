@@ -41,15 +41,8 @@
         <div class="headlines-dashboard">
             <div class="dashboard-header">
                 <div class="dashboard-tabs">
-                    <button class="tab-button active" data-tab="warnings">
-                        <i class="fas fa-exclamation-triangle"></i> Alerts
-                    </button>
-                    <button class="tab-button" data-tab="conditions">
-                        <i class="fas fa-cloud-sun"></i> Current
-                    </button>
-                    <button class="tab-button" data-tab="ai-summary">
-                        <i class="fas fa-robot"></i> AI Summary
-                    </button>
+                    <button class="tab-button active" data-tab="warnings">Alerts</button>
+                    <button class="tab-button" data-tab="conditions">Current</button>
                 </div>
             </div>
 
@@ -57,73 +50,52 @@
                 <!-- Alerts Tab -->
                 <div id="warnings-content" class="tab-panel active">
                     <div class="alerts-grid">
-                        <a href="/forecast_outlooks" class="headline-item info alerts-map-link">
-                            <i class="fas fa-calendar-week headline-icon"></i>
+                        <a href="/forecast_outlooks" class="headline-item pane info alerts-map-link">
                             <div class="headline-text">
                                 <span class="headline-label">Next 5 Days</span>
-                                <span class="headline-value" id="alerts-ozone-risk"><span class="live-dot"></span> See Full Outlook</span>
+                                <span class="headline-value" id="alerts-ozone-risk">See the ozone outlook</span>
                             </div>
                         </a>
-                        <div class="headline-item info alerts-snow-panel" id="alerts-snow">
-                            <i class="fas fa-snowflake headline-icon"></i>
-                            <div class="headline-text">
-                                <span class="headline-label">Snow Likely?</span>
-                                <span class="headline-value" id="alerts-snow-value">Loading...</span>
-                                <span class="headline-detail" id="alerts-snow-detail"></span>
-                            </div>
-                        </div>
-                        <a href="/live_aq" class="headline-item info alerts-map-link">
-                            <i class="fas fa-map-marked-alt headline-icon"></i>
+                        <a href="/live_aq" class="headline-item pane info alerts-map-link">
                             <div class="headline-text">
                                 <span class="headline-label">Live Map</span>
                                 <span class="headline-value"><span class="live-dot"></span> Active Now</span>
                             </div>
                         </a>
+                        <!-- Shown only once a GEFS snow summary exists; none has been uploaded yet. -->
+                        <div class="headline-item pane info" id="alerts-snow" hidden>
+                            <div class="headline-text">
+                                <span class="headline-label">Snow Likely?</span>
+                                <span class="headline-value" id="alerts-snow-value"></span>
+                                <span class="headline-detail" id="alerts-snow-detail"></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Current Conditions Tab -->
+                <!-- Current Conditions Tab: filled by homepage-current.js from the latest observation -->
                 <div id="conditions-content" class="tab-panel">
                     <div class="headline-items">
-                        <div class="headline-item">
-                            <i class="fas fa-thermometer-half headline-icon"></i>
+                        <div class="headline-item pane">
                             <div class="headline-text">
                                 <span class="headline-label">Temperature</span>
-                                <span class="headline-value">--°F</span>
+                                <span class="headline-value" id="current-temp">--</span>
                             </div>
                         </div>
-                        <div class="headline-item">
-                            <i class="fas fa-tint headline-icon"></i>
+                        <div class="headline-item pane">
                             <div class="headline-text">
                                 <span class="headline-label">Humidity</span>
-                                <span class="headline-value">--%</span>
+                                <span class="headline-value" id="current-rh">--</span>
                             </div>
                         </div>
-                        <div class="headline-item">
-                            <i class="fas fa-eye headline-icon"></i>
+                        <div class="headline-item pane">
                             <div class="headline-text">
-                                <span class="headline-label">Visibility</span>
-                                <span class="headline-value">-- mi</span>
-                            </div>
-                        </div>
-                        <div class="headline-item">
-                            <i class="fas fa-compass headline-icon"></i>
-                            <div class="headline-text">
-                                <span class="headline-label">Wind Direction</span>
-                                <span class="headline-value">--</span>
+                                <span class="headline-label">Wind</span>
+                                <span class="headline-value" id="current-wind">--</span>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- AI Summary Tab -->
-                <div id="ai-summary-content" class="tab-panel">
-                    <div class="ai-summary-box">
-                        <p class="ai-summary-text">
-                            <i class="fas fa-robot"></i>
-                            Basin conditions are stable with good air quality. Light winds expected. A weather system approaching may bring snow in 48 hours. Ozone levels forecast to rise tomorrow due to temperature inversion.
-                        </p>
-                    </div>
+                    <p class="headline-stamp" id="current-stamp">Loading the latest observation…</p>
                 </div>
             </div>
         </div>
@@ -132,17 +104,15 @@
     <!-- Air Quality Overview Dashboard -->
     <section class="dashboard-section" aria-label="Air Quality and Weather Overview">
         <div class="section-header">
-            <h2><i class="fas fa-tachometer-alt"></i> Air Quality and Weather Overview</h2>
+            <h2>Air Quality and Weather Overview</h2>
         </div>
 
         <div class="dashboard-grid">
             <!-- Live Map Panel -->
-            <div class="dashboard-panel map-panel">
+            <div class="dashboard-panel pane map-panel">
                 <div class="panel-header">
-                    <h3><i class="fas fa-map-marked-alt"></i> Live Monitoring Stations</h3>
-                    <a href="/live_aq" class="panel-link">
-                        <i class="fas fa-external-link-alt"></i> Full Map
-                    </a>
+                    <h3>Live Monitoring Stations</h3>
+                    <a href="/live_aq" class="panel-link">Full map</a>
                 </div>
                 <div class="map-container-dashboard">
                     <div id="map" class="dashboard-map" aria-label="Air Quality Monitoring Map"></div>
@@ -164,7 +134,6 @@
                 <!-- Compact Legend - Starts Visible -->
                 <div class="map-legend-compact">
                     <button class="legend-toggle" id="legend-toggle" title="Click to show/hide marker color legend" aria-expanded="true">
-                        <i class="fas fa-palette"></i>
                         <span class="legend-toggle-text">Legend</span>
                     </button>
                     <div class="legend-dropdown active" id="legend-dropdown">
@@ -205,38 +174,19 @@
             </div>
 
             <!-- Latest Forecast Panel -->
-            <div class="dashboard-panel forecast-panel">
+            <div class="dashboard-panel pane forecast-panel">
                 <div class="panel-header">
-                    <h3><i class="fas fa-chart-line"></i> Latest Forecasts</h3>
+                    <h3>Air Quality Outlook</h3>
                     <button class="forecast-collapse-toggle" id="forecast-collapse" title="Show/hide forecast details">
                         <i class="fas fa-chevron-up"></i>
                     </button>
-                    <div class="forecast-tabs">
-                        <button class="forecast-tab active" data-tab="air-quality" title="Air quality and ozone outlook">
-                            <i class="fas fa-lungs"></i> Air Quality
-                        </button>
-                        <button class="forecast-tab" data-tab="weather" title="General weather forecast summary">
-                            <i class="fas fa-cloud-sun"></i> Weather
-                        </button>
-                    </div>
                 </div>
                 <div class="forecast-container-dashboard">
                     <div class="forecast-content active" id="air-quality-content">
                         <div class="outlook-preview-date" id="outlook-date">Loading...</div>
                         <div class="outlook-preview-content compact" id="outlook-summary">Loading air quality outlook...</div>
                         <div class="forecast-link">
-                            <a href="/forecast_outlooks" id="aq-see-more">
-                                <i class="fas fa-external-link-alt"></i> All Air Quality Outlooks
-                            </a>
-                        </div>
-                    </div>
-                    <div class="forecast-content" id="weather-content">
-                        <div class="outlook-preview-date">Latest Weather Summary</div>
-                        <div class="outlook-preview-content compact" id="weather-summary">Loading weather forecast summary...</div>
-                        <div class="forecast-link">
-                            <a href="/forecast_weather">
-                                <i class="fas fa-external-link-alt"></i> Full Weather Forecasts
-                            </a>
+                            <a href="/forecast_outlooks" id="aq-see-more">All air quality outlooks</a>
                         </div>
                     </div>
                 </div>
@@ -244,18 +194,6 @@
         </div>
     </section>
 
-    <!-- Future sections for weather, alerts, etc. -->
-    <!--
-    <section class="dashboard-section" aria-label="Weather Overview">
-        <div class="section-header">
-            <h2><i class="fas fa-cloud-sun"></i> Weather Conditions</h2>
-            <div class="section-subtitle">Current conditions and short-term forecasts</div>
-        </div>
-        <div class="dashboard-grid">
-            // Weather content will go here
-        </div>
-    </section>
-    -->
 </main>
 
 <!-- Load Leaflet JS -->
@@ -267,6 +205,7 @@
 <script src="/public/js/headlines-dashboard.js"></script>
 <script type="module" src="/public/js/config.js"></script>
 <script type="module" src="/public/js/index_map.js"></script>
+<script type="module" src="/public/js/homepage-current.js"></script>
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
@@ -274,9 +213,6 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", async function() {
-        // Initialize forecast tabs
-        initForecastTabs();
-        
         // Initialize legend toggle
         initLegendToggle();
         
@@ -285,29 +221,9 @@
 
         // Load initial content
         loadAirQualityForecast();
-        loadWeatherForecast();
         loadAlertsOzoneRisk();
         loadAlertsSnowForecast();
     });
-
-    function initForecastTabs() {
-        const tabs = document.querySelectorAll('.forecast-tab');
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const targetTab = tab.dataset.tab;
-                
-                // Update tab styles
-                tabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update content visibility
-                document.querySelectorAll('.forecast-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                document.getElementById(`${targetTab}-content`).classList.add('active');
-            });
-        });
-    }
 
     function initLegendToggle() {
         const toggle = document.getElementById('legend-toggle');
@@ -349,6 +265,8 @@
 
             // Get the latest outlook
             const latestOutlook = outlooks[0];
+            const dateEl = document.getElementById('outlook-date');
+            if (dateEl) dateEl.textContent = latestOutlook.formattedDate ? `Issued ${latestOutlook.formattedDate}` : '';
 
             // Fetch its content
             const outlookResponse = await fetch(`/api/static/outlooks/${latestOutlook.filename}`);
@@ -387,28 +305,6 @@
         }
     }
 
-    async function loadWeatherForecast() {
-        const weatherSummary = document.getElementById("weather-summary");
-        if (!weatherSummary) return;
-
-        // Launch announcement - AI weather summaries coming Dec 1
-        weatherSummary.innerHTML = `
-            <div style="text-align: center; padding: 0.5rem;">
-                <p style="font-size: 1.1rem; margin-bottom: 0.75rem;">
-                    <strong><i class="fas fa-robot"></i> AI Weather Summaries</strong>
-                </p>
-                <p style="margin-bottom: 0.5rem;">Coming December 1, 2025</p>
-                <p style="font-size: 0.9rem; color: var(--usu-accent);">
-                    Our AI-powered weather summaries are in final testing.
-                </p>
-                <p style="margin-top: 0.75rem; font-size: 0.85rem;">
-                    <a href="mailto:john.lawson@usu.edu" style="color: var(--usu-blue);">
-                        <i class="fas fa-envelope"></i> Questions? john.lawson@usu.edu
-                    </a>
-                </p>
-            </div>
-        `;
-    }
     
     function initForecastCollapse() {
         const collapseBtn = document.getElementById('forecast-collapse');
@@ -441,6 +337,17 @@
             const outlooks = await response.json();
             if (outlooks.length === 0) {
                 riskEl.textContent = 'No outlook available';
+                return;
+            }
+
+            // A five-day outlook says nothing about the next five days once it is a few days
+            // old. Show its date instead of its risk levels, so an old one never reads as current.
+            const issued = new Date(outlooks[0].date);
+            const ageDays = (Date.now() - issued.getTime()) / 86400000;
+            if (!Number.isFinite(ageDays) || ageDays > 2) {
+                riskEl.textContent = Number.isFinite(ageDays)
+                    ? `Last outlook ${issued.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                    : 'See the ozone outlook';
                 return;
             }
 
@@ -486,10 +393,16 @@
         const detailEl = document.getElementById('alerts-snow-detail');
         if (!snowEl) return;
 
+        const panel = document.getElementById('alerts-snow');
+
+        // The panel stays hidden unless a real summary loads. It used to say "No significant
+        // snow expected" on any failure, and the file has never been uploaded to either host,
+        // so the homepage gave a confident all-clear with no data behind it.
         try {
             const response = await fetch('/api/static/forecasts/gefs_snow_summary.json');
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const data = await response.json();
+            if (!Number.isFinite(data.median_max_snow_inches)) throw new Error('no median_max_snow_inches');
 
             if (data.median_max_snow_inches > 0.5) {
                 snowEl.textContent = `${data.median_max_snow_inches.toFixed(1)} inches possible`;
@@ -499,9 +412,9 @@
             } else {
                 snowEl.textContent = 'No significant snow expected';
             }
+            if (panel) panel.hidden = false;
         } catch (err) {
-            // Graceful fallback — GEFS JSON may not exist yet
-            snowEl.textContent = 'No significant snow expected';
+            if (panel) panel.hidden = true;
         }
     }
 </script>

@@ -1,49 +1,23 @@
 /* Dashboard Components */
 
 /* Dashboard Section Styling */
+/* The section is a plain region; the panels inside it are the panes (theme/panes.css). */
 .dashboard-section {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(0, 38, 58, 0.1);
     position: relative;
-    overflow: hidden;
-}
-
-.dashboard-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--usu-blue), var(--usu-light-blue), var(--usu-accent));
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 /* Section Header */
 .section-header {
-    text-align: center;
-    margin-bottom: 2rem;
-    padding-bottom: 1rem;
-    border-bottom: 2px solid var(--usu-light-gray);
+    margin-bottom: 1.25rem;
 }
 
 .section-header h2 {
-    color: var(--usu-blue);
-    font-size: 1.6rem;
+    color: var(--color-text);
+    font-size: 1.4rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    margin: 0 0 0.5rem 0;
-}
-
-.section-header h2 i {
-    color: var(--usu-light-blue);
+    text-align: left;
+    margin: 0;
 }
 
 .section-subtitle {
@@ -90,19 +64,11 @@
 
 /* Dashboard Panels */
 .dashboard-panel {
-    background: #f8f9fa;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    border: 1px solid rgba(0, 38, 58, 0.1);
-    transition: all 0.3s ease;
+    --pane-tab-inset: 1.5rem;
     min-height: 500px;
     display: flex;
     flex-direction: column;
-}
-
-.dashboard-panel:hover {
-    box-shadow: var(--shadow-card-hover);
-    background: white;
 }
 
 /* Panel Headers */
@@ -112,21 +78,14 @@
     justify-content: space-between;
     margin-bottom: 1rem;
     padding-bottom: 0.75rem;
-    border-bottom: 2px solid var(--usu-light-gray);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .panel-header h3 {
-    color: var(--usu-blue);
-    font-size: 1.2rem;
+    color: var(--color-text);
+    font-size: 1.15rem;
     font-weight: 600;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
     margin: 0;
-}
-
-.panel-header h3 i {
-    color: var(--usu-light-blue);
 }
 
 .panel-link {
@@ -148,11 +107,6 @@
     color: white;
 }
 
-/* Map Panel Specific */
-.map-panel {
-    border-left: 4px solid var(--usu-blue);
-}
-
 .map-container-dashboard {
     flex: 1;
     display: flex;
@@ -164,7 +118,6 @@
     flex: 1;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
-    border: 2px solid rgba(0, 38, 58, 0.1);
     min-height: 350px;
     width: 100%;
 }

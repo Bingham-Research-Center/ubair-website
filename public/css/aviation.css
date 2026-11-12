@@ -12,11 +12,10 @@ body[data-page-type="aviation"] .aviation-subtitle {
     margin: 0.25rem 0 1.5rem;
 }
 
+/* Each section is a pane (theme/panes.css): square, hairline, accent tab on the top edge. */
 body[data-page-type="aviation"] .aviation-panel {
-    background: var(--color-surface);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    padding: 1.25rem 1.5rem;
+    padding: 1.5rem;
+    --pane-tab-inset: 1.5rem;
     margin-bottom: 1.5rem;
 }
 
