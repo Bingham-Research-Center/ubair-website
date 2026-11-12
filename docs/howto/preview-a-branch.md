@@ -55,8 +55,9 @@ That script does the heavy lifting:
 - Creates a `git worktree` — a second checkout of your branch at `/srv/ubair-website-preview-<user>/`.
 - Symlinks the live CHPC data directory so your preview sees the same real observations as production.
 - Copies `.env`, overrides `PORT` and sets `PREVIEW_MODE=true`.
-- Runs `npm install` and `pm2 start` with a derived app name like `basinwx-feature-braxton-sports`.
-- Runs `pm2 save` so the preview survives a reboot.
+- Runs `npm install` and `pm2 start` with a derived app name like `basinwx-feature-braxton-sports`,
+  from an empty environment so nothing from your shell leaks into the app.
+- Does **not** run `pm2 save`: previews stay out of the reboot set. After a reboot, run `up` again.
 
 At the end it prints nginx + certbot instructions. Run them once:
 
