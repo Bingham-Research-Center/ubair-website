@@ -394,24 +394,20 @@ main.content {
 }
 
 .outlook-preview-date {
-    color: var(--usu-accent);
-    font-size: 0.9rem;
-    font-style: italic;
-    margin-bottom: 1rem;
-    text-align: center;
-    padding: 0.5rem;
-    background: rgba(0, 38, 58, 0.05);
-    border-radius: var(--radius-md);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
 }
 
+/* The outlook text sits straight on the pane: no second box inside it. */
 .outlook-preview-content {
     flex: 1;
     line-height: 1.6;
-    color: var(--usu-blue);
-    padding: 1rem;
-    background: white;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(0, 38, 58, 0.1);
+    color: var(--color-text);
     overflow-y: auto;
 }
 
@@ -506,7 +502,6 @@ main.content {
 .outlook-preview-content.compact {
     font-size: 0.85rem;
     line-height: 1.5;
-    padding: 0.8rem;
 }
 
 .forecast-link {
