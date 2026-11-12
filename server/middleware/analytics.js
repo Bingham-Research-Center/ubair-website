@@ -446,8 +446,8 @@ export default function analyticsMiddleware(req, res, next) {
     // the `clean` tier, so it must be tallied and logged. Only a *failed* one counts: a file we
     // served or revalidated exists, so asking for it is not probing — the homepage itself loads
     // /public/js/config.js, which matches the /config pattern. Asset 404s are not counted as
-    // misses: a 404 on an asset path is as likely our own missing file (root /favicon.ico 404s,
-    // #309) as a scanner, and ten of them would push a real reader out of `clean`.
+    // misses: a 404 on an asset path is as likely our own missing file (as the root /favicon.ico
+    // was until #309) as a scanner, and ten of them would push a real reader out of `clean`.
     const staticAsset = isStaticAssetPath(req.path);
 
     const startTime = Date.now();

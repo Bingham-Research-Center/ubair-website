@@ -107,6 +107,16 @@ app.use('/public', express.static('public', {
     }
 }));
 
+// One icon for the whole site (docs/FAVICON-INSTALL-STEPS.md). Browsers ask for /favicon.ico
+// and iOS for /apple-touch-icon.png at the site root whatever a page links to (#309).
+const faviconDir = path.join(__dirname, '../public/images/favicons');
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(faviconDir, 'favicon.ico'), { maxAge: '1h' });
+});
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+    res.sendFile(path.join(faviconDir, 'apple-touch-icon.png'), { maxAge: '1h' });
+});
+
 // Locally installed UI assets keep the roads map usable when public CDNs are slow or unavailable.
 const vendorStaticOptions = { maxAge: '1h' };
 app.use('/vendor/leaflet', express.static(

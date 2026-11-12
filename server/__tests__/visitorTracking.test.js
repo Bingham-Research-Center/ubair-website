@@ -95,9 +95,10 @@ describe('visitor tracking through the app', () => {
         const before = await counts();
         await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         await request(app).get('/public/js/loadSidebar.js').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
-        // Root /favicon.ico 404s on the live site today (#309); a reader's browser asks for it.
+        // A page that points at a file we do not have (as the root /favicon.ico was until #309)
+        // makes the reader's browser ask for it on every load.
         for (let i = 0; i < 12; i++) {
-            await request(app).get('/favicon.ico').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(404);
+            await request(app).get('/missing-icon.ico').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(404);
         }
         const after = await counts();
 
