@@ -81,4 +81,3 @@ weather-map integration; its commit `b051513` has long been on `dev`. Read it wi
 - `public/api/static/metadata/map_obs_meta_20250731_0228Z.json` is the de-facto local-dev
   metadata seed — `api.js`/`fireWeatherService.js` prefix-match `map_obs_meta_`, so it cannot
   take a `test_*` name without widening that match.
-- `/test-viz` (route in `server.js` + `views/test-viz.html` + 51 KB JS) ships to prod, unlinked from nav.
