@@ -218,7 +218,7 @@ function showClusterView(clustering) {
     if (clusterRow) {
         clusterRow.innerHTML = sorted.map((c, i) => {
             const pct = Math.round(c.fraction * 100);
-            return `<button class="cluster-btn${i === 0 ? ' active' : ''}" data-medoid="${c.medoid}" data-idx="${i}" title="${c.members.length} members, ${c.clyfar_ozone.risk_level} ozone risk">Cluster ${c.id} (${pct}%)</button>`;
+            return `<button class="cluster-btn clyfar-glow${i === 0 ? ' active' : ''}" data-medoid="${c.medoid}" data-idx="${i}" title="${c.members.length} members, ${c.clyfar_ozone.risk_level} ozone risk">Cluster ${c.id} (${pct}%)</button>`;
         }).join('');
 
         // Bind click events

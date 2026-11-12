@@ -121,3 +121,9 @@ predates the rule, so it is a ratchet, not a ban:
 
 Hovering changes colour or border only. No lift, no scale. Keyboard focus shows the same
 state as hover.
+
+Clyfar is the one hover whose colour moves: anything that leads to or belongs to Clyfar carries
+`class="clyfar-glow"` (`public/css/theme/clyfar.css`) and fills with a dark red that drifts
+between wine, oxblood and rust (`--clyfar-*` and `--ember-*` in `tokens.css`). It is still
+colour only, and it stops drifting under `prefers-reduced-motion`. Keep it to Clyfar, so it
+stays a signature rather than a second accent.
