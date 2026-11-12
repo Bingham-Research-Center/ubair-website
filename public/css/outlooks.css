@@ -2,7 +2,7 @@
 .markdown-content {
     line-height: 1.7;
     color: var(--usu-blue);
-    font-family: 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: var(--font-sans);
     max-width: 100%;
     overflow-wrap: break-word;
     word-wrap: break-word;
@@ -32,9 +32,9 @@
     margin: 1.5rem 0 0.75rem 0;
     color: var(--usu-blue);
     font-weight: 600;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+    background: #f8f9fa;
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border-left: 4px solid var(--usu-light-blue);
     position: relative;
     cursor: pointer;
@@ -42,9 +42,8 @@
 }
 
 .markdown-content h3:hover {
-    background: linear-gradient(135deg, #e9ecef, #dee2e6);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,38,58,0.1);
+    background: #e9ecef;
+    box-shadow: var(--shadow-card-hover);
 }
 
 .markdown-content h4 {
@@ -75,12 +74,12 @@
 .risk-indicator {
     display: inline;
     padding: 3px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-weight: 700;
     font-size: inherit;
     text-transform: uppercase;
     letter-spacing: 0.3px;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    box-shadow: var(--shadow-card);
     white-space: nowrap;
 }
 
@@ -122,8 +121,8 @@
     border-left: 4px solid var(--usu-light-blue);
     padding: 1.5rem;
     margin: 1.5rem 0;
-    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
-    border-radius: 0 8px 8px 0;
+    background: #f8fafc;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
     color: var(--usu-accent);
     font-style: italic;
     position: relative;
@@ -156,7 +155,7 @@
     height: 2px;
     background: linear-gradient(90deg, transparent, var(--usu-light-blue), transparent);
     margin: 2.5rem 0;
-    border-radius: 1px;
+    border-radius: var(--radius-sm);
 }
 
 /* Links */
@@ -178,23 +177,22 @@
     height: auto;
     margin: 2rem auto;
     display: block;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0,38,58,0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 /* Day sections with enhanced collapsible styling */
 .day-section {
     margin: 1.5rem 0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: 0 4px 16px rgba(0,38,58,0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(0,38,58,0.1);
     transition: all 0.3s ease;
 }
 
 .day-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0,38,58,0.12);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .day-content {
@@ -229,8 +227,8 @@
 .archive-box {
     background-color: var(--usu-blue);
     color: white;
-    border-radius: 8px;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     max-height: fit-content;
 }
 
@@ -261,7 +259,7 @@
 
 .archive-list::-webkit-scrollbar-thumb {
     background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .archive-item {
@@ -270,7 +268,7 @@
     align-items: center;
     padding: 10px 15px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background-color: rgba(255, 255, 255, 0.1);
     transition: all 0.2s ease;
     text-decoration: none;
@@ -280,7 +278,6 @@
 
 .archive-item:hover {
     background-color: var(--usu-light-blue);
-    transform: translateX(4px);
 }
 
 .archive-item.active {

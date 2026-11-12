@@ -36,7 +36,7 @@ three designs and one colour pair per theme:
 |---|---|---|
 | `current` | navy `#00263a` | red `#ef4a5f` |
 | `slate-copper` | slate `#2a323c` | copper `#e0813f` |
-| `ink-teal` | ink `#15181c` | teal `#2bb5a6` |
+| `ink-teal` (**installed**) | ink `#15181c` | teal `#2bb5a6` |
 | `navy-sage` | navy `#10283f` | sage `#8fbf96` |
 
 The accent is a lighter tint of each theme's accent: the theme's own is tuned for text on white

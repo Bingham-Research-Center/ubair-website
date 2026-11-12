@@ -69,15 +69,20 @@ describe('token tiers', () => {
             .toEqual(['#6c757d', '#ffc107', '#28a745']);
     });
 
-    test('the legacy --usu-* shim resolves to the values the site shipped with', () => {
+    test('the legacy --usu-* shim follows the theme', () => {
+        // Hundreds of rules still say var(--usu-blue). They must move with the anchor and
+        // accent in tokens.css, not hold the colours the site shipped with before the theme.
         const shim = fs.readFileSync(path.join(repoRoot, 'public/css/variables.css'), 'utf8');
         const all = { ...light, ...Object.fromEntries(
             [...shim.matchAll(/(--usu-[\w-]+)\s*:\s*([^;]+);/g)].map((m) => [m[1], m[2].trim()])) };
-        const shipped = {
-            '--usu-blue': '#00263a', '--usu-light-blue': '#627c8b', '--usu-accent': '#8b9299',
-            '--usu-gray': '#a7a9ac', '--usu-light-gray': '#e6e7e8', '--usu-red': '#c8102e',
+        const follows = {
+            '--usu-blue': '--anchor-900', '--usu-light-blue': '--anchor-600', '--usu-red': '--accent-600',
         };
-        for (const [name, value] of Object.entries(shipped)) {
+        for (const [name, token] of Object.entries(follows)) {
+            expect([name, resolve(all, name)]).toEqual([name, resolve(all, token)]);
+        }
+        const neutral = { '--usu-accent': '#8b9299', '--usu-gray': '#a7a9ac', '--usu-light-gray': '#e6e7e8' };
+        for (const [name, value] of Object.entries(neutral)) {
             expect([name, resolve(all, name)]).toEqual([name, value]);
         }
     });

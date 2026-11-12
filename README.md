@@ -32,6 +32,10 @@ feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins 
 `<name>.basinwx.dev`. Forecast schemas are pinned in `DATA_MANIFEST.json`.
 
 ## Look and feel (theme)
+The current look is **Ink + Teal**: near-black ink, one teal accent, IBM Plex Sans (served from
+`public/fonts/`, no font CDN), flat surfaces and a greyed basemap. A dark mode exists in the
+tokens (`<html data-mode="dark">`) but is a draft and is not switched on.
+
 Every colour, corner radius, shadow and font is defined once, in `public/css/theme/tokens.css`.
 Page stylesheets read those tokens with `var(--…)` and add no raw values of their own, so
 changing the site's look is an edit to that one file.
