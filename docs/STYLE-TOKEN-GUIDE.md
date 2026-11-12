@@ -34,7 +34,11 @@ body[data-page-type="fire"] { --page-accent: var(--status-danger); }
 ```
 
 `--card-accent` / `--card-text` began on the sports page (Quinten's per-card colours) and are
-now the shared way to do this.
+now the shared way to do this. They have no value on `:root`, on purpose: a component reads
+them with a fallback, `border-color: var(--card-accent, var(--page-accent))`, so a card that
+sets nothing follows its page, and a page that sets nothing follows the theme. Do not "tidy"
+that into a `:root` alias (`--card-accent: var(--page-accent)`): an alias is resolved where it
+is declared, so it would hold the root's accent and ignore the page's.
 
 ## Changing the theme
 

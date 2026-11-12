@@ -108,11 +108,14 @@
     --motion-fast: 0.15s ease;
     --sidebar-width: 250px;
 
-    /* 3. Component knobs. A page sets these; shared components read them. */
+    /* 3. Component knobs. A page sets these; shared components read them.
+
+       --card-accent and --card-text are deliberately NOT given a value here. A custom property
+       that aliases another is resolved on the element that declares it, so a :root alias would
+       freeze the root's --page-accent and ignore a page that sets its own on <body>. Components
+       read them with a fallback instead: var(--card-accent, var(--page-accent)). */
 
     --page-accent: var(--color-accent);
-    --card-accent: var(--page-accent);
-    --card-text: var(--color-text);
     --marker-status-color: var(--status-nodata);
 }
 
