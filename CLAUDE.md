@@ -31,7 +31,9 @@ stage it — use `git worktree add /tmp/staging <branch>`.
 
 Feature-branch previews live at `<name>.basinwx.dev` (Namecheap wildcard A record),
 managed via `scripts/manage-previews.sh` + `preview-apps.json`. Background jobs are
-gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas.
+gated on `PREVIEW_MODE=true` so previews don't double-burn upstream quotas. DNS is wildcard
+but the certificate is not: each new subdomain needs root to run
+`certbot certonly --nginx -d <name>.basinwx.dev` and then add an nginx vhost.
 
 A third dev laptop/VM may also run this repo: **not operational, never the source of truth.**
 
@@ -60,13 +62,25 @@ in `docs/DEPLOYMENT.md`. Read it before any provisioning work.
   behind it. The unit was removed on 2026-10-27; since 1.5.5 a copy that cannot read `.env`
   exits before binding. After any reboot, check `ss -ltnp 'sport = :3000'` and `ingest.ready`
   (`docs/DEPLOYMENT.md` §8).
-- **Claude cannot reach either box.** notchpeak1 has no SSH keys; deploys are JRL's, from
-  elsewhere. Verify from outside and hand over the one-liner.
+- **Claude cannot reach either box from notchpeak1** (no SSH keys); there, verify from outside
+  and hand over the one-liner. A session whose working directory is `/srv/ubair-website` and
+  whose user is `deploy` is running **on the dev box**: it can pull and restart dev when JRL
+  asks, but has no sudo and no route to prod.
+- **Never plain-`pm2 restart` from a Claude Code shell.** pm2 copies the calling shell's
+  environment, session token included, into the app and into `pm2 save`. Delete and start clean:
+  `pm2 delete basinwx-dev && env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin bash -c 'cd /srv/ubair-website && pm2 start ecosystem.config.cjs'`
+  (about a second of downtime). Check for stray keys by name only, never by printing `pm2 jlist`
+  or `pm2 env` (they show values):
+  `pm2 jlist | python3 -c "import json,sys; [print(a['name'], [k for k in a['pm2_env'] if 'CLAUDE' in k]) for a in json.load(sys.stdin)]"`.
+  Do not `pm2 save` afterwards unless the reboot set is meant to change: it writes every running
+  app, previews included, and whatever environment they hold. The saved set is `regs-alpha` +
+  `basinwx-dev`, and the existing entry still starts the same app after a reboot.
 - **`npm install` is part of every deploy.** `package-lock.json` is gitignored and the roads
   page serves Leaflet, markercluster and Font Awesome out of `node_modules`; a pull without it
   404s those routes and `/api/health` reports `vendorAssets.ok: false`.
   Prod, as root: `cd /var/www/ubair-website && git pull --ff-only origin ops && npm install && pm2 restart ubair-site`.
-  Dev, as deploy: `cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev`.
+  Dev, as deploy: `cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev`
+  (from JRL's own shell; from a Claude Code session swap the last step for the clean restart below).
   Then re-run `probe.py`: `release matches newest tag` on prod, the new commit on dev.
 
 ## Data pipeline
@@ -103,6 +117,24 @@ Everything else uses `var(--…)` semantic tokens (`--color-*`, `--status-*`, `-
 not by adding rules. `styleRatchet.test.js` holds a per-file ceiling that may fall but not rise
 (new stylesheets start at zero); lower it with `node scripts/style-scan.mjs --tighten`.
 Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
+
+The look since v1.6.0 is **Ink + Teal**: IBM Plex Sans served from `public/fonts/` (no font
+CDN), flat surfaces, a greyed basemap (`--basemap-filter`), hover that changes colour and never
+moves. Dark mode is a draft in the tokens (`html[data-mode="dark"]`) and is not switched on.
+- **A colour that carries meaning never rides on a page's decorative palette.** Status, AQI,
+  confidence and fire-restriction colours have their own tokens (`--status-*`, `--epa-*`,
+  `--confidence-*`, `--restriction-*`). The first cut of the look turned Stage 1 fire
+  restrictions teal because the pills borrowed `--fire-accent` (#353).
+- **Nothing unfinished on `dev`:** no "Coming Soon" overlays, badges or disabled links
+  (`removedPages.test.js`). A page that is not ready lives on a branch. The kiosk pages, easter
+  eggs, and the agriculture, aviation and water pages left in Nov 2026; the code is at tag
+  `parked/pre-cleanup-2026-11-11` (branch `parked/unfinished-pages`).
+- **One icon and one wordmark**, drawn by `scripts/make_favicon.py` and
+  `scripts/make_wordmark.py` (`docs/FAVICON-INSTALL-STEPS.md`). `localAssets.test.js` fails if
+  a page links a `/public` file that does not exist.
+- To compare candidate looks, run one preview with preview-only `html[data-theme]` blocks and
+  a switcher (README "Look and feel"); `styleRatchet.test.js` fails if the switcher reaches `dev`.
+- Outstanding theme work is issue #355.
 
 ## Protected branches
 **Never push directly to `dev`, `ops`, or `main`.** All changes go through PRs. If a
@@ -156,8 +188,8 @@ password manager.
 
 ## Testing
 - `npm run dev` — nodemon server
-- `npm test` — Jest. **The suite is green (273/273 as of 2026-10-27); any failure is new
-  breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
+- `npm test` — Jest. **The suite is green (427/427 across 33 suites as of 2026-11-12); any failure
+  is new breakage.** Never tolerate a red suite — a tolerated one once let a vacuous test survive
   unnoticed.
 - **First rule out staleness.** "Any failure is new breakage" holds only once the branch is
   current with `dev`. Run the same suite on `dev` and compare before blaming the change. PR #128

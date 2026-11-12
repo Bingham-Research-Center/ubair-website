@@ -40,6 +40,16 @@ sets nothing follows its page, and a page that sets nothing follows the theme. D
 that into a `:root` alias (`--card-accent: var(--page-accent)`): an alias is resolved where it
 is declared, so it would hold the root's accent and ignore the page's.
 
+## Colours that mean something
+
+A page's decorative palette (`--fire-accent`, `--roads-secondary`, …) follows the theme. A
+colour that tells the reader something must not: give it a semantic token and use that.
+`--status-*` (good, warning, danger, info), `--epa-*` (AQI categories), `--confidence-*` and
+`--restriction-*` (fire-restriction stages) are the existing families. For text on a fill,
+use the matching "on" token (`--color-on-brand`, `--color-on-brand-muted`, `--color-on-accent`,
+`--color-on-warm`); `themeContrast.test.js` checks each pair, so add the pair when you add a
+token.
+
 ## Changing the theme
 
 Edit values in `tokens.css`. Changing `--anchor-900` moves the sidebar, headings and every
