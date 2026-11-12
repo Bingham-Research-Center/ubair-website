@@ -27,6 +27,20 @@ export function toMph(value, unit) {
     return null;
 }
 
+export function toMetresPerSecond(value, unit) {
+    const mph = toMph(value, unit);
+    return mph === null ? null : mph / 2.23694;
+}
+
+export function toMillimetres(value, unit) {
+    if (!Number.isFinite(value)) return null;
+    if (unit === 'Millimeters' || unit === 'mm') return value;
+    if (unit === 'Centimeters' || unit === 'cm') return value * 10;
+    if (unit === 'Meters' || unit === 'm') return value * 1000;
+    if (unit === 'Inches' || unit === 'in') return value * 25.4;
+    return null;
+}
+
 /**
  * Relative humidity from temperature and dew point, via the Magnus formula.
  *
