@@ -8,19 +8,7 @@ const PAGE_DISCLAIMERS = {
         For official weather forecasts and warnings, please visit the National Weather Service.
         Real-time data are preliminary and subject to quality control. ©2024, Utah State University.`,
 
-    '/agriculture': `DISCLAIMER: Agricultural weather forecasts are experimental and for research purposes only.
-        Consult with agricultural extension services and professional agronomists for farming decisions.
-        ©2024, Utah State University.`,
-
     '/roads': `UDOT data may be delayed. Verify critical trips with official sources.`,
-
-    '/aviation': `DISCLAIMER: Aviation weather products are for planning purposes only. Always obtain official
-        weather briefings from Flight Service or approved sources before flight operations.
-        ©2024, Utah State University.`,
-
-    '/water': `DISCLAIMER: Water recreation forecasts are experimental.
-        Always check current conditions and weather warnings before water activities.
-        ©2025, Utah State University.`,
 
     '/fire': `DISCLAIMER: Fire-weather products are experimental research outputs and informational only.
         They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
