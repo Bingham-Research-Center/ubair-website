@@ -51,6 +51,9 @@ const PAIRS = [
     ['--color-on-warm', '--restriction-stage-1'],
     ['--color-on-warm', '--restriction-stage-2'],
     ['--color-on-accent', '--color-accent'],
+    ['--color-on-clyfar', '--clyfar-ember-from'],
+    ['--color-on-clyfar', '--clyfar-ember'],
+    ['--color-on-clyfar', '--clyfar-ember-to'],
 ];
 
 describe.each([['light', light], ['dark', dark]])('%s theme contrast', (_name, tokens) => {
