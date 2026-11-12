@@ -88,6 +88,18 @@
     left: 150%;
 }
 
+/* The wordmark is line art, not the photo-like logo .site-logo was written for: no edge
+   fade, no drop shadow, and room either side so the shine sweep clears the letters. */
+.site-wordmark {
+    width: clamp(200px, 22vw, 320px);
+    padding: 0.5rem 0.75rem;
+    box-sizing: content-box;
+    border-radius: 0;
+    -webkit-mask-image: none;
+    mask-image: none;
+    filter: none;
+}
+
 .headlines-dashboard {
     flex: 1;
     max-width: 650px;
