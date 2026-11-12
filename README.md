@@ -52,14 +52,49 @@ corners of 4, 6 or 8 px; hover and keyboard focus change colour or border and ne
 element; icons come from the one vendored Font Awesome (`/vendor/fontawesome`), not emoji or a
 CDN. Tiers, the ratchet and how to add a token: `docs/STYLE-TOKEN-GUIDE.md`.
 
-**Branch previews carry the theme with them.** A preview at `<name>.basinwx.dev` is one
-developer's PR branch running from its own worktree on the dev box
-(`docs/howto/preview-a-branch.md`; each new subdomain also needs a certificate and an nginx
-vhost, which only root can add). Every page loads `tokens.css` through `main.css`, so a branch
-that is current with `dev` shows the current theme with no extra work, and a branch that edits
-`tokens.css` previews its own look. To compare several looks on one preview, put each
-candidate's values in an `html[data-theme="name"]` block in a preview-only stylesheet and
-switch the attribute. Keep that off `dev`: `styleRatchet` fails if the switcher is present.
+**Branch previews carry the theme with them.** Every page loads `tokens.css` through
+`main.css`, so a preview of a branch that is current with `dev` shows the current theme with no
+extra work, and a branch that edits `tokens.css` previews its own look. To compare several
+looks on one preview, put each candidate's values in an `html[data-theme="name"]` block in a
+preview-only stylesheet and switch the attribute. Keep that off `dev`: `styleRatchet` fails if
+the switcher is present.
+
+## Branch previews (dev box only)
+Any branch or PR can run beside the dev site at its own `<name>.basinwx.dev`. One slot is
+already wired: **`theme.basinwx.dev` → port 3003** has its certificate and nginx vhost, and
+answers 502 while nothing runs there. Nothing below needs root. As `deploy` on the dev box:
+
+```bash
+cd /srv/ubair-website && git fetch origin
+git worktree add --detach /srv/ubair-website-preview-theme origin/<branch>
+cd /srv/ubair-website-preview-theme
+cp /srv/ubair-website/.env .env && sed -i 's/^PORT=.*/PORT=3003/' .env && echo PREVIEW_MODE=true >> .env
+ln -s /srv/ubair-website/node_modules node_modules
+rm -rf public/api/static && ln -s /srv/ubair-website/public/api/static public/api/static
+env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin \
+  PM2_APP_NAME=basinwx-preview-theme bash -c 'cd /srv/ubair-website-preview-theme && pm2 start ecosystem.config.cjs'
+curl -s https://theme.basinwx.dev/api/health    # "commit" should be the branch's
+```
+
+To take it down, which is also the first step of pointing the slot at a different branch:
+
+```bash
+pm2 delete basinwx-preview-theme
+rm /srv/ubair-website-preview-theme/node_modules /srv/ubair-website-preview-theme/public/api/static
+git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-theme
+```
+
+- **A PR instead of a branch:** `git fetch origin pull/<N>/head`, then use `FETCH_HEAD` in place
+  of `origin/<branch>`. **The look switcher** from the Nov 2026 comparison, also the quickest
+  way to try dark mode, is the branch `preview/theme`; it exists only in the repo on the dev box.
+- The two symlinks give the preview the dev site's packages and its live data. Unlink them
+  before removing the folder, as above. If the branch changes dependencies, run `npm install`
+  in place of the `node_modules` link.
+- `PREVIEW_MODE=true` keeps the preview's background jobs off, `env -i` keeps the calling
+  shell's variables out of the app, and there is no `pm2 save` because previews stay out of the
+  reboot set.
+- A second preview at another name needs its own port, a certificate and an nginx vhost,
+  which only root can add: `docs/howto/preview-a-branch.md`.
 
 ## Documentation
 | Audience | Start here |
