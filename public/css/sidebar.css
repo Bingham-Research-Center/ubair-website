@@ -160,37 +160,6 @@
     opacity: 1;
 }
 
-/* Disabled/Coming Soon Links */
-.coming-soon-link {
-    cursor: not-allowed;
-}
-
-.coming-soon-link:hover {
-    background-color: transparent !important;
-}
-
-.disabled-link {
-    color: rgba(255, 255, 255, 0.4);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: not-allowed;
-}
-
-.disabled-link i {
-    opacity: 0.5;
-}
-
-.coming-soon-badge {
-    font-size: 0.65rem;
-    background: rgba(255, 215, 0, 0.3);
-    color: #ffd700;
-    padding: 2px 6px;
-    border-radius: var(--radius-sm);
-    margin-left: auto;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
 
 /* Dropdown Menu */
 .sidebar ul li.nav-dropdown {
@@ -233,29 +202,4 @@
 
 .dropdown-menu a {
     font-size: inherit;
-}
-
-/* Coming Soon folder styling */
-.nav-dropdown.coming-soon .dropdown-toggle {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.nav-dropdown.coming-soon .dropdown-toggle i:first-child {
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.nav-dropdown.coming-soon .dropdown-menu {
-    background: var(--color-brand);
-}
-
-.nav-dropdown.coming-soon .dropdown-menu li a {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.nav-dropdown.coming-soon .dropdown-menu li a i {
-    opacity: 0.5;
-}
-
-.nav-dropdown.coming-soon .dropdown-menu li:hover a {
-    color: rgba(255, 255, 255, 0.9);
 }
