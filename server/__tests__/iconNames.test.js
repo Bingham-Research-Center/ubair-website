@@ -11,11 +11,6 @@ const vendoredCss = fs.readFileSync(
     path.join(repoRoot, 'node_modules/@fortawesome/fontawesome-free/css/all.css'), 'utf8');
 const known = new Set(vendoredCss.match(/\.fa-[a-z0-9]+(?:-[a-z0-9]+)*/g).map((c) => c.slice(1)));
 
-// Pages due to leave dev in their own PRs; they keep their old link until then.
-const PENDING_REMOVAL = new Set([
-    'kiosk.html', 'kiosk-portrait.html', 'agriculture.html', 'aviation.html', 'water.html',
-]);
-
 function walk(dir, ext) {
     return fs.readdirSync(path.join(repoRoot, dir), { withFileTypes: true }).flatMap((entry) => {
         const rel = path.join(dir, entry.name);
@@ -26,7 +21,7 @@ function walk(dir, ext) {
     });
 }
 
-const views = walk('views', '.html').filter((f) => !PENDING_REMOVAL.has(path.basename(f)));
+const views = walk('views', '.html');
 const sources = [...views, ...walk('public/partials', '.html'), ...walk('public/js', '.js')];
 
 describe('Font Awesome', () => {
