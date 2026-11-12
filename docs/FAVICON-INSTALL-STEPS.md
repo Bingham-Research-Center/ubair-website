@@ -30,7 +30,7 @@ three designs and one colour pair per theme:
 |---|---|
 | `ridge` | two white peaks above a band of the accent colour: the mountains round the Basin and the air that pools below them |
 | `basin` | a white bowl with an accent-coloured lid: the Basin in cross-section under a winter inversion |
-| `letter` | a white **B** with an accent-coloured degree ring |
+| `letter` | a white **B** with an accent-coloured degree ring (**installed**, chosen 12 Nov 2026: the most distinctive of the three, and the basis for the wordmark) |
 
 | `--theme` | Background | Accent |
 |---|---|---|
@@ -52,7 +52,7 @@ scripts/make_favicon.py --sheet /tmp/favicons.png
 
 1. From a branch off `dev`:
    ```bash
-   scripts/make_favicon.py --design ridge --theme slate-copper
+   scripts/make_favicon.py --design letter --theme slate-copper
    ```
    It overwrites the three files above. No page or server change is needed.
 2. `npm test`, commit the three files, open a PR into `dev`.
