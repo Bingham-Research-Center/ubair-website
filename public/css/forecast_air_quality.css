@@ -120,7 +120,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     box-shadow: var(--shadow-card-hover);
 }
 
-/* The LLM Summaries, Clyfar and heatmap boxes are panes (theme/panes.css): square,
+/* The Clyfar and heatmap boxes are panes (theme/panes.css): square,
    hairline, accent tab on the top edge. Rules here set padding and spacing only. */
 
 /* Clyfar Section */
@@ -132,6 +132,30 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .clyfar-header {
     margin-bottom: 2rem;
+}
+
+/* The pane at the top of the page holds only the links and the run status line. */
+.clyfar-status-pane {
+    padding: 1.25rem;
+}
+
+.clyfar-status-pane .clyfar-header {
+    margin-bottom: 0.75rem;
+}
+
+.clyfar-run-status {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+/* Too old to be a forecast: say so in body colour behind a status marker, not as small print. */
+.clyfar-run-status.is-stale {
+    padding-left: 0.75rem;
+    border-left: 0.25rem solid var(--status-warning);
+    color: var(--color-text);
+    font-weight: 500;
 }
 
 .clyfar-header h2 {
@@ -181,58 +205,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .ffion-btn:hover {
     background: var(--air-danger);
     color: white;
-}
-
-/* Forecast Summary Grid */
-.forecast-summary-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
-}
-
-/* Today / Tomorrow / 7-Day are rows inside the Clyfar pane, not boxes of their own:
-   one level of boxes. A hairline separates them; the day carries no colour of its own. */
-.summary-card {
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--color-border);
-    position: relative;
-}
-
-.summary-card:last-child {
-    border-bottom: none;
-}
-
-.card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 3.125rem;
-    height: 3.125rem;
-    margin-bottom: 1rem;
-    color: var(--page-accent);
-    font-size: 1.2rem;
-}
-
-.card-content h3 {
-    color: var(--air-primary);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 1rem;
-}
-
-.forecast-level {
-    font-size: 1.4rem;
-    font-weight: 700;
-    margin: 0.5rem 0;
-    color: var(--air-secondary);
-}
-
-.confidence {
-    color: #666;
-    font-size: 0.9rem;
-    margin: 0;
-    font-style: italic;
 }
 
 /* Section wrappers for full-width containers */
@@ -562,54 +534,34 @@ body[data-page-type="forecast_air_quality"] h1::after {
         flex-direction: column;
         gap: 1rem;
     }
-    
+
     .heatmap-display {
         grid-template-columns: 1fr;
         gap: 1rem;
     }
-    
+
     .scenario-legend {
         flex-direction: column;
         gap: 1rem;
         align-items: center;
     }
-    
+
     .clyfar-header {
         flex-direction: column;
         align-items: flex-start;
         gap: 1rem;
     }
-    
+
     .clyfar-info {
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
     }
-    
-    .forecast-summary-grid {
-        grid-template-columns: 1fr;
-    }
-    
+
     .performance-grid {
         grid-template-columns: 1fr;
     }
 
-    .llm-summaries-section {
-        max-width: 100%;
-        padding: 1.5rem;
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .summary-tabs {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .tab-button {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
 }
 
 /* Animations */
@@ -618,14 +570,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     50% { opacity: 1; }
 }
 
-.forecast-level:empty::after {
-    content: '...';
-    animation: pulse-attention 1.5s infinite;
-    color: var(--air-warning);
-}
-
 /* Focus states for accessibility */
-.summary-card:focus-within,
 .metric-card:focus-within,
 .outlook-link:focus,
 .info-link:focus {
@@ -643,180 +588,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
     color: var(--air-warning);
 }
 
-/* Compact Two-Column Grid for LLM Summaries and Clyfar */
-.compact-sections-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin-bottom: 2rem;
-}
-
-@media (max-width: 900px) {
-    .compact-sections-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-.llm-summaries-section {
-    padding: 2rem;
-    margin-bottom: 2rem;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-/* Compact styles - symmetrical panels */
-.llm-summaries-section.compact,
-.clyfar-section.compact {
-    margin-bottom: 0;
-    padding: 1.25rem;
-    min-height: 280px;
-    max-height: 320px;
-    display: flex;
-    flex-direction: column;
-}
-
-.llm-summaries-section.compact .section-header h2,
-.clyfar-section.compact .section-header h2 {
-    font-size: 1.1rem;
-    margin-bottom: 0.75rem;
-}
-
-.llm-summaries-section.compact .section-header,
-.clyfar-section.compact .section-header {
-    margin-bottom: 0.75rem;
-}
-
-.llm-summaries-section.compact .tab-content {
-    flex: 1;
-    overflow: auto;
-}
-
-.llm-summaries-section.compact .summary-content {
-    padding: 0.75rem;
-    font-size: 0.85rem;
-    max-height: 160px;
-    overflow-y: auto;
-}
-
-.compact-tabs {
-    gap: 0.25rem !important;
-    margin-bottom: 0.75rem !important;
-}
-
-.compact-tabs .tab-button {
-    padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-}
-
-.clyfar-section.compact .clyfar-content {
-    flex: 1;
-    display: flex;
-    align-items: center;
-}
-
-.compact-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    width: 100%;
-}
-
-.compact-grid .summary-card {
-    padding: 0.6rem 0;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.compact-grid .card-icon {
-    width: 2rem;
-    height: 2rem;
-    margin-bottom: 0;
-    font-size: 0.85rem;
-    flex-shrink: 0;
-}
-
-.compact-grid .card-content {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    flex: 1;
-}
-
-.compact-grid .card-content h3 {
-    margin: 0;
-    font-size: 0.85rem;
-    min-width: 65px;
-}
-
-.compact-grid .forecast-level {
-    margin: 0;
-    font-size: 1rem;
-}
-
-
-.summary-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--air-background);
-}
-
-.tab-button {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border: none;
-    color: var(--air-primary);
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    transition: all 0.3s ease;
-    position: relative;
-}
-
-.tab-button:hover {
-    background: var(--air-background);
-}
-
-.tab-button.active {
-    background: var(--air-primary);
-    color: white;
-}
-
-.tab-content {
-    position: relative;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-.summary-content {
-    display: none;
-    background: var(--air-background);
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
-    line-height: 1.6;
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    max-width: 100%;
-}
-
-.summary-content.active {
-    display: block;
-}
-
-.summary-content .markdown-content h1,
-.summary-content .markdown-content h2,
-.summary-content .markdown-content h3 {
-    color: var(--air-primary);
-    margin-top: 1rem;
-    margin-bottom: 0.5rem;
-}
-
-.summary-content .markdown-content p {
-    margin-bottom: 1rem;
-}
 /* Plotly Chart Containers */
 .plotly-chart {
     min-height: 350px;
@@ -914,11 +685,11 @@ body[data-page-type="forecast_air_quality"] h1::after {
     .plotly-chart {
         min-height: 280px;
     }
-    
+
     .heatmap-display {
         grid-template-columns: 1fr;
     }
-    
+
     .heatmap-legend {
         order: -1;
         min-width: 100%;
@@ -1049,47 +820,4 @@ body[data-page-type="forecast_air_quality"] h1::after {
     height: auto;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
-}
-
-/* Forecast level color classes for summary cards */
-.forecast-level.level-background {
-    color: #22c55e; /* Green */
-}
-
-.forecast-level.level-moderate {
-    color: #eab308; /* Yellow */
-}
-
-.forecast-level.level-elevated {
-    color: #f97316; /* Orange */
-}
-
-.forecast-level.level-extreme {
-    color: #ef4444; /* Red */
-}
-
-/* Data Unavailable State - greyed out cards */
-.summary-card.data-unavailable {
-    opacity: 0.5;
-    filter: grayscale(100%);
-    cursor: not-allowed;
-}
-
-.summary-card.data-unavailable .card-icon {
-    color: var(--color-text-muted);
-}
-
-.summary-card.data-unavailable .forecast-level {
-    color: #9ca3af !important;
-}
-
-.summary-card.data-unavailable .forecast-level::after {
-    content: ' (No Data)';
-    font-size: 0.7rem;
-    font-weight: 400;
-    opacity: 0.7;
-}
-
-.summary-card.data-unavailable .confidence {
-    color: #9ca3af !important;
 }
