@@ -40,6 +40,33 @@ sets nothing follows its page, and a page that sets nothing follows the theme. D
 that into a `:root` alias (`--card-accent: var(--page-accent)`): an alias is resolved where it
 is declared, so it would hold the root's accent and ignore the page's.
 
+## Panes
+
+Since v1.6.2 every card-like box is a **pane**: square (`--radius-*` are 0), separated by the
+hairline in `--shadow-card`, and marked by a short accent tab on its top edge
+(`public/css/theme/panes.css`). The tab replaced a coloured left bar that curved round rounded
+corners. Opt in with `class="pane"`; nothing else is needed.
+
+- Colour: `--pane-accent` on the pane, else the page's `--page-accent`. A pane whose colour means
+  something points it at a semantic token, e.g. `.headline-item.warning { --pane-accent:
+  var(--status-danger); }`.
+- Position: the tab sits `--pane-tab-inset` from the left. A pane with other padding sets the
+  inset to match, so the tab lines up with its text.
+- A pane holds content; it does not nest inside another box. Outer regions (a section, a
+  header) are plain, so the reader sees one level of boxes.
+- A callout inside a pane (a quote, a note) keeps a plain left rule: the tab marks a pane, the
+  left rule marks an aside.
+
+The homepage and Aviation use panes. The other pages still draw their own left bars, square
+since 1.6.2, and move to `.pane` a page at a time.
+
+## Scale
+
+`--root-font-size` (85% since v1.6.2) sets `html { font-size }`, and nearly every size on the
+site is in `rem`, so this one value acts like browser zoom. It is deliberately not CSS `zoom`,
+which would put Leaflet and Plotly pointer positions out of step with what they draw. Write new
+lengths in `rem` so they follow it; the sidebar width is `--sidebar-width` for the same reason.
+
 ## Colours that mean something
 
 A page's decorative palette (`--fire-accent`, `--roads-secondary`, …) follows the theme. A

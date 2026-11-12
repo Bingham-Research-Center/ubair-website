@@ -143,9 +143,11 @@
     --confidence-likely: #ffc107;
     --confidence-confirmed: #28a745;
 
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
+    /* Hard edges since v1.6.2: panes, buttons and inputs are square. Pills (toggles, status
+       chips, live dots) keep their round ends. */
+    --radius-sm: 0;
+    --radius-md: 0;
+    --radius-lg: 0;
     --radius-pill: 999px;
 
     /* A card is separated by a hairline, not a drop shadow; only floating things cast one. */
@@ -160,7 +162,12 @@
 
     /* Applied to Leaflet's tile pane. Greyed, so the coloured markers carry the map. */
     --basemap-filter: grayscale(1) contrast(0.9) brightness(1.06);
-    --sidebar-width: 250px;
+    --sidebar-width: 15.625rem;    /* 250px at a 16px root; scales with --root-font-size */
+
+    /* The whole UI's scale. Nearly every size on the site is in rem, so this one value works
+       like browser zoom without CSS zoom, which would put Leaflet and Plotly pointer positions
+       out of step with what is drawn. 85% since v1.6.2: the site read too large at 100%. */
+    --root-font-size: 85%;
 
     /* 3. Component knobs. A page sets these; shared components read them.
 
@@ -171,6 +178,13 @@
 
     --page-accent: var(--color-accent);
     --marker-status-color: var(--status-nodata);
+
+    /* Panes (public/css/theme/panes.css): square, hairline, and a short accent tab on the top
+       edge. A pane's colour is --pane-accent if it sets one, else the page's accent; like
+       --card-accent it has no :root value, so it is read with a fallback. */
+    --pane-tab-width: 2rem;
+    --pane-tab-height: 4px;
+    --pane-tab-inset: 1.25rem;
 }
 
 /* 4. Dark mode: semantic tier only */

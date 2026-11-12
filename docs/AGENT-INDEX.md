@@ -1,6 +1,6 @@
 # Agent Index — ubair-website
 
-Entry point for AI agents working in this repo. **Last refreshed:** 2026-11-09.
+Entry point for AI agents working in this repo. **Last refreshed:** 2026-11-12.
 
 This file lists what's in `docs/` so you can pick the right reference without grepping the
 whole tree. Read on demand; do not auto-load. Humans start at the
@@ -25,7 +25,11 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Plumb a new forecast dataType from brc-tools | `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — endpoint, schemas, unit traps (permanent); then `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for what is still unanswered and who owns it |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
-| Finish or review the HRRR weather-map integration | `docs/HRRR-NWP-HANDOFF-apr16.md` — cold-start handoff written 2026-04-16 against commit `b051513`; check what has landed on `dev` since before trusting its file list |
+| Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`) + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
+| Convert observation units or derive RH | `public/js/met.js` (pure; null for an unknown unit); the feed is raw SI by design (`CLAUDE.md` §Data pipeline) |
+| Restyle a page, cards, the UI scale | `docs/STYLE-TOKEN-GUIDE.md` §Panes and §Scale; `public/css/theme/panes.css` |
+| Work on the aviation page (KVEL crosswind) | `public/js/aviation.js` + `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c |
+| Take screenshots on the dev box | no browser is installed and there is no sudo; Playwright's Chromium runs once its missing libraries are unpacked from `apt-get download` into `LD_LIBRARY_PATH` |
 | Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |
 | Fix a road weather bug | `docs/HOW_IT_WORKS.md` + `gh issue list --label area:roads` (the former `ROADS_AUDIT.md` findings live there) |
 
@@ -62,6 +66,10 @@ were parked, not rejected. The former `IMPROVEMENTS.md`, `AGENT-WORK-QUEUE-aug26
 Deleted from the tree on 2026-09-28: `docs/archive/` (49 session handoffs and superseded
 plans), `chpc-deployment/` (superseded by brc-tools), `references/`. Last commit containing
 them: `b6dbddf` — `git show b6dbddf:docs/archive/<file>`.
+
+Deleted on 2026-11-12: `docs/HRRR-NWP-HANDOFF-apr16.md`, the cold-start handoff for the HRRR
+weather-map integration; its commit `b051513` has long been on `dev`. Read it with
+`git show c798a46:docs/HRRR-NWP-HANDOFF-apr16.md`.
 
 ## Doc-naming convention (also in `CLAUDE.md`)
 - LLM-produced markdown: ALL-CAPS, 3–4 hyphen-separated words.

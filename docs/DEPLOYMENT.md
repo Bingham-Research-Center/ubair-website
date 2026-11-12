@@ -395,8 +395,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.6.0"     (tag v1.6.0)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.6.1-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.6.1"     (tag v1.6.1)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.6.2-dev"
 ```
 
 Since 1.5.5 the same response also carries `commit`, `branch`, `startedAt` and
@@ -553,10 +553,10 @@ scripts/manage-previews.sh status
 
 ### Adding a new user / preview
 
-Add an entry to `preview-apps.json` (choose a port not used by any other process — ops=3000, dev=3001, existing previews listed there), then open a PR.
+Add an entry to `preview-apps.json` (choose a port not used by any other process — ops=3000, dev=3001, 3002 the parked roads stack, 3003 the `theme.basinwx.dev` spare slot), then open a PR.
 
 ```json
-{ "user": "julianna", "branch": "feature/julianna-aviation", "port": 3003, "subdomain": "aviation" }
+{ "user": "<name>", "branch": "feature/<name>-<topic>", "port": 3004, "subdomain": "<name>" }
 ```
 
 ### Notes
