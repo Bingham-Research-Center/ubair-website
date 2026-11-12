@@ -4,82 +4,79 @@ Written 12 Nov 2026. What is left of the visual overhaul for the 15 Nov relaunch
 is due 13 Nov). Tick things off here; delete the file when the list is empty or the remainder
 has moved to issues.
 
-**Where things stand:** six pieces of work are ready and merge with each other in any order
-(all six together on `dev`: 402 tests pass). Nothing is merged. Nobody has yet looked at the
-new look in a browser.
+**Where things stand:** six PRs are ready and merge with each other in any order (all the
+relaunch branches together on `dev`: 402 tests pass). Nothing is merged. Nobody has yet looked
+at the new look in a browser. Decided so far: the favicon is the B with a degree ring.
 
-## 1. John only
+## Next ten steps, in order
 
-- [ ] **Make the preview reachable.** As root on the dev box, certificate first (nginx will not
-      start without it):
-      ```bash
-      certbot certonly --nginx -d theme.basinwx.dev
-      cp /srv/ubair-website-preview-theme/theme.basinwx.dev.nginx /etc/nginx/sites-available/theme.basinwx.dev
-      ln -s /etc/nginx/sites-available/theme.basinwx.dev /etc/nginx/sites-enabled/
-      nginx -t && systemctl reload nginx
-      ```
-      The app is already running on port 3003 (`basinwx-preview-theme`). It is not in the pm2
-      reboot list, so it will not come back by itself after a reboot.
-- [ ] **Pick a theme variant** on `https://theme.basinwx.dev`: Slate + Copper (Inter),
-      Ink + Teal (IBM Plex Sans) or Navy + Sage (Source Sans 3). The panel at the bottom right
-      switches variant, light/dark, basemap and tab icon. Choices are per tab, so two tabs can
-      sit side by side. **If there is no pick by midday 12 Nov, 1.6.0 ships without the new look
-      and it lands as 1.6.1.**
-- [ ] **Pick a favicon design:** `ridge`, `basin` or `letter` (the "Tab icon" choice in the same
-      panel, or the sheet from `scripts/make_favicon.py --sheet /tmp/favicons.png` on #348).
-      `ridge` in the current navy and red is installed as a placeholder.
-- [ ] **Decide how Quinten's repaired #322 lands:** `rebased/quinten-changes` is his ten commits
-      on current `dev` plus five small fixes. Either he resets `quinten-changes` to it, or it
-      gets a PR of its own. He has not been told yet.
-- [ ] **Merge, one at a time** (`gh pr merge <N> --admin`). Any order works.
+1. [ ] **John: merge the six ready PRs**, one command each. Each is green and conflict-free.
+   ```bash
+   gh pr merge 346 --admin --merge   # one vendored Font Awesome
+   gh pr merge 347 --admin --merge   # token foundation, style ratchet, README theme section
+   gh pr merge 344 --admin --merge   # remove easter eggs and 90s mode
+   gh pr merge 345 --admin --merge   # remove kiosk pages; old URLs redirect
+   gh pr merge 348 --admin --merge   # one constant favicon (B with degree ring)
+   gh pr merge 349 --admin --merge   # this checklist
+   ```
+2. [ ] **John: deploy `dev`** (as `deploy` on the dev box), then check the icon is served.
+   ```bash
+   cd /srv/ubair-website && git pull --ff-only origin dev && npm install && pm2 restart basinwx-dev
+   curl -sI https://www.basinwx.dev/favicon.ico | head -1    # 200
+   ```
+3. [ ] **John: make the preview reachable** (as root on the dev box; certificate first, because
+   nginx will not start without it).
+   ```bash
+   certbot certonly --nginx -d theme.basinwx.dev
+   cp /srv/ubair-website-preview-theme/theme.basinwx.dev.nginx /etc/nginx/sites-available/theme.basinwx.dev
+   ln -s /etc/nginx/sites-available/theme.basinwx.dev /etc/nginx/sites-enabled/
+   nginx -t && systemctl reload nginx
+   ```
+4. [ ] **John: pick a theme variant** on `https://theme.basinwx.dev` and reply with its name:
+   Slate + Copper (Inter), Ink + Teal (IBM Plex Sans) or Navy + Sage (Source Sans 3). The panel
+   at the bottom right switches variant, light/dark, basemap and tab icon; choices are per tab.
+   **No pick by midday 12 Nov means 1.6.0 ships without the new look and it lands as 1.6.1.**
+5. [ ] **John: pick a wordmark lockup** and reply with one word: `dot` (ring is the dot of the
+   i), `end` (ring after the x) or `tile` (favicon tile, then the name). Sheet:
+   `scripts/make_wordmark.py --sheet /tmp/wordmarks.png` on branch `feat/wordmark-logo`.
+6. [ ] **John: tell Quinten** his #322 is repaired on `rebased/quinten-changes` (his ten commits
+   on current `dev` plus five small fixes) and agree how it lands: he resets `quinten-changes`
+   to it, or it gets a PR of its own. Tell Michael the look is changing at the same time.
+7. [ ] **Claude, after 1 and 4: the apply PR.** Bake the chosen variant into
+   `public/css/theme/tokens.css`, vendor its typeface under `/vendor/fonts`, recolour the
+   favicon (`scripts/make_favicon.py --design letter --theme <variant>`), name the variant in
+   README. The page changes exist today only as commit `44ef436` on the local `preview/theme`.
+8. [ ] **Claude, after 7: the flatten PR** (radii, shadows, gradients, hover lift; commit
+   `dfbe9dd` on `preview/theme`), then lower the ratchet ceilings with
+   `node scripts/style-scan.mjs --tighten`. Leave `roads.css` and `live_aq.css` until the roads
+   stack and #322 are in.
+9. [ ] **Claude, after 1 and 5: the logo PR.** Install the wordmark SVG in place of the 1.4 MB
+   `basinwx-logo.png` on the homepage, and delete the old Gemini icon files in
+   `public/images/favicons/`. Closes #309.
+10. [ ] **Claude, after 6: the coming-soon removal PR**, then the 1.6.0 release (#315).
+    Removal: agriculture, aviation and water pages; the two glassed Clyfar sections; the
+    sidebar "Coming Soon" dropdown; "Our Website Team" becomes the #284 link; copyright credits
+    BRC (#290); drop those pages from `PENDING_REMOVAL` in `iconNames.test.js`. Release: the
+    full sequence is in `CLAUDE.md` under "Versioning & release train" (strip `-dev`, promote
+    `dev` to `ops`, tag, merge `ops` into `main`, reopen `dev` at the next `-dev`), plus the
+    GitHub Release.
 
-      | PR | What | Tests |
-      |---|---|---|
-      | #344 | remove easter eggs, 90s mode, Welsh flag strip | 322 |
-      | #345 | remove kiosk pages; old URLs redirect | 326 |
-      | #346 | one vendored Font Awesome; blank icons replaced | 352 |
-      | #347 | token foundation, style ratchet, README theme section | 347 |
-      | #348 | one constant favicon, generator, install steps | 343 |
-      | `rebased/quinten-changes` | #322 repaired (no PR yet) | 322 |
-
-- [ ] **Tell Michael and Quinten** once the variant is picked. Draft notes are mine to write;
-      they should credit Michael's flat roads direction and ring marker, and Quinten's sports
-      accents.
-
-## 2. Mine, once the choices above are made
-
-- [ ] Bake the chosen variant into `public/css/theme/tokens.css` and vendor its typeface under
-      `/vendor/fonts` (needs #347 merged).
-- [ ] Open the **apply** PR (page palettes, font, flat background, accents read the tokens) and
-      the **flatten** PR (radii, shadows, gradients, hover lift). Both exist only on the local
-      `preview/theme` branch today, as commits `44ef436` and `dfbe9dd`.
-- [ ] Lower the ratchet ceilings afterwards: `node scripts/style-scan.mjs --tighten`. Leave
-      `roads.css` and `live_aq.css` until the roads stack and #322 are in.
-- [ ] Recolour the favicon to the chosen variant and design: one command,
-      `docs/FAVICON-INSTALL-STEPS.md` (needs #348 merged).
-- [ ] Delete the old Gemini icon files in `public/images/favicons/` (needs #344 and #345 merged;
-      90s mode and the kiosk pages point at them until then). Closes the favicon half of #309.
-- [ ] **Coming-soon removal** PR (needs #322 merged): agriculture, aviation and water pages; the
-      two glassed Clyfar sections; the sidebar "Coming Soon" dropdown; "Our Website Team"
-      becomes the #284 link; copyright credits BRC (#290). Then drop those pages from
-      `PENDING_REMOVAL` in `iconNames.test.js`.
-- [ ] Name the chosen variant in README's "Look and feel" section.
-- [ ] Release train for 1.6.0 (#315): strip `-dev`, promote `dev` to `ops`, tag, GitHub Release.
-
-## 3. Look at these on the preview before choosing
+## Look at these on the preview before choosing
 
 - [ ] **The flattening pass has not been checked by eye.** It was mechanical. Look at home,
-      `/live_aq` with a popup open, `/roads`, Clyfar, sports, fire, and the sidebar at phone width.
+  `/live_aq` with a popup open, `/roads`, Clyfar, sports, fire, and the sidebar at phone width.
 - [ ] **Dark mode is a draft** and does not ship on 15 Nov. Only tokenised surfaces follow it;
-      expect white panels.
+  expect white panels.
 - [ ] **Agriculture, aviation and water are still present and unflattened** there. They go in
-      the coming-soon removal.
+  step 10.
 - [ ] **Tab icon:** judge it in Chrome, Edge or Firefox. Safari ignores SVG favicons, so on the
-      preview it keeps showing the placeholder.
+  preview it keeps showing the installed one.
 - [ ] Two tests fail on `preview/theme` only, by design: the guard that keeps the switcher off
-      `dev`.
+  `dev`.
+- [ ] The preview app (`basinwx-preview-theme`, port 3003) is not in the pm2 reboot list, so it
+  will not come back by itself after a reboot.
 
-## 4. Known and handled, for the record
+## Known and handled, for the record
 
 - **#344 and `rebased/quinten-changes`** no longer collide. The legend script tag moved two
   lines up on Quinten's branch (`55c938f`).
@@ -87,10 +84,12 @@ new look in a browser.
   cannot be removed from #345's side. The fix when the stack is un-parked is to keep the
   deletion (`git rm views/kiosk.html`). Rehearsed: 445 tests pass. The only thing dropped is
   the one-line feed notice Michael added to the kiosk's roads slide.
-- **Copilot's two comments on #347** were both right and are fixed (`310ce3b`, `c54332b`). The
-  first also hid a small colour change on untyped sports cards.
+- **Copilot's comments** on #347, #348 and #349 were all correct and are fixed. The first on
+  #347 also hid a small colour change on untyped sports cards.
+- **Old Gemini icon files** stay until #344 and #345 are in, because 90s mode and the kiosk
+  pages point at them (step 9 removes them).
 
-## 5. After the relaunch, not before DOGM
+## After the relaunch, not before DOGM
 
 - Display mode (`?display=1`) on home, live map and roads, replacing the kiosk pages.
 - Michael's ring marker as the shared map marker, with EPA bands (#194, #122), with Quinten.
