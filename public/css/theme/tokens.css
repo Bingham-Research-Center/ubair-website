@@ -129,6 +129,7 @@
     --restriction-stage-2: var(--orange-700);
     --restriction-stage-3: var(--status-danger);
     --restriction-prevention: var(--brick-700);
+    --color-on-warm: var(--anchor-900);    /* text on an orange fill, where white is too faint */
 
     --aqi-good: var(--epa-good);
     --aqi-moderate: var(--epa-moderate);

@@ -48,6 +48,8 @@ const PAIRS = [
     ['--color-link', '--color-surface'],
     ['--color-on-brand', '--color-brand'],
     ['--color-on-brand-muted', '--color-brand'],
+    ['--color-on-warm', '--restriction-stage-1'],
+    ['--color-on-warm', '--restriction-stage-2'],
     ['--color-on-accent', '--color-accent'],
 ];
 
