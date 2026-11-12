@@ -36,6 +36,8 @@ body[data-page-type="sports"] .observation-stamp {
 }
 
 /* Condition cards
+   Each card and each panel is a pane (theme/panes.css): square, hairline, accent tab on
+   the top edge. The rules here set padding and the per-card accent only.
    ------------------------------------------------------------------ */
 
 .summary-grid {
@@ -46,66 +48,46 @@ body[data-page-type="sports"] .observation-stamp {
 }
 
 .condition-card {
-    background: #ffffff;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--card-accent, var(--color-accent));
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-left-color 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    --pane-tab-inset: 1.5rem;
+    /* Declared on the card itself, where --card-accent is set, so it resolves per card. */
+    --pane-accent: var(--card-accent, var(--page-accent));
 }
 
-/* Per-card palette: --card-accent tints the border and icon disc, --card-text the
-   labels and the value. Every --card-text clears WCAG AA (>= 4.5:1) on white; the
-   pastel accents are decorative only and never carry text. */
-.condition-card[data-card-type="current-temperature"]  { --card-accent: #A7D8FF; --card-text: #2E7BA8; }
-.condition-card[data-card-type="felt-temperature"]     { --card-accent: #BFF4D2; --card-text: #2C8452; }
-.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #F0B6D5; --card-text: #AF5080; }
-.condition-card[data-card-type="dew-point"]            { --card-accent: #FFD6A5; --card-text: #9C6B3A; }
-.condition-card[data-card-type="baseball"]             { --card-accent: #AEECFF; --card-text: #2E7F8E; }
-.condition-card[data-card-type="football"]             { --card-accent: #DDB892; --card-text: #8E7045; }
+/* Per-card accent (Quinten's palette): it colours the card's tab and its icon only; the text
+   stays in the theme's colours. Every value clears WCAG AA (>= 4.5:1) on white. */
+.condition-card[data-card-type="current-temperature"]  { --card-accent: #2E7BA8; }
+.condition-card[data-card-type="felt-temperature"]     { --card-accent: #2C8452; }
+.condition-card[data-card-type="wind-speed-direction"] { --card-accent: #AF5080; }
+.condition-card[data-card-type="dew-point"]            { --card-accent: #9C6B3A; }
+.condition-card[data-card-type="baseball"]             { --card-accent: #2E7F8E; }
+.condition-card[data-card-type="football"]             { --card-accent: #8E7045; }
 
 .condition-card h3 {
-    color: var(--card-text, var(--color-accent-strong));
-    font-size: 1rem;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
     margin: 0 0 0.25rem;
 }
 
-.condition-card:hover {
-    box-shadow: var(--shadow-card-hover);
-    border-left-color: #1A1A1A;
-}
-
-.condition-card:hover .card-icon {
-    background-color: #1A1A1A;
-    color: var(--card-accent, var(--color-accent));
-}
-
 .card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    margin-bottom: 1rem;
-    color: #1A1A1A;
-    background-color: var(--card-accent, var(--color-accent));
-    font-size: 1.2rem;
-    transition: background-color 0.4s ease, color 0.4s ease;
+    margin-bottom: 0.75rem;
+    color: var(--card-accent, var(--page-accent));
+    font-size: 1.4rem;
 }
 
 .current-value {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--card-text, var(--color-accent-strong));
+    font-weight: 600;
+    color: var(--color-text);
     margin: 0.5rem 0 0.25rem;
     line-height: 1.2;
 }
 
 .card-note {
-    color: #5A5A5A;
+    color: var(--color-text-muted);
     font-size: 0.85rem;
     margin: 0;
     min-height: 1.1em;
@@ -115,28 +97,13 @@ body[data-page-type="sports"] .observation-stamp {
    ------------------------------------------------------------------ */
 
 .forecast-section {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(80, 22, 22, 0.1);
-    position: relative;
+    --pane-tab-inset: 2rem;
     margin-bottom: 2rem;
 }
 
-.forecast-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--color-accent), var(--color-accent-strong), #1A1A1A);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
-
 .forecast-section h2 {
-    color: var(--color-accent-strong);
+    color: var(--color-text);
     font-size: 1.3rem;
     font-weight: 600;
     margin: 0 0 1.5rem;
@@ -150,8 +117,11 @@ body[data-page-type="sports"] .observation-stamp {
     font-size: 1.1rem;
 }
 
-.forecast-content {
-    color: #4A4A4A;
+/* main.css hides .forecast-content (it is the homepage's tab body); on this page it is the
+   body of each panel and must show. */
+body[data-page-type="sports"] .forecast-content {
+    display: block;
+    color: var(--color-text);
     line-height: 1.6;
 }
 
@@ -180,25 +150,15 @@ body[data-page-type="sports"] .observation-stamp {
 }
 
 .model-caveat {
-    background: #FFF6F6;
+    background: var(--color-bg);
     border-left: 4px solid var(--color-accent);
-    border-radius: var(--radius-sm);
     padding: 0.75rem 1rem;
     font-size: 0.92rem;
-    color: #5A2020;
+    color: var(--color-text);
 }
 
 /* Prediction game
    ------------------------------------------------------------------ */
-
-.prediction-game {
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-}
-
-.prediction-game:hover {
-    box-shadow: var(--shadow-card-hover);
-    border-color: rgba(80, 22, 22, 0.2);
-}
 
 /* Readable at rest. The previous 10px-growing-to-14px-on-hover reflowed the list
    under the cursor and never reached a legible size on touch. */

@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { promises as fs, readdirSync } from 'fs';
+import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 
@@ -42,13 +42,6 @@ const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const aboutPagesDir = path.join(__dirname, '../views/about');
-const aboutPageAllowlist = new Set(
-    readdirSync(aboutPagesDir, { withFileTypes: true })
-        .filter(entry => entry.isFile() && path.extname(entry.name) === '.html')
-        .map(entry => path.basename(entry.name, '.html'))
-);
-
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
 const reportEmailService = new ReportEmailService({
@@ -185,15 +178,14 @@ app.get('/test-viz', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/test-viz.html'));
 });
 
-app.get('/about/:page', (req, res) => {
-    const { page } = req.params;
-
-    if (!aboutPageAllowlist.has(page)) {
-        return res.status(404).send('Not Found');
-    }
-
-    res.sendFile(path.join(aboutPagesDir, `${page}.html`));
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/about.html'));
 });
+
+// The About Clyfar and FAQ pages were merged into /about on 2026-11-12. Their old URLs still
+// land somewhere useful; 302 so the targets can change if those pages come back.
+app.get('/about/clyfar', (req, res) => res.redirect(302, '/about#clyfar'));
+app.get('/about/faq', (req, res) => res.redirect(302, '/about'));
 
 // NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
 // served a deploy-time fossil (./public/api/static/filelist.json) that

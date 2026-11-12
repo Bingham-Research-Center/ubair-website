@@ -51,7 +51,7 @@
     </section>
 
     <!-- Hero: basin-wide HDW + snapshot -->
-    <section class="fire-hero" aria-label="Current basin fire-weather summary">
+    <section class="fire-hero pane" aria-label="Current basin fire-weather summary">
         <div class="hero-hdw">
             <span class="hdw-label">Hot-Dry-Windy Index</span>
             <span class="hdw-level-badge" id="basin-hdw-badge" data-level="loading">
@@ -72,7 +72,7 @@
     <!-- Live conditions grid -->
     <section class="weather-summary" aria-label="Live basin conditions">
         <div class="summary-grid">
-            <article class="condition-card">
+            <article class="condition-card pane">
                 <div class="card-icon"><i class="fas fa-temperature-high" aria-hidden="true"></i></div>
                 <div class="card-content">
                     <h3>Temperature</h3>
@@ -80,7 +80,7 @@
                     <p class="trend" id="card-temp-trend">basin centroid</p>
                 </div>
             </article>
-            <article class="condition-card">
+            <article class="condition-card pane">
                 <div class="card-icon"><i class="fas fa-tint" aria-hidden="true"></i></div>
                 <div class="card-content">
                     <h3>Relative Humidity</h3>
@@ -88,7 +88,7 @@
                     <p class="trend" id="card-rh-trend">basin centroid</p>
                 </div>
             </article>
-            <article class="condition-card">
+            <article class="condition-card pane">
                 <div class="card-icon"><i class="fas fa-wind" aria-hidden="true"></i></div>
                 <div class="card-content">
                     <h3>Wind &amp; Gusts</h3>
@@ -96,7 +96,7 @@
                     <p class="trend" id="card-wind-trend">gust --</p>
                 </div>
             </article>
-            <article class="condition-card">
+            <article class="condition-card pane">
                 <div class="card-icon"><i class="fas fa-fire" aria-hidden="true"></i></div>
                 <div class="card-content">
                     <h3>HDW (max station)</h3>
@@ -108,7 +108,7 @@
     </section>
 
     <!-- Map -->
-    <section class="map-section" aria-label="Fire-weather station map and active satellite detections">
+    <section class="map-section pane" aria-label="Fire-weather station map and active satellite detections">
         <h2><i class="fas fa-map-marked-alt" aria-hidden="true"></i> Station Map &amp; Active Detections</h2>
         <div id="fire-map" class="station-map" role="application" aria-label="Leaflet map of fire-weather stations and FIRMS hotspot detections in the Uinta Basin"></div>
         <p class="map-legend-text">
@@ -136,7 +136,7 @@
     </section>
 
     <!-- NWS forecast strip -->
-    <section class="forecast-section" aria-label="National Weather Service basin forecast">
+    <section class="forecast-section pane" aria-label="National Weather Service basin forecast">
         <h2><i class="fas fa-cloud-sun" aria-hidden="true"></i> NWS Forecast (Basin Centroid)</h2>
         <div id="forecast-strip" class="forecast-strip">
             <div class="loading-spinner"><i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>Loading forecast…</span></div>
@@ -144,13 +144,13 @@
     </section>
 
     <!-- Meteogram -->
-    <section class="forecast-section" aria-label="48-hour meteogram">
+    <section class="forecast-section pane" aria-label="48-hour meteogram">
         <h2><i class="fas fa-chart-area" aria-hidden="true"></i> 48-Hour Meteogram</h2>
         <div id="meteogram" class="meteogram-chart"></div>
     </section>
 
     <!-- Preparedness -->
-    <section class="preparedness-section" aria-labelledby="prep-heading">
+    <section class="preparedness-section pane" aria-labelledby="prep-heading">
         <h2 id="prep-heading"><i class="fas fa-shield-alt" aria-hidden="true"></i> Wildfire Preparedness</h2>
         <ul class="preparedness-grid">
             <li><strong>Defensible space.</strong> Maintain at least 30&nbsp;ft of cleared, well-watered vegetation around structures; 100&nbsp;ft on slopes.</li>
@@ -165,19 +165,19 @@
     <section class="resources-section" aria-label="External fire-weather resources">
         <h2><i class="fas fa-external-link-alt" aria-hidden="true"></i> Resources</h2>
         <div class="resources-grid">
-            <a class="resource-card" href="https://utahfireinfo.gov/" target="_blank" rel="noopener noreferrer">
+            <a class="resource-card pane" href="https://utahfireinfo.gov/" target="_blank" rel="noopener noreferrer">
                 <h3>Utah Fire Info</h3>
                 <p>Statewide restrictions, active incidents, prevention.</p>
             </a>
-            <a class="resource-card" href="https://www.weather.gov/fire/" target="_blank" rel="noopener noreferrer">
+            <a class="resource-card pane" href="https://www.weather.gov/fire/" target="_blank" rel="noopener noreferrer">
                 <h3>NWS Fire Weather</h3>
                 <p>Official forecasts, watches, and Red Flag warnings.</p>
             </a>
-            <a class="resource-card" href="https://inciweb.wildfire.gov/" target="_blank" rel="noopener noreferrer">
+            <a class="resource-card pane" href="https://inciweb.wildfire.gov/" target="_blank" rel="noopener noreferrer">
                 <h3>InciWeb</h3>
                 <p>National incident information system.</p>
             </a>
-            <a class="resource-card" href="https://firms.modaps.eosdis.nasa.gov/map/" target="_blank" rel="noopener noreferrer">
+            <a class="resource-card pane" href="https://firms.modaps.eosdis.nasa.gov/map/" target="_blank" rel="noopener noreferrer">
                 <h3>NASA FIRMS</h3>
                 <p>Source of the satellite hotspots on our map.</p>
             </a>
@@ -185,12 +185,6 @@
     </section>
 </main>
 
-<!-- Footer -->
-<footer class="main-footer">
-    <div class="footer-content">
-        <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Experimental use only. All rights reserved.</p>
-    </div>
-</footer>
 
 <!-- Scripts -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

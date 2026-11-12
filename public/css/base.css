@@ -16,6 +16,15 @@ body {
     position: relative;
 }
 
+/* Form controls do not inherit the page font by default: browsers give them the system UI
+   font, which put every tab, toggle and legend button in Arial. */
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
+}
+
 /* Main Headers */
 h1 {
     color: var(--color-brand);

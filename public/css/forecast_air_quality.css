@@ -120,15 +120,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
     box-shadow: var(--shadow-card-hover);
 }
 
+/* The LLM Summaries, Clyfar and heatmap boxes are panes (theme/panes.css): square,
+   hairline, accent tab on the top edge. Rules here set padding and spacing only. */
+
 /* Clyfar Section */
 .clyfar-section {
-    background: #ffffff;
-    border-radius: var(--radius-lg);
     padding: 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 2px solid rgba(47, 79, 79, 0.1);
-    position: relative;
     overflow: hidden;
 }
 
@@ -193,67 +191,27 @@ body[data-page-type="forecast_air_quality"] h1::after {
     margin-bottom: 2.5rem;
 }
 
+/* Today / Tomorrow / 7-Day are rows inside the Clyfar pane, not boxes of their own:
+   one level of boxes. A hairline separates them; the day carries no colour of its own. */
 .summary-card {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--air-accent);
-    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--color-border);
     position: relative;
-    overflow: hidden;
 }
 
-.summary-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 50px;
-    height: 50px;
-    background: radial-gradient(circle, var(--air-accent) 0%, transparent 70%);
-    opacity: 0.1;
-}
-
-.summary-card:hover {
-    box-shadow: var(--shadow-card-hover);
-}
-
-.summary-card.current {
-    border-left-color: var(--air-accent);
-}
-
-.summary-card.tomorrow {
-    border-left-color: var(--air-warning);
-}
-
-.summary-card.week {
-    border-left-color: var(--air-danger);
+.summary-card:last-child {
+    border-bottom: none;
 }
 
 .card-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 50px;
-    height: 50px;
-    background: var(--air-primary);
-    border-radius: 50%;
+    width: 3.125rem;
+    height: 3.125rem;
     margin-bottom: 1rem;
-    color: white;
+    color: var(--page-accent);
     font-size: 1.2rem;
-}
-
-.summary-card.current .card-icon {
-    background: var(--air-accent);
-}
-
-.summary-card.tomorrow .card-icon {
-    background: var(--air-warning);
-}
-
-.summary-card.week .card-icon {
-    background: var(--air-danger);
 }
 
 .card-content h3 {
@@ -287,12 +245,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 /* Heatmap Container */
 .heatmap-container {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 2rem;
+    --pane-tab-inset: 2rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
 .visualization-header {
@@ -350,11 +305,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .heatmap-legend {
-    background: var(--air-background);
-    padding: 1.5rem;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(47, 79, 79, 0.1);
-    min-width: 200px;
+    padding: 0 0 0 1.5rem;
+    border-left: 1px solid var(--color-border);
+    min-width: 12.5rem;
 }
 
 .heatmap-legend h4 {
@@ -680,12 +633,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
     outline-offset: 2px;
 }
 
-/* Special hover effects */
-.clyfar-section:hover {
-    box-shadow: var(--shadow-card-hover);
-    transition: all 0.3s ease;
-}
-
 .visualization-header h3 i {
     transition: all 0.3s ease;
 }
@@ -711,12 +658,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .llm-summaries-section {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--air-primary);
     max-width: 100%;
     box-sizing: border-box;
 }
@@ -730,22 +673,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
     max-height: 320px;
     display: flex;
     flex-direction: column;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-}
-
-.clyfar-section.compact {
-    background: white;
-    border: 1px solid rgba(47, 79, 79, 0.1);
-    border-left: 4px solid var(--air-danger);
-}
-
-.clyfar-section.compact::before {
-    display: none;
-}
-
-.clyfar-section.compact::after {
-    display: none;
 }
 
 .llm-summaries-section.compact .section-header h2,
@@ -795,15 +722,15 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .compact-grid .summary-card {
-    padding: 0.6rem 0.75rem;
+    padding: 0.6rem 0;
     display: flex;
     align-items: center;
     gap: 0.75rem;
 }
 
 .compact-grid .card-icon {
-    width: 32px;
-    height: 32px;
+    width: 2rem;
+    height: 2rem;
     margin-bottom: 0;
     font-size: 0.85rem;
     flex-shrink: 0;
@@ -995,6 +922,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
     .heatmap-legend {
         order: -1;
         min-width: 100%;
+        border-left: none;
+        border-bottom: 1px solid var(--color-border);
+        padding: 0 0 1rem;
     }
 }
 
@@ -1142,17 +1072,11 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .summary-card.data-unavailable {
     opacity: 0.5;
     filter: grayscale(100%);
-    border-left-color: #9ca3af !important;
     cursor: not-allowed;
 }
 
-.summary-card.data-unavailable:hover {
-    transform: none;
-    box-shadow: var(--shadow-card-hover);
-}
-
 .summary-card.data-unavailable .card-icon {
-    background: #9ca3af !important;
+    color: var(--color-text-muted);
 }
 
 .summary-card.data-unavailable .forecast-level {

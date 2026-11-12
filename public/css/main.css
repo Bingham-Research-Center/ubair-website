@@ -27,17 +27,33 @@
     z-index: 2;
 }
 
-/* Homepage Header */
+/* Homepage Header: the same columns as .dashboard-grid below (dashboard.css), so the wordmark
+   sits centred over the map panel and the Alerts/Current panel lines up with the outlook. When
+   the dashboard drops to one column (mobile.css, 1024px) the header does too, wordmark first. */
 .homepage-header {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 450px), 1fr));
     align-items: center;
-    justify-content: flex-start;
+    justify-items: center;
     margin-bottom: 2rem;
     padding: 0.5rem 0 1.5rem;
     border-bottom: 1px solid var(--color-border);
     position: relative;
     z-index: 2;
     gap: 2rem;
+}
+
+.homepage-header > .headlines-dashboard {
+    justify-self: stretch;
+    max-width: none;
+}
+
+@media (min-width: 1800px) {
+    .homepage-header {
+        max-width: 1600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
 }
 
 .site-title {
@@ -378,24 +394,20 @@ main.content {
 }
 
 .outlook-preview-date {
-    color: var(--usu-accent);
-    font-size: 0.9rem;
-    font-style: italic;
-    margin-bottom: 1rem;
-    text-align: center;
-    padding: 0.5rem;
-    background: rgba(0, 38, 58, 0.05);
-    border-radius: var(--radius-md);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
 }
 
+/* The outlook text sits straight on the pane: no second box inside it. */
 .outlook-preview-content {
     flex: 1;
     line-height: 1.6;
-    color: var(--usu-blue);
-    padding: 1rem;
-    background: white;
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(0, 38, 58, 0.1);
+    color: var(--color-text);
     overflow-y: auto;
 }
 
@@ -490,7 +502,6 @@ main.content {
 .outlook-preview-content.compact {
     font-size: 0.85rem;
     line-height: 1.5;
-    padding: 0.8rem;
 }
 
 .forecast-link {
@@ -574,11 +585,19 @@ main.content {
 }
 
 .legend-row .legend-color {
-    width: 12px;
-    height: 12px;
+    flex: none;
+    width: 0.75rem;
+    height: 0.75rem;
     border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    background: var(--marker-status-color);
+}
+
+.legend-note {
+    margin: 0.25rem 0 0;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-align: left;
 }
 
 .legend-row span {
@@ -596,7 +615,7 @@ main.content {
     text-align: center;
     margin: 0.5rem 0 0.3rem 0;
     padding-bottom: 0.2rem;
-    border-bottom: 1px solid rgba(0, 38, 58, 0.2);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .legend-section-header:first-child {
@@ -643,10 +662,6 @@ main.content {
 /* Dashboard Section Spacing */
 .dashboard-section {
     margin-bottom: 1.5rem;
-}
-
-.sidebar-disclaimer {
-    color: var(--color-on-brand-muted);
 }
 
 /* Handles the timer-fill effect for the auto-cycle toggle */
