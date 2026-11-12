@@ -30,6 +30,11 @@ body[data-page-type="fire"] h1::after {
     border-radius: var(--radius-sm);
 }
 
+/* Cards and single-content sections on this page are panes (theme/panes.css): square,
+   hairline, accent tab on the top edge. A section that holds cards (restrictions, detected
+   fires, resources) is a plain region with a heading, so the reader sees one level of boxes.
+   Rules here set padding and spacing; colour on a tab only where it means something. */
+
 /* Weather Summary Grid */
 .weather-summary {
     margin-bottom: 2rem;
@@ -43,62 +48,34 @@ body[data-page-type="fire"] h1::after {
 }
 
 .condition-card {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--fire-primary);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.condition-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--fire-accent), transparent);
-    border-radius: 0 var(--radius-lg) 0 100%;
-    opacity: 0.1;
-}
-
-.condition-card:hover {
-    box-shadow: var(--shadow-card-hover);
-    border-left-color: var(--fire-accent);
+    --pane-tab-inset: 1.5rem;
 }
 
 .card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    background: var(--fire-primary);
-    border-radius: 50%;
-    margin-bottom: 1rem;
-    color: white;
-    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+    color: var(--page-accent);
+    font-size: 1.4rem;
 }
 
 .card-content h3 {
-    color: var(--fire-primary);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
 }
 
 .current-value {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--fire-secondary);
+    font-weight: 600;
+    color: var(--color-text);
     margin: 0.5rem 0;
 }
 
 .trend {
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
     margin: 0;
 }
@@ -111,28 +88,9 @@ body[data-page-type="fire"] h1::after {
 }
 
 .forecast-section {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(178, 34, 34, 0.1);
-    position: relative;
-}
-
-.forecast-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(
-        90deg,
-        var(--fire-primary),
-        var(--fire-accent),
-        var(--fire-secondary)
-    );
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    --pane-tab-inset: 2rem;
+    margin-bottom: 2rem;
 }
 
 .forecast-section h2 {
@@ -217,48 +175,6 @@ body[data-page-type="fire"] h1::after {
     color: var(--fire-smoke);
 }
 
-/* Specific condition card themes */
-.condition-card:nth-child(1) .card-icon {
-    background: var(--fire-primary);
-}
-
-.condition-card:nth-child(2) .card-icon {
-    background: var(--fire-ember);
-}
-
-.condition-card:nth-child(3) .card-icon {
-    background: var(--fire-accent);
-}
-
-.condition-card:nth-child(4) .card-icon {
-    background: var(--fire-smoke);
-}
-
-/* Forecast-section theming */
-.forecast-section:nth-child(1) {
-    border-left: 4px solid var(--fire-ash);
-}
-
-.forecast-section:nth-child(1)::before {
-    background: var(--fire-ash);
-}
-
-.forecast-section:nth-child(2) {
-    border-left: 4px solid var(--fire-secondary);
-}
-
-.forecast-section:nth-child(2)::before {
-    background: var(--fire-secondary);
-}
-
-.forecast-section:nth-child(3) {
-    border-left: 4px solid var(--fire-smoke);
-}
-
-.forecast-section:nth-child(3)::before {
-    background: var(--fire-smoke);
-}
-
 /* Responsive Design */
 @media (max-width: 768px) {
     .summary-grid {
@@ -267,9 +183,11 @@ body[data-page-type="fire"] h1::after {
     }
     .condition-card {
         padding: 1rem;
+        --pane-tab-inset: 1rem;
     }
     .forecast-section {
         padding: 1.5rem;
+        --pane-tab-inset: 1.5rem;
         margin: 1rem 0;
     }
     .chart-placeholder {
@@ -290,12 +208,6 @@ body[data-page-type="fire"] h1::after {
     content: '...';
     animation: pulse-red 1.5s infinite;
     color: var(--fire-accent);
-}
-
-/* Hover effects */
-.forecast-section:hover {
-    box-shadow: var(--shadow-card-hover);
-    transition: all 0.3s ease;
 }
 
 /* Focus states */
@@ -344,11 +256,8 @@ body[data-page-type="fire"] h1::after {
     justify-content: space-between;
     gap: 1.5rem;
     padding: 1.5rem 2rem;
-    background: white;
-    border-radius: var(--radius-lg);
+    --pane-tab-inset: 2rem;
     margin-bottom: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 6px solid var(--fire-primary);
 }
 .hero-hdw { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
 .hdw-label { font-size: 0.8rem; text-transform: uppercase; color: var(--fire-smoke); letter-spacing: 0.05em; }
@@ -392,12 +301,9 @@ body[data-page-type="fire"] h1::after {
 
 /* Map section */
 .map-section {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
+    --pane-tab-inset: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(178, 34, 34, 0.1);
 }
 .map-section h2 {
     color: var(--fire-primary);
@@ -412,8 +318,6 @@ body[data-page-type="fire"] h1::after {
 .station-map {
     width: 100%;
     height: 480px;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
 }
 .map-legend-text {
     font-size: 0.85rem;
@@ -493,13 +397,11 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.75rem;
 }
+/* Forecast periods are cells inside the forecast pane, not boxes: a hairline above each. */
 .forecast-day-card {
-    background: white;
     padding: 1rem 0.75rem;
-    border-radius: var(--radius-lg);
     text-align: center;
-    border-top: 3px solid var(--fire-accent);
-    box-shadow: var(--shadow-card);
+    border-top: 1px solid var(--color-border);
 }
 .forecast-day-card h3 {
     font-size: 0.95rem;
@@ -514,7 +416,7 @@ body[data-page-type="fire"] h1::after {
 }
 .forecast-wind, .forecast-short {
     font-size: 0.82rem;
-    color: #555;
+    color: var(--color-text-muted);
     margin: 0.2rem 0;
 }
 
@@ -529,12 +431,9 @@ body[data-page-type="fire"] h1::after {
 
 /* Preparedness */
 .preparedness-section {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 2rem;
+    --pane-tab-inset: 2rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--fire-accent);
 }
 .preparedness-section h2 {
     color: var(--fire-primary);
@@ -552,12 +451,11 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
 }
+/* Tips are asides inside the pane: a plain left rule, no box of their own. */
 .preparedness-grid li {
-    background: #fff8f0;
-    padding: 1rem 1.1rem;
-    border-radius: var(--radius-lg);
-    border-left: 3px solid var(--fire-secondary);
-    color: #333;
+    padding: 0.25rem 0 0.25rem 1rem;
+    border-left: 3px solid var(--color-border);
+    color: var(--color-text);
     line-height: 1.5;
 }
 .preparedness-grid li strong { color: var(--fire-primary); }
@@ -579,22 +477,14 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1rem;
 }
+/* Resource cards are link panes: a.pane in theme/panes.css changes colour on hover. */
 .resource-card {
     display: block;
-    background: white;
     padding: 1.25rem;
-    border-radius: var(--radius-lg);
-    text-decoration: none;
-    color: inherit;
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.resource-card:hover {
-    box-shadow: var(--shadow-card-hover);
+    --pane-tab-inset: 1.25rem;
 }
 .resource-card h3 { color: var(--fire-primary); margin: 0 0 0.3rem; font-size: 1.05rem; }
-.resource-card p { color: #555; font-size: 0.9rem; margin: 0; }
+.resource-card p { color: var(--color-text-muted); font-size: 0.9rem; margin: 0; }
 
 /* Loading spinner */
 .loading-spinner {
@@ -608,27 +498,11 @@ body[data-page-type="fire"] h1::after {
 }
 .loading-spinner i { color: var(--fire-secondary); font-size: 1.2rem; }
 
-/* Active Fire Restrictions */
+/* Active Fire Restrictions: a plain region; each order is a pane whose tab is its stage. */
 .restrictions-section {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--fire-primary);
-    position: relative;
+    margin-bottom: 2rem;
 }
 .restrictions-section[hidden] { display: none; }
-.restrictions-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--fire-primary), var(--fire-secondary), var(--fire-accent));
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
 .restrictions-section h2 {
     color: var(--fire-primary);
     font-size: 1.3rem;
@@ -651,19 +525,17 @@ body[data-page-type="fire"] h1::after {
     gap: 1rem;
 }
 .restriction-card {
-    background: white;
     padding: 1.1rem 1.2rem;
-    border-radius: var(--radius-lg);
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    --pane-tab-inset: 1.2rem;
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
 }
-.restriction-card:hover {
-    box-shadow: var(--shadow-card-hover);
-}
+/* Severity colours, not page decoration: the tab matches the stage pill. */
+.restriction-card[data-type^="stage-1"]    { --pane-accent: var(--restriction-stage-1); }
+.restriction-card[data-type^="stage-2"]    { --pane-accent: var(--restriction-stage-2); }
+.restriction-card[data-type^="stage-3"]    { --pane-accent: var(--restriction-stage-3); }
+.restriction-card[data-type^="prevention"] { --pane-accent: var(--restriction-prevention); }
 .restriction-card-head {
     display: flex;
     justify-content: space-between;
@@ -699,7 +571,7 @@ body[data-page-type="fire"] h1::after {
 .restriction-type-pill[data-type^="ordinance"]   { background: var(--fire-smoke); }
 .restriction-area {
     margin: 0;
-    color: #333;
+    color: var(--color-text);
     font-size: 0.95rem;
     line-height: 1.45;
     font-weight: 500;
@@ -788,27 +660,11 @@ body[data-page-type="fire"] h1::after {
     font-style: italic;
 }
 
-/* Detected Fires (auto-clustered FIRMS) */
+/* Detected Fires (auto-clustered FIRMS): a plain region; each fire is a pane. */
 .fire-list-section {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--fire-primary);
-    position: relative;
+    margin-bottom: 2rem;
 }
 .fire-list-section[hidden] { display: none; }
-.fire-list-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--fire-primary), var(--fire-warning), var(--fire-accent));
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-}
 .fire-list-section h2 {
     color: var(--fire-primary);
     font-size: 1.3rem;
@@ -859,19 +715,14 @@ body[data-page-type="fire"] h1::after {
     gap: 1rem;
 }
 .fire-card {
-    background: white;
     padding: 1.1rem 1.2rem;
-    border-radius: var(--radius-lg);
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: var(--shadow-card);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    --pane-tab-inset: 1.2rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-.fire-card:hover {
-    box-shadow: var(--shadow-card-hover);
-}
+/* An active fire's tab is the danger colour, matching its status pill. */
+.fire-card[data-status="active"] { --pane-accent: var(--status-danger); }
 .fire-card-head {
     display: flex;
     justify-content: space-between;
@@ -970,10 +821,10 @@ body[data-page-type="fire"] h1::after {
     .hero-snapshot { text-align: left; }
     .station-map { height: 360px; }
     .meteogram-chart { height: 340px; }
-    .restrictions-section { padding: 1.5rem 1.25rem; }
+
     .restrictions-list { grid-template-columns: 1fr; }
     .restriction-foot { flex-direction: column-reverse; align-items: stretch; }
     .restriction-link { justify-content: center; }
-    .fire-list-section { padding: 1.5rem 1.25rem; }
+
     .fire-list-grid { grid-template-columns: 1fr; }
 }

@@ -40,27 +40,23 @@ body[data-page-type="forecast_weather"] h1::after {
     border-radius: var(--radius-sm);
 }
 
-/* Control Panel */
-.control-panel {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-overlay);
-    border: 1px solid rgba(47, 79, 79, 0.1);
-    position: relative;
-    overflow: hidden;
+/* Every box on this page is a pane (theme/panes.css): square, hairline, accent tab on the
+   top edge. The rules here only set padding, spacing and the tab inset to match. */
+.control-panel,
+.weather-summaries-section,
+.weather-map-section,
+.meteogram-section,
+.summary-panel,
+.forecast-panel,
+.conditions-panel,
+.model-panel {
+    --pane-tab-inset: 1.5rem;
 }
 
-.control-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--weather-primary), var(--weather-secondary), var(--weather-accent));
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+/* Control Panel */
+.control-panel {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .controls-row {
@@ -195,18 +191,16 @@ body[data-page-type="forecast_weather"] h1::after {
     font-size: 0.9rem;
 }
 
-/* Weather Map Section */
+/* Weather Map Section: the section is the pane; the map sits inside its padding so the
+   tab is not drawn under the map tiles. */
 .weather-map-section {
     margin-bottom: 2rem;
+    padding: 1.5rem;
 }
 
 .map-container {
     position: relative;
-    background: white;
-    border-radius: var(--radius-lg);
     overflow: hidden;
-    box-shadow: var(--shadow-card);
-    border: 2px solid rgba(47, 79, 79, 0.1);
 }
 
 .weather-map {
@@ -339,58 +333,13 @@ body[data-page-type="forecast_weather"] h1::after {
 .forecast-panel,
 .conditions-panel,
 .model-panel {
-    background: white;
-    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(47, 79, 79, 0.1);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
 }
 
-.summary-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--earth-green);
-    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-}
-
-.forecast-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--sky-blue);
-    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-}
-
-.conditions-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--sun-gold);
-    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
-}
-
-.model-panel::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
-    height: 100%;
-    background: var(--cloud-gray);
-    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+/* main.css hides .forecast-content (it is the homepage's tab body); here it is the
+   Forecast Snapshots body and must show. */
+body[data-page-type="forecast_weather"] .forecast-panel .forecast-content {
+    display: block;
 }
 
 .panel-header {
@@ -635,14 +584,6 @@ body[data-page-type="forecast_weather"] h1::after {
 .tooltip.show {
     opacity: 1;
     visibility: visible;
-}
-
-/* Hover Effects */
-.summary-panel:hover,
-.forecast-panel:hover,
-.conditions-panel:hover,
-.model-panel:hover {
-    box-shadow: var(--shadow-card-hover);
 }
 
 /* Responsive Design */
@@ -937,12 +878,8 @@ body[data-page-type="forecast_weather"] h1::after {
 }
 
 .weather-summaries-section {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
+    padding: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: var(--shadow-card);
-    border-left: 4px solid var(--weather-primary);
     max-width: 100%;
     box-sizing: border-box;
 }
@@ -992,12 +929,8 @@ body[data-page-type="forecast_weather"] h1::after {
    ============================================ */
 
 .meteogram-section {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 2rem;
+    padding: 1.5rem;
     margin: 2rem 0;
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
 .meteogram-section .section-header {
@@ -1092,10 +1025,7 @@ body[data-page-type="forecast_weather"] h1::after {
 /* Large Meteogram Display */
 .meteogram-display {
     position: relative;
-    background: var(--weather-background);
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
-    border: 1px solid rgba(47, 79, 79, 0.1);
+    padding: 1rem 0 0;
     min-height: 400px;
 }
 

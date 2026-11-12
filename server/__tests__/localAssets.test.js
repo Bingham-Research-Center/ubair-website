@@ -10,7 +10,7 @@ const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../
 
 function pages() {
     const list = [];
-    for (const dir of ['views', 'views/about', 'public/partials']) {
+    for (const dir of ['views', 'public/partials']) {
         for (const name of fs.readdirSync(path.join(repoRoot, dir))) {
             if (name.endsWith('.html')) list.push(`${dir}/${name}`);
         }

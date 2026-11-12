@@ -80,8 +80,6 @@ function initializeMobileMenu() {
     const sidebarLinks = document.querySelectorAll('.sidebar-nav a');
     sidebarLinks.forEach(link => {
         link.addEventListener('click', function() {
-            // A dropdown toggle opens a submenu; it is not navigation, so keep the drawer open.
-            if (link.classList.contains('dropdown-toggle')) return;
             if (window.innerWidth <= 768) {
                 sidebarContainer.classList.remove('active');
                 menuToggle.innerHTML = '<i class="fas fa-arrow-right"></i>';

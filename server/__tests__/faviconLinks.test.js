@@ -18,7 +18,7 @@ const LINKS = [
 
 function views() {
     const list = [];
-    for (const dir of ['views', 'views/about']) {
+    for (const dir of ['views']) {
         for (const name of fs.readdirSync(path.join(repoRoot, dir))) {
             if (name.endsWith('.html')) list.push(`${dir}/${name}`);
         }

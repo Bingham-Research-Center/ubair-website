@@ -19,6 +19,8 @@ function renderMeteogram(hourly) {
         { x: t, y: hourly.wind_gusts_10m, name: 'Gusts (m/s)', type: 'scatter', mode: 'lines', line: { color: '#ff4500', width: 2, dash: 'dot' }, yaxis: 'y3' }
     ];
     const layout = {
+        // Plotly draws text in its own default (Open Sans); use the site typeface instead.
+        font: { family: getComputedStyle(document.documentElement).getPropertyValue('--font-sans').trim() },
         margin: { l: 55, r: 70, t: 25, b: 45 },
         plot_bgcolor: '#fff8f0',
         paper_bgcolor: '#fff',

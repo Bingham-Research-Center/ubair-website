@@ -66,7 +66,7 @@ function renderCard(f) {
     const linkAttrs = `data-lat="${f.centerLat}" data-lon="${f.centerLon}"`;
 
     return `
-        <article class="fire-card" data-fire-id="${esc(f.id)}">
+        <article class="fire-card pane" data-fire-id="${esc(f.id)}" data-status="${esc(f.status || '')}">
             <header class="fire-card-head">
                 <h4 class="fire-card-title">${esc(title)}</h4>
                 <span class="fire-status-pill" data-status="${esc(f.status || '')}">${esc(f.status || '')}</span>

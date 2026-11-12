@@ -29,11 +29,11 @@ describe('visitor tracking through the app', () => {
     it('keys a visitor on the address nginx appended, not the spoofable first hop', async () => {
         const ua = `${UA} first-hop-test`;
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', ua)
+        await request(app).get('/about').set('User-Agent', ua)
             .set('X-Forwarded-For', '10.9.9.9, 203.0.113.50').expect(200);
-        await request(app).get('/about/faq').set('User-Agent', ua)
+        await request(app).get('/about').set('User-Agent', ua)
             .set('X-Forwarded-For', '172.16.1.1, 203.0.113.50').expect(200);
-        await request(app).get('/about/faq').set('User-Agent', ua)
+        await request(app).get('/about').set('User-Agent', ua)
             .set('X-Forwarded-For', '10.9.9.9, 198.51.100.50').expect(200);
         const after = await counts();
 
@@ -45,7 +45,7 @@ describe('visitor tracking through the app', () => {
 
     it('counts a request with no forwarded address as unresolved, not as a visitor', async () => {
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', UA).expect(200);
+        await request(app).get('/about').set('User-Agent', UA).expect(200);
         const after = await counts();
 
         expect(after.clientAddress.unresolved - before.clientAddress.unresolved).toBe(1);
@@ -66,7 +66,7 @@ describe('visitor tracking through the app', () => {
         // '/config.json' contains '.js', so the static-asset skip used to hide it entirely.
         const xff = '192.0.2.88';
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/about').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         await request(app).get('/config.json').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(404);
         const after = await counts();
 
@@ -78,7 +78,7 @@ describe('visitor tracking through the app', () => {
         // The homepage loads /public/js/config.js, which matches the /config scanner pattern.
         const xff = '203.0.113.120';
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/about').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         const first = await request(app).get('/public/js/config.js')
             .set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         await request(app).get('/public/js/config.js')
@@ -93,7 +93,7 @@ describe('visitor tracking through the app', () => {
     it('still ignores real assets, and their 404s do not push a reader over the miss limit', async () => {
         const xff = '198.51.100.88';
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/about').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         await request(app).get('/public/js/loadSidebar.js').set('User-Agent', UA).set('X-Forwarded-For', xff).expect(200);
         // A page that points at a file we do not have (as the root /favicon.ico was until #309)
         // makes the reader's browser ask for it on every load.
@@ -110,7 +110,7 @@ describe('visitor tracking through the app', () => {
         const ua = `${UA} beacon-test`;
         const xff = '203.0.113.77';
         const before = await counts();
-        await request(app).get('/about/faq').set('User-Agent', ua).set('X-Forwarded-For', xff).expect(200);
+        await request(app).get('/about').set('User-Agent', ua).set('X-Forwarded-For', xff).expect(200);
         await request(app).post('/api/analytics/engagement')
             .set('User-Agent', ua).set('X-Forwarded-For', xff)
             .set('Content-Type', 'text/plain;charset=UTF-8')

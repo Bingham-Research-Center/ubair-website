@@ -38,7 +38,7 @@
 
             <div class="summary-grid">
 
-                <div class="condition-card" data-card-type="current-temperature">
+                <div class="condition-card pane" data-card-type="current-temperature">
                     <div class="card-icon">
                         <i class="fa-solid fa-temperature-half"></i>
                     </div>
@@ -49,7 +49,7 @@
                     </div>
                 </div>
 
-                <div class="condition-card" data-card-type="felt-temperature">
+                <div class="condition-card pane" data-card-type="felt-temperature">
                     <div class="card-icon">
                         <i class="fa-solid fa-person-running"></i>
                     </div>
@@ -60,7 +60,7 @@
                     </div>
                 </div>
 
-                <div class="condition-card" data-card-type="wind-speed-direction">
+                <div class="condition-card pane" data-card-type="wind-speed-direction">
                     <div class="card-icon">
                         <i class="fa-solid fa-wind"></i>
                     </div>
@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                <div class="condition-card" data-card-type="dew-point">
+                <div class="condition-card pane" data-card-type="dew-point">
                     <div class="card-icon">
                         <i class="fa-solid fa-droplet"></i>
                     </div>
@@ -82,7 +82,7 @@
                     </div>
                 </div>
 
-                <div class="condition-card" data-card-type="baseball">
+                <div class="condition-card pane" data-card-type="baseball">
                     <div class="card-icon">
                         <i class="fa-solid fa-baseball"></i>
                     </div>
@@ -93,7 +93,7 @@
                     </div>
                 </div>
 
-                <div class="condition-card" data-card-type="football">
+                <div class="condition-card pane" data-card-type="football">
                     <div class="card-icon">
                         <i class="fa-solid fa-football"></i>
                     </div>
@@ -106,7 +106,7 @@
             </div>
 
             <!-- Crosswind model controls + assumptions -->
-            <div class="forecast-section prediction-game">
+            <div class="forecast-section prediction-game pane">
                 <h2><i class="fa-solid fa-compass"></i> Crosswind Drift Model</h2>
                 <div class="forecast-content">
                     <p class="model-controls">
@@ -146,7 +146,7 @@
             </div>
 
             <!-- Prediction Game -->
-            <div class="forecast-section prediction-game">
+            <div class="forecast-section prediction-game pane">
                 <h2><i class="fa-solid fa-dice"></i> Prediction Game — coin-flip trainer (prototype)</h2>
                 <div class="forecast-content">
                     <p>
@@ -177,12 +177,6 @@
         </div>
     </main>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-content">
-            <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Sports forecasts are experimental. All rights reserved.</p>
-        </div>
-    </footer>
 
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/loadFooter.js"></script>
