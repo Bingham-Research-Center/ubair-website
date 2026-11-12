@@ -174,10 +174,6 @@ app.get(['/kiosk', '/kiosk-portrait', '/portrait-kiosk'], (req, res) => {
     res.redirect(302, '/?display=1');
 });
 
-app.get('/test-viz', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/test-viz.html'));
-});
-
 app.get('/about', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/about.html'));
 });

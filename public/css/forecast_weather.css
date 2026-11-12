@@ -43,7 +43,6 @@ body[data-page-type="forecast_weather"] h1::after {
 /* Every box on this page is a pane (theme/panes.css): square, hairline, accent tab on the
    top edge. The rules here only set padding, spacing and the tab inset to match. */
 .control-panel,
-.weather-summaries-section,
 .weather-map-section,
 .meteogram-section,
 .summary-panel,
@@ -629,22 +628,6 @@ body[data-page-type="forecast_weather"] .forecast-panel .forecast-content {
         gap: 1rem;
     }
 
-    .weather-summaries-section {
-        max-width: 100%;
-        padding: 1.5rem;
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .weather-summaries-section .summary-tabs {
-        flex-wrap: wrap;
-        gap: 0.5rem;
-    }
-
-    .weather-summaries-section .tab-button {
-        padding: 0.5rem 1rem;
-        font-size: 0.9rem;
-    }
 }
 
 @media (max-width: 480px) {
@@ -875,53 +858,6 @@ body[data-page-type="forecast_weather"] .forecast-panel .forecast-content {
     0% { transform: scale(1); }
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
-}
-
-.weather-summaries-section {
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-.weather-summaries-section .summary-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    border-bottom: 2px solid var(--weather-background);
-}
-
-.weather-summaries-section .tab-button {
-    padding: 0.75rem 1.5rem;
-    background: transparent;
-    border: none;
-    color: var(--weather-primary);
-    font-weight: 500;
-    cursor: pointer;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    transition: all 0.3s ease;
-}
-
-.weather-summaries-section .tab-button:hover {
-    background: var(--weather-background);
-}
-
-.weather-summaries-section .tab-button.active {
-    background: var(--weather-primary);
-    color: white;
-}
-
-.weather-summaries-section .tab-content {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-}
-
-.weather-summaries-section .summary-content {
-    overflow-wrap: break-word;
-    word-wrap: break-word;
-    word-break: break-word;
-    max-width: 100%;
 }
 
 /* ============================================
