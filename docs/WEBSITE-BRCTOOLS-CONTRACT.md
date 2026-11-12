@@ -200,22 +200,24 @@ difference is exactly what the nginx trap exploited — the index passed while e
 **Endpoint** `POST /api/upload/forecasts` (shared dataType, distinguished by filename prefix)
 **Filename** `forecast_hrrr_kvel_crosswind_YYYYMMDD_HHMMZ.json`
 **Manifest:** `dataTypes.forecasts.products.hrrr_kvel_crosswind` (manifest 2.0.0).
-Consumer of record: `public/js/aviation.js` `buildTable()` (~:32-50). **Parked since 12 Nov 2026:** the
-aviation page left `dev` with the other unfinished pages, so nothing on the site reads this
-product now. The consumer is at tag `parked/pre-cleanup-2026-11-11` (branch
-`parked/unfinished-pages`); the producer can keep uploading.
+Consumer of record: `public/js/aviation.js` `forecastComponents()` and `summariseRunway()`, the
+`/aviation` page (back on `dev` in 1.6.1 after being parked on 12 Nov 2026). It pairs reciprocal
+headings into one strip (`[179, 359]` → `Rwy 17/35`), reads `crosswind_kt_<h>` / `headwind_kt_<h>`
+for the lower heading of each pair and computes them from `wind_speed_kt` / `wind_dir_deg` when
+either is missing. Steps more than 7.5 min in the past are not shown: a run lands about three
+hours after `init_time`, so roughly half of its six hours is already history.
 
 ```jsonc
 {
   "product": "aviation_crosswind",       // exact string; else the header falls back to "hrrr"
   "model": "hrrr_subh",                  // shown in the <h2> when product matches
-  "init_time": "2026-08-13T18:00:00Z",   // rendered verbatim as a string
+  "init_time": "2026-08-13T18:00:00Z",   // shown as "1800Z"
   "runway_headings_deg": [179, 359],     // TOP-LEVEL. Degrees true. Drives all column pairs.
   "valid_times": ["2026-08-13T19:00:00Z", "..."],   // drives row count
   "series": {
     "wind_speed_kt":     [12, 14, ...],  // knots
     "wind_dir_deg":      [210, 215, ...],// degrees true
-    "gust_kt":           [18, 21, ...],  // producer sends it; the page currently ignores it
+    "gust_kt":           [18, 21, ...],  // scales the crosswind ("In gusts"); floored at the wind
     "headwind_kt_179":   [ 8,  9, ...],  // key = "headwind_kt_" + String(heading).padStart(3,'0')
     "crosswind_kt_179":  [ 9, 11, ...],
     "headwind_kt_359":   [-8, -9, ...],
@@ -226,8 +228,8 @@ product now. The consumer is at tag `parked/pre-cleanup-2026-11-11` (branch
 
 **Every `series` array must be index-aligned with `valid_times`.** Missing or short arrays
 render as `—`, not an error — a silent misalignment looks like partial data, not a failure.
-Column headers derive as `Rwy` + `String(Math.floor(heading / 10)).padStart(2,'0')`:
-`179` → `Rwy17`, `359` → `Rwy35`.
+Runway numbers derive as `String(Math.floor(heading / 10)).padStart(2,'0')`, matching the
+producer's `heading // 10`: `179` → `17`, `359` → `35`.
 
 Runway headings confirmed against the FAA chart 2026-08-13 — 17/35, true `[179, 359]`, shipped
 in brc-tools #59 / v0.1.1. An earlier (deleted) apr27 handoff specified `crosswind_kt_rwy16` /
@@ -319,7 +321,7 @@ Symbol-anchored; line numbers verified 2026-08-26 against `dev` and expected to 
 | `loadHRRRForecast` (~:336) | `server/roadWeatherService.js` | 3 h reject gate, 1 h cache |
 | `getHRRRConditionAtPoint` (~:367) | `server/roadWeatherService.js` | the five fields actually read |
 | `DEFAULT_WEIGHTS` (~:417) | `server/roadWeatherService.js` | source blend weights |
-| `buildTable` (~:32) | `public/js/aviation.js` at tag `parked/pre-cleanup-2026-11-11` | KVEL crosswind consumer (authoritative; page parked, not on `dev`) |
+| `forecastComponents`, `summariseRunway` | `public/js/aviation.js` | KVEL crosswind consumer (authoritative) |
 | `fetchSurfaceRunIndex` (~:371) | `public/js/forecast_weather.js` | index + filelist fallback |
 | `parseCronIntervalMinutes` (~:111) | `server/monitoring/dataMonitor.js` | staleness window derivation |
 | `parse_api_urls` (:192), `upload_file` (:241) | `scripts/chpc_uploader.py` | fan-out + upload with retries |

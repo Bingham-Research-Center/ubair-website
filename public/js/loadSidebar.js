@@ -10,6 +10,10 @@ const PAGE_DISCLAIMERS = {
 
     '/roads': `UDOT data may be delayed. Verify critical trips with official sources.`,
 
+    '/aviation': `DISCLAIMER: Aviation weather products are experimental and for planning only. They are NOT an
+        official weather briefing: obtain one from Flight Service (1-800-WX-BRIEF) or another approved source
+        before flight. Real-time data are preliminary and subject to quality control. ©2026, Utah State University.`,
+
     '/fire': `DISCLAIMER: Fire-weather products are experimental research outputs and informational only.
         They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
         Satellite hotspot detections (NASA FIRMS) can lag by ~3 hours and may include false positives.

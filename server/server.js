@@ -161,6 +161,10 @@ app.get('/roads', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/roads.html'));
 });
 
+app.get('/aviation', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/aviation.html'));
+});
+
 app.get('/fire', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/fire.html'));
 });

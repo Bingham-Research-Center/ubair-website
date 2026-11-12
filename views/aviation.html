@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Runway winds at Vernal Regional Airport (KVEL): observed and HRRR-forecast crosswind and headwind for runway 17/35.">
+    <title>BasinWx — Aviation</title>
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+
+    <!-- Plotly (load before our scripts) -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/aviation.css">
+</head>
+
+<body data-page-type="aviation">
+    <div class="colored-bar"></div>
+
+    <!-- Sidebar Container -->
+    <div class="sidebar_container">
+        <!-- Sidebar will be loaded here via loadSidebar.js -->
+    </div>
+
+    <!-- Page content -->
+    <main class="content">
+        <div class="aviation">
+            <h1>Aviation Weather</h1>
+            <p class="aviation-subtitle">
+                Runway winds at Vernal Regional Airport (KVEL), runway 17/35.
+            </p>
+
+            <section class="aviation-panel" aria-labelledby="now-heading">
+                <h2 id="now-heading"><i class="fas fa-plane" aria-hidden="true"></i> Now</h2>
+                <p class="aviation-stamp" id="nowStamp">Loading the latest KVEL observation…</p>
+                <div class="runway-now" id="runwayNow"></div>
+            </section>
+
+            <section class="aviation-panel" aria-labelledby="forecast-heading">
+                <h2 id="forecast-heading"><i class="fas fa-wind" aria-hidden="true"></i> Crosswind forecast</h2>
+                <p class="aviation-stamp" id="forecastStamp">Loading the latest HRRR run…</p>
+                <div id="crosswindChart" class="crosswind-chart" role="img"
+                    aria-label="Forecast crosswind on runway 17/35 in knots, sustained and in gusts, over the coming hours"></div>
+                <div class="table-scroll">
+                    <table id="crosswindTable" class="crosswind-table">
+                        <caption class="visually-hidden">Forecast wind and runway components at KVEL, 15-minute steps</caption>
+                    </table>
+                </div>
+            </section>
+
+            <section class="aviation-panel aviation-about" aria-labelledby="about-heading">
+                <h2 id="about-heading"><i class="fas fa-circle-info" aria-hidden="true"></i> Reading the numbers</h2>
+                <ul>
+                    <li><strong>Crosswind</strong> is the part of the wind blowing across the runway, and the side it
+                        comes from. It is the same at both ends of the strip.</li>
+                    <li><strong>In gusts</strong> is the crosswind in the forecast gust, shown only when the gust is
+                        stronger than the sustained wind.</li>
+                    <li><strong>Headwind on</strong> names the end the wind blows down, the one to take off and land
+                        into, and how much of the wind is headwind there.</li>
+                    <li>Directions are degrees true, as in METARs and TAFs. Runway 17/35 lies at 179°/359° true.</li>
+                    <li>The forecast is NOAA's HRRR model in 15-minute steps, six hours from each hourly run, processed
+                        at the University of Utah's CHPC. A run reaches this page a few hours after its start time, so
+                        steps already in the past are not shown.</li>
+                </ul>
+                <p class="aviation-caveat">
+                    Not an official weather briefing. Before flight, get one from Flight Service
+                    (1-800-WX-BRIEF) or <a href="https://aviationweather.gov" target="_blank" rel="noopener">aviationweather.gov</a>.
+                </p>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="footer-content">
+            <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Aviation forecasts are experimental. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script type="module" src="/public/js/loadSidebar.js"></script>
+    <script type="module" src="/public/js/loadFooter.js"></script>
+    <script type="module" src="/public/js/aviation.js"></script>
+</body>
+
+</html>
