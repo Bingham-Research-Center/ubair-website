@@ -19,20 +19,19 @@
     padding: 12px 16px;
     background: white;
     border: 2px solid var(--usu-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     transition: all 0.3s ease;
     color: var(--usu-blue);
     font-size: 1.2rem;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card);
     flex-shrink: 0;
 }
 
 .dark-mode-toggle:hover {
     background: var(--usu-light-gray);
     border-color: var(--usu-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .dark-mode-toggle:focus {
@@ -52,7 +51,7 @@ body.dark-mode .content {
 
 body.dark-mode .plot-section {
     background: #2a2a2a;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-card);
 }
 
 body.dark-mode .plot-title,
@@ -109,7 +108,7 @@ body.dark-mode .multi-select-dropdown {
 }
 
 body.dark-mode .dropdown-header {
-    background: linear-gradient(135deg, #333, #2a2a2a);
+    background: #333;
     border-bottom-color: #444;
 }
 
@@ -137,13 +136,13 @@ body.dark-mode .dark-mode-toggle:hover {
 }
 
 body.dark-mode .data-info {
-    background: linear-gradient(135deg, #2a3a4a, #2a2a2a);
+    background: #2a3a4a;
     color: #9DC3E6;
     border-left-color: #627C8B;
 }
 
 body.dark-mode .selection-summary {
-    background: linear-gradient(135deg, #2a3a4a, #2a2a2a);
+    background: #2a3a4a;
     border-color: #444;
 }
 
@@ -152,7 +151,7 @@ body.dark-mode .summary-item {
 }
 
 body.dark-mode .stat-card {
-    background: linear-gradient(135deg, #2a3a4a, #1a2a3a);
+    background: #2a3a4a;
 }
 
 body.dark-mode .map-legend {
@@ -181,16 +180,16 @@ body.dark-mode .variable-tooltip-text {
 .plot-section {
     background: white;
     padding: 2rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-bottom: 2.5rem;
-    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.12);
+    box-shadow: var(--shadow-card);
     transition: box-shadow 0.3s ease;
     width: 100%;
     box-sizing: border-box;
 }
 
 .plot-section:hover {
-    box-shadow: 0 6px 16px rgba(0, 38, 58, 0.18);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .plot-title {
@@ -226,19 +225,18 @@ body.dark-mode .variable-tooltip-text {
     background: white;
     color: var(--usu-blue);
     border: 2px solid var(--usu-light-blue);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card);
 }
 
 .export-btn:hover {
     background: var(--usu-light-blue);
     color: white;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 118, 168, 0.2);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .export-btn:active {
@@ -283,7 +281,7 @@ body.dark-mode .variable-tooltip-text {
 
 .plot-container .tick text {
     fill: #00263A;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-sans);
 }
 
 /* Controls */
@@ -299,15 +297,15 @@ body.dark-mode .variable-tooltip-text {
 .controls button {
     padding: 10px 18px;
     border: 2px solid var(--usu-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     background: white;
     color: var(--usu-blue);
     cursor: pointer;
     font-size: 14px;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0, 38, 58, 0.08);
+    box-shadow: var(--shadow-overlay);
 }
 
 .controls select {
@@ -318,13 +316,12 @@ body.dark-mode .variable-tooltip-text {
     background: var(--usu-light-blue);
     color: white;
     border-color: var(--usu-light-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 38, 58, 0.15);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .controls button:active {
     transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0, 38, 58, 0.08);
+    box-shadow: var(--shadow-overlay);
 }
 
 .controls select:hover {
@@ -340,11 +337,11 @@ body.dark-mode .variable-tooltip-text {
 
 /* Data Info Banner */
 .data-info {
-    background: linear-gradient(135deg, #f0f8ff, #ffffff);
+    background: #f0f8ff;
     padding: 1.5rem;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     margin-bottom: 2rem;
-    box-shadow: 0 3px 8px rgba(0, 38, 58, 0.1);
+    box-shadow: var(--shadow-card);
     color: var(--usu-blue);
     font-size: 0.95rem;
     line-height: 1.7;
@@ -366,7 +363,7 @@ body.dark-mode .variable-tooltip-text {
     max-height: 500px;
     overflow-y: auto;
     border: 1px solid var(--usu-light-gray);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .data-table-container table {
@@ -471,7 +468,7 @@ body.dark-mode .variable-tooltip-text {
     background: #fee2e2;
     border: 1px solid #ef4444;
     padding: 1rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     color: #dc2626;
 }
 
@@ -498,19 +495,19 @@ body.dark-mode .variable-tooltip-text {
 .control-group input[type="datetime-local"] {
     padding: 12px 14px;
     border: 2px solid var(--usu-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 14px;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     font-weight: 500;
     color: var(--usu-blue);
     background: white;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 38, 58, 0.06);
+    box-shadow: var(--shadow-overlay);
 }
 
 .control-group input[type="datetime-local"]:hover {
     border-color: var(--usu-light-blue);
-    box-shadow: 0 2px 6px rgba(0, 38, 58, 0.1);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .control-group input[type="datetime-local"]:focus {
@@ -525,22 +522,22 @@ body.dark-mode .variable-tooltip-text {
     padding: 14px 18px;
     background: white;
     border: 2px solid var(--usu-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.95rem;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     color: var(--usu-blue);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 38, 58, 0.06);
+    box-shadow: var(--shadow-card);
     text-align: left;
 }
 
 .multi-select-btn:hover {
     border-color: var(--usu-light-blue);
-    box-shadow: 0 2px 6px rgba(0, 38, 58, 0.1);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .multi-select-btn:focus {
@@ -571,7 +568,7 @@ body.dark-mode .variable-tooltip-text {
     background: var(--usu-light-blue);
     color: white;
     padding: 4px 10px;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     font-size: 0.85rem;
     margin-right: 6px;
     margin-bottom: 4px;
@@ -585,8 +582,8 @@ body.dark-mode .variable-tooltip-text {
     right: 0;
     background: white;
     border: 2px solid var(--usu-light-blue);
-    border-radius: 8px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     z-index: 1000;
     max-height: 400px;
     overflow-y: auto;
@@ -602,7 +599,7 @@ body.dark-mode .variable-tooltip-text {
     align-items: center;
     padding: 14px 16px;
     border-bottom: 2px solid var(--usu-light-gray);
-    background: linear-gradient(135deg, #f8f9fa, white);
+    background: #f8f9fa;
 }
 
 .dropdown-header span {
@@ -635,7 +632,7 @@ body.dark-mode .variable-tooltip-text {
     gap: 10px;
     padding: 12px 14px;
     cursor: pointer;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     transition: background 0.2s ease;
     font-size: 0.95rem;
     color: #333;
@@ -661,26 +658,25 @@ body.dark-mode .variable-tooltip-text {
 .preset-btn {
     flex: 1;
     padding: 12px 20px;
-    background: linear-gradient(135deg, var(--usu-light-blue), #5399C6);
+    background: var(--usu-light-blue);
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     cursor: pointer;
     font-weight: 600;
     font-size: 14px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 3px 8px rgba(0, 118, 168, 0.25);
+    box-shadow: var(--shadow-card);
 }
 
 .preset-btn:hover {
-    background: linear-gradient(135deg, var(--usu-blue), #005A86);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(0, 118, 168, 0.35);
+    background: var(--usu-blue);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .preset-btn:active {
     transform: translateY(0);
-    box-shadow: 0 2px 6px rgba(0, 118, 168, 0.25);
+    box-shadow: var(--shadow-card);
 }
 
 /* Action Buttons Container */
@@ -698,20 +694,19 @@ body.dark-mode .variable-tooltip-text {
     background: white;
     color: var(--usu-accent);
     border: 2px solid var(--usu-light-gray);
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-card);
 }
 
 .reset-all-btn:hover {
     background: var(--usu-light-gray);
     border-color: var(--usu-accent);
     color: var(--usu-blue);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .reset-all-btn:active {
@@ -725,21 +720,20 @@ body.dark-mode .variable-tooltip-text {
 /* Share Button */
 .share-btn {
     padding: 12px 28px;
-    background: linear-gradient(135deg, #27AE60, #229954);
+    background: #27AE60;
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 3px 8px rgba(39, 174, 96, 0.3);
+    box-shadow: var(--shadow-card);
 }
 
 .share-btn:hover {
-    background: linear-gradient(135deg, #229954, #1E8449);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 12px rgba(39, 174, 96, 0.4);
+    background: #229954;
+    box-shadow: var(--shadow-card-hover);
 }
 
 .share-btn:active {
@@ -755,11 +749,11 @@ body.dark-mode .variable-tooltip-text {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: linear-gradient(135deg, #27AE60, #229954);
+    background: #27AE60;
     color: white;
     padding: 16px 24px;
-    border-radius: 8px;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     z-index: 10000;
     display: flex;
     align-items: center;
@@ -801,27 +795,26 @@ body.dark-mode .variable-tooltip-text {
 /* Fetch Button */
 .fetch-btn {
     padding: 16px 40px;
-    background: linear-gradient(135deg, var(--usu-blue), #005A86);
+    background: var(--usu-blue);
     color: white;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-size: 1.05rem;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 5px 15px rgba(0, 38, 58, 0.35);
+    box-shadow: var(--shadow-card);
     letter-spacing: 0.3px;
 }
 
 .fetch-btn:hover {
-    background: linear-gradient(135deg, #005A86, #003D5C);
-    transform: translateY(-3px);
-    box-shadow: 0 8px 20px rgba(0, 38, 58, 0.45);
+    background: #005A86;
+    box-shadow: var(--shadow-card-hover);
 }
 
 .fetch-btn:active {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 38, 58, 0.35);
+    box-shadow: var(--shadow-card);
 }
 
 .fetch-btn i {
@@ -835,7 +828,7 @@ body.dark-mode .variable-tooltip-text {
     padding: 10px 16px;
     background: #fff3cd;
     border: 1px solid #ffc107;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     color: #856404;
     font-size: 0.9rem;
     display: inline-block;
@@ -865,13 +858,13 @@ body.dark-mode .variable-tooltip-text {
     width: 100%;
     padding: 12px 14px 12px 42px;
     border: 2px solid var(--usu-light-gray);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 14px;
-    font-family: 'Roboto', sans-serif;
+    font-family: var(--font-sans);
     color: var(--usu-blue);
     background: white;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0, 38, 58, 0.06);
+    box-shadow: var(--shadow-card);
 }
 
 .station-search-input:hover {
@@ -893,9 +886,9 @@ body.dark-mode .variable-tooltip-text {
 .station-map {
     width: 100%;
     height: 450px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 2px solid var(--usu-light-gray);
-    box-shadow: 0 2px 8px rgba(0, 38, 58, 0.1);
+    box-shadow: var(--shadow-card);
     z-index: 1;
 }
 
@@ -906,9 +899,9 @@ body.dark-mode .variable-tooltip-text {
     right: 10px;
     background: rgba(255, 255, 255, 0.95);
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     border: 2px solid var(--usu-light-gray);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-overlay);
     z-index: 1000;
     display: flex;
     flex-direction: column;
@@ -929,7 +922,7 @@ body.dark-mode .variable-tooltip-text {
     height: 18px;
     border-radius: 50%;
     border: 3px solid white;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
 }
 
 .legend-marker-selected {
@@ -947,7 +940,7 @@ body.dark-mode .variable-tooltip-text {
     margin-top: 12px;
     padding: 12px 16px;
     background: #f0f4f7;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     border: 1px solid var(--usu-light-gray);
 }
 
@@ -966,7 +959,7 @@ body.dark-mode .variable-tooltip-text {
     background: var(--usu-red);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-size: 0.9rem;
     font-weight: 500;
@@ -975,7 +968,6 @@ body.dark-mode .variable-tooltip-text {
 
 .clear-selection-btn:hover {
     background: #A00D25;
-    transform: translateY(-1px);
 }
 
 .clear-selection-btn i {
@@ -984,44 +976,43 @@ body.dark-mode .variable-tooltip-text {
 
 /* Custom Leaflet Marker Styles */
 .station-marker {
-    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    background: #7f8c8d;
     border: 3px solid white;
     border-radius: 50%;
     width: 22px;
     height: 22px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-card);
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .station-marker:hover {
-    transform: scale(1.25);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-    background: linear-gradient(135deg, #6AADE4, #0076A8);
+    box-shadow: var(--shadow-card-hover);
+    background: #6AADE4;
 }
 
 .station-marker.selected {
-    background: linear-gradient(135deg, #0076A8, #005A86);
+    background: #0076A8;
     width: 28px;
     height: 28px;
     border-width: 4px;
     border-color: white;
-    box-shadow: 0 4px 16px rgba(0, 118, 168, 0.6), 0 0 20px rgba(0, 118, 168, 0.4);
+    box-shadow: var(--shadow-card);
     z-index: 1000;
     animation: pulse-marker 2s ease-in-out infinite;
 }
 
 @keyframes pulse-marker {
     0%, 100% {
-        box-shadow: 0 4px 16px rgba(0, 118, 168, 0.6), 0 0 20px rgba(0, 118, 168, 0.4);
+        box-shadow: var(--shadow-card);
     }
     50% {
-        box-shadow: 0 4px 20px rgba(0, 118, 168, 0.8), 0 0 30px rgba(0, 118, 168, 0.6);
+        box-shadow: var(--shadow-card);
     }
 }
 
 .station-marker.disabled {
-    background: linear-gradient(135deg, #bdc3c7, #d3d3d3);
+    background: #bdc3c7;
     cursor: not-allowed;
     opacity: 0.4;
     filter: grayscale(100%);
@@ -1029,8 +1020,8 @@ body.dark-mode .variable-tooltip-text {
 
 .station-marker.disabled:hover {
     transform: none;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, #bdc3c7, #d3d3d3);
+    box-shadow: var(--shadow-card-hover);
+    background: #bdc3c7;
 }
 
 /* Statistics Cards Container */
@@ -1041,17 +1032,16 @@ body.dark-mode .variable-tooltip-text {
 }
 
 .stat-card {
-    background: linear-gradient(135deg, var(--usu-light-blue), var(--usu-blue));
+    background: var(--usu-light-blue);
     color: white;
     padding: 1.75rem;
-    border-radius: 12px;
-    box-shadow: 0 5px 15px rgba(0, 38, 58, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     transition: all 0.3s ease;
 }
 
 .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0, 38, 58, 0.25);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .stat-card-header {
@@ -1136,11 +1126,11 @@ body.dark-mode .variable-tooltip-text {
     background: var(--usu-blue);
     color: white;
     text-align: center;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.8rem;
     font-weight: normal;
     transition: opacity 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
 }
 
 .variable-tooltip-text::after {
@@ -1162,9 +1152,9 @@ body.dark-mode .variable-tooltip-text {
 
 /* Selection Summary Bar */
 .selection-summary {
-    background: linear-gradient(135deg, #f0f8ff, #e6f2ff);
+    background: #f0f8ff;
     padding: 1rem 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     margin-bottom: 1.5rem;
     border: 1px solid var(--usu-light-blue);
     display: flex;

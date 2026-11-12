@@ -1,5 +1,6 @@
 import { fetchLiveObservations } from './api.js';
 import { getCardinalDirection } from './mapUtils.js';
+import { relativeHumidityFromDewPoint } from './met.js';
 
 // All cards read from one pinned station so the numbers are mutually consistent.
 // Observation keys are friendly display names (see mapStationName in mapShared.js).
@@ -96,22 +97,9 @@ function toPascals(value, unit) {
  * Meteorology
  * ------------------------------------------------------------------ */
 
-/**
- * Relative humidity from temperature and dew point, via the Magnus formula.
- *
- * The feed carries no relative_humidity at all, but it does carry dew point —
- * the temperature you would have to cool the air to before water starts
- * condensing out, so a direct measure of the water actually present.
- *
- * `es` is the most water this air could hold at its temperature; `e` is how much
- * is really there. RH is the ratio of the two.
- */
-export function relativeHumidityFromDewPoint(tempC, dewPointC) {
-    if (tempC === null || dewPointC === null) return null;
-    const saturationPressure = t => 6.112 * Math.exp((17.67 * t) / (t + 243.5));
-    const rh = 100 * saturationPressure(dewPointC) / saturationPressure(tempC);
-    return Math.min(100, Math.max(0, rh));
-}
+// Relative humidity from dew point lives in met.js, shared with the homepage; re-exported here
+// so existing imports keep working.
+export { relativeHumidityFromDewPoint };
 
 /**
  * NWS heat index (Rothfusz regression), including the two standard adjustments.

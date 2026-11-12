@@ -12,10 +12,10 @@
     color: white;
     border: none;
     padding: 15px 12px;
-    border-radius: 0 8px 8px 0;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
     cursor: pointer;
     font-size: 20px;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: var(--shadow-overlay);
     transition: all 0.3s ease;
 }
 
@@ -223,7 +223,6 @@
     }
 
     .dashboard-section {
-        padding: 1rem;
         margin-bottom: 1rem;
         width: 100%;
         max-width: 100%;
@@ -266,21 +265,6 @@
     .kiosk-switch-container label {
         font-size: 0.9rem;
     }
-    
-    /* Mobile-friendly forecast tabs */
-    .forecast-tabs {
-        flex-direction: column;
-        gap: 0.5rem;
-        width: 100%;
-    }
-    
-    .forecast-tab {
-        width: 100%;
-        justify-content: center;
-        padding: 0.6rem 1rem;
-        font-size: 1rem;
-        min-height: 44px;
-    }
 
     /* Legend dropdown stays inline on mobile, not as centered overlay */
     .legend-dropdown {
@@ -308,13 +292,6 @@
         line-height: 1.4;
         padding: 1rem;
     }
-
-    .dutch-john-easter-egg {
-        top: 60px !important;
-        right: 10px !important;
-        max-width: calc(100vw - 20px) !important;
-        left: auto !important;
-    }
 }
 
 /* Large Tablet / Small Desktop (900px - 1024px) */
@@ -322,14 +299,6 @@
     .homepage-header {
         padding: 1.25rem;
         gap: 1.5rem;
-    }
-
-    .headlines-dashboard {
-        padding: 1.25rem;
-    }
-
-    .headline-icon {
-        font-size: 1.5rem;
     }
 
     .dashboard-tabs .tab-button {
@@ -349,21 +318,8 @@
         gap: 1.25rem;
     }
 
-    .headlines-dashboard {
-        padding: 1rem;
-    }
-
-    .headline-icon {
-        font-size: 1.4rem;
-    }
-
     .headline-items {
         grid-template-columns: 1fr;
-        gap: 0.75rem;
-    }
-
-    .headline-item {
-        padding: 0.75rem;
         gap: 0.75rem;
     }
 
@@ -372,22 +328,11 @@
         font-size: 0.9rem;
     }
 
-    .dashboard-tabs .tab-button i {
-        font-size: 0.85rem;
-    }
-
     .town-dropdown {
         font-size: 0.85rem;
         min-width: 110px;
     }
 
-    .ai-summary-box {
-        padding: 1.25rem;
-    }
-
-    .ai-summary-text {
-        font-size: 0.95rem;
-    }
 }
 
 /* Portrait mobile optimization */
@@ -414,7 +359,6 @@
 
     .headlines-dashboard {
         width: 100%;
-        padding: 1rem;
     }
 
     .dashboard-header {
@@ -451,24 +395,8 @@
         gap: 0.75rem;
     }
 
-    .headline-item {
-        padding: 0.75rem;
-    }
-
-    .headline-icon {
-        font-size: 1.3rem;
-    }
-
     .headline-value {
         font-size: 1rem;
-    }
-
-    .ai-summary-box {
-        padding: 1rem;
-    }
-
-    .ai-summary-text {
-        font-size: 0.9rem;
     }
 
     .site-info {
@@ -486,9 +414,7 @@
     
     /* Ultra-compact dashboard sections - use full width */
     .dashboard-section {
-        padding: 0.75rem;
         margin: 0 0 0.75rem 0;
-        border-radius: 12px;
         width: 100%;
         max-width: 100%;
         box-sizing: border-box;
@@ -561,7 +487,7 @@
         border: 1px solid rgba(0, 38, 58, 0.2);
         color: var(--usu-blue);
         padding: 0.3rem 0.6rem;
-        border-radius: 4px;
+        border-radius: var(--radius-sm);
         cursor: pointer;
         font-size: 0.9rem;
         transition: all 0.2s ease;
@@ -594,10 +520,6 @@
         align-self: center;
     }
 
-    .headlines-dashboard {
-        padding: 0.75rem;
-    }
-
     .dashboard-header {
         gap: 0.5rem;
     }
@@ -606,10 +528,6 @@
         padding: 0.4rem 0.6rem;
         font-size: 0.8rem;
         gap: 0.3rem;
-    }
-
-    .dashboard-tabs .tab-button i {
-        font-size: 0.8rem;
     }
 
     .town-selector {
@@ -628,10 +546,6 @@
 
     .headline-label {
         font-size: 0.75rem;
-    }
-
-    .headline-icon {
-        font-size: 1.2rem;
     }
 
     .headline-value {
@@ -683,7 +597,6 @@
     }
 
     .headlines-dashboard {
-        padding: 0.875rem;
         max-width: none;
         /* Remove max-width constraint in landscape */
     }
@@ -712,15 +625,6 @@
         gap: 0.625rem;
     }
 
-    .headline-item {
-        padding: 0.625rem;
-        gap: 0.625rem;
-    }
-
-    .headline-icon {
-        font-size: 1.3rem;
-    }
-
     .headline-label {
         font-size: 0.75rem;
     }
@@ -740,16 +644,5 @@
         min-width: 100px;
     }
 
-    .ai-summary-box {
-        padding: 0.875rem;
-    }
-
-    .ai-summary-text {
-        font-size: 0.85rem;
-    }
-
     /* Reduce vertical padding throughout to maximize content area */
-    .dashboard-section {
-        padding: 0.75rem;
-    }
 }

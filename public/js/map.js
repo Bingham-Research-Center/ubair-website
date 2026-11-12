@@ -131,7 +131,7 @@ function fixUSULogo() {
         // Ensure proper positioning for live AQ page
         usuLogoContainer.style.position = 'fixed';
         usuLogoContainer.style.bottom = '120px';
-        usuLogoContainer.style.left = 'calc(250px + 20px)';
+        usuLogoContainer.style.left = 'calc(var(--sidebar-width) + 1.25rem)';
         usuLogoContainer.style.zIndex = '1000';
 
         const usuLogoImage = usuLogoContainer.querySelector('img');
@@ -242,7 +242,7 @@ function getPopupPanPadding() {
         '.map-controls-stack',
         '.study-area-toggle',
         '.overlay-container',
-        '.warning-levels-overlay',
+        '#live-aq-legend-panel',
         '.main-footer',
         '.usu-logo'
     ];
@@ -264,8 +264,8 @@ function getPopupPanPadding() {
     applyRightInset(insets, elements['.overlay-container'], mapRect);
     applyTopInset(insets, elements['.overlay-container'], mapRect);
 
-    applyRightInset(insets, elements['.warning-levels-overlay'], mapRect);
-    applyBottomInset(insets, elements['.warning-levels-overlay'], mapRect);
+    applyRightInset(insets, elements['#live-aq-legend-panel'], mapRect);
+    applyBottomInset(insets, elements['#live-aq-legend-panel'], mapRect);
 
     applyBottomInset(insets, elements['.main-footer'], mapRect);
 

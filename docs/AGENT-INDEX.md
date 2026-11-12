@@ -1,6 +1,6 @@
 # Agent Index — ubair-website
 
-Entry point for AI agents working in this repo. **Last refreshed:** 2026-09-28.
+Entry point for AI agents working in this repo. **Last refreshed:** 2026-11-12.
 
 This file lists what's in `docs/` so you can pick the right reference without grepping the
 whole tree. Read on demand; do not auto-load. Humans start at the
@@ -13,18 +13,24 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 ## Read first when…
 | Goal | File |
 |---|---|
-| **Pick up outstanding work** | `gh issue list --label student-ready` (sized, verifiable) or `gh issue list --label copilot-ok` (chores with tests); the org Project "BasinWx Winter 2026/27" is the board. Milestones: `v1.6.0 Beta relaunch` (Nov 1), `v2.0.0 Ozone season open` (Dec 1) |
+| **Pick up outstanding work** | `gh issue list --label student-ready` (sized, verifiable) or `gh issue list --label copilot-ok` (chores with tests). Every open issue sits on one of two milestones: `v1.6.0 Beta relaunch` (15 Nov 2026), `v2.0.0 Ozone season open` (1 Dec 2026) |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | **Check both live boxes from outside, no shell needed** | `scripts/probe.py` (python3 only; see `docs/DEPLOYMENT.md` §6 step 0) |
+| Change the site icon (favicon) or the BasinWx wordmark | `docs/FAVICON-INSTALL-STEPS.md` + `scripts/make_favicon.py`, `scripts/make_wordmark.py` |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
 | Work the CHPC/producer side | The [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) repo: `docs/CHPC-REFERENCE.md` (cron, env, pitfalls), `docs/WEBSITE-INTEGRATION.md` (upload contract), `docs/walkthroughs/upload.md` |
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
-| Onboard a new RA | Wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) ("what do I do today?") + [Team](https://github.com/Bingham-Research-Center/ubair-website/wiki/Team); then `docs/howto/preview-a-branch.md` |
+| Onboard a new RA | Wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) (the wiki's only page); then `docs/howto/preview-a-branch.md` |
 | Plumb a new forecast dataType from brc-tools | `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — endpoint, schemas, unit traps (permanent); then `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for what is still unanswered and who owns it |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
-| Finish or review the HRRR weather-map integration | `docs/HRRR-NWP-HANDOFF-apr16.md` — cold-start handoff written 2026-04-16 against commit `b051513`; check what has landed on `dev` since before trusting its file list |
+| Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`) + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
+| Convert observation units or derive RH | `public/js/met.js` (pure; null for an unknown unit); the feed is raw SI by design (`CLAUDE.md` §Data pipeline) |
+| Restyle a page, cards, the UI scale | `docs/STYLE-TOKEN-GUIDE.md` §Panes and §Scale; `public/css/theme/panes.css` |
+| Work on the aviation page (KVEL crosswind) | `public/js/aviation.js` + `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c |
+| Take screenshots on the dev box | no browser is installed and there is no sudo; Playwright's Chromium runs once its missing libraries are unpacked from `apt-get download` into `LD_LIBRARY_PATH` |
+| Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |
 | Fix a road weather bug | `docs/HOW_IT_WORKS.md` + `gh issue list --label area:roads` (the former `ROADS_AUDIT.md` findings live there) |
 
 ## Reference docs (cite, don't reread)
@@ -36,16 +42,18 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | API rate budget | `docs/API_RATE_CALCULATIONS_HYBRID.md` | matches the shipped staggered schedule |
 | API key + auth | `docs/API-KEY-SETUP.md` | sole doc for `scripts/generate-api-key.js`; systemd-era paths partially stale — refresh at next key rotation |
 | Secret sharing | `docs/SECRET-SHARING-GUIDE.md` | password-manager workflow |
-| Branching (day-to-day) | `CLAUDE.md` §Protected branches + wiki [How-We-Work](https://github.com/Bingham-Research-Center/ubair-website/wiki/How-We-Work) | the release train itself: `CLAUDE.md` + `DEPLOYMENT.md` §7a |
+| Styling, theme, colours, fonts | `docs/STYLE-TOKEN-GUIDE.md` | raw values live only in `public/css/theme/tokens.css`; ratchet test enforces it |
+| Branching (day-to-day) | `CLAUDE.md` §Protected branches + wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) | the release train itself: `CLAUDE.md` + `DEPLOYMENT.md` §7a |
 | PR review template | `docs/PR-REVIEW-PROMPT-TEMPLATE.md` | use with `/code-review` |
 | Winter ozone science | `docs/WINTER-OZONE-SCIENCE.md` | why the site exists |
-| Easter eggs / 90s mode | `docs/EASTER-EGGS.md` | Konami code, kiosk, etc. |
 
 ## Outstanding-work indices
-Outstanding work is **GitHub Issues + the "BasinWx Winter 2026/27" Project**, not files in this
-tree. `student-ready` = ≤ 8 h with success criteria a reviewer can verify; `copilot-ok` = chores
-with tests an agent may take unprompted. Wishlists go to Discussions › Ideas and become issues
-only when milestoned. The former `IMPROVEMENTS.md`, `AGENT-WORK-QUEUE-aug26.md`,
+Outstanding work is **GitHub Issues on two milestones**, not files in this tree. The backlog was
+cut to 32 issues on 2026-11-09: no epics, no per-area Ideas threads, no UX-review workflow.
+`student-ready` = ≤ 8 h with success criteria a reviewer can verify; `copilot-ok` = chores
+with tests an agent may take unprompted. Wishlists go to one thread, Discussions #342 ("Ideas
+parking lot"), and become issues only when milestoned; issues closed with the `swept` label
+were parked, not rejected. The former `IMPROVEMENTS.md`, `AGENT-WORK-QUEUE-aug26.md`,
 `ROADS_AUDIT.md` and `SPORTS-PAGE-ROADMAP.md` were converted and deleted (see History).
 
 ## Howto/ subdir
@@ -58,6 +66,10 @@ only when milestoned. The former `IMPROVEMENTS.md`, `AGENT-WORK-QUEUE-aug26.md`,
 Deleted from the tree on 2026-09-28: `docs/archive/` (49 session handoffs and superseded
 plans), `chpc-deployment/` (superseded by brc-tools), `references/`. Last commit containing
 them: `b6dbddf` — `git show b6dbddf:docs/archive/<file>`.
+
+Deleted on 2026-11-12: `docs/HRRR-NWP-HANDOFF-apr16.md`, the cold-start handoff for the HRRR
+weather-map integration; its commit `b051513` has long been on `dev`. Read it with
+`git show c798a46:docs/HRRR-NWP-HANDOFF-apr16.md`.
 
 ## Doc-naming convention (also in `CLAUDE.md`)
 - LLM-produced markdown: ALL-CAPS, 3–4 hyphen-separated words.
