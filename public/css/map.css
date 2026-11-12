@@ -1,4 +1,14 @@
 /* Map Styles */
+
+/* Leaflet sets its own font on the map (Helvetica, and Lucida Console on the zoom buttons),
+   so popups, legends, labels and attribution would not match the page. `body` raises the
+   specificity because some pages load leaflet.css after main.css. */
+body .leaflet-container,
+body .leaflet-control-zoom-in,
+body .leaflet-control-zoom-out {
+    font-family: var(--font-sans);
+}
+
 #map {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-card);
