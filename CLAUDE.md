@@ -82,8 +82,8 @@ One branch, its own worktree, a spare port, served at `<name>.basinwx.dev`.
   (`certbot certonly --nginx -d <name>.basinwx.dev`, then an nginx vhost).
 - `PREVIEW_MODE=true` in the preview's `.env` gates background jobs so previews don't
   double-burn upstream quotas.
-- Scrubbed-shell start and no `pm2 save`, as above. `scripts/manage-previews.sh` does a plain
-  `pm2 start` and a `pm2 save`, so it is for a person's own shell, not a Claude Code session.
+- Scrubbed-shell start and no `pm2 save`, as above. `scripts/manage-previews.sh` does both
+  (`pm2_clean`), so it is safe from a Claude Code session; its `nginx` step still needs root.
 
 ## Data pipeline
 CHPC `brc-tools` (Synoptic + HRRR) → POST `/api/upload/:dataType` with `x-api-key` +
