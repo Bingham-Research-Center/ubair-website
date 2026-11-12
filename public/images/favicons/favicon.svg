@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <clipPath id="tile"><rect width="64" height="64" rx="12"/></clipPath>
   <g clip-path="url(#tile)">
-    <rect width="64" height="64" fill="#00263a"/>
+    <rect width="64" height="64" fill="#15181c"/>
     <path d="M19 14 L19 50" fill="none" stroke="#ffffff" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M19 14 L30 14 A8.5 8.5 0 0 1 30 31 L19 31" fill="none" stroke="#ffffff" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="M19 31 L32 31 A9.5 9.5 0 0 1 32 50 L19 50" fill="none" stroke="#ffffff" stroke-width="8.0" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="51" cy="15" r="6.5" fill="#ef4a5f"/>
-    <circle cx="51" cy="15" r="2.6" fill="#00263a"/>
+    <circle cx="51" cy="15" r="6.5" fill="#2bb5a6"/>
+    <circle cx="51" cy="15" r="2.6" fill="#15181c"/>
   </g>
 </svg>
