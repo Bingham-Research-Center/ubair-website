@@ -36,7 +36,7 @@
         <h1>Weather Forecasts</h1>
 
         <!-- GEFS Meteogram Section - Active Feature -->
-        <section class="meteogram-section" aria-label="Model Forecast Meteograms">
+        <section class="meteogram-section pane" aria-label="Model Forecast Meteograms">
             <div class="section-header">
                 <h2><i class="fas fa-chart-area"></i> Model Forecast Data</h2>
                 <div class="info-icon" data-tooltip="Ensemble model forecast meteograms showing uncertainty ranges">
@@ -102,7 +102,7 @@
         </section>
 
         <!-- Control Panel -->
-        <section class="control-panel" aria-label="Forecast Controls">
+        <section class="control-panel pane" aria-label="Forecast Controls">
             <div class="controls-row">
                 <div class="run-selector">
                     <label for="forecast-run">Forecast Run:</label>
@@ -150,7 +150,7 @@
         </section>
 
         <!-- Weather AI Summaries Section -->
-        <section class="weather-summaries-section" aria-label="AI Weather Summaries">
+        <section class="weather-summaries-section pane" aria-label="AI Weather Summaries">
             <div class="section-header">
                 <h2><i class="fas fa-cloud-sun-rain"></i> AI Weather Summaries</h2>
                 <div class="info-icon" data-tooltip="AI-generated weather summaries at different complexity levels">
@@ -172,7 +172,7 @@
         </section>
 
         <!-- Weather Map Container -->
-        <section class="weather-map-section" aria-label="Interactive Weather Map">
+        <section class="weather-map-section pane" aria-label="Interactive Weather Map">
             <div class="map-container">
                 <div id="weather-map" class="weather-map"></div>
                 <div class="map-overlay">
@@ -190,7 +190,7 @@
         <!-- Weather Analysis -->
         <section class="analysis-section" aria-label="Weather Analysis and Summary">
             <div class="analysis-grid">
-                <div class="summary-panel">
+                <div class="summary-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-clipboard-list"></i> Current Summary</h3>
                         <div class="info-icon" data-tooltip="Automated analysis of current weather patterns">
@@ -216,7 +216,7 @@
                     </div>
                 </div>
 
-                <div class="forecast-panel">
+                <div class="forecast-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-chart-line"></i> Forecast Snapshots</h3>
                         <div class="info-icon" data-tooltip="Short-term forecast highlighting key changes">
@@ -228,7 +228,7 @@
                     </div>
                 </div>
 
-                <div class="conditions-panel">
+                <div class="conditions-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-exclamation-triangle"></i> Special Conditions</h3>
                         <div class="info-icon" data-tooltip="Notable weather conditions affecting the Basin">
@@ -240,7 +240,7 @@
                     </div>
                 </div>
 
-                <div class="model-panel">
+                <div class="model-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-cogs"></i> Model Information</h3>
                         <div class="info-icon" data-tooltip="Weather model sources and update times">
