@@ -95,6 +95,13 @@
     --epa-very-unhealthy: #8f3f97;
     --epa-hazardous: #7e0023;
 
+    /* Clyfar's ember: three dark reds a few degrees of hue apart (wine, oxblood, rust) and about
+       equally dark, so white text reads the same on each; and a warm light for an icon on them. */
+    --ember-wine: #45162a;
+    --ember-oxblood: #521a21;
+    --ember-rust: #51231b;
+    --ember-spark: #f2b3a3;
+
     /* 2. Semantic */
 
     --color-bg: var(--grey-100);
@@ -112,6 +119,15 @@
     --color-on-accent: var(--white);
     --color-link: var(--anchor-900);
     --color-focus: var(--focus-blue);
+
+    /* Clyfar's hover (theme/clyfar.css): a dark red whose hue drifts while the pointer rests.
+       Decorative, so it never stands in for a status or AQI colour. */
+    --clyfar-ember-from: var(--ember-wine);
+    --clyfar-ember: var(--ember-oxblood);
+    --clyfar-ember-to: var(--ember-rust);
+    --clyfar-glow: linear-gradient(110deg, var(--clyfar-ember-from), var(--clyfar-ember), var(--clyfar-ember-to));
+    --color-on-clyfar: var(--white);
+    --clyfar-spark: var(--ember-spark);    /* an icon on the ember */
 
     --color-neutral: var(--neutral-500);
     --color-neutral-soft: var(--neutral-400);
@@ -159,6 +175,7 @@
     --font-mono: 'Courier New', monospace;
 
     --motion-fast: 0.15s ease;
+    --motion-drift: 6s ease-in-out;    /* one sweep of Clyfar's hover; it then sweeps back */
 
     /* Applied to Leaflet's tile pane. Greyed, so the coloured markers carry the map. */
     --basemap-filter: grayscale(1) contrast(0.9) brightness(1.06);

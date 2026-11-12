@@ -921,23 +921,11 @@ body[data-page-type="roads"] .leaflet-drag-target {
         height: auto !important;
     }
 
+    /* A smaller tab over the map; its position comes from mobile.css */
     body[data-page-type="roads"] .mobile-menu-toggle {
-        right: -62px;
         padding: 10px 8px;
         border-radius: 0 var(--radius-md) var(--radius-md) 0;
         font-size: 16px;
-    }
-
-    body[data-page-type="roads"] .mobile-menu-toggle:hover {
-        right: -62px;
-    }
-
-    body[data-page-type="roads"] .sidebar_container.active .mobile-menu-toggle {
-        right: -15px;
-    }
-
-    body[data-page-type="roads"] .sidebar_container.active .mobile-menu-toggle:hover {
-        right: -17px;
     }
 
     .summary-grid {
