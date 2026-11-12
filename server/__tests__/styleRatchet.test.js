@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { scanTree, scanCss, repoRoot, baselinePath } from '../../scripts/style-scan.mjs';
+import { scanTree, scanCss, literalParts, repoRoot, baselinePath } from '../../scripts/style-scan.mjs';
 
 // Raw colours, radii, shadows, gradients and fonts belong in public/css/theme/tokens.css and
 // nowhere else (docs/STYLE-TOKEN-GUIDE.md). Most of the site predates that rule, so this is a
@@ -63,5 +63,34 @@ describe('scanCss', () => {
         expect(counts).toMatchObject({
             color: 4, radius: 1, shadow: 1, gradient: 1, important: 1, hoverMotion: 1, fontFamily: 1,
         });
+    });
+
+    test('a token beside a literal still counts as raw', () => {
+        // One var() must not excuse the rest of the declaration (#347 review).
+        const counts = scanCss(`
+            .a { border-radius: var(--radius-sm) 24px; }
+            .b { box-shadow: 0 4px 20px var(--color-border); }
+            .c { font-family: var(--font-sans), Georgia; }
+            .d { border-radius: calc(var(--radius-md) - 2px); }
+        `);
+        expect(counts).toMatchObject({ radius: 2, shadow: 1, fontFamily: 1 });
+    });
+
+    test('tokens, zeros and keywords do not count, alone or combined', () => {
+        const counts = scanCss(`
+            .a { border-radius: var(--radius-md) var(--radius-md) 0 0; }
+            .b { border-top-left-radius: 50%; border-radius: 0 !important; }
+            .c { box-shadow: var(--shadow-card), var(--shadow-overlay); }
+            .d { box-shadow: var(--shadow-card, 0 0 0 1px grey) !important; font-family: inherit; }
+            .e { font-family: var(--font-sans); box-shadow: none; }
+        `);
+        expect(counts).toMatchObject({ radius: 0, shadow: 0, fontFamily: 0 });
+    });
+});
+
+describe('literalParts', () => {
+    test('removes whole var() references, nested fallbacks included', () => {
+        expect(literalParts('var(--a, var(--b, 2px)) 4px / 50%')).toEqual(['4px', '50%']);
+        expect(literalParts('var(--shadow-card)')).toEqual([]);
     });
 });

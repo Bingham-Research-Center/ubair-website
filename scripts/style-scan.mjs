@@ -32,20 +32,42 @@ function declarations(css, property) {
     return [...css.matchAll(pattern)].map((match) => match[1].trim());
 }
 
+// What is left of a declaration's value once every var(...) reference is taken out, split
+// into words. `var(--radius-sm) 24px` leaves ['24px']: one token does not excuse the literal
+// beside it. A fallback inside var() goes with it (a hex fallback is still counted as a colour).
+export function literalParts(value) {
+    let rest = '';
+    let depth = 0;
+    for (let i = 0; i < value.length; i += 1) {
+        if (depth === 0 && value.startsWith('var(', i)) {
+            depth = 1;
+            i += 3;
+        } else if (depth > 0) {
+            if (value[i] === '(') depth += 1;
+            else if (value[i] === ')') depth -= 1;
+        } else {
+            rest += value[i];
+        }
+    }
+    return rest.replace(/!important/g, ' ').split(/[\s,/]+/).filter(Boolean);
+}
+
+const KEYWORDS = ['inherit', 'initial', 'unset', 'revert'];
+
 export function scanCss(source) {
     const css = source.replace(/\/\*[\s\S]*?\*\//g, '');
-    const raw = (value) => !value.includes('var(');
+    const raw = (value, allowed) => literalParts(value).some((part) => !allowed.includes(part));
     const hoverMotion = [...css.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter(([, selector, body]) =>
         selector.includes(':hover') && /transform\s*:[^;]*(translate|scale)/.test(body)).length;
     return {
         color: count(css, HEX) + count(css, /\b(?:rgba?|hsla?)\(/g),
         radius: declarations(css, 'border(?:-[a-z]+){0,2}-radius')
-            .filter((v) => raw(v) && !/^(0|50%|inherit|initial|unset)$/.test(v)).length,
-        shadow: declarations(css, 'box-shadow').filter((v) => raw(v) && v !== 'none').length,
+            .filter((v) => raw(v, ['0', '50%', ...KEYWORDS])).length,
+        shadow: declarations(css, 'box-shadow').filter((v) => raw(v, ['none', ...KEYWORDS])).length,
         gradient: count(css, /gradient\(/g),
         important: count(css, /!important/g),
         hoverMotion,
-        fontFamily: declarations(css, 'font-family').filter((v) => raw(v) && v !== 'inherit').length,
+        fontFamily: declarations(css, 'font-family').filter((v) => raw(v, KEYWORDS)).length,
         rootBlock: count(css, /:root\b/g),
         legacyVar: count(css, /var\(--usu-/g),
     };
