@@ -64,6 +64,19 @@ async function loadSidebar() {
         const content = await response.text();
         sidebarContainer.innerHTML = content;
 
+        sidebarContainer.querySelectorAll('.dropdown-toggle').forEach((toggle) => {
+            toggle.setAttribute('aria-expanded', 'false');
+
+            toggle.addEventListener('click', (event) => {
+                event.preventDefault();
+
+                const dropdown = toggle.closest('.nav-dropdown');
+                const isOpen = dropdown.classList.toggle('is-open');
+
+                toggle.setAttribute('aria-expanded', String(isOpen));
+            });
+        });
+
         const host = window.location.host.replace(/^www\./, '') || 'basinwx.com';
         const brandEl = sidebarContainer.querySelector('.sidebar-logo-title');
         if (brandEl) brandEl.textContent = host;

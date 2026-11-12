@@ -195,8 +195,9 @@
 }
 
 /* Dropdown Menu */
-.nav-dropdown {
+.sidebar ul li.nav-dropdown {
     position: relative;
+    padding: 0;
 }
 
 .dropdown-toggle {
@@ -204,6 +205,8 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    padding: 15px 20px;
+    box-sizing: border-box;
 }
 
 .dropdown-arrow {
@@ -211,28 +214,19 @@
     font-size: 0.8em;
 }
 
-.nav-dropdown:hover .dropdown-arrow {
+.nav-dropdown.is-open .dropdown-arrow {
     transform: rotate(180deg);
 }
 
 .dropdown-menu {
     display: none;
-    position: absolute;
-    left: 0;
-    top: 100%;
+    position: static;
     width: 100%;
     background: var(--usu-light-blue);
-    border-radius: 0 0 8px 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-    z-index: 1000;
 }
 
-.nav-dropdown:hover .dropdown-menu {
+.nav-dropdown.is-open .dropdown-menu {
     display: block;
-}
-
-.dropdown-menu li {
-    padding: 8px 20px;
 }
 
 .dropdown-menu li:hover {
@@ -240,8 +234,7 @@
 }
 
 .dropdown-menu a {
-    font-size: 0.9em;
-    padding-left: 1.5em;
+    font-size: inherit;
 }
 
 /* Coming Soon folder styling */
