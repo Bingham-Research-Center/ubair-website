@@ -86,14 +86,26 @@ class Polygon:
 
 
 class Stroke:
-    """A line of the given width with round ends and joins. `path` mixes ('M'|'L', x, y) with
-    ('R', x, y): a half circle bulging right from the current point down to (x, y)."""
+    """A line of the given width with round ends and joins. `path` mixes ('M'|'L', x, y);
+    ('R', x, y), a half circle bulging right from the current point down to (x, y); and
+    ('C', cx, cy, r, start, end), an arc about (cx, cy) between two angles in degrees
+    (0 = right, 90 = down), which starts its own piece of line."""
 
     def __init__(self, path, width):
-        self.path, self.half = path, width / 2
-        self.segments = []
+        self.path, self.half, self.segments = path, width / 2, []
         cx = cy = 0
-        for kind, x, y in path:
+        for command in path:
+            kind = command[0]
+            if kind == 'C':
+                _, ox, oy, radius, start, end = command
+                steps = max(8, int(abs(end - start) / 6))
+                points = [(ox + radius * math.cos(math.radians(start + (end - start) * i / steps)),
+                           oy + radius * math.sin(math.radians(start + (end - start) * i / steps)))
+                          for i in range(steps + 1)]
+                self.segments += [(*a, *b) for a, b in zip(points, points[1:])]
+                cx, cy = points[-1]
+                continue
+            _, x, y = command
             if kind == 'L':
                 self.segments.append((cx, cy, x, y))
             elif kind == 'R':
@@ -105,6 +117,9 @@ class Stroke:
                     self.segments.append((*previous, *point))
                     previous = point
             cx, cy = x, y
+        xs = [v for s in self.segments for v in (s[0], s[2])]
+        ys = [v for s in self.segments for v in (s[1], s[3])]
+        self.box = (min(xs) - self.half, min(ys) - self.half, max(xs) + self.half, max(ys) + self.half)
 
     def contains(self, px, py):
         for x1, y1, x2, y2 in self.segments:
@@ -117,7 +132,23 @@ class Stroke:
 
     def svg(self, fill):
         parts, cy = [], 0
-        for kind, x, y in self.path:
+        for command in self.path:
+            kind = command[0]
+            if kind == 'C':
+                _, ox, oy, radius, start, end = command
+                def at(angle):
+                    return (round(ox + radius * math.cos(math.radians(angle)), 3),
+                            round(oy + radius * math.sin(math.radians(angle)), 3))
+                sweep = 1 if end > start else 0
+                stops = [start, (start + end) / 2, end] if abs(end - start) >= 360 else [start, end]
+                parts.append('M{} {}'.format(*at(stops[0])))
+                for a, b in zip(stops, stops[1:]):
+                    large = 1 if abs(b - a) > 180 else 0
+                    parts.append('A{r} {r} 0 {l} {s} {x} {y}'.format(
+                        r=radius, l=large, s=sweep, x=at(b)[0], y=at(b)[1]))
+                cy = at(end)[1]
+                continue
+            _, x, y = command
             if kind == 'R':
                 radius = (y - cy) / 2
                 parts.append(f'A{radius} {radius} 0 0 1 {x} {y}')

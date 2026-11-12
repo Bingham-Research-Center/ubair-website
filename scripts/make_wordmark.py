@@ -19,7 +19,6 @@ PNG writer come from make_favicon.py. Python 3 standard library only.
 """
 
 import argparse
-import math
 import re
 from pathlib import Path
 
@@ -31,69 +30,6 @@ HEIGHT = 64
 # On a white page the ring takes the theme's own accent, which is dark enough there.
 ACCENT_ON_LIGHT = {'current': '#c8102e', 'slate-copper': '#b4531a',
                    'ink-teal': '#0f766e', 'navy-sage': '#55775a'}
-
-
-class Line(Stroke):
-    """A Stroke that also takes ('C', cx, cy, r, start, end): an arc about (cx, cy) between
-    two angles in degrees (0 = right, 90 = down). An arc starts its own piece of line."""
-
-    def __init__(self, path, width=LINE):
-        self.path, self.half, self.segments = path, width / 2, []
-        cx = cy = 0
-        for command in path:
-            kind = command[0]
-            if kind == 'C':
-                _, ox, oy, radius, start, end = command
-                steps = max(8, int(abs(end - start) / 6))
-                points = [(ox + radius * math.cos(math.radians(start + (end - start) * i / steps)),
-                           oy + radius * math.sin(math.radians(start + (end - start) * i / steps)))
-                          for i in range(steps + 1)]
-                self.segments += [(*a, *b) for a, b in zip(points, points[1:])]
-                cx, cy = points[-1]
-                continue
-            _, x, y = command
-            if kind == 'L':
-                self.segments.append((cx, cy, x, y))
-            elif kind == 'R':
-                radius, mid = (y - cy) / 2, (y + cy) / 2
-                previous = (cx, cy)
-                for step in range(1, 25):
-                    angle = -math.pi / 2 + math.pi * step / 24
-                    point = (cx + radius * math.cos(angle), mid + radius * math.sin(angle))
-                    self.segments.append((*previous, *point))
-                    previous = point
-            cx, cy = x, y
-        xs = [v for s in self.segments for v in (s[0], s[2])]
-        ys = [v for s in self.segments for v in (s[1], s[3])]
-        self.box = (min(xs) - self.half, min(ys) - self.half, max(xs) + self.half, max(ys) + self.half)
-
-    def svg(self, fill):
-        parts, cy = [], 0
-        for command in self.path:
-            kind = command[0]
-            if kind == 'C':
-                _, ox, oy, radius, start, end = command
-                def at(angle):
-                    return (round(ox + radius * math.cos(math.radians(angle)), 3),
-                            round(oy + radius * math.sin(math.radians(angle)), 3))
-                sweep = 1 if end > start else 0
-                stops = [start, (start + end) / 2, end] if abs(end - start) >= 360 else [start, end]
-                parts.append('M{} {}'.format(*at(stops[0])))
-                for a, b in zip(stops, stops[1:]):
-                    large = 1 if abs(b - a) > 180 else 0
-                    parts.append('A{r} {r} 0 {l} {s} {x} {y}'.format(
-                        r=radius, l=large, s=sweep, x=at(b)[0], y=at(b)[1]))
-                cy = at(end)[1]
-                continue
-            _, x, y = command
-            if kind == 'R':
-                radius = (y - cy) / 2
-                parts.append(f'A{radius} {radius} 0 0 1 {x} {y}')
-            else:
-                parts.append(f'{kind}{x} {y}')
-            cy = y
-        return (f'<path d="{" ".join(parts)}" fill="none" stroke="{fill}" '
-                f'stroke-width="{self.half * 2}" stroke-linecap="round" stroke-linejoin="round"/>')
 
 
 # --- letters: each returns (paths, width between the outermost centre lines) ---------------
@@ -139,7 +75,7 @@ NAME = [(letter_B, 0), (letter_a, 6), (letter_s, 6), (letter_i, 6), (letter_n, 6
 
 def ring(cx, cy):
     """The favicon's degree ring, as a line so the hole is really empty."""
-    return Line([('C', cx, cy, 4.55, 0, 360)], 3.9)
+    return Stroke([('C', cx, cy, 4.55, 0, 360)], 3.9)
 
 
 def wordmark(lockup):
@@ -154,7 +90,7 @@ def wordmark(lockup):
     for letter, gap in NAME:
         left = pen + gap + LINE / 2
         paths, width = letter(left)
-        layers += [(Line(path), 'fg') for path in paths]
+        layers += [(Stroke(path, LINE), 'fg') for path in paths]
         if letter is letter_i:
             layers.append((ring(left, 11.5), 'accent') if lockup == 'dot'
                           else (Circle(left, 13.5, 4.6), 'fg'))
@@ -181,12 +117,8 @@ def to_svg(layers, width, colours):
 
 
 def box_of(shape):
-    if isinstance(shape, Line):
-        return shape.box
     if isinstance(shape, Stroke):
-        xs = [v for s in shape.segments for v in (s[0], s[2])]
-        ys = [v for s in shape.segments for v in (s[1], s[3])]
-        return (min(xs) - shape.half, min(ys) - shape.half, max(xs) + shape.half, max(ys) + shape.half)
+        return shape.box
     if isinstance(shape, Circle):
         return (shape.cx - shape.r, shape.cy - shape.r, shape.cx + shape.r, shape.cy + shape.r)
     return (shape.x, shape.y, shape.x + shape.w, shape.y + shape.h)
