@@ -9,8 +9,6 @@
     <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
-    <!-- Google Fonts -->
-
     <!-- Font Awesome -->
     <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
@@ -35,73 +33,21 @@
     <main class="content">
         <h1><span style="font-variant: small-caps;">Clyfar</span>: AI Ozone Forecasts</h1>
 
-        <!-- Two-column grid for LLM Summaries and Clyfar -->
-        <div class="compact-sections-grid">
-            <!-- LLM Summaries Section -->
-            <section class="llm-summaries-section compact pane" aria-label="Experimental LLM Summaries">
-                <div class="section-header">
-                    <h2><i class="fas fa-comments"></i> LLM Summaries</h2>
-                    <div class="info-icon" data-tooltip="AI-generated summaries at different complexity levels">
-                        <i class="fas fa-info-circle"></i>
-                    </div>
+        <!-- Clyfar: links, and when the newest run was. Filled in by forecast_air_quality.js. -->
+        <section class="clyfar-section clyfar-status-pane pane" aria-label="Clyfar AI Forecasting System">
+            <div class="section-header clyfar-header">
+                <h2><i class="fas fa-dragon"></i> Clyfar AI</h2>
+                <div class="clyfar-info">
+                    <a id="ffion-outlook-btn" href="#" target="_blank" rel="noopener" class="info-link ffion-btn" style="display:none;" title="Experimental LLM-generated outlook using Clyfar + GEFS data">
+                        <i class="fas fa-robot"></i> Ffion AI Outlook<span id="ffion-outlook-date"></span>
+                    </a>
+                    <a href="/about#clyfar" class="info-link">
+                        <i class="fas fa-info"></i> About
+                    </a>
                 </div>
-
-                <div class="summary-tabs compact-tabs">
-                    <button class="tab-button active" data-tab="plain">Plain</button>
-                    <button class="tab-button" data-tab="extended">Extended</button>
-                    <button class="tab-button" data-tab="detailed">Detailed</button>
-                </div>
-
-                <div class="tab-content">
-                    <div id="plain-content" class="summary-content active">Loading...</div>
-                    <div id="extended-content" class="summary-content">Loading...</div>
-                    <div id="detailed-content" class="summary-content">Loading...</div>
-                </div>
-            </section>
-
-            <!-- Clyfar AI Forecasting -->
-            <section class="clyfar-section compact pane" aria-label="Clyfar AI Forecasting System">
-                <div class="section-header clyfar-header">
-                    <h2><i class="fas fa-dragon"></i> Clyfar AI</h2>
-                    <div class="clyfar-info">
-                        <a id="ffion-outlook-btn" href="#" target="_blank" rel="noopener" class="info-link ffion-btn" style="display:none;" title="Experimental LLM-generated outlook using Clyfar + GEFS data">
-                            <i class="fas fa-robot"></i> Ffion AI Outlook
-                        </a>
-                        <a href="/about#clyfar" class="info-link">
-                            <i class="fas fa-info"></i> About
-                        </a>
-                    </div>
-                </div>
-
-                <div class="clyfar-content">
-                    <div class="forecast-summary-grid compact-grid">
-                        <div class="summary-card current data-unavailable" id="card-today">
-                            <div class="card-icon"><i class="fas fa-calendar-day"></i></div>
-                            <div class="card-content">
-                                <h3>Today</h3>
-                                <p class="forecast-level">--</p>
-                            </div>
-                        </div>
-
-                        <div class="summary-card tomorrow data-unavailable" id="card-tomorrow">
-                            <div class="card-icon"><i class="fas fa-calendar-plus"></i></div>
-                            <div class="card-content">
-                                <h3>Tomorrow</h3>
-                                <p class="forecast-level">--</p>
-                            </div>
-                        </div>
-
-                        <div class="summary-card week data-unavailable" id="card-week">
-                            <div class="card-icon"><i class="fas fa-calendar-week"></i></div>
-                            <div class="card-content">
-                                <h3>7-Day</h3>
-                                <p class="forecast-level">--</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-        </div>
+            </div>
+            <p id="clyfar-run-status" class="clyfar-run-status" role="status" hidden></p>
+        </section>
 
         <!-- Possibility Heatmap -->
         <section class="heatmap-section" aria-label="15-Day Ozone Possibility Forecast">

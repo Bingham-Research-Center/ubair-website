@@ -149,28 +149,6 @@
             <p class="forecast-status" id="forecast-status">Loading HRRR surface layers...</p>
         </section>
 
-        <!-- Weather AI Summaries Section -->
-        <section class="weather-summaries-section pane" aria-label="AI Weather Summaries">
-            <div class="section-header">
-                <h2><i class="fas fa-cloud-sun-rain"></i> AI Weather Summaries</h2>
-                <div class="info-icon" data-tooltip="AI-generated weather summaries at different complexity levels">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-            </div>
-
-            <div class="summary-tabs">
-                <button class="tab-button active" data-tab="plain" data-tooltip="For general public">Plain</button>
-                <button class="tab-button" data-tab="extended" data-tooltip="For general stakeholders">Extended</button>
-                <button class="tab-button" data-tab="detailed" data-tooltip="For meteorologists and researchers">Detailed</button>
-            </div>
-
-            <div class="tab-content">
-                <div id="weather-plain-content" class="summary-content active">Loading plain weather summary...</div>
-                <div id="weather-extended-content" class="summary-content">Loading extended weather summary...</div>
-                <div id="weather-detailed-content" class="summary-content">Loading detailed weather summary...</div>
-            </div>
-        </section>
-
         <!-- Weather Map Container -->
         <section class="weather-map-section pane" aria-label="Interactive Weather Map">
             <div class="map-container">
@@ -198,7 +176,7 @@
                         </div>
                     </div>
                     <div class="summary-content" id="weather-summary">
-                        <p>Current weather conditions across the Uintah Basin show typical winter patterns with temperature inversions common in valley areas. Snow cover remains variable across elevation gradients.</p>
+                        <p>Loading the HRRR summary...</p>
                         <div class="summary-stats">
                             <div class="stat-item">
                                 <span class="stat-label">Basin Average:</span>
@@ -210,7 +188,7 @@
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Trend:</span>
-                                <span class="stat-value" id="trend-indicator">Stable</span>
+                                <span class="stat-value" id="trend-indicator">--</span>
                             </div>
                         </div>
                     </div>
@@ -250,8 +228,8 @@
                     <div class="model-content" id="model-info">
                         <div class="model-source">
                             <h4>Primary Model: HRRR 3km</h4>
-                            <p>Last Update: <span id="model-update-time">06:00 UTC</span></p>
-                            <p>Next Update: <span id="next-update-time">12:00 UTC</span></p>
+                            <p>Last Update: <span id="model-update-time">--</span></p>
+                            <p>Next Update: <span id="next-update-time">--</span></p>
                         </div>
                         <div class="model-performance">
                             <div class="performance-metric">
