@@ -395,8 +395,8 @@ so the first question in any investigation is *which box am I actually looking a
 **Version tells you.** `GET /api/health` reports `version` and `manifestVersion`:
 
 ```bash
-curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.4"     (tag v1.5.4)
-curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.5-dev"
+curl -fsS https://www.basinwx.com/api/health   # -> "version": "1.5.5"     (tag v1.5.5)
+curl -fsS https://www.basinwx.dev/api/health   # -> "version": "1.5.6-dev"
 ```
 
 Since 1.5.5 the same response also carries `commit`, `branch`, `startedAt` and

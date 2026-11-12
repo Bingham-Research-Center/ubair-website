@@ -3,10 +3,10 @@
 /* Dashboard Section Styling */
 .dashboard-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(0, 38, 58, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(0, 38, 58, 0.1);
     position: relative;
     overflow: hidden;
@@ -20,7 +20,7 @@
     right: 0;
     height: 4px;
     background: linear-gradient(90deg, var(--usu-blue), var(--usu-light-blue), var(--usu-accent));
-    border-radius: 16px 16px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 /* Section Header */
@@ -90,8 +90,8 @@
 
 /* Dashboard Panels */
 .dashboard-panel {
-    background: linear-gradient(135deg, #f8f9fa, #f1f3f4);
-    border-radius: 12px;
+    background: #f8f9fa;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     border: 1px solid rgba(0, 38, 58, 0.1);
     transition: all 0.3s ease;
@@ -101,8 +101,7 @@
 }
 
 .dashboard-panel:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(0, 38, 58, 0.12);
+    box-shadow: var(--shadow-card-hover);
     background: white;
 }
 
@@ -139,7 +138,7 @@
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.4rem 0.8rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: rgba(98, 124, 139, 0.1);
     transition: all 0.2s ease;
 }
@@ -147,7 +146,6 @@
 .panel-link:hover {
     background: var(--usu-light-blue);
     color: white;
-    transform: translateY(-1px);
 }
 
 /* Map Panel Specific */
@@ -164,8 +162,8 @@
 
 .dashboard-map {
     flex: 1;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 38, 58, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
     border: 2px solid rgba(0, 38, 58, 0.1);
     min-height: 350px;
     width: 100%;

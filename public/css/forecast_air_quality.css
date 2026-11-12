@@ -1,21 +1,13 @@
-/* Forecast Air Quality - Welsh-inspired color scheme */
+/* Forecast Air Quality (Clyfar) */
 :root {
-    /* Welsh-inspired colors (Clyfar = Welsh for clever) */
-    --welsh-red: #c8102e;           /* Welsh dragon red */
-    --welsh-green: #00a950;         /* Welsh leek green */
-    --welsh-gold: #ffb612;          /* Welsh daffodil yellow */
-    --welsh-slate: #2f4f4f;         /* Welsh slate gray */
-    --welsh-sea: #006994;           /* Welsh coastal blue */
-    --welsh-mist: #e6f2ff;          /* Light Welsh mist */
-    
-    /* Air quality specific colors */
-    --air-primary: var(--welsh-slate);
-    --air-secondary: var(--welsh-sea);
-    --air-accent: var(--welsh-green);
-    --air-warning: var(--welsh-gold);
-    --air-danger: var(--welsh-red);
-    --air-background: var(--welsh-mist);
-    
+    /* Page palette */
+    --air-primary: var(--color-brand);
+    --air-secondary: var(--color-brand);
+    --air-accent: var(--status-good);
+    --air-warning: var(--status-warning);
+    --air-danger: var(--status-danger);
+    --air-background: var(--color-bg);
+
     /* Ozone level colors */
     --ozone-background: #4ade80;    /* Green */
     --ozone-moderate: #facc15;      /* Yellow */
@@ -25,7 +17,7 @@
 
 /* Override main header for air quality theme */
 body[data-page-type="forecast_air_quality"] h1 {
-    background: linear-gradient(135deg, var(--air-primary), var(--air-secondary));
+    background: var(--air-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -40,17 +32,17 @@ body[data-page-type="forecast_air_quality"] h1::after {
     transform: translateX(-50%);
     width: 120px;
     height: 3px;
-    background: linear-gradient(90deg, var(--air-primary), var(--air-accent));
-    border-radius: 2px;
+    background: var(--air-primary);
+    border-radius: var(--radius-sm);
 }
 
 /* Latest Outlook Section */
 .outlook-preview-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid var(--air-primary);
     position: relative;
     overflow: hidden;
@@ -63,8 +55,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--air-primary), var(--air-secondary));
-    border-radius: 16px 16px 0 0;
+    background: var(--air-primary);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
 
 .section-header {
@@ -102,7 +94,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     font-size: 0.95rem;
     background: var(--air-background);
     padding: 1.5rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border-left: 3px solid var(--air-accent);
 }
 
@@ -118,47 +110,26 @@ body[data-page-type="forecast_air_quality"] h1::after {
     background: var(--air-secondary);
     color: white;
     text-decoration: none;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-weight: 500;
     transition: all 0.3s ease;
 }
 
 .outlook-link:hover {
     background: var(--air-primary);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(47, 79, 79, 0.3);
+    box-shadow: var(--shadow-card-hover);
 }
 
-/* Clyfar Section - Welsh theme */
+/* Clyfar Section */
 .clyfar-section {
-    background: linear-gradient(135deg, #ffffff, var(--air-background));
-    border-radius: 20px;
+    background: #ffffff;
+    border-radius: var(--radius-lg);
     padding: 2.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 8px 30px rgba(47, 79, 79, 0.12);
+    box-shadow: var(--shadow-card);
     border: 2px solid rgba(47, 79, 79, 0.1);
     position: relative;
     overflow: hidden;
-}
-
-.clyfar-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 6px;
-    background: linear-gradient(90deg, var(--welsh-red), var(--welsh-gold), var(--welsh-green));
-    border-radius: 20px 20px 0 0;
-}
-
-.clyfar-section::after {
-    content: '🏴󠁧󠁢󠁷󠁬󠁳󠁿';
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    font-size: 2rem;
-    opacity: 0.1;
 }
 
 .clyfar-header {
@@ -166,7 +137,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .clyfar-header h2 {
-    color: var(--welsh-red);
+    color: var(--air-danger);
     font-size: 1.6rem;
     font-weight: 700;
     display: flex;
@@ -182,36 +153,35 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .clyfar-info-icon {
-    color: var(--welsh-gold);
+    color: var(--air-warning);
 }
 
 .info-link {
     display: inline-flex;
     align-items: center;
     gap: 0.3rem;
-    color: var(--welsh-sea);
+    color: var(--air-secondary);
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
     padding: 0.4rem 0.8rem;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     background: rgba(0, 105, 148, 0.1);
     transition: all 0.2s ease;
 }
 
 .info-link:hover {
-    background: var(--welsh-sea);
+    background: var(--air-secondary);
     color: white;
-    transform: translateY(-1px);
 }
 
 .ffion-btn {
     background: rgba(200, 16, 46, 0.1);
-    color: var(--welsh-red);
+    color: var(--air-danger);
 }
 
 .ffion-btn:hover {
-    background: var(--welsh-red);
+    background: var(--air-danger);
     color: white;
 }
 
@@ -225,9 +195,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .summary-card {
     background: white;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid var(--air-accent);
     transition: all 0.3s ease;
     position: relative;
@@ -246,20 +216,19 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .summary-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(47, 79, 79, 0.15);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .summary-card.current {
-    border-left-color: var(--welsh-green);
+    border-left-color: var(--air-accent);
 }
 
 .summary-card.tomorrow {
-    border-left-color: var(--welsh-gold);
+    border-left-color: var(--air-warning);
 }
 
 .summary-card.week {
-    border-left-color: var(--welsh-red);
+    border-left-color: var(--air-danger);
 }
 
 .card-icon {
@@ -268,7 +237,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     justify-content: center;
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, var(--air-primary), var(--air-secondary));
+    background: var(--air-primary);
     border-radius: 50%;
     margin-bottom: 1rem;
     color: white;
@@ -276,15 +245,15 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .summary-card.current .card-icon {
-    background: linear-gradient(135deg, var(--welsh-green), #16a34a);
+    background: var(--air-accent);
 }
 
 .summary-card.tomorrow .card-icon {
-    background: linear-gradient(135deg, var(--welsh-gold), #eab308);
+    background: var(--air-warning);
 }
 
 .summary-card.week .card-icon {
-    background: linear-gradient(135deg, var(--welsh-red), #dc2626);
+    background: var(--air-danger);
 }
 
 .card-content h3 {
@@ -319,10 +288,10 @@ body[data-page-type="forecast_air_quality"] h1::after {
 /* Heatmap Container */
 .heatmap-container {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
@@ -334,7 +303,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .visualization-header h3 {
-    color: var(--welsh-red);
+    color: var(--air-danger);
     font-size: 1.3rem;
     font-weight: 600;
     display: flex;
@@ -353,18 +322,18 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .heatmap-placeholder {
     position: relative;
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     min-height: 300px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border: 2px dashed var(--welsh-gold);
+    border: 2px dashed var(--air-warning);
 }
 
 .heatmap-image {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
 }
 
 .heatmap-overlay {
@@ -376,14 +345,14 @@ body[data-page-type="forecast_air_quality"] h1::after {
     justify-content: center;
     gap: 1rem;
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 12px;
-    color: var(--welsh-slate);
+    border-radius: var(--radius-lg);
+    color: var(--air-primary);
 }
 
 .heatmap-legend {
     background: var(--air-background);
     padding: 1.5rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     border: 1px solid rgba(47, 79, 79, 0.1);
     min-width: 200px;
 }
@@ -411,7 +380,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .legend-color {
     width: 20px;
     height: 20px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
@@ -440,18 +409,18 @@ body[data-page-type="forecast_air_quality"] h1::after {
 /* Time Series Container */
 .timeseries-container {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
 .timeseries-display {
-    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    border-radius: 12px;
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    border: 2px dashed var(--welsh-sea);
+    border: 2px dashed var(--air-secondary);
     min-height: 350px;
 }
 
@@ -482,19 +451,19 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .scenario-line {
     width: 30px;
     height: 3px;
-    border-radius: 2px;
+    border-radius: var(--radius-sm);
 }
 
 .scenario-item.best-case .scenario-line {
-    background: var(--welsh-green);
+    background: var(--air-accent);
 }
 
 .scenario-item.average .scenario-line {
-    background: var(--welsh-gold);
+    background: var(--air-warning);
 }
 
 .scenario-item.worst-case .scenario-line {
-    background: var(--welsh-red);
+    background: var(--air-danger);
 }
 
 .chart-area {
@@ -503,7 +472,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .chart-area i {
-    color: var(--welsh-sea);
+    color: var(--air-secondary);
     opacity: 0.7;
     margin-bottom: 1rem;
 }
@@ -516,9 +485,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
 /* Performance Container */
 .performance-container {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.08);
+    box-shadow: var(--shadow-card);
     border: 1px solid rgba(47, 79, 79, 0.1);
 }
 
@@ -530,8 +499,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .metric-card {
-    background: linear-gradient(135deg, var(--air-background), #f0f9ff);
-    border-radius: 12px;
+    background: var(--air-background);
+    border-radius: var(--radius-lg);
     padding: 1.5rem;
     border: 1px solid rgba(47, 79, 79, 0.1);
     transition: all 0.3s ease;
@@ -546,13 +515,12 @@ body[data-page-type="forecast_air_quality"] h1::after {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(180deg, var(--welsh-green), var(--welsh-gold), var(--welsh-red));
-    border-radius: 0 12px 12px 0;
+    background: linear-gradient(180deg, var(--air-accent), var(--air-warning), var(--air-danger));
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
 }
 
 .metric-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card-hover);
     background: white;
 }
 
@@ -562,7 +530,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     justify-content: center;
     width: 40px;
     height: 40px;
-    background: linear-gradient(135deg, var(--welsh-sea), var(--air-secondary));
+    background: var(--air-secondary);
     border-radius: 50%;
     margin-bottom: 1rem;
     color: white;
@@ -579,7 +547,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .metric-value {
     font-size: 1.6rem;
     font-weight: 700;
-    color: var(--welsh-red);
+    color: var(--air-danger);
     margin: 0.5rem 0;
 }
 
@@ -592,14 +560,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
 /* Info Icons and Tooltips */
 .info-icon {
     cursor: help;
-    color: var(--welsh-gold);
+    color: var(--air-warning);
     transition: all 0.2s ease;
     position: relative;
 }
 
 .info-icon:hover {
-    color: var(--welsh-red);
-    transform: scale(1.1);
+    color: var(--air-danger);
 }
 
 .tooltip {
@@ -607,14 +574,14 @@ body[data-page-type="forecast_air_quality"] h1::after {
     background: var(--air-primary);
     color: white;
     padding: 0.75rem 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     font-size: 0.9rem;
     max-width: 250px;
     z-index: 10000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     pointer-events: none;
 }
 
@@ -693,15 +660,15 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 /* Animations */
-@keyframes pulse-welsh {
+@keyframes pulse-attention {
     0%, 100% { opacity: 0.6; }
     50% { opacity: 1; }
 }
 
 .forecast-level:empty::after {
     content: '...';
-    animation: pulse-welsh 1.5s infinite;
-    color: var(--welsh-gold);
+    animation: pulse-attention 1.5s infinite;
+    color: var(--air-warning);
 }
 
 /* Focus states for accessibility */
@@ -709,13 +676,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .metric-card:focus-within,
 .outlook-link:focus,
 .info-link:focus {
-    outline: 2px solid var(--welsh-gold);
+    outline: 2px solid var(--air-warning);
     outline-offset: 2px;
 }
 
 /* Special hover effects */
 .clyfar-section:hover {
-    box-shadow: 0 12px 40px rgba(47, 79, 79, 0.15);
+    box-shadow: var(--shadow-card-hover);
     transition: all 0.3s ease;
 }
 
@@ -726,8 +693,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .heatmap-container:hover .visualization-header h3 i,
 .timeseries-container:hover .visualization-header h3 i,
 .performance-container:hover .visualization-header h3 i {
-    transform: scale(1.1);
-    color: var(--welsh-gold);
+    color: var(--air-warning);
 }
 
 /* Compact Two-Column Grid for LLM Summaries and Clyfar */
@@ -746,10 +712,10 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .llm-summaries-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card);
     border-left: 4px solid var(--air-primary);
     max-width: 100%;
     box-sizing: border-box;
@@ -764,14 +730,14 @@ body[data-page-type="forecast_air_quality"] h1::after {
     max-height: 320px;
     display: flex;
     flex-direction: column;
-    border-radius: 16px;
-    box-shadow: 0 6px 25px rgba(47, 79, 79, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .clyfar-section.compact {
     background: white;
     border: 1px solid rgba(47, 79, 79, 0.1);
-    border-left: 4px solid var(--welsh-red);
+    border-left: 4px solid var(--air-danger);
 }
 
 .clyfar-section.compact::before {
@@ -861,45 +827,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
     font-size: 1rem;
 }
 
-/* Coming Soon Glass Overlay */
-.coming-soon-wrapper {
-    position: relative;
-}
-
-.coming-soon-glass {
-    position: absolute;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    z-index: 100;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-    border-radius: 16px;
-    text-align: center;
-}
-
-.coming-soon-glass i {
-    font-size: 2.5rem;
-    color: var(--welsh-gold);
-}
-
-.coming-soon-glass h3 {
-    font-size: 1.5rem;
-    color: var(--air-primary);
-    margin: 0;
-    font-weight: 600;
-}
-
-.coming-soon-glass p {
-    font-size: 1rem;
-    color: var(--air-secondary);
-    margin: 0;
-    max-width: 300px;
-}
 
 .summary-tabs {
     display: flex;
@@ -915,7 +842,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     color: var(--air-primary);
     font-weight: 500;
     cursor: pointer;
-    border-radius: 8px 8px 0 0;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     transition: all 0.3s ease;
     position: relative;
 }
@@ -940,7 +867,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     display: none;
     background: var(--air-background);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     line-height: 1.6;
     overflow-wrap: break-word;
     word-wrap: break-word;
@@ -967,8 +894,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .plotly-chart {
     min-height: 350px;
     width: 100%;
-    background: linear-gradient(135deg, #f8fafc, #e2e8f0);
-    border-radius: 12px;
+    background: #f8fafc;
+    border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -984,12 +911,12 @@ body[data-page-type="forecast_air_quality"] h1::after {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    color: var(--welsh-slate);
+    color: var(--air-primary);
     padding: 2rem;
 }
 
 .chart-loading i {
-    color: var(--welsh-sea);
+    color: var(--air-secondary);
 }
 
 .chart-loading p {
@@ -1003,7 +930,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    color: var(--welsh-red);
+    color: var(--air-danger);
     padding: 2rem;
     text-align: center;
 }
@@ -1023,13 +950,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
     flex-direction: column;
     align-items: center;
     gap: 1rem;
-    color: var(--welsh-slate);
+    color: var(--air-primary);
     padding: 2rem;
     text-align: center;
 }
 
 .chart-no-data i {
-    color: var(--welsh-gold);
+    color: var(--air-warning);
 }
 
 .chart-no-data p {
@@ -1046,8 +973,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .forecast-image {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 .plotly-chart .forecast-image {
@@ -1080,10 +1007,10 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .cluster-btn {
     padding: 0.5rem 1rem;
-    border: 2px solid var(--welsh-slate);
-    border-radius: 8px;
+    border: 2px solid var(--air-primary);
+    border-radius: var(--radius-lg);
     background: white;
-    color: var(--welsh-slate);
+    color: var(--air-primary);
     font-weight: 500;
     font-size: 0.9rem;
     cursor: pointer;
@@ -1092,13 +1019,13 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .cluster-btn:hover {
     background: var(--air-background);
-    border-color: var(--welsh-sea);
+    border-color: var(--air-secondary);
 }
 
 .cluster-btn.active {
-    background: var(--welsh-slate);
+    background: var(--air-primary);
     color: white;
-    border-color: var(--welsh-slate);
+    border-color: var(--air-primary);
 }
 
 .cluster-image-title {
@@ -1126,7 +1053,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 }
 
 .toggle-label input[type="checkbox"] {
-    accent-color: var(--welsh-sea);
+    accent-color: var(--air-secondary);
     width: 16px;
     height: 16px;
     cursor: pointer;
@@ -1171,7 +1098,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
 .member-dropdown {
     padding: 0.5rem 1rem;
     border: 1px solid var(--air-secondary);
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: white;
     font-size: 1rem;
     cursor: pointer;
@@ -1190,8 +1117,8 @@ body[data-page-type="forecast_air_quality"] h1::after {
 #heatmap-image-container img {
     max-width: 100%;
     height: auto;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
 }
 
 /* Forecast level color classes for summary cards */
@@ -1221,11 +1148,11 @@ body[data-page-type="forecast_air_quality"] h1::after {
 
 .summary-card.data-unavailable:hover {
     transform: none;
-    box-shadow: 0 4px 20px rgba(47, 79, 79, 0.1);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .summary-card.data-unavailable .card-icon {
-    background: linear-gradient(135deg, #9ca3af, #6b7280) !important;
+    background: #9ca3af !important;
 }
 
 .summary-card.data-unavailable .forecast-level {

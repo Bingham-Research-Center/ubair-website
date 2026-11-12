@@ -6,11 +6,11 @@
     <title>BasinWx</title>
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-combined.ico?v=1">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
@@ -19,7 +19,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 </head>
 
 <body data-page-type="index">
@@ -35,7 +35,7 @@
 <main class="content">
     <div class="homepage-header">
         <div class="glade">
-            <img src="/public/images/basinwx-logo.png" alt="BasinWX - Uintah Basin Weather" class="site-logo">
+            <img src="/public/images/brand/basinwx-wordmark.svg" alt="BasinWx: Uintah Basin weather and air quality" class="site-logo site-wordmark" width="228" height="64">
         </div>
 
         <div class="headlines-dashboard">
@@ -57,13 +57,13 @@
                 <!-- Alerts Tab -->
                 <div id="warnings-content" class="tab-panel active">
                     <div class="alerts-grid">
-                        <div class="headline-item info" id="alerts-forecast">
+                        <a href="/forecast_outlooks" class="headline-item info alerts-map-link">
                             <i class="fas fa-calendar-week headline-icon"></i>
                             <div class="headline-text">
                                 <span class="headline-label">Next 5 Days</span>
-                                <span class="headline-value" id="alerts-ozone-risk">Loading...</span>
+                                <span class="headline-value" id="alerts-ozone-risk"><span class="live-dot"></span> See Full Outlook</span>
                             </div>
-                        </div>
+                        </a>
                         <div class="headline-item info alerts-snow-panel" id="alerts-snow">
                             <i class="fas fa-snowflake headline-icon"></i>
                             <div class="headline-text">
@@ -207,7 +207,7 @@
             <!-- Latest Forecast Panel -->
             <div class="dashboard-panel forecast-panel">
                 <div class="panel-header">
-                    <h3><i class="fas fa-crystal-ball"></i> Latest Forecasts</h3>
+                    <h3><i class="fas fa-chart-line"></i> Latest Forecasts</h3>
                     <button class="forecast-collapse-toggle" id="forecast-collapse" title="Show/hide forecast details">
                         <i class="fas fa-chevron-up"></i>
                     </button>
@@ -263,7 +263,6 @@
 
 <!-- Load JavaScript Modules -->
 <script type="module" src="/public/js/loadSidebar.js"></script>
-<script src="/public/js/nineties-mode.js"></script>
 <script src="/public/js/mobile-menu.js"></script>
 <script src="/public/js/headlines-dashboard.js"></script>
 <script type="module" src="/public/js/config.js"></script>
@@ -274,9 +273,6 @@
 <script src="/public/js/outlook-highlight.js"></script>
 
 <script>
-    // Store outside click handler reference to enable proper cleanup
-    let legendOutsideClickHandler = null;
-
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize forecast tabs
         initForecastTabs();
@@ -320,24 +316,9 @@
         if (toggle && dropdown) {
             toggle.addEventListener('click', () => {
                 dropdown.classList.toggle('active');
-                // Update aria-expanded for accessibility
-                toggle.setAttribute('aria-expanded', dropdown.classList.contains('active'));
+                const isOpen = dropdown.classList.contains('active');
+                toggle.setAttribute('aria-expanded', String(isOpen));
             });
-            
-            // Remove any existing listener before adding new one to prevent memory leaks
-            if (legendOutsideClickHandler) {
-                document.removeEventListener('click', legendOutsideClickHandler);
-            }
-            
-            // Create and store the handler for proper cleanup
-            legendOutsideClickHandler = (e) => {
-                if (!toggle.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.classList.remove('active');
-                    toggle.setAttribute('aria-expanded', 'false');
-                }
-            };
-            
-            document.addEventListener('click', legendOutsideClickHandler);
         }
     }
 
@@ -525,9 +506,6 @@
     }
 </script>
 
-<!-- Easter Eggs - Activated via Konami Code -->
-<link rel="stylesheet" href="/public/css/easter-eggs.css">
-<script src="/public/js/easter-eggs.js"></script>
 
 </body>
 </html>
