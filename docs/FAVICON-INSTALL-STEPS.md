@@ -1,4 +1,4 @@
-# Favicon: what is installed and how to change it
+# Favicon and wordmark: what is installed and how to change it
 
 The site has **one** icon, the same on every page. (Until #309 each page linked a different
 Gemini-made `.ico`, so the tab icon changed as a reader moved around, and `/favicon.ico` 404ed.)
@@ -75,3 +75,26 @@ Designs are short lists of shapes on a 64 × 64 grid in `make_favicon.py` (`desi
 its neighbours); themes are the `THEMES` table at the top. The SVG and the PNGs are both made
 from that one description, so they cannot drift apart. Keep a design to two or three shapes:
 at 16 px, anything finer than about 6 grid units disappears.
+
+## The wordmark
+
+`public/images/brand/basinwx-wordmark.svg` is the name "BasinWx" drawn in the same strokes as
+the favicon's B, with the degree ring as the dot of the i. It is the homepage logo
+(`views/index.html`, class `site-wordmark`) and replaced a 1.4 MB PNG (#309).
+
+`scripts/make_wordmark.py` draws it:
+
+```bash
+scripts/make_wordmark.py --lockup dot --scheme light --theme ink-teal --out public/images/brand/basinwx-wordmark.svg
+scripts/make_wordmark.py --sheet /tmp/wordmarks.png     # every lockup, on dark and on white
+```
+
+| Option | Choices |
+|---|---|
+| `--lockup` | `dot` (installed: ring is the dot of the i), `end` (ring after the x), `tile` (favicon tile, then the name) |
+| `--scheme` | `light` (dark letters, for a white page; installed) or `dark` (white letters, for a dark surface such as the sidebar) |
+| `--theme` | as for the favicon |
+
+The SVG has no background and no text: the letters are paths, so it looks the same whether or
+not the site typeface has loaded. If dark mode is ever switched on, the homepage needs the
+`dark` scheme file as well.

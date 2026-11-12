@@ -16,7 +16,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | **Pick up outstanding work** | `gh issue list --label student-ready` (sized, verifiable) or `gh issue list --label copilot-ok` (chores with tests). Every open issue sits on one of two milestones: `v1.6.0 Beta relaunch` (15 Nov 2026), `v2.0.0 Ozone season open` (1 Dec 2026) |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | **Check both live boxes from outside, no shell needed** | `scripts/probe.py` (python3 only; see `docs/DEPLOYMENT.md` §6 step 0) |
-| Change the site icon (favicon) | `docs/FAVICON-INSTALL-STEPS.md` + `scripts/make_favicon.py` |
+| Change the site icon (favicon) or the BasinWx wordmark | `docs/FAVICON-INSTALL-STEPS.md` + `scripts/make_favicon.py`, `scripts/make_wordmark.py` |
 | Understand the data pipeline end-to-end | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json` |
 | Work the CHPC/producer side | The [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) repo: `docs/CHPC-REFERENCE.md` (cron, env, pitfalls), `docs/WEBSITE-INTEGRATION.md` (upload contract), `docs/walkthroughs/upload.md` |
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
