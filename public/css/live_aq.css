@@ -128,15 +128,16 @@ body[data-page-type="live_aq"] .overlay-container {
     width: 0.85rem;
     height: 0.85rem;
     margin-top: 0.2rem;
-    border: 1px solid rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--color-border);
     border-radius: 50%;
+    background: var(--marker-status-color);
 }
 
-.live-aq-legend-swatch--green { background: green; }
-.live-aq-legend-swatch--orange { background: orange; }
-.live-aq-legend-swatch--red { background: red; }
-.live-aq-legend-swatch--blue { background: #4A90D2; }
-.live-aq-legend-swatch--gray { background: gray; }
+.live-aq-legend-note {
+    margin: 0.5rem 0 0;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
 
 .live-aq-legend-panel[hidden] {
     display: none;
@@ -154,42 +155,6 @@ body[data-page-type="live_aq"] .overlay-container {
     height: 60px;
     width: auto;
     opacity: 0.8;
-}
-
-/* Map Popup Styles */
-.leaflet-popup-content {
-    margin: 12px 16px;
-    line-height: 1.4;
-    font-size: 14px;
-}
-
-.leaflet-popup-content h3 {
-    color: var(--usu-blue);
-    font-size: 16px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-    text-align: center;
-}
-
-.measurement {
-    margin: 5px 0;
-    padding: 6px 8px;
-    border-radius: var(--radius-sm);
-    background-color: #f8f9fa;
-    border-left: 3px solid #e9ecef;
-    font-size: 13px;
-}
-
-.measurement.warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border-left-color: #ffc107;
-}
-
-.measurement.danger {
-    background-color: #f8d7da;
-    color: #721c24;
-    border-left-color: #dc3545;
 }
 
 /* Kiosk control styling - positioned in bottom right */
@@ -402,19 +367,6 @@ body[data-page-type="live_aq"] .overlay-container {
 .leaflet-marker-icon:hover {
     filter: brightness(1.2);
     transition: all 0.2s ease;
-}
-
-/* Station popup styling - Enhanced */
-.station-popup .leaflet-popup-content-wrapper {
-    background: white;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-overlay);
-    border: 2px solid var(--usu-light-gray);
-}
-
-.station-popup .leaflet-popup-tip {
-    background: white;
-    border: 2px solid var(--usu-light-gray);
 }
 
 /* Loading state for map */

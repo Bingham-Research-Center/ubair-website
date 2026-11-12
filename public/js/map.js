@@ -1,4 +1,4 @@
-import { getMarkerColor, createPopupContent } from './mapUtils.js';
+import { createStationIcon, createStationPopup, getMarkerStatus } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
 import { stations as configStations } from './config.js';
 import { buildStationMeasurements, mapStationName } from './mapShared.js';
@@ -22,6 +22,7 @@ let markers = [];
 let cycleMarkers = [];
 let useCelsius = false; // Default to Fahrenheit (matches homepage default)
 let lastUnits = {}; // Cache units for popup rebuilds
+let lastTimestamps = {}; // Each station's latest report time, for the popups
 const AUTO_CYCLE_PAN_OFFSET_PX = { x: 130, y: 20 };
 const AUTO_CYCLE_PAN_DURATION_S = 0.8;
 const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
@@ -115,10 +116,7 @@ function setupUnitToggle() {
             markers.forEach(marker => {
                 const opts = marker.options;
                 if (opts.stationName && opts.measurements) {
-                    const popupContent = createPopupContent(
-                        opts.stationName, opts.measurements, lastUnits, useCelsius
-                    );
-                    marker.bindPopup(popupContent, getPopupOptions());
+                    marker.bindPopup(popupFor(opts.stationName, opts.measurements), getPopupOptions());
                 }
             });
         });
@@ -252,24 +250,29 @@ function getPopupPanPadding() {
         return acc;
     }, {});
 
-    applyLeftInset(insets, elements['.leaflet-control-zoom'], mapRect);
+    // Each overlay pushes popups away on the side it sits. On a phone the corner controls
+    // together span nearly the whole width, and clearing them sideways left no room at all:
+    // popups opened half off-screen. There they only push popups down (or up).
+    const side = (apply, element) => { if (!isMobile) apply(insets, element, mapRect); };
+
+    side(applyLeftInset, elements['.leaflet-control-zoom']);
     applyTopInset(insets, elements['.leaflet-control-zoom'], mapRect);
 
-    applyLeftInset(insets, elements['.map-controls-stack'], mapRect);
+    side(applyLeftInset, elements['.map-controls-stack']);
     applyTopInset(insets, elements['.map-controls-stack'], mapRect);
 
-    applyRightInset(insets, elements['.study-area-toggle'], mapRect);
+    side(applyRightInset, elements['.study-area-toggle']);
     applyTopInset(insets, elements['.study-area-toggle'], mapRect);
 
-    applyRightInset(insets, elements['.overlay-container'], mapRect);
+    side(applyRightInset, elements['.overlay-container']);
     applyTopInset(insets, elements['.overlay-container'], mapRect);
 
-    applyRightInset(insets, elements['#live-aq-legend-panel'], mapRect);
+    side(applyRightInset, elements['#live-aq-legend-panel']);
     applyBottomInset(insets, elements['#live-aq-legend-panel'], mapRect);
 
     applyBottomInset(insets, elements['.main-footer'], mapRect);
 
-    applyLeftInset(insets, elements['.usu-logo'], mapRect);
+    side(applyLeftInset, elements['.usu-logo']);
     applyBottomInset(insets, elements['.usu-logo'], mapRect);
 
     return {
@@ -352,6 +355,7 @@ async function updateMap() {
     // Extract units from observations data
     const units = observations._units || {};
     lastUnits = units;
+    lastTimestamps = observations._timestamps || {};
 
     // Clear existing markers
     markers.forEach(m => map.removeLayer(m));
@@ -372,7 +376,7 @@ async function updateMap() {
       const stationName = mapStationName(stid, info?.name);
       const stationInfo = { lat: stationLat, lng: stationLng };
       const measurements = buildStationMeasurements(observations, stationName);
-      const marker = createStationMarker(stationName, stationInfo, measurements, units);
+      const marker = createStationMarker(stationName, stationInfo, measurements);
       if (marker) {
         markers.push(marker);
         validStations++;
@@ -399,33 +403,23 @@ async function updateMap() {
   }
 }
 
-// Helper function to create station markers (if not already defined)
-function createStationMarker(stationName, stationInfo, measurements, units = {}) {
-    try {
-        const hasOzone = measurements && measurements['Ozone'] != null;
-        const color = getMarkerColor(measurements);
-        let marker;
+function popupFor(stationName, measurements) {
+    return createStationPopup(stationName, measurements, {
+        units: lastUnits, observedAt: lastTimestamps[stationName] ?? null, imperial: !useCelsius
+    });
+}
 
-        // Circle marker for all stations — color indicates status
-        marker = L.circleMarker([stationInfo.lat, stationInfo.lng], {
-            color: '#fff',
-            weight: 2,
-            fillColor: color,
-            fillOpacity: 0.8,
-            radius: hasOzone ? 12 : 9,
+// Same marker and popup as the homepage map (mapUtils.js).
+function createStationMarker(stationName, stationInfo, measurements) {
+    try {
+        const marker = L.marker([stationInfo.lat, stationInfo.lng], {
+            icon: createStationIcon(getMarkerStatus(measurements)),
             stationName: stationName,
             measurements: measurements
         });
-
-        // Create popup content with dynamic units and current unit preference
-        const popupContent = createPopupContent(stationName, measurements, units, useCelsius);
-        marker.bindPopup(popupContent, getPopupOptions());
-
-        // Add to map
+        marker.bindPopup(popupFor(stationName, measurements), getPopupOptions());
         marker.addTo(map);
-
         return marker;
-
     } catch (error) {
         console.error(`Error creating marker for ${stationName}:`, error);
         return null;

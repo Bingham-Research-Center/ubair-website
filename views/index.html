@@ -138,35 +138,25 @@
                     </button>
                     <div class="legend-dropdown active" id="legend-dropdown">
                         <div class="legend-items-compact">
-                            <div class="legend-section-header">Air Quality Stations (●)</div>
+                            <div class="legend-section-header">Air quality stations (&#9679;), ozone</div>
+                            <!-- Filled by index_map.js from the bands in mapUtils.js -->
+                            <div id="aq-legend-rows"></div>
+                            <div class="legend-section-header">Road weather stations (&#9670;)</div>
                             <div class="legend-row">
-                                <div class="legend-color" style="background-color: green;"></div>
-                                <span>Good (&lt;50)</span>
-                                <div class="legend-color" style="background-color: orange;"></div>
-                                <span>Warning (50-69)</span>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-clear"></span>
+                                <span>All clear</span>
                             </div>
                             <div class="legend-row">
-                                <div class="legend-color" style="background-color: red;"></div>
-                                <span>Danger (≥70)</span>
-                                <div class="legend-color" style="background-color: #4A90D2;"></div>
-                                <span>Active (weather only)</span>
-                            </div>
-                            <div class="legend-row">
-                                <div class="legend-color" style="background-color: gray;"></div>
-                                <span>No Data</span>
-                            </div>
-                            <div class="legend-section-header">Road Weather Stations (♦)</div>
-                            <div class="legend-row">
-                                <div class="legend-color legend-diamond" style="background-color: #28A745;"></div>
-                                <span>All Clear</span>
-                                <div class="legend-color legend-diamond" style="background-color: #FFC107;"></div>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-caution"></span>
                                 <span>Caution</span>
                             </div>
                             <div class="legend-row">
-                                <div class="legend-color legend-diamond" style="background-color: #DC3545;"></div>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-hazardous"></span>
                                 <span>Hazardous</span>
-                                <div class="legend-color legend-diamond" style="background-color: gray;"></div>
-                                <span>No Data</span>
+                            </div>
+                            <div class="legend-row">
+                                <span class="legend-color legend-diamond aq-status" data-status="nodata"></span>
+                                <span>No data</span>
                             </div>
                         </div>
                     </div>

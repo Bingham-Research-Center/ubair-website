@@ -1,30 +1,17 @@
-import { thresholds } from './config.js';
+import { legendEntries, LEGEND_NOTE } from './mapUtils.js';
 
-export function buildLegendMarkup(ozoneThresholds = thresholds.Ozone) {
-    const { warning, danger } = ozoneThresholds;
+// The same rows and colours as the homepage legend, from the bands the markers use.
+export function buildLegendMarkup() {
+    const rows = legendEntries().map(({ status, label }) => `
+        <div class="live-aq-legend-row">
+            <span class="live-aq-legend-swatch aq-status" data-status="${status}" aria-hidden="true"></span>
+            <span>${label}</span>
+        </div>`).join('');
 
     return `
         <div class="live-aq-legend-section-title">Ozone (ppb)</div>
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch live-aq-legend-swatch--green" aria-hidden="true"></span>
-            <span>Good (&lt;${warning} ppb)</span>
-        </div>
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch live-aq-legend-swatch--orange" aria-hidden="true"></span>
-            <span>Warning (${warning} to &lt;${danger} ppb)</span>
-        </div>
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch live-aq-legend-swatch--red" aria-hidden="true"></span>
-            <span>Danger (&gt;=${danger} ppb)</span>
-        </div>
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch live-aq-legend-swatch--blue" aria-hidden="true"></span>
-            <span>Blue = station reporting weather only, no ozone</span>
-        </div>
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch live-aq-legend-swatch--gray" aria-hidden="true"></span>
-            <span>No data</span>
-        </div>
+        ${rows}
+        <p class="live-aq-legend-note">${LEGEND_NOTE}</p>
     `;
 }
 

@@ -585,11 +585,19 @@ main.content {
 }
 
 .legend-row .legend-color {
-    width: 12px;
-    height: 12px;
+    flex: none;
+    width: 0.75rem;
+    height: 0.75rem;
     border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.2);
-    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    background: var(--marker-status-color);
+}
+
+.legend-note {
+    margin: 0.25rem 0 0;
+    font-size: 0.7rem;
+    color: var(--color-text-muted);
+    text-align: left;
 }
 
 .legend-row span {
@@ -607,7 +615,7 @@ main.content {
     text-align: center;
     margin: 0.5rem 0 0.3rem 0;
     padding-bottom: 0.2rem;
-    border-bottom: 1px solid rgba(0, 38, 58, 0.2);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .legend-section-header:first-child {
