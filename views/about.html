@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About · BasinWx</title>
+    <meta name="description" content="What BasinWx is, who runs it, and where its data come from.">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="stylesheet" href="/public/css/main.css">
+    <link rel="stylesheet" href="/public/css/about.css">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
+</head>
+<body data-page-type="about">
+<div class="colored-bar"></div>
+<div class="sidebar_container"></div>
+
+<main class="content about-page">
+    <h1>About BasinWx</h1>
+
+    <section class="pane about-section" aria-labelledby="about-what">
+        <h2 id="about-what">What this site is</h2>
+        <p>BasinWx shows live weather and air-quality observations, and experimental forecasts,
+            for the Uintah Basin in northeastern Utah. It is built and run by the Bingham Research
+            Center at Utah State University.</p>
+        <p>Everything here is a research product. Forecasts are not official and live data are
+            preliminary. For official forecasts and warnings, use the
+            <a href="https://www.weather.gov/" target="_blank" rel="noopener noreferrer">National Weather Service</a>
+            and the <a href="https://air.utah.gov/" target="_blank" rel="noopener noreferrer">Utah Division of Air Quality</a>.</p>
+    </section>
+
+    <section class="pane about-section" aria-labelledby="about-ozone">
+        <h2 id="about-ozone">Winter ozone</h2>
+        <p>In some winters, ozone near the ground in the Basin rises above the federal health
+            standard. It builds when snow cover, a temperature inversion, sunshine and light winds
+            come together, holding emissions in a shallow, sunlit layer of cold air.</p>
+        <p>The <a href="/forecast_outlooks">Ozone Alert</a> outlooks are written by our forecasters
+            during the winter season.</p>
+    </section>
+
+    <section class="pane about-section" id="clyfar" aria-labelledby="about-clyfar">
+        <h2 id="about-clyfar">Clyfar</h2>
+        <p>Clyfar is our in-house model for winter ozone. During the ozone season it runs on each
+            new NOAA GEFS ensemble weather forecast, four times a day, and estimates how likely
+            elevated ozone is up to two weeks or more ahead. It is experimental and has not been
+            operationally validated. <a href="/forecast_air_quality">See the latest Clyfar forecast</a>.</p>
+    </section>
+
+    <section class="pane about-section" aria-labelledby="about-data">
+        <h2 id="about-data">Where the data come from</h2>
+        <ul>
+            <li><strong>Observations:</strong> weather and air-quality stations, through Synoptic Data.
+                Some data come from partners including Utah DEQ and the Ute Indian Tribe.</li>
+            <li><strong>Weather models:</strong> NOAA's HRRR and GEFS.</li>
+            <li><strong>Roads:</strong> UDOT.</li>
+            <li><strong>Fire:</strong> NASA FIRMS satellite detections, Utah Fire Info restrictions,
+                National Weather Service and Open-Meteo forecasts.</li>
+        </ul>
+    </section>
+
+    <section class="pane about-section" aria-labelledby="about-contact">
+        <h2 id="about-contact">Contact</h2>
+        <p><a href="https://www.usu.edu/binghamresearch/contact-us" target="_blank" rel="noopener noreferrer">Contact the Bingham Research Center</a>,
+            or meet <a href="https://jrl.ac/team" target="_blank" rel="noopener noreferrer">the website team</a>.</p>
+    </section>
+</main>
+
+<script type="module" src="/public/js/loadSidebar.js"></script>
+<script type="module" src="/public/js/loadFooter.js"></script>
+</body>
+</html>

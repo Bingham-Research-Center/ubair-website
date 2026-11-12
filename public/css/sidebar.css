@@ -83,8 +83,10 @@
     margin: 0;
 }
 
+/* The link fills its row, so the whole row is clickable, and the active marker sits inside the
+   padding, so the text does not move when a page becomes active. */
 .sidebar ul li {
-    padding: 0.9375rem 1.25rem;
+    padding: 0;
     transition: background-color 0.3s;
 }
 
@@ -98,6 +100,7 @@
     display: flex;
     align-items: center;
     gap: 0.625rem;
+    padding: 0.9375rem 1.25rem;
 }
 
 .sidebar ul li i {
@@ -109,33 +112,21 @@
 
 .sidebar ul li.nav-active {
     background-color: var(--usu-light-blue);
-    border-left: 4px solid var(--color-accent);
 }
 
-/* Sidebar Disclaimer */
-.sidebar-disclaimer {
-    padding: 0.9375rem 1.25rem;
-    font-size: 0.75rem;
-    color: var(--usu-light-gray);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background-color: rgba(0, 0, 0, 0.1);
-    margin-top: auto;
-    flex-shrink: 0;
-    transition: 0.4s ease-in all;
-}
-.sidebar-disclaimer:hover {
-    color: white;
-}
-.sidebar-disclaimer p {
-    margin: 0.5em 0;
-    line-height: 1.4;
-    opacity: 0.9;
+.sidebar ul li.nav-active > a {
+    border-left: 0.25rem solid var(--color-accent);
+    padding-left: 1rem;
 }
 
 /* Navigation Divider */
-.nav-divider {
+.sidebar ul li.nav-divider {
     margin: 1rem 0 0.5rem 0;
-    padding: 0 1.25rem;
+    padding: 0.9375rem 1.25rem;
+}
+
+.sidebar ul li.nav-divider:hover {
+    background-color: transparent;
 }
 
 .divider-line {
@@ -158,48 +149,4 @@
 
 .external-link:hover a {
     opacity: 1;
-}
-
-
-/* Dropdown Menu */
-.sidebar ul li.nav-dropdown {
-    position: relative;
-    padding: 0;
-}
-
-.dropdown-toggle {
-    display: flex !important;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    padding: 0.9375rem 1.25rem;
-    box-sizing: border-box;
-}
-
-.dropdown-arrow {
-    transition: transform 0.3s ease;
-    font-size: 0.8em;
-}
-
-.nav-dropdown.is-open .dropdown-arrow {
-    transform: rotate(180deg);
-}
-
-.dropdown-menu {
-    display: none;
-    position: static;
-    width: 100%;
-    background: var(--usu-light-blue);
-}
-
-.nav-dropdown.is-open .dropdown-menu {
-    display: block;
-}
-
-.dropdown-menu li:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-.dropdown-menu a {
-    font-size: inherit;
 }

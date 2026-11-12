@@ -169,7 +169,8 @@
         bottom: 0 !important;
         position: fixed !important;
         padding: 6px !important;
-        height: 50px !important;
+        height: auto !important;
+        min-height: 50px;
         box-sizing: border-box !important;
     }
 

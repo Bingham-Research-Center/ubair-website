@@ -27,15 +27,6 @@ body[data-page-type="roads"] .main-footer {
     box-sizing: border-box;
 }
 
-body[data-page-type="roads"] .sidebar-disclaimer {
-    padding: 10px 15px;
-    font-size: 0.7rem;
-}
-
-body[data-page-type="roads"] .sidebar ul li {
-    padding: 12px 20px;
-}
-
 .roads-data-notice {
     margin-top: 1rem;
     padding: 1rem 1.25rem;

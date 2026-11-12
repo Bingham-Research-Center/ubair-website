@@ -19,7 +19,7 @@ describe('aviation page', () => {
 
     test('is in the sidebar and carries a disclaimer', () => {
         expect(read('public/partials/sidebar.html')).toContain('href="/aviation"');
-        expect(read('public/js/loadSidebar.js')).toMatch(/'\/aviation':\s*`DISCLAIMER/);
+        expect(read('public/js/disclaimers.js')).toMatch(/'\/aviation':\s*'For planning only, not a weather briefing/);
     });
 
     test('has no placeholder panels', () => {

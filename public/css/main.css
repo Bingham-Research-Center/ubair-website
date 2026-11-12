@@ -645,10 +645,6 @@ main.content {
     margin-bottom: 1.5rem;
 }
 
-.sidebar-disclaimer {
-    color: var(--color-on-brand-muted);
-}
-
 /* Handles the timer-fill effect for the auto-cycle toggle */
 :root {
     --kiosk-fill-duration: 4s;
