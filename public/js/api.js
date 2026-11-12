@@ -77,7 +77,7 @@ export async function fetchAvailableStations() {
   }
 }
 
-async function getLatestFilename(prefix, dataType) {
+export async function getLatestFilename(prefix, dataType) {
   const res = await fetch(`/api/filelist/${dataType}`);
   if (!res.ok) throw new Error(`Unable to list files: ${res.status}`);
   const files = await res.json();
