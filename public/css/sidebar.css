@@ -94,6 +94,11 @@
     background-color: var(--usu-light-blue);
 }
 
+/* Clyfar's row has its own hover (theme/clyfar.css), so the grey would only muddy its fade-in */
+.sidebar ul li.clyfar-glow:hover {
+    background-color: transparent;
+}
+
 .sidebar ul li a {
     color: white;
     text-decoration: none;

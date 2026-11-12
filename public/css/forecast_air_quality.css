@@ -178,6 +178,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     color: var(--air-warning);
 }
 
+/* Hover is Clyfar's ember (theme/clyfar.css): the links carry class="clyfar-glow" */
 .info-link {
     display: inline-flex;
     align-items: center;
@@ -192,19 +193,9 @@ body[data-page-type="forecast_air_quality"] h1::after {
     transition: all 0.2s ease;
 }
 
-.info-link:hover {
-    background: var(--air-secondary);
-    color: white;
-}
-
 .ffion-btn {
     background: rgba(200, 16, 46, 0.1);
     color: var(--air-danger);
-}
-
-.ffion-btn:hover {
-    background: var(--air-danger);
-    color: white;
 }
 
 /* Section wrappers for full-width containers */
@@ -706,6 +697,7 @@ body[data-page-type="forecast_air_quality"] h1::after {
     flex-wrap: wrap;
 }
 
+/* Hover is Clyfar's ember (theme/clyfar.css), via class="clyfar-glow" in forecast_air_quality.js */
 .cluster-btn {
     padding: 0.5rem 1rem;
     border: 2px solid var(--air-primary);
@@ -716,11 +708,6 @@ body[data-page-type="forecast_air_quality"] h1::after {
     font-size: 0.9rem;
     cursor: pointer;
     transition: all 0.2s ease;
-}
-
-.cluster-btn:hover {
-    background: var(--air-background);
-    border-color: var(--air-secondary);
 }
 
 .cluster-btn.active {
