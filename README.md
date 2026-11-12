@@ -31,12 +31,39 @@ frontend reads from `/api/static/*`. DNS for `.dev` is at Namecheap with a wildc
 feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins them up at
 `<name>.basinwx.dev`. Forecast schemas are pinned in `DATA_MANIFEST.json`.
 
+## Look and feel (theme)
+Every colour, corner radius, shadow and font is defined once, in `public/css/theme/tokens.css`.
+Page stylesheets read those tokens with `var(--…)` and add no raw values of their own, so
+changing the site's look is an edit to that one file.
+
+| To | Do this |
+|---|---|
+| Style something in page CSS | use the semantic names: `var(--color-text-muted)`, `var(--radius-md)`, `var(--shadow-card)`, `var(--font-sans)`; never a hex or px literal |
+| Give one page or card its own accent | set `--page-accent` on `body[data-page-type="…"]`, or `--card-accent` on the card |
+| Change the look of the whole site | edit values in `tokens.css`, nothing else |
+| Check you kept to it | `npm test`: `styleRatchet` fails if a file gains raw values, `themeContrast` fails if text drops below WCAG AA |
+
+House rules for new work: flat surfaces separated by a hairline rather than a drop shadow;
+corners of 4, 6 or 8 px; hover and keyboard focus change colour or border and never move the
+element; icons come from the one vendored Font Awesome (`/vendor/fontawesome`), not emoji or a
+CDN. Tiers, the ratchet and how to add a token: `docs/STYLE-TOKEN-GUIDE.md`.
+
+**Branch previews carry the theme with them.** A preview at `<name>.basinwx.dev` is one
+developer's PR branch running from its own worktree on the dev box
+(`docs/howto/preview-a-branch.md`; each new subdomain also needs a certificate and an nginx
+vhost, which only root can add). Every page loads `tokens.css` through `main.css`, so a branch
+that is current with `dev` shows the current theme with no extra work, and a branch that edits
+`tokens.css` previews its own look. To compare several looks on one preview, put each
+candidate's values in an `html[data-theme="name"]` block in a preview-only stylesheet and
+switch the attribute. Keep that off `dev`: `styleRatchet` fails if the switcher is present.
+
 ## Documentation
 | Audience | Start here |
 |---|---|
 | **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — one page: what to work on and how a change gets merged |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
+| **Styling** | `docs/STYLE-TOKEN-GUIDE.md` (tokens, the style ratchet); summary under "Look and feel" above |
 | **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json`; producer side in [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) |
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
