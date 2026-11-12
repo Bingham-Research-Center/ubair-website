@@ -360,7 +360,7 @@ function renderChart(payload, pairs, steps, wind, nowMs) {
         if (observed) {
             traces.push({
                 x: [plotlyUtc(wind.time)], y: [observed.cross], name: 'Observed',
-                mode: 'markers', marker: { color: text, size: 9, symbol: 'diamond' },
+                mode: 'markers', marker: { color: text, size: 9, symbol: 'diamond' }, cliponaxis: false,
                 hovertemplate: '%{y:.0f} kt<extra>Observed</extra>',
             });
         }
@@ -368,13 +368,13 @@ function renderChart(payload, pairs, steps, wind, nowMs) {
 
     const layout = {
         autosize: true,
-        margin: { l: 48, r: 16, t: 8, b: 48 },
+        margin: { l: 48, r: 16, t: 32, b: 40 },
         paper_bgcolor: 'transparent',
         plot_bgcolor: 'transparent',
         font: { family: font, color: muted, size: 13 },
-        xaxis: { title: { text: 'Time (UTC)' }, gridcolor: grid, tickformat: '%H%MZ' },
+        xaxis: { gridcolor: grid, tickformat: '%H%MZ' },
         yaxis: { title: { text: 'kt' }, gridcolor: grid, rangemode: 'tozero', zeroline: false },
-        legend: { orientation: 'h', y: -0.25 },
+        legend: { orientation: 'h', x: 0, y: 1, yanchor: 'bottom' },
         hovermode: 'x unified',
     };
     chart.hidden = false;

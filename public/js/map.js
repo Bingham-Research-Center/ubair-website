@@ -131,7 +131,7 @@ function fixUSULogo() {
         // Ensure proper positioning for live AQ page
         usuLogoContainer.style.position = 'fixed';
         usuLogoContainer.style.bottom = '120px';
-        usuLogoContainer.style.left = 'calc(250px + 20px)';
+        usuLogoContainer.style.left = 'calc(var(--sidebar-width) + 1.25rem)';
         usuLogoContainer.style.zIndex = '1000';
 
         const usuLogoImage = usuLogoContainer.querySelector('img');

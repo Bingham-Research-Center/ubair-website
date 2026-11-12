@@ -113,7 +113,8 @@ Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
   (new stylesheets start at zero); lower it with `node scripts/style-scan.mjs --tighten`.
 - The look since v1.6.0 is **Ink + Teal**: IBM Plex Sans from `public/fonts/` (no font CDN),
   flat surfaces, a greyed basemap (`--basemap-filter`), hover that changes colour and never
-  moves. Dark mode is a draft in the tokens (`html[data-mode="dark"]`), not switched on.
+  moves. Since v1.6.2: hard edges, cards are `.pane` (square, hairline, short accent tab on the
+  top edge), and the whole UI is scaled to 85% by `--root-font-size` (write lengths in `rem`). Dark mode is a draft in the tokens (`html[data-mode="dark"]`), not switched on.
 - **A colour that carries meaning never rides on a page's decorative palette.** Status, AQI,
   confidence and fire-restriction colours have their own tokens (`--status-*`, `--epa-*`,
   `--confidence-*`, `--restriction-*`); borrowing `--fire-accent` once turned Stage 1 fire

@@ -1,4 +1,8 @@
 /* Base HTML and Body Styles */
+html {
+    font-size: var(--root-font-size);
+}
+
 html, body {
     height: 100%;
     margin: 0;
