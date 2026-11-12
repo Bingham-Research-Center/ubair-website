@@ -138,35 +138,25 @@
                     </button>
                     <div class="legend-dropdown active" id="legend-dropdown">
                         <div class="legend-items-compact">
-                            <div class="legend-section-header">Air Quality Stations (●)</div>
+                            <div class="legend-section-header">Air quality stations (&#9679;), ozone</div>
+                            <!-- Filled by index_map.js from the bands in mapUtils.js -->
+                            <div id="aq-legend-rows"></div>
+                            <div class="legend-section-header">Road weather stations (&#9670;)</div>
                             <div class="legend-row">
-                                <div class="legend-color" style="background-color: green;"></div>
-                                <span>Good (&lt;50)</span>
-                                <div class="legend-color" style="background-color: orange;"></div>
-                                <span>Warning (50-69)</span>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-clear"></span>
+                                <span>All clear</span>
                             </div>
                             <div class="legend-row">
-                                <div class="legend-color" style="background-color: red;"></div>
-                                <span>Danger (≥70)</span>
-                                <div class="legend-color" style="background-color: #4A90D2;"></div>
-                                <span>Active (weather only)</span>
-                            </div>
-                            <div class="legend-row">
-                                <div class="legend-color" style="background-color: gray;"></div>
-                                <span>No Data</span>
-                            </div>
-                            <div class="legend-section-header">Road Weather Stations (♦)</div>
-                            <div class="legend-row">
-                                <div class="legend-color legend-diamond" style="background-color: #28A745;"></div>
-                                <span>All Clear</span>
-                                <div class="legend-color legend-diamond" style="background-color: #FFC107;"></div>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-caution"></span>
                                 <span>Caution</span>
                             </div>
                             <div class="legend-row">
-                                <div class="legend-color legend-diamond" style="background-color: #DC3545;"></div>
+                                <span class="legend-color legend-diamond aq-status" data-status="road-hazardous"></span>
                                 <span>Hazardous</span>
-                                <div class="legend-color legend-diamond" style="background-color: gray;"></div>
-                                <span>No Data</span>
+                            </div>
+                            <div class="legend-row">
+                                <span class="legend-color legend-diamond aq-status" data-status="nodata"></span>
+                                <span>No data</span>
                             </div>
                         </div>
                     </div>
@@ -212,7 +202,12 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
 <script src="/public/js/outlook-highlight.js"></script>
 
-<script>
+<script type="module">
+    import { describeOutlook, currentSeason } from '/public/js/outlookSeasons.js';
+
+    // Five-day risk levels say nothing about the next five days once an outlook is a few days old.
+    const CURRENT_FOR_DAYS = 2;
+
     document.addEventListener("DOMContentLoaded", async function() {
         // Initialize legend toggle
         initLegendToggle();
@@ -267,7 +262,19 @@
             // Get the latest outlook
             const latestOutlook = outlooks[0];
             const dateEl = document.getElementById('outlook-date');
-            if (dateEl) dateEl.textContent = latestOutlook.formattedDate ? `Issued ${latestOutlook.formattedDate}` : '';
+            const info = describeOutlook(latestOutlook.filename);
+            if (dateEl && info) {
+                // The text stays whatever its age; the season, and a marker once it is no longer
+                // current, keep an old outlook from reading as this week's.
+                const ageDays = (Date.now() - info.issued.getTime()) / 86400000;
+                let age = '';
+                if (info.season !== currentSeason()) {
+                    age = '<span class="outlook-age">Past season</span>';
+                } else if (ageDays > CURRENT_FOR_DAYS) {
+                    age = `<span class="outlook-age">${Math.floor(ageDays)} days old</span>`;
+                }
+                dateEl.innerHTML = `Issued ${info.date}, ${info.time} <span class="outlook-season">${info.season} season</span>${age}`;
+            }
 
             // Fetch its content
             const outlookResponse = await fetch(`/api/static/outlooks/${latestOutlook.filename}`);
@@ -341,14 +348,11 @@
                 return;
             }
 
-            // A five-day outlook says nothing about the next five days once it is a few days
-            // old. Show its date instead of its risk levels, so an old one never reads as current.
-            const issued = new Date(outlooks[0].date);
-            const ageDays = (Date.now() - issued.getTime()) / 86400000;
-            if (!Number.isFinite(ageDays) || ageDays > 2) {
-                riskEl.textContent = Number.isFinite(ageDays)
-                    ? `Last outlook ${issued.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}`
-                    : 'See the ozone outlook';
+            // Show its date instead of its risk level once it is no longer current.
+            const info = describeOutlook(outlooks[0].filename);
+            const ageDays = info ? (Date.now() - info.issued.getTime()) / 86400000 : NaN;
+            if (!Number.isFinite(ageDays) || ageDays > CURRENT_FOR_DAYS) {
+                riskEl.textContent = info ? `Last outlook ${info.date}` : 'See the ozone outlook';
                 return;
             }
 
@@ -356,32 +360,15 @@
             if (!outlookResponse.ok) throw new Error(`HTTP ${outlookResponse.status}`);
             const markdown = await outlookResponse.text();
 
-            // Extract risk levels from Day 1-5 headings
-            const riskLevels = [];
-            const lines = markdown.split('\n');
-            for (const line of lines) {
-                if (line.match(/###.*Day\s*6/i)) break;
-                const riskMatch = line.match(/\*\*(NO(?:\s*RISK)?|NONE|LOW|MODERATE|MEDIUM|HIGH)(?:\s*RISK)?\*\*/i);
-                if (riskMatch) {
-                    riskLevels.push(riskMatch[1].toUpperCase().replace(/\s*RISK/, ''));
-                }
-            }
-
-            if (riskLevels.length === 0) {
+            // The Day 1–5 section of the outlook template: a "### Day 1–5 (...)" heading, then a
+            // line "NO|LOW|SOME|MODERATE|HIGH RISK OF ELEVATED OZONE".
+            const days1to5 = markdown.split(/^###\s/m).find((section) => /^[^\n]*Day\s*1\s*[–-]\s*5/i.test(section));
+            const risk = days1to5?.match(/\b(NO|LOW|SOME|MODERATE|MEDIUM|HIGH)\s+RISK\b/i);
+            if (!risk) {
                 riskEl.textContent = 'See full outlook';
                 return;
             }
-
-            // Build compact risk summary
-            const riskHtml = riskLevels.map((level, i) => {
-                let cls = 'risk-no';
-                if (level === 'LOW') cls = 'risk-low';
-                else if (level === 'MODERATE' || level === 'MEDIUM') cls = 'risk-moderate';
-                else if (level === 'HIGH') cls = 'risk-high';
-                return `<span class="risk-indicator ${cls}" style="font-size:0.75rem; padding:2px 6px; margin:1px;">D${i+1}: ${level}</span>`;
-            }).join(' ');
-
-            riskEl.innerHTML = riskHtml;
+            riskEl.innerHTML = highlightRiskWords(`${risk[1].toUpperCase()} RISK`);
 
         } catch (err) {
             console.error('Error loading alerts ozone risk:', err);

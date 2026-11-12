@@ -82,16 +82,122 @@ body:not([data-page-type="locations"]):not([data-page-type="roads"]) .leaflet-po
     pointer-events: auto;
 }
 
-/* Two-column popup styling */
-.two-column-popup .leaflet-popup-content {
-    margin: 8px 12px;
-    line-height: 1.4;
-    font-size: 13px;
+/* Station markers and popups, shared by the homepage and Live AQ maps (public/js/mapUtils.js).
+   Anything that carries a status sets --marker-status-color from data-status: ozone uses the
+   EPA bands, road weather stations the status colours. */
+.aq-status[data-status="good"] { --marker-status-color: var(--epa-good); }
+.aq-status[data-status="moderate"] { --marker-status-color: var(--epa-moderate); }
+.aq-status[data-status="sensitive"] { --marker-status-color: var(--epa-sensitive); }
+.aq-status[data-status="unhealthy"] { --marker-status-color: var(--epa-unhealthy); }
+.aq-status[data-status="very-unhealthy"] { --marker-status-color: var(--epa-very-unhealthy); }
+.aq-status[data-status="hazardous"] { --marker-status-color: var(--epa-hazardous); }
+.aq-status[data-status="weather"] { --marker-status-color: var(--status-info); }
+.aq-status[data-status="nodata"] { --marker-status-color: var(--status-nodata); }
+.aq-status[data-status="road-clear"] { --marker-status-color: var(--status-good); }
+.aq-status[data-status="road-caution"] { --marker-status-color: var(--status-warning); }
+.aq-status[data-status="road-hazardous"] { --marker-status-color: var(--status-danger); }
+
+.station-marker-icon {
+    background: none;
+    border: none;
 }
 
-.two-column-popup .leaflet-popup-content h3 {
-    color: var(--usu-blue);
-    font-size: 14px;
+.station-marker {
+    display: block;
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 2px solid var(--color-surface);
+    background: var(--marker-status-color);
+    box-shadow: var(--shadow-overlay);
+}
+
+.station-marker--road {
+    border-radius: 0;
+    transform: rotate(45deg) scale(0.85);
+}
+
+.station-popup .leaflet-popup-content-wrapper,
+.station-popup .leaflet-popup-tip {
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-overlay);
+}
+
+.station-popup .leaflet-popup-content {
+    margin: 0.75rem 1rem;
+    min-width: 12rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--color-text);
+}
+
+.station-popup-name {
+    margin: 0;
+    padding-right: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.station-popup-time {
+    margin: 0.125rem 0 0.5rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+/* Over two hours old: still shown, but not to be taken for current conditions. */
+.station-popup-time.is-stale {
+    color: var(--status-danger);
+    font-weight: 600;
+}
+
+.station-popup-group {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.2rem 1rem;
+    margin: 0;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--color-border);
+}
+
+.station-popup-group dt {
+    color: var(--color-text-muted);
+}
+
+.station-popup-group dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.station-popup-category {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-left: 0.4rem;
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+}
+
+.station-popup-category::before {
+    content: '';
+    width: 0.7rem;
+    height: 0.7rem;
+    border: 1px solid var(--color-border);
+    background: var(--marker-status-color);
+}
+
+.station-popup-empty {
+    margin: 0.5rem 0 0;
+    color: var(--color-text-muted);
+}
+
+.station-popup-link {
+    display: block;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--color-border);
+    color: var(--color-link);
+    font-weight: 500;
 }
 
 /* Weather-only station diamond markers */

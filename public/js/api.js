@@ -239,9 +239,11 @@ function mapVariableName(variable) {
         'soil_temp': 'Soil Temperature',
         'sea_level_pressure': 'Pressure',
         'NOx_concentration': 'NOx',
-        'black_carbon_concentration': 'NOx',
-        'ppb': 'NO',  // From your mapping file
-        'NO_concentration': 'NO2'
+        // These used to read black carbon as NOx and NO as NO2. Neither is in the feed yet,
+        // but the map popups list every pollutant a station reports, so the names must be right.
+        'NO_concentration': 'NO',
+        'NO2_concentration': 'NO2',
+        'black_carbon_concentration': 'Black Carbon'
     };
 
     return mappings[variable] || variable;

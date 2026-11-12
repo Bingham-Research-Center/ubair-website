@@ -3,6 +3,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { describeOutlook, OUTLOOK_FILE_RE } from '../public/js/outlookSeasons.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +12,8 @@ const DEFAULT_OUTLOOKS_DIR = path.join(__dirname, '../public/api/static/outlooks
 
 // Only issued outlooks count. Anything else in the folder (template-2025-2026.md,
 // images) must never reach the list: index 0 is shown as "the latest outlook".
-const OUTLOOK_FILE_RE = /^outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md$/;
+// The filename's HHMM is Mountain time; public/js/outlookSeasons.js turns it into the true
+// instant, so `date` is right for working out an outlook's age wherever the server runs.
 
 export async function generateOutlooksList(outlooksDir = DEFAULT_OUTLOOKS_DIR) {
     try {
@@ -28,10 +30,10 @@ export async function generateOutlooksList(outlooksDir = DEFAULT_OUTLOOKS_DIR) {
         const outlooks = files
             .filter(file => OUTLOOK_FILE_RE.test(file))
             .map(filename => {
-                const [, year, month, day, hour, minute] = filename.match(OUTLOOK_FILE_RE);
-                const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`).toISOString();
-                // Shown as "Issued: …" on the homepage (public/js/index_outlook.js)
-                const formattedDate = new Date(date).toLocaleString('en-US', {
+                const { issued, season } = describeOutlook(filename);
+                // Shown as "Issued …" on the homepage, in Mountain time.
+                const formattedDate = issued.toLocaleString('en-US', {
+                    timeZone: 'America/Denver',
                     year: 'numeric',
                     month: 'long',
                     day: 'numeric',
@@ -39,7 +41,7 @@ export async function generateOutlooksList(outlooksDir = DEFAULT_OUTLOOKS_DIR) {
                     minute: '2-digit',
                     hour12: true
                 });
-                return { filename, date, formattedDate };
+                return { filename, date: issued.toISOString(), formattedDate, season };
             })
             .sort((a, b) => new Date(b.date) - new Date(a.date)); // Sort newest first
 
