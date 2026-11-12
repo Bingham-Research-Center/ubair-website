@@ -1,11 +1,13 @@
 /* Mobile and Responsive Styles */
 
-/* Mobile Arrow Menu Toggle - Embedded in Sidebar */
+/* Mobile menu tab. It hangs off the drawer's right edge (left: 100%), so it stays on screen
+   whatever the drawer's width; a pixel offset broke when the sidebar width moved to rem in
+   v1.6.2 and the tab ended up 2px off the left of the screen. */
 .mobile-menu-toggle {
     display: none;
     position: absolute;
     top: 50%;
-    right: -65px;
+    left: 100%;
     transform: translateY(-50%);
     z-index: 1;
     background: var(--usu-blue);
@@ -19,17 +21,10 @@
     transition: all 0.3s ease;
 }
 
-.mobile-menu-toggle:hover {
+/* Hover changes colour only (docs/STYLE-TOKEN-GUIDE.md) */
+.mobile-menu-toggle:hover,
+.mobile-menu-toggle:focus-visible {
     background: var(--usu-light-blue);
-    right: -70px;
-}
-
-/* Applied to mobile-menu-toggle when open but removed when closed */
-.clear {
-    right: -15px;
-}
-.clear:hover {
-    right: -17px;
 }
 
 /* Tablet styles */
@@ -37,11 +32,6 @@
     .container {
         margin: 0 20px;
         max-width: 95%;
-    }
-    
-    .sidebar {
-        width: 80%;
-        max-width: 280px;
     }
     
     #map, .dashboard-map {
@@ -71,9 +61,10 @@
         overflow: visible;
     }
 
+    /* Tucked away by exactly its own width, so only the tab shows */
     .sidebar_container {
         position: fixed;
-        left: -280px;
+        left: calc(-1 * var(--sidebar-width));
         top: 0;
         bottom: 70px;
         transition: left 0.3s ease;
@@ -100,11 +91,6 @@
     .container {
         margin: 0 10px;
         padding: 15px;
-    }
-    
-    .sidebar {
-        width: 90%;
-        max-width: 100%;
     }
     
     #map, .dashboard-map {
@@ -568,10 +554,6 @@
     #map, .dashboard-map {
         height: 45vh;
         min-height: 200px;
-    }
-    
-    .sidebar {
-        width: 95%;
     }
     
     /* Ensure touch targets are large enough */
