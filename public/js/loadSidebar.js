@@ -74,6 +74,13 @@ async function loadSidebar() {
                 const isOpen = dropdown.classList.toggle('is-open');
 
                 toggle.setAttribute('aria-expanded', String(isOpen));
+
+            });
+            toggle.addEventListener('mouseleave', (event) => {
+                const dropdown = toggle.closest('.nav-dropdown');
+                const isOpen = dropdown.classList.toggle('is-open');
+
+                toggle.setAttribute('aria-expanded', String(!isOpen));
             });
         });
 
