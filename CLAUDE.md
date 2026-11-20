@@ -104,7 +104,9 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
   derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility. In
   `road-forecast`, `precip_1hr` is a running total since the model run began, not an hourly
-  amount: use `precip_type` for "is it snowing", and difference the totals for a rate.
+  amount: use `precip_type` for "is it snowing", and difference the totals for a rate. In the
+  HRRR surface layers, `snowfall_1h_mm` is also a running total, zeroed in some hours
+  (`runningTotalForHour` in `public/js/hrrrFields.js`); its `rainfall_1h_mm` is truly hourly.
 - **Never invent data.** A failed or missing fetch shows nothing, or says it is unavailable; it
   never falls back to a plausible value. That includes "none": an alerts fetch that failed is
   `unavailable`, not an empty list (`server/nwsAlerts.js`; the fire page read an NWS outage as

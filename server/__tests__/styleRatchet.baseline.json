@@ -5,7 +5,7 @@
   "public/css/fire.css": {"color":39,"radius":2,"shadow":7,"gradient":1,"important":1,"rootBlock":1},
   "public/css/forecast.css": {"color":13,"radius":2,"shadow":2,"rootBlock":1,"legacyVar":8},
   "public/css/forecast_air_quality.css": {"color":18,"gradient":2,"important":2,"rootBlock":1},
-  "public/css/forecast_weather.css": {"color":47,"shadow":1,"important":6,"rootBlock":1},
+  "public/css/forecast_weather.css": {"color":28,"shadow":1,"rootBlock":1},
   "public/css/index.css": {"color":1,"important":4,"legacyVar":4},
   "public/css/live_aq.css": {"color":14,"gradient":1,"important":34,"legacyVar":17},
   "public/css/main.css": {"color":12,"gradient":4,"important":2,"rootBlock":1,"legacyVar":22},
