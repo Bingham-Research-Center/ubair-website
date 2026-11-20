@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/index.css">
     <link rel="stylesheet" href="/public/css/status-lights.css">
+    <link rel="stylesheet" href="/public/css/llm-text.css">
     <link rel="stylesheet" href="/public/css/outlooks.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -96,6 +97,10 @@
         <div class="section-header">
             <h2>Air Quality and Weather Overview</h2>
         </div>
+
+        <!-- LLM forecast summary: drawn by llmText.js only while a current file exists. With no
+             file, or a stale one, this element stays hidden and empty. -->
+        <div class="llm-block pane" id="home-llm" data-llm-placement="home.summary" hidden></div>
 
         <div class="dashboard-grid">
             <!-- Live Map Panel -->
@@ -186,6 +191,7 @@
 <script type="module" src="/public/js/index_map.js"></script>
 <script type="module" src="/public/js/homepage-current.js"></script>
 <script type="module" src="/public/js/homepage-lights.js"></script>
+<script type="module" src="/public/js/llmText.js"></script>
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>

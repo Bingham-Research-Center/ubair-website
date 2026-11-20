@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/forecast_weather.css">
     <link rel="stylesheet" href="/public/css/weather-panes.css">
+    <link rel="stylesheet" href="/public/css/llm-text.css">
     <link rel="stylesheet" href="/public/css/overlays.css">
 </head>
 <body data-page-type="forecast_weather">
@@ -35,6 +36,9 @@
     <!-- Main Content -->
     <main class="content">
         <h1>Weather Forecasts</h1>
+
+        <!-- LLM forecast discussion: drawn by llmText.js only while a current file exists. -->
+        <section class="llm-block pane" id="weather-llm" data-llm-placement="weather.discussion" aria-label="LLM forecast discussion" hidden></section>
 
         <!-- Hazards: National Weather Service alerts, then rain or snow by elevation.
              Filled by weatherHazards.js. A failed alerts check says so; it never reads as "none". -->
@@ -205,6 +209,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/loadFooter.js"></script>
+    <script type="module" src="/public/js/llmText.js"></script>
     <script type="module" src="/public/js/weatherHazards.js"></script>
     <script type="module" src="/public/js/townForecast.js"></script>
     <script type="module" src="/public/js/forecast_weather.js"></script>
