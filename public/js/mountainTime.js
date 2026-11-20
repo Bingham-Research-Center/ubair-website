@@ -33,3 +33,14 @@ export function mountainTime(ms, now) {
 export function modelRunLabel(ms) {
     return `${mountainWeekday(ms)} ${mountainClock(ms)} (${utcHour(ms)})`;
 }
+
+/**
+ * Index of the first of `validTimes` that is not yet past: the hour under way (one that began
+ * up to half an hour ago) or the next one. For a run whose hours are all past, the last index.
+ * A model run reaches the site hours after it starts, so its first hours are already history.
+ */
+export function firstHourFromNow(validTimes, now) {
+    const times = Array.isArray(validTimes) ? validTimes.map((time) => Date.parse(time)) : [];
+    const index = times.findIndex((time) => Number.isFinite(time) && time >= now - 30 * 60 * 1000);
+    return index === -1 ? Math.max(0, times.length - 1) : index;
+}

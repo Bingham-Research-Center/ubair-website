@@ -6,7 +6,7 @@
 // the reader scrolls to the map; the ensemble charts are fetched when the drawer is opened.
 // Times are Mountain time, with the model's own UTC hour beside a run.
 
-import { modelRunLabel, mountainTime } from './mountainTime.js';
+import { firstHourFromNow, modelRunLabel, mountainTime } from './mountainTime.js';
 
 const API_IMAGES = '/api/static/images';
 const API_FORECASTS = '/api/static/forecasts';
@@ -457,7 +457,8 @@ async function selectSurfaceRun(index) {
 
     surfaceState.selectedRunIndex = index;
     surfaceState.payload = await fetchSurfacePayload(run.filename);
-    surfaceState.hourIndex = 0;
+    // A run reaches the page hours after it starts: open on the hour under way, not on hour 0.
+    surfaceState.hourIndex = firstHourFromNow(surfaceState.payload.valid_times, Date.now());
 
     populateHourSelector(surfaceState.payload);
     renderSurfaceForecast();
@@ -493,7 +494,7 @@ function populateHourSelector(payload) {
         option.textContent = `${validTime} (+${hour} h)`;
         timeSelect.appendChild(option);
     });
-    timeSelect.value = '0';
+    timeSelect.value = String(surfaceState.hourIndex);
 }
 
 function renderSurfaceForecast() {
@@ -604,8 +605,11 @@ function renderWindVectors(payload, hourIndex) {
 
 function fitMapToPayload(payload) {
     if (!weatherMap || weatherMap._surfaceBoundsSet) return;
-    const bbox = payload.bbox?.actual;
+    // The box asked for, where the file gives it: the grid actually sent runs a little past it
+    // on every side, and fitting to that leaves the Basin small in the middle of the map.
+    const bbox = payload.bbox?.requested?.sw ? payload.bbox.requested : payload.bbox?.actual;
     if (!bbox?.sw || !bbox?.ne) return;
+    weatherMap.invalidateSize();
 
     weatherMap.fitBounds([
         [bbox.sw[0], bbox.sw[1]],
@@ -672,20 +676,20 @@ function updateSpecialConditions(payload) {
 
     const items = [];
     if (freezingFraction >= 0.5) {
-        items.push(renderConditionBlock('alert', 'Freezing', `${Math.round(freezingFraction * 100)}% of the map's grid points are at or below 32°F.`));
+        items.push(renderConditionBlock('alert', 'Freezing:', `${Math.round(freezingFraction * 100)}% of the map's grid points are at or below 32°F.`));
     }
     if (maxSnow >= 1.0) {
-        items.push(renderConditionBlock('alert', 'Snow', `Snowfall peaks at ${mmToIn(maxSnow).toFixed(2)} in/hr somewhere on the map.`));
+        items.push(renderConditionBlock('alert', 'Snow:', `up to ${mmToIn(maxSnow).toFixed(2)} in/hr somewhere on the map.`));
     }
     if (maxRain >= 0.5) {
-        items.push(renderConditionBlock('note', 'Rain', `Rainfall peaks at ${mmToIn(maxRain).toFixed(2)} in/hr somewhere on the map.`));
+        items.push(renderConditionBlock('note', 'Rain:', `up to ${mmToIn(maxRain).toFixed(2)} in/hr somewhere on the map.`));
     }
     if (maxWind >= 10.0) {
-        items.push(renderConditionBlock('note', 'Wind', `Wind peaks at ${msToMph(maxWind).toFixed(0)} mph somewhere on the map.`));
+        items.push(renderConditionBlock('note', 'Wind:', `up to ${msToMph(maxWind).toFixed(0)} mph somewhere on the map.`));
     }
 
     if (!items.length) {
-        items.push(renderConditionBlock('note', 'Quiet hour', 'No strong rain, snow, widespread freezing or wind shows on the map at this hour.'));
+        items.push(renderConditionBlock('note', 'Quiet hour:', 'no strong rain, snow, widespread freezing or wind shows on the map.'));
     }
 
     conditions.replaceChildren(...items);

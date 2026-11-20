@@ -120,8 +120,12 @@
 
 /* ── Tables: rain or snow by hour, and a town hour by hour ───────────────────────────── */
 
+/* position: relative makes the box the containing block for the screen-reader-only labels in
+   its cells. Without it those absolutely placed labels sit outside the scrolling box, at the
+   far end of the table, and widen the whole page on a phone (#101). */
 .precip-hours-wrap,
 .town-table-wrap {
+    position: relative;
     max-width: 100%;
     overflow-x: auto;
 }

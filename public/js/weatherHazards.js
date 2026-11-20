@@ -100,7 +100,8 @@ function drawAlerts(result) {
             const item = element('li', 'hazard-alert');
             item.dataset.level = alert.level;
             const head = element('p', 'hazard-head');
-            head.append(element('strong', '', alert.event), ` ${[alert.where, alert.until].filter(Boolean).join(', ')}`);
+            const rest = [alert.where ? `for ${alert.where}` : '', alert.until].filter(Boolean).join(', ');
+            head.append(element('strong', '', alert.event), rest ? ` ${rest}` : '');
             item.append(head);
             if (alert.text) {
                 const more = element('details', 'hazard-more');

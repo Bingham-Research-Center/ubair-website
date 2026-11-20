@@ -12,7 +12,7 @@ import {
     townSummary,
     windLabel,
 } from '../townForecast.js';
-import { modelRunLabel, mountainClock, mountainTime, sameMountainDay } from '../mountainTime.js';
+import { firstHourFromNow, modelRunLabel, mountainClock, mountainTime, sameMountainDay } from '../mountainTime.js';
 
 // Town forecasts on the weather page (issue #407). The fixture is a real HRRR waypoints run
 // (02Z on 20 Nov 2026), cut down to four of its fourteen places.
@@ -38,6 +38,16 @@ describe('mountainTime helpers', () => {
 
     test('label a model run in both clocks', () => {
         expect(modelRunLabel(Date.parse('2026-11-20T02:00:00Z'))).toBe('Thu 7 PM (02Z)');
+    });
+
+    test('firstHourFromNow opens a run on the hour under way, not on its first hour', () => {
+        const hours = RUN.valid_times; // 02Z to 20Z
+        expect(firstHourFromNow(hours, NOW)).toBe(3);                                   // 05Z, begun 25 min ago
+        expect(firstHourFromNow(hours, Date.parse('2026-11-20T05:31:00Z'))).toBe(4);    // 06Z
+        expect(firstHourFromNow(hours, Date.parse('2026-11-20T01:00:00Z'))).toBe(0);    // run not started
+        expect(firstHourFromNow(hours, Date.parse('2026-11-21T09:00:00Z'))).toBe(18);   // all past: the last
+        expect(firstHourFromNow([], NOW)).toBe(0);
+        expect(firstHourFromNow(undefined, NOW)).toBe(0);
     });
 });
 

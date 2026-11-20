@@ -80,6 +80,15 @@ describe('weather forecast page', () => {
 
     test('its tables scroll inside their own box, so the page does not scroll sideways (#101)', () => {
         const css = read('public/css/weather-panes.css');
-        expect(css).toMatch(/\.precip-hours-wrap,\s*\.town-table-wrap\s*\{[^}]*overflow-x:\s*auto/);
+        const rule = css.match(/\.precip-hours-wrap,\s*\.town-table-wrap\s*\{([^}]*)\}/)[1];
+        expect(rule).toMatch(/overflow-x:\s*auto/);
+        // The screen-reader labels in the cells are absolutely placed. Unless their scrolling box
+        // is their containing block they escape it and widen the page by the table's hidden part.
+        expect(rule).toMatch(/position:\s*relative/);
+    });
+
+    test('the map opens on the hour under way, not on a run\'s first hour, which is long past', () => {
+        expect(script).toMatch(/surfaceState\.hourIndex = firstHourFromNow\(surfaceState\.payload\.valid_times, Date\.now\(\)\)/);
+        expect(script).toMatch(/timeSelect\.value = String\(surfaceState\.hourIndex\)/);
     });
 });
