@@ -4,6 +4,7 @@ import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
 import SnowDetectionService from './snowDetectionService.js';
 import { fetchNWSGridpointForecast } from './nwsHelpers.js';
+import { classifyUdotRoad, isMajorBasinRoute } from './roadConditionRules.js';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
@@ -106,6 +107,9 @@ class RoadWeatherService {
                     console.warn(`Failed to decode polyline for ${road.RoadwayName}:`, error);
                 }
 
+                // US-40, US-191 or SR-87 inside the Basin: snow covering one of these is red.
+                const major = isMajorBasinRoute({ name: road.RoadwayName, coordinates });
+
                 return {
                     id: road.Id,
                     sourceId: road.SourceId,
@@ -117,8 +121,9 @@ class RoadWeatherService {
                     coordinates: coordinates,
                     source: 'UDOT',
                     cached: false,
+                    major,
                     lastUpdated: this.udotTimestamp(road.LastUpdated),
-                    condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction)
+                    condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction, { major })
                 };
             });
 
@@ -140,35 +145,11 @@ class RoadWeatherService {
         return times.length ? new Date(Math.max(...times)).toISOString() : null;
     }
 
-    mapUDOTConditionToColor(roadCondition, weatherCondition, restriction) {
-        const road = (roadCondition || '').toLowerCase();
-        const weather = (weatherCondition || '').toLowerCase();
-        const restrict = (restriction || '').toLowerCase();
-
-        // Red conditions - dangerous
-        if (restrict.includes('closed') || restrict.includes('no travel') ||
-            road.includes('icy') || road.includes('ice')) {
-            return { condition: 'red', status: 'Dangerous', reason: `${roadCondition} - ${restriction}` };
-        }
-
-        // Yellow conditions - caution
-        if (road.includes('wet') && weather.includes('snow') ||
-            road.includes('slush') || road.includes('snow') ||
-            weather.includes('snow') || weather.includes('storm') ||
-            restrict.includes('chain') || restrict.includes('traction')) {
-            return { condition: 'yellow', status: 'Use Caution', reason: `${roadCondition} - ${weatherCondition}` };
-        }
-
-        // Default to yellow for wet conditions
-        if (road.includes('wet')) {
-            return { condition: 'yellow', status: 'Wet Roads', reason: 'Use caution on wet pavement' };
-        }
-
-        if (road.includes('dry')) {
-            return { condition: 'green', status: 'Clear', reason: 'Dry road surface reported' };
-        }
-
-        return { condition: 'gray', status: 'No Data', reason: 'Road condition not reported or not recognized' };
+    // The rules live in roadConditionRules.js, shared with the homepage roads light, so the
+    // roads page and the homepage give the same stretch of road the same colour.
+    mapUDOTConditionToColor(roadCondition, weatherCondition, restriction, options) {
+        const { condition, status, reason } = classifyUdotRoad(roadCondition, weatherCondition, restriction, options);
+        return { condition, status, reason };
     }
 
     async fetchNWSData(lat, lon) {
@@ -530,9 +511,17 @@ class RoadWeatherService {
         // Compute weighted average score
         const ensembleScore = normalized.reduce((sum, s) => sum + s.weight * SEVERITY[s.condition], 0);
 
+        // UDOT's own report of a closure, ice, or snow covering a major route stands. It is what
+        // someone saw on the road; a forecast and a camera estimate must not average it down
+        // to "use caution".
+        const udotReportsRed = normalized.some(s => s.name === 'udot' && s.condition === 'red');
+
         // Threshold to final condition
         let condition, status;
-        if (ensembleScore < 0.5) {
+        if (udotReportsRed) {
+            condition = 'red';
+            status = 'Dangerous';
+        } else if (ensembleScore < 0.5) {
             condition = 'green';
             status = 'Clear';
         } else if (ensembleScore < 1.5) {
@@ -658,6 +647,7 @@ class RoadWeatherService {
                     type: 'monitored',
                     source: udotRoad.source,
                     cached: udotRoad.cached,
+                    major: udotRoad.major === true,
                     lastUpdated: udotRoad.lastUpdated,
                     roadCondition: udotRoad.roadCondition,
                     weatherCondition: udotRoad.weatherCondition,
