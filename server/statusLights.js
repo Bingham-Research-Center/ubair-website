@@ -428,9 +428,10 @@ export function precipBands({ forecast, now }) {
  * The same forecast hour by hour, for the weather page: one type per band for each of the
  * hours still ahead in the newest run (up to twelve).
  *
- * Returns `{ status: 'ok', hours, bands, detail, asOf }`, where `hours` is the valid times and
- * each band carries `types`, one per hour: 'snow' | 'rain' | 'mix' | 'dry', or null where the
- * model gives no type for that hour.
+ * Returns `{ status: 'ok', hours, bands, places, snowLine, detail, asOf }`, where `hours` is
+ * the valid times and each band carries `types`, one per hour: 'snow' | 'rain' | 'mix' | 'dry',
+ * or null where the model gives no type for that hour. `places` is the same for each forecast
+ * point, highest first, and `snowLine` says where rain turns to snow in each hour (`snowLineAt`).
  */
 export function precipByHour({ forecast, now }) {
     const unavailable = (detail) => ({ status: 'unavailable', hours: [], bands: [], detail, asOf: null });
@@ -466,15 +467,67 @@ export function precipByHour({ forecast, now }) {
         return { key, label, range, places: inBand.map((point) => point.name), types };
     });
 
+    // The same hours point by point, highest first, for the picture of the hillside, and where
+    // rain turns to snow in each hour.
+    const places = points
+        .map((point) => ({
+            name: point.name,
+            elevationFt: Math.round((point.elevation_m * FEET_PER_METRE) / 10) * 10,
+            types: hours.map((hour) => {
+                const type = point.forecasts.find((candidate) => candidate?.valid_time === hour)?.precip_type;
+                return typeof type === 'string' ? pointType(type) : null;
+            }),
+        }))
+        .sort((a, b) => b.elevationFt - a.elevationFt);
+    const snowLine = hours.map((_, i) => snowLineAt(places.map((place) => ({ elevationFt: place.elevationFt, type: place.types[i] }))));
+
     const init = Number.isFinite(Date.parse(forecast.init_time)) ? forecast.init_time : null;
     return {
         status: 'ok',
         hours,
         bands,
+        places,
+        snowLine,
         detail: `HRRR forecast${init ? ` run at ${mountainTime(Date.parse(init), now)}` : ''}: `
             + 'the kind of precipitation the model expects at points along the highways, not a measurement.',
         asOf: init,
     };
+}
+
+/** One point's type in one hour, in the tile's four words. Anything frozen but not snow is a mix. */
+function pointType(type) {
+    if (type === 'snow' || type === 'rain') return type;
+    if (type === 'none') return 'dry';
+    return 'mix';
+}
+
+/**
+ * Where rain turns to snow in one hour, from each forecast point's height and type:
+ *
+ *   { kind: 'between', lowFt, highFt }  rain or a mix up to lowFt, snow from highFt up: the
+ *                                       line lies somewhere between the two
+ *   { kind: 'zone', lowFt, highFt }     snow as low as lowFt and rain or a mix as high as
+ *                                       highFt: both fall between them, as they do when the
+ *                                       line sits lower at one end of the Basin than the other
+ *   { kind: 'snow', downToFt }          snow at every point with precipitation, the lowest at downToFt
+ *   { kind: 'rain', upToFt }            rain or a mix at every point with precipitation, the highest at upToFt
+ *   null                                no precipitation at any point, or no forecast
+ *
+ * It is always a range between two forecast points and never a single height: fifteen points
+ * cannot say more. A mix counts with rain: above the range it is all snow.
+ */
+export function snowLineAt(points) {
+    const wet = (points || []).filter((point) => Number.isFinite(point?.elevationFt) && ['snow', 'rain', 'mix'].includes(point.type));
+    if (wet.length === 0) return null;
+    const snow = wet.filter((point) => point.type === 'snow').map((point) => point.elevationFt);
+    const liquid = wet.filter((point) => point.type !== 'snow').map((point) => point.elevationFt);
+    if (liquid.length === 0) return { kind: 'snow', downToFt: Math.min(...snow) };
+    if (snow.length === 0) return { kind: 'rain', upToFt: Math.max(...liquid) };
+    const lowestSnow = Math.min(...snow);
+    const highestLiquid = Math.max(...liquid);
+    return lowestSnow > highestLiquid
+        ? { kind: 'between', lowFt: highestLiquid, highFt: lowestSnow }
+        : { kind: 'zone', lowFt: lowestSnow, highFt: highestLiquid };
 }
 
 // ── The forecast tile: "Tonight", "Tomorrow morning" ─────────────────────────────────────

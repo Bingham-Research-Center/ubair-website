@@ -20,10 +20,10 @@ import {
     formatValue,
     layerByKey,
     legendBands,
-    rampColour,
     rasterise,
     valueAt,
 } from './mapLayers.js';
+import { bandRgb, cssRgb, tokenRgb } from './themeColours.js';
 import { firstHourFromNow, modelRunLabel, mountainTime } from './mountainTime.js';
 
 const API_IMAGES = '/api/static/images';
@@ -143,6 +143,7 @@ function setupWeatherMap() {
     // The value under the pointer, or under a tap.
     weatherMap.on('mousemove click', (event) => updateReadout(event.latlng));
     weatherMap.on('mouseout', () => updateReadout(null));
+    weatherMap.on('zoomend', redrawWindVectors);
 }
 
 /**
@@ -619,35 +620,7 @@ function advanceForecastFrame() {
 
 // ── Colours ────────────────────────────────────────────────────────────────────────────
 
-// A ramp's steps as [r, g, b], read once from the theme tokens (--scale-<name>-1 to -5, or
-// the single --scale-freezing). No colour is written in this file.
-const rampCache = new Map();
-function rampSteps(name) {
-    if (!rampCache.has(name)) {
-        const tokens = name === 'freezing' ? ['--scale-freezing'] : [1, 2, 3, 4, 5].map(step => `--scale-${name}-${step}`);
-        rampCache.set(name, tokens.map(tokenRgb).filter(Boolean));
-    }
-    return rampCache.get(name);
-}
-
-/** A theme colour token as [r, g, b], or null if the page does not define it. */
-function tokenRgb(token) {
-    const probe = document.createElement('span');
-    probe.hidden = true;
-    document.body.appendChild(probe);
-    probe.style.color = `var(${token})`;
-    const parts = token && getComputedStyle(probe).color.match(/[\d.]+/g);
-    probe.remove();
-    return parts && parts.length >= 3 ? parts.slice(0, 3).map(Number) : null;
-}
-
-let inkColour;
-const textColour = () => (inkColour === undefined ? (inkColour = tokenRgb('--color-text')) : inkColour);
-
-/** The [r, g, b] of one band's colour, or null for a band that is left clear. */
-function bandRgb(colour) {
-    return colour ? rampColour(rampSteps(colour.ramp), colour.t) : null;
-}
+const textColour = () => tokenRgb('--color-text');
 
 // ── Drawing ────────────────────────────────────────────────────────────────────────────
 
@@ -681,13 +654,13 @@ function renderSurfaceForecast() {
         rasterise(values, rows, cols, RASTER_FACTOR, scale, colours, ink ? [...ink, EDGE_ALPHA] : null),
         surfaceState.fit.corners);
 
+    fitMapToPayload(payload);
     if (windLayerGroup) windLayerGroup.clearLayers();
     // Arrows belong to one hour; a layer that covers the whole run has no one hour to show.
     if (surfaceState.showWind && !layer.wholeRun) {
         renderWindVectors(payload, surfaceState.hourIndex);
     }
 
-    fitMapToPayload(payload);
     updateTimeControls(payload, layer);
     updateCurrentDisplay(payload, layer);
     updateLegend(layer, scale, values);
@@ -734,12 +707,33 @@ function updateTimeControls(payload, layer) {
     }
 }
 
+const ARROW_SPACING_PX = 44;
+
+/** How many grid points to skip between arrows so they do not crowd at the map's zoom. */
+function arrowStep(payload) {
+    const { lats, lons } = payload.grid;
+    if (!weatherMap || !Number.isFinite(lats[0]) || !Number.isFinite(lats[1])) return 3;
+    const a = weatherMap.latLngToContainerPoint([lats[0], lons[0]]);
+    const b = weatherMap.latLngToContainerPoint([lats[1], lons[1]]);
+    const spacing = Math.hypot(a.x - b.x, a.y - b.y);
+    return spacing > 0 ? Math.max(1, Math.ceil(ARROW_SPACING_PX / spacing)) : 3;
+}
+
+// Arrows are redrawn after a zoom, so that zooming in shows more of them and zooming out fewer.
+function redrawWindVectors() {
+    const layer = layerByKey(surfaceState.layerKey);
+    if (!windLayerGroup || !surfaceState.payload || !layer) return;
+    windLayerGroup.clearLayers();
+    if (surfaceState.showWind && !layer.wholeRun) renderWindVectors(surfaceState.payload, surfaceState.hourIndex);
+}
+
 function renderWindVectors(payload, hourIndex) {
     const { lats, lons } = payload.grid;
     const [rows, cols] = payload.grid.shape;
     const uValues = sliceFieldForHour(payload, 'wind_u_10m_ms', hourIndex);
     const vValues = sliceFieldForHour(payload, 'wind_v_10m_ms', hourIndex);
-    const step = Math.max(1, Math.floor((payload.stride || 2) * 1.5));
+    // Far enough apart to read as arrows at this zoom: about one every 44 pixels.
+    const step = arrowStep(payload);
 
     for (let row = 0; row < rows; row += step) {
         for (let col = 0; col < cols; col += step) {
@@ -835,8 +829,7 @@ function updateLegend(layer, scale, values) {
         const swatch = document.createElement('span');
         swatch.className = 'map-legend-swatch';
         swatch.setAttribute('aria-hidden', 'true');
-        const rgb = bandRgb(band.colour);
-        if (rgb) swatch.style.backgroundColor = `rgb(${rgb.join(', ')})`;
+        swatch.style.backgroundColor = cssRgb(bandRgb(band.colour));
         row.append(swatch, band.label);
         return row;
     }));

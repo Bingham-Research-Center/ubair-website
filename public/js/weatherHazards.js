@@ -8,6 +8,7 @@
 // The functions above the "drawing" line are pure and tested.
 
 import { mountainClock, mountainTime, mountainWeekday, sameMountainDay } from './mountainTime.js';
+import { drawHillside } from './snowLine.js';
 
 export const ALERTS_UNAVAILABLE = 'National Weather Service alerts could not be checked just now. '
     + 'See weather.gov for current alerts.';
@@ -177,6 +178,8 @@ async function loadHazards() {
     ]);
     drawAlerts(alerts);
     drawPrecip(precip);
+    // The same answer, point by point: "Where rain turns to snow", further down the page.
+    drawHillside(precip);
 }
 
 if (typeof document !== 'undefined' && document.getElementById('weather-hazards')) {

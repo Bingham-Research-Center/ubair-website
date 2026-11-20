@@ -1,5 +1,7 @@
 // Town forecasts on /forecast_weather: hour by hour for 14 towns and passes along US-40, from
-// the HRRR waypoints run that reaches both boxes every hour.
+// the HRRR waypoints run that reaches both boxes every hour. The same run is handed to two
+// drawings: the forecast-and-measured chart above the table (townChart.js) and the Basin in
+// profile below it (basinProfile.js).
 //
 // The run arrives in SI units and is converted here, at display, with met.js, from the units
 // the file itself states. A unit met.js does not know gives "--", never a wrong number. It is
@@ -7,9 +9,11 @@
 //
 // The functions above the "drawing" line are pure and tested; the rest touches the page.
 
+import { showProfile } from './basinProfile.js';
 import { getCardinalDirection } from './mapUtils.js';
 import { toFahrenheit, toMillimetres, toMph } from './met.js';
 import { modelRunLabel, mountainClock, mountainTime, mountainWeekday, sameMountainDay } from './mountainTime.js';
+import { showTownChart } from './townChart.js';
 
 export const DEFAULT_TOWN = 'vernal';
 const FEET_PER_METRE = 3.28084;
@@ -136,6 +140,14 @@ export function runLine(forecast, now) {
 
 const REFRESH_MS = 10 * 60 * 1000;
 let latest = null;
+// What the towns' paired stations have measured since the run began, for the chart. Null
+// until it arrives, and again if it cannot be had: the chart then draws the forecast alone.
+let observed = null;
+
+function drawChart(townId) {
+    const town = latest ? townList(latest).find((candidate) => candidate.id === townId) : null;
+    showTownChart(town ? latest : null, town?.id ?? null, town?.name ?? '', observed);
+}
 
 function cell(tag, text) {
     const el = document.createElement(tag);
@@ -144,6 +156,7 @@ function cell(tag, text) {
 }
 
 function drawTown(townId) {
+    drawChart(townId);
     const summaryEl = document.getElementById('town-summary');
     const table = document.getElementById('town-table');
     const body = table?.querySelector('tbody');
@@ -196,6 +209,7 @@ function drawPicker() {
 }
 
 function drawUnavailable(message) {
+    showTownChart(null, null, '', null);
     const summaryEl = document.getElementById('town-summary');
     const table = document.getElementById('town-table');
     const select = document.getElementById('town-select');
@@ -212,11 +226,28 @@ async function loadTowns() {
         if (!body?.forecast) throw new Error('no forecast in the answer');
         latest = body.forecast;
         drawPicker();
+        showProfile(latest);
+        loadObserved();
     } catch (error) {
         console.warn('weather page: town forecast unavailable', error);
         latest = null;
         drawUnavailable('The town forecast is not available right now.');
+        showProfile(null);
     }
+}
+
+// The readings are a second, smaller question, asked after the forecast is on the page: the
+// table and the line never wait for them, and a failure leaves the line without dots.
+async function loadObserved() {
+    try {
+        const response = await fetch('/api/weather-forecast/observed', { cache: 'no-store' });
+        observed = await response.json();
+    } catch (error) {
+        console.warn('weather page: station readings unavailable', error);
+        observed = null;
+    }
+    const select = document.getElementById('town-select');
+    if (select?.value) drawChart(select.value);
 }
 
 if (typeof document !== 'undefined' && document.getElementById('town-forecast')) {

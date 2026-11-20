@@ -13,8 +13,9 @@ const script = read('public/js/forecast_weather.js');
 const layers = read('public/js/mapLayers.js');
 
 describe('weather forecast page', () => {
-    test('runs top to bottom: hazards, town forecasts, the map, then the expert drawer', () => {
-        const order = ['id="weather-hazards"', 'id="town-forecast"', 'id="weather-map-section"', 'id="expert-drawer"']
+    test('runs top to bottom: hazards, town forecasts, the Basin in profile, the snow line, the map, then the expert drawer', () => {
+        const order = ['id="weather-hazards"', 'id="town-forecast"', 'id="basin-profile"', 'id="snow-hillside"',
+            'id="weather-map-section"', 'id="expert-drawer"']
             .map((marker) => main.indexOf(marker));
         expect(order.every((index) => index > -1)).toBe(true);
         expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -48,6 +49,9 @@ describe('weather forecast page', () => {
         const css = read('public/css/weather-panes.css');
         expect(css).toMatch(/\.weather-hazards\s*\{\s*min-height:\s*22rem;/);
         expect(css).toMatch(/\.town-forecast\s*\{\s*min-height:\s*36rem;/);
+        const charts = read('public/css/weather-charts.css');
+        expect(charts).toMatch(/\.basin-profile\s*\{\s*min-height:\s*32rem;/);
+        expect(charts).toMatch(/\.snow-hillside\s*\{\s*min-height:\s*34rem;/);
     });
 
     test('the ensemble charts sit in a closed drawer and load when it is opened', () => {
@@ -88,7 +92,11 @@ describe('weather forecast page', () => {
             expect(text).not.toMatch(/#[0-9a-fA-F]{6}\b/);
             expect(text).not.toMatch(/style=["'`]/);
         }
-        expect(script).toMatch(/`--scale-\$\{name\}-\$\{step\}`/);
+        // themeColours.js is the one place a script reads a colour, and it reads a token.
+        expect(read('public/js/themeColours.js')).toMatch(/`--scale-\$\{name\}-\$\{step\}`/);
+        for (const file of ['themeColours.js', 'basinProfile.js', 'townChart.js', 'snowLine.js', 'svgKit.js']) {
+            expect(read(`public/js/${file}`)).not.toMatch(/#[0-9a-fA-F]{6}\b|rgba?\(\s*\d/);
+        }
         const tokens = read('public/css/theme/tokens.css');
         for (const ramp of ['cold', 'warm', 'wind', 'rain', 'snow', 'cloud']) {
             for (const step of [1, 2, 3, 4, 5]) expect(tokens).toMatch(new RegExp(`--scale-${ramp}-${step}:`));
@@ -127,6 +135,35 @@ describe('weather forecast page', () => {
         expect(script).toMatch(/if \(kioskRequested\(\)\) \{\s*surfaceState\.playMs = KIOSK_PLAY_MS;\s*startPlaying\(\);/);
     });
 
+    test('the three drawn views are fed by the two answers the page already fetches', () => {
+        const towns = read('public/js/townForecast.js');
+        const hazards = read('public/js/weatherHazards.js');
+        // The side view and the chart take the run the town table loaded; the hillside takes the
+        // precipitation answer the hazards pane loaded. Neither fetches it a second time.
+        expect(towns).toMatch(/showProfile\(latest\)/);
+        expect(towns).toMatch(/showTownChart\(/);
+        expect(hazards).toMatch(/drawHillside\(precip\)/);
+        for (const file of ['basinProfile.js', 'snowLine.js', 'townChart.js']) {
+            expect(read(`public/js/${file}`)).not.toMatch(/\bfetch\(/);
+        }
+        // The readings are one more small question, asked after the forecast is drawn.
+        expect(towns.match(/fetch\('\/api\/weather-forecast\/(towns|observed)'/g)).toEqual([
+            "fetch('/api/weather-forecast/towns'", "fetch('/api/weather-forecast/observed'",
+        ]);
+        expect(towns.indexOf('drawPicker();')).toBeLessThan(towns.indexOf('loadObserved();'));
+    });
+
+    test('the drawn views start empty: no chart, no dot and no snow line in the page source', () => {
+        expect(main).toMatch(/<div class="town-chart" id="town-chart"><\/div>/);
+        expect(main).toMatch(/<div class="profile-chart" id="profile-chart"><\/div>/);
+        expect(main).toMatch(/<div class="precip-hours-wrap hillside-wrap" id="hillside-wrap" hidden><\/div>/);
+        expect(main).toMatch(/<ul class="chart-legend" id="town-chart-legend" hidden>/);
+        expect(main).toMatch(/<details class="hazard-more chart-table" id="town-chart-table" hidden>/);
+        expect(main).not.toMatch(/<svg|<circle|<polyline/);
+        // The side view says what its ground is: a sketch from the forecast points.
+        expect(main).toMatch(/The ground is a sketch/);
+    });
+
     test('the hazards pane and the town table start empty, never with a made-up value', () => {
         expect(main).toMatch(/id="hazard-alerts" data-state="loading"/);
         expect(main).toMatch(/<table class="town-table" id="town-table" hidden>/);
@@ -136,7 +173,7 @@ describe('weather forecast page', () => {
 
     test('loads its three scripts and its pane styles', () => {
         for (const file of ['/public/js/weatherHazards.js', '/public/js/townForecast.js', '/public/js/forecast_weather.js',
-            '/public/css/weather-panes.css', '/public/css/weather-map.css']) {
+            '/public/css/weather-panes.css', '/public/css/weather-map.css', '/public/css/weather-charts.css']) {
             expect(html).toContain(file);
         }
     });

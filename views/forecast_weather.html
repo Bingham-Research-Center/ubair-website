@@ -22,6 +22,7 @@
     <link rel="stylesheet" href="/public/css/forecast_weather.css">
     <link rel="stylesheet" href="/public/css/weather-panes.css">
     <link rel="stylesheet" href="/public/css/weather-map.css">
+    <link rel="stylesheet" href="/public/css/weather-charts.css">
     <link rel="stylesheet" href="/public/css/llm-text.css">
     <link rel="stylesheet" href="/public/css/overlays.css">
 </head>
@@ -65,6 +66,35 @@
                 </div>
             </div>
             <p class="town-summary" id="town-summary">Loading the town forecast…</p>
+
+            <!-- Forecast and measured: the run's temperature line, with a dot for each reading the
+                 town's paired station has made since the run began. Drawn by townChart.js. -->
+            <figure class="town-chart-figure" id="town-chart-figure">
+                <figcaption class="chart-title">Temperature: forecast and measured</figcaption>
+                <ul class="chart-legend" id="town-chart-legend" hidden>
+                    <li data-series="forecast"><span class="chart-key chart-key-line" aria-hidden="true"></span><span class="town-chart-legend-text">Forecast (HRRR model)</span></li>
+                    <li data-series="measured" hidden><span class="chart-key chart-key-dot" aria-hidden="true"></span><span class="town-chart-legend-text"></span></li>
+                </ul>
+                <div class="town-chart" id="town-chart"></div>
+                <p class="chart-readout" id="town-chart-readout"></p>
+                <p class="chart-verdict" id="town-chart-verdict"></p>
+                <details class="hazard-more chart-table" id="town-chart-table" hidden>
+                    <summary>The hours already past, as a table</summary>
+                    <div class="town-table-wrap">
+                        <table class="town-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Time</th>
+                                    <th scope="col">Forecast</th>
+                                    <th scope="col">Measured</th>
+                                    <th scope="col">The forecast was</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </details>
+            </figure>
             <div class="town-table-wrap">
                 <table class="town-table" id="town-table" hidden>
                     <thead>
@@ -80,6 +110,37 @@
                 </table>
             </div>
             <p class="town-source" id="town-source"></p>
+        </section>
+
+        <!-- Across the Basin: the same run in profile along US-40. Drawn by basinProfile.js from
+             the forecast townForecast.js has already fetched. -->
+        <section class="basin-profile pane" id="basin-profile" aria-labelledby="profile-title">
+            <div class="section-header">
+                <h2 id="profile-title">Across the Basin</h2>
+                <div class="profile-controls">
+                    <label class="map-time-label" for="profile-hour">Hour</label>
+                    <input type="range" id="profile-hour" class="map-time-slider" min="0" max="18" step="1" value="0" disabled>
+                    <output class="map-time-value" id="profile-hour-label" for="profile-hour"></output>
+                </div>
+            </div>
+            <p class="chart-lede">US-40 seen from the side, west to east: each town and pass at its own height, coloured by its forecast temperature.</p>
+            <div class="profile-chart" id="profile-chart"></div>
+            <ul class="profile-legend" id="profile-legend"></ul>
+            <p class="chart-readout" id="profile-readout"></p>
+            <p class="chart-verdict" id="profile-summary">Loading the town forecast…</p>
+            <p class="town-source">The ground is a sketch: the forecast points' own heights joined by straight lines, not a survey of the road. Each temperature is the HRRR model's for a point near that place.</p>
+        </section>
+
+        <!-- Where rain turns to snow: the road forecast's points as a hillside, highest first.
+             Drawn by snowLine.js from the answer weatherHazards.js has already fetched. -->
+        <section class="snow-hillside pane" id="snow-hillside" aria-labelledby="hillside-title">
+            <div class="section-header">
+                <h2 id="hillside-title">Where rain turns to snow</h2>
+            </div>
+            <p class="chart-verdict" id="hillside-now">Loading the forecast…</p>
+            <div class="precip-hours-wrap hillside-wrap" id="hillside-wrap" hidden></div>
+            <ul class="hillside-legend" id="hillside-legend" hidden></ul>
+            <p class="hazard-note" id="hillside-note"></p>
         </section>
 
         <!-- Forecast map: the 1.5 MB model run loads when the reader scrolls here, not before.
