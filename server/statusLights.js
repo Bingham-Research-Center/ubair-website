@@ -600,9 +600,30 @@ export function largestRise(values) {
     return rise;
 }
 
+// The words must never cross a threshold the colour did not. A value is rounded for reading in
+// the ordinary way, unless that would carry it across a threshold it has not really crossed:
+// 3.8 in of snow is amber and reads "3.5 in", not "4 in"; a 57.6 mph gust is amber and reads
+// "57 mph", not "58 mph"; and a quiet tile never names a gust of "40 mph".
 const aboutInches = (inches) => {
-    const rounded = inches < 2 ? Math.round(inches * 2) / 2 : Math.round(inches);
-    return `${rounded} in`;
+    let shown = inches < 2 ? Math.round(inches * 2) / 2 : Math.round(inches);
+    for (const threshold of [NEW_SNOW_AMBER_IN, NEW_SNOW_RED_IN]) {
+        if (inches < threshold && shown >= threshold) shown = threshold - 0.5;
+    }
+    return `${shown} in`;
+};
+const gustMph = (mph) => {
+    let shown = Math.round(mph);
+    for (const threshold of [FORECAST_GUST_AMBER_MPH, FORECAST_GUST_RED_MPH]) {
+        if (mph < threshold && shown >= threshold) shown = threshold - 1;
+    }
+    return shown;
+};
+const coldF = (f) => {
+    let shown = Math.round(f);
+    for (const threshold of [COLD_AMBER_F, COLD_RED_F]) {
+        if (f > threshold && shown <= threshold) shown = threshold + 1;
+    }
+    return Object.is(shown, -0) ? 0 : shown;
 };
 
 /**
@@ -676,15 +697,15 @@ export function forecastLight({ forecast, now }) {
 
     const coldWords = (c, capital = true) => {
         const what = c.windChill ? 'wind chill' : 'temperature';
-        return `${capital ? what[0].toUpperCase() + what.slice(1) : what} ${Math.round(c.f)}°F`;
+        return `${capital ? what[0].toUpperCase() + what.slice(1) : what} ${coldF(c.f)}°F`;
     };
     const found = [];
     if (gust && gust.mph >= FORECAST_GUST_AMBER_MPH) {
         found.push({
             red: gust.mph >= FORECAST_GUST_RED_MPH,
-            line: `Gusts ${Math.round(gust.mph)} mph near ${gust.where}`,
+            line: `Gusts ${gustMph(gust.mph)} mph near ${gust.where}`,
             also: 'strong gusts',
-            detail: `gusts of ${Math.round(gust.mph)} mph near ${gust.where} around ${mountainTime(gust.time, now)}`,
+            detail: `gusts of ${gustMph(gust.mph)} mph near ${gust.where} around ${mountainTime(gust.time, now)}`,
         });
     }
     if (snow && snow.inches >= NEW_SNOW_AMBER_IN) {
@@ -721,7 +742,7 @@ export function forecastLight({ forecast, now }) {
         }
         const quiet = `no gusts of ${FORECAST_GUST_AMBER_MPH} mph, no inch of new snow on the Basin floor, `
             + `and nothing as cold as ${COLD_AMBER_F}°F`;
-        const extremes = `strongest gust ${Math.round(gust.mph)} mph, coldest ${coldWords(cold, false)}`;
+        const extremes = `strongest gust ${gustMph(gust.mph)} mph, coldest ${coldWords(cold, false)}`;
         return make('green', 'Nothing notable', `${covers}: ${quiet} (${extremes}). ${caveat}`, init);
     }
     const others = found.slice(1).map((reason) => reason.also);
