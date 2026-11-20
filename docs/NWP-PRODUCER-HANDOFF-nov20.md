@@ -9,7 +9,7 @@ to-do list and the worked example.
 
 **The one-paragraph version.** The website is ready to receive tiered LLM forecast text and
 aircraft products. It will not generate any text itself. Seven things are asked of the
-producers (P1–P7 below, plus P8 found on 20 Nov). The website's version 1.8.0 is held until
+producers (P1–P7 below, plus P8 and P9 found on 20 Nov). The website's version 1.8.0 is held until
 P2 delivers live text, so P1 and P2 are the critical path.
 
 ---
@@ -48,6 +48,7 @@ without `latest_<persona>.json`.
 | **P6** | The hub pushes its best aircraft products to dataType `aircraft` (§5) | Expert page | M |
 | **P7** | Fused inversion product (HRRR + aircraft + pseudo-profile) | Inversion light | L; likely after 2.0.0 |
 | **P8** | Add **wind gust** (and visibility where a station reports it) to the observation feed. As of 20 Nov no station in `map_obs_*.json` carries either | Weather light from our own feed (it uses UDOT road-station gusts meanwhile) | S |
+| **P9** | In `road-forecast`, `precip_1hr` is a **running total since the model run began**, not an hourly amount: across the last five files on 20 Nov all 85 point series only ever rise (Daniels Summit 2.8 → 18.6 mm over 12 h, flat in the one hour typed `none`). Either send true hourly amounts, or rename the field and say so in the manifest | An amount on the homepage precip tile (it shows the type only, meanwhile); the roads page's "heavy precipitation" thresholds read this field as hourly today | S |
 
 Each new file family needs a manifest entry before the website reads it. For P4 and P5 the
 families already exist; say so in the PR if the shape changes.

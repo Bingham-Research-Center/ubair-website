@@ -47,7 +47,7 @@ the file.
 | A7 | brc-tools | **OPEN** | Are single missed cycles detected upstream? |
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
-| P1–P8 | brc-tools + hub | **OPEN** | The NWP dashboard asks (LLM forecast text, GEFS percentiles year-round, 48 h waypoints, aircraft products, gusts in the obs feed): listed with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md). P1 overlaps A5 |
+| P1–P9 | brc-tools + hub | **OPEN** | The NWP dashboard asks (LLM forecast text, GEFS percentiles year-round, 48 h waypoints, aircraft products, gusts in the obs feed, the road-forecast precipitation total): listed with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md). P1 overlaps A5 |
 
 ---
 

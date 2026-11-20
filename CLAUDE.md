@@ -102,12 +102,25 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
-  derive it with `met.js` meanwhile. KVEL in the obs feed has no gusts or visibility either.
+  derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility. In
+  `road-forecast`, `precip_1hr` is a running total since the model run began, not an hourly
+  amount: use `precip_type` for "is it snowing", and difference the totals for a rate.
 - **Never invent data.** A failed or missing fetch shows nothing, or says it is unavailable; it
   never falls back to a plausible value. That includes "none": an alerts fetch that failed is
   `unavailable`, not an empty list (`server/nwsAlerts.js`; the fire page read an NWS outage as
   "no Red Flag Warning" until 1.7.4). The homepage said "No significant snow expected" for
   months from a file that had never been uploaded (`homepage.test.js` now guards it).
+
+## Homepage status lights
+Four tiles (Weather now, Ozone, Roads now, Precip next 6 h): `docs/features/HOMEPAGE-STATUS-LIGHTS.md`.
+- **The server decides, the browser draws.** Every rule is a pure function with a named
+  threshold in `server/statusLights.js`; `GET /api/status-lights` gathers the inputs one by one
+  so a broken source greys one tile; `public/js/homepage-lights.js` holds no thresholds.
+- **Grey means "not known".** A failed, missing or stale source is grey, never green.
+- **The roads page and the roads light share `server/roadConditionRules.js`**, so they cannot
+  disagree. Snow covering a major Basin route (US-40, US-191, SR-87) is red on both, and a UDOT
+  report of a closure, ice or snow cover is not averaged down by the forecast blend.
+- The thresholds are JRL's (20 Nov 2026). Change one only with him, in the constant and its test.
 
 ## Styling
 Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
