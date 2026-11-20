@@ -23,6 +23,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
 | Onboard a new RA | Wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) (the wiki's only page); then `docs/howto/preview-a-branch.md` |
 | **Build the producer side of the NWP dashboard** (LLM forecast text, aircraft products) | `docs/NWP-PRODUCER-HANDOFF-nov20.md` — asks P1–P8, the `llm_forecast/1` file with a worked example, how to check an upload. Rules as code: `public/js/llmForecast.js`; permanent contract: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5d–5e |
+| Show National Weather Service alerts anywhere on the site | `server/nwsAlerts.js` (`getNwsAlertsService().getBasinAlerts()`, the Basin zone list, floor vs nearby) and `GET /api/weather-alerts`. It answers `ok` with a list or `unavailable` with `alerts: null`; never treat a failure as an empty list |
 | Change who may upload, or add a dataType | `server/uploadPolicy.js` (the dataType list, per-dataType file types, host allowlist rules) + `UPLOAD_ALLOWED_HOSTS` in `.env.example` |
 | Plumb a new forecast dataType from brc-tools | `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — endpoint, schemas, unit traps (permanent); then `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for what is still unanswered and who owns it |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
