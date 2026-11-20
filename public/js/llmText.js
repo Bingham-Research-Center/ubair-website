@@ -2,7 +2,8 @@
 // Expert), the text, and for forecasters what it was built from.
 //
 // The site only shows this text. It is written by a producer, checked at upload against the
-// llm_forecast/1 contract (llmForecast.js), and read here from latest_<persona>.json. Rules:
+// llm_forecast/1 contract (llmForecast.js), and read here through GET /api/llm-forecasts/latest,
+// which hands over each persona's newest file or says there is none. Rules:
 //
 //  - Nothing is drawn until there is text to draw. A block whose file is missing, expired,
 //    stale, or about an older model run than the chart beside it is not there at all: no
@@ -146,20 +147,23 @@ export function renderLlmBlock(container, model) {
     container.hidden = false;
 }
 
-async function latest(persona) {
-    try {
-        const response = await fetch(`/api/static/llm_forecasts/latest_${persona}.json`, { cache: 'no-store' });
-        return response.ok ? await response.json() : null;
-    } catch {
-        return null;
-    }
-}
-
-/** The newest file from each persona, or null for one that has none. */
+/**
+ * The newest file from each persona, or null for one that has none.
+ *
+ * One request to /api/llm-forecasts/latest, which answers 200 with a null for a persona that
+ * has sent nothing. The files are not fetched by name: before any producer has sent one, that
+ * would put a 404 in the console of every visitor to the homepage.
+ */
 export async function loadLlmFiles() {
-    const personas = Object.keys(PERSONAS);
-    const docs = await Promise.all(personas.map(latest));
-    return Object.fromEntries(personas.map((persona, i) => [persona, docs[i]]));
+    const none = Object.fromEntries(Object.keys(PERSONAS).map((persona) => [persona, null]));
+    try {
+        const response = await fetch('/api/llm-forecasts/latest', { cache: 'no-store' });
+        if (!response.ok) return none;
+        const files = (await response.json())?.files;
+        return Object.fromEntries(Object.keys(none).map((persona) => [persona, files?.[persona] ?? null]));
+    } catch {
+        return none;
+    }
 }
 
 /**

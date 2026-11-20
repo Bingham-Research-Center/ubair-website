@@ -65,6 +65,7 @@ website. Readers never see their names: the site says "LLM forecast".
 | What producers must build | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §3 | Waiting |
 | The hide-when-stale guards (`fileState`, `placementText`) | `public/js/llmForecast.js` | On `.dev` since 1.7.7 |
 | Drawing the label, tabs and text | `public/js/llmText.js`, `public/css/llm-text.css` (#405) | On `.dev` since 1.7.7, drawing nothing until a file arrives |
+| Handing the pages each persona's newest file, or "none yet" | `server/routes/llmForecasts.js`: `GET /api/llm-forecasts/latest`, always a 200 | On `.dev` since 1.7.7. The pages never fetch a file by name, so an empty site logs no 404 |
 | Sample files for a preview, never for a real site | `scripts/preview-llm-samples.mjs` | In the repo. It refuses to write inside a live checkout |
 
 **See a refusal** (nothing is stored):

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { fileState, placementText } from '../llmForecast.js';
-import { LLM_DISCLAIMER, LLM_LABEL, TIER_LABELS, blockModel, describesLine } from '../llmText.js';
+import { jest } from '@jest/globals';
+import { LLM_DISCLAIMER, LLM_LABEL, TIER_LABELS, blockModel, describesLine, loadLlmFiles } from '../llmText.js';
 
 // Showing LLM forecast text (issue #405): when a block is drawn, when it is not, and what it
 // says. The fixtures were issued at 12:10Z (Ffion) and 12:00Z (Rhiannon) on 3 Dec 2026.
@@ -176,5 +177,44 @@ describe('the renderer', () => {
     test('opens on the first tab and keeps no memory of a reader\'s choice', () => {
         expect(source).toMatch(/select\(0\);/);
         expect(source).not.toMatch(/localStorage|sessionStorage|cookie/);
+    });
+
+    test('never asks for a file by name: before any text exists that is a 404 on every page view', () => {
+        // 1.7.7 fetched latest_<persona>.json directly, and the homepage logged two 404s a visit.
+        expect(source).toMatch(/fetch\('\/api\/llm-forecasts\/latest'/);
+        expect(source.match(/\bfetch\(/g)).toHaveLength(1);
+        expect(source).not.toMatch(/fetch\([^)]*api\/static\/llm_forecasts/);
+    });
+});
+
+describe('loadLlmFiles', () => {
+    const realFetch = globalThis.fetch;
+    afterEach(() => { globalThis.fetch = realFetch; });
+    const answer = (ok, body) => jest.fn().mockResolvedValue({ ok, json: async () => body });
+
+    test('one request, and a null for a persona with no file', async () => {
+        globalThis.fetch = answer(true, { status: 'ok', files: { ffion: FFION, rhiannon: null } });
+        expect(await loadLlmFiles()).toEqual({ ffion: FFION, rhiannon: null });
+        expect(globalThis.fetch).toHaveBeenCalledTimes(1);
+        expect(globalThis.fetch).toHaveBeenCalledWith('/api/llm-forecasts/latest', { cache: 'no-store' });
+    });
+
+    test('no files at all, which is today: both null, and nothing to draw', async () => {
+        globalThis.fetch = answer(true, { status: 'ok', files: { ffion: null, rhiannon: null } });
+        const files = await loadLlmFiles();
+        expect(files).toEqual({ ffion: null, rhiannon: null });
+        expect(blockModel('home.summary', files, { now: NOW })).toBeNull();
+    });
+
+    test('a failed request, a server error or an odd answer all mean "none", never an error on the page', async () => {
+        for (const fetchMock of [answer(false, {}), answer(true, null), answer(true, { files: 'x' }), jest.fn().mockRejectedValue(new Error('offline'))]) {
+            globalThis.fetch = fetchMock;
+            expect(await loadLlmFiles()).toEqual({ ffion: null, rhiannon: null });
+        }
+    });
+
+    test('a persona the site does not know is not passed on', async () => {
+        globalThis.fetch = answer(true, { status: 'ok', files: { ffion: FFION, gwen: { text: 'x' } } });
+        expect(Object.keys(await loadLlmFiles())).toEqual(['ffion', 'rhiannon']);
     });
 });
