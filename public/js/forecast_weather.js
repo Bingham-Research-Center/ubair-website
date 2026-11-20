@@ -81,7 +81,7 @@ const surfaceState = {
     kioskCountdown: 30
 };
 
-// Run `start` once, the first time `element` comes within a screen of the viewport.
+// Run `start` once, the first time `element` comes within a short scroll of the viewport.
 function whenNear(element, start) {
     if (!element) return;
     if (typeof IntersectionObserver === 'undefined') {
@@ -93,7 +93,7 @@ function whenNear(element, start) {
             observer.disconnect();
             start();
         }
-    }, { rootMargin: '600px 0px' });
+    }, { rootMargin: '200px 0px' });
     observer.observe(element);
 }
 

@@ -42,6 +42,11 @@ describe('weather forecast page', () => {
         expect(script.match(/\bsetupWeatherMap\(\)/g)).toHaveLength(2);       // its definition and one call
         expect(script.match(/\binitializeSurfaceForecasts\(\)/g)).toHaveLength(2);
         expect(main).toContain('The map loads when you scroll to it.');
+        // The panes above the map hold their height before their data arrives. If they started
+        // short, the map would be on screen at load and the run would be fetched every time.
+        const css = read('public/css/weather-panes.css');
+        expect(css).toMatch(/\.weather-hazards\s*\{\s*min-height:\s*22rem;/);
+        expect(css).toMatch(/\.town-forecast\s*\{\s*min-height:\s*36rem;/);
     });
 
     test('the ensemble charts sit in a closed drawer and load when it is opened', () => {

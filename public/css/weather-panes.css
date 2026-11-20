@@ -34,6 +34,18 @@
     font-weight: 600;
 }
 
+/* The two panes above the map keep roughly the height they will have once their data arrives.
+   Without this they start short, the map starts on screen, and its 1.5 MB model run is
+   fetched on every visit instead of when the reader scrolls to it. It also stops the page
+   jumping as they fill. */
+.weather-hazards {
+    min-height: 22rem;
+}
+
+.town-forecast {
+    min-height: 36rem;
+}
+
 /* ── Hazards ─────────────────────────────────────────────────────────────────────────── */
 
 .hazard-group {
