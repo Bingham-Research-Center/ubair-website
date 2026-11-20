@@ -62,49 +62,31 @@
     font-weight: 600;
 }
 
-/* Risk Level Color Coding - Applied via JavaScript */
-.risk-word-no { color: #22c55e !important; font-weight: 600; }
-.risk-word-low { color: #3b82f6 !important; font-weight: 600; }
-.risk-word-moderate { color: #f59e0b !important; font-weight: 600; }
-.risk-word-high { color: #dc2626 !important; font-weight: 600; }
-
-/* Enhanced risk indicators with background styling */
+/* Risk pills: outlook-highlight.js wraps "LOW RISK" and the like in one of these. Flat, on
+   the --risk-* tokens: a fill, its ink, and a hairline in the same ink. */
 .risk-indicator {
     display: inline;
-    padding: 3px 8px;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid currentColor;
     border-radius: var(--radius-sm);
     font-weight: 700;
     font-size: inherit;
     text-transform: uppercase;
-    letter-spacing: 0.3px;
-    box-shadow: var(--shadow-card);
+    letter-spacing: 0.02rem;
     white-space: nowrap;
 }
 
-.risk-no {
-    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
-    color: #15803d;
-    border: 1px solid #22c55e;
-}
+.risk-no { background: var(--risk-none-fill); color: var(--risk-none-ink); }
+.risk-low { background: var(--risk-low-fill); color: var(--risk-low-ink); }
+.risk-some { background: var(--risk-some-fill); color: var(--risk-some-ink); }
+.risk-moderate { background: var(--risk-moderate-fill); color: var(--risk-moderate-ink); }
+.risk-high { background: var(--risk-high-fill); color: var(--risk-high-ink); }
 
-.risk-low {
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    color: #1e40af;
-    border: 1px solid #3b82f6;
-}
-
-.risk-some, .risk-moderate {
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
-    color: #a16207;
-    border: 1px solid #f59e0b;
-}
-
-.risk-high {
-    background: linear-gradient(135deg, #fee2e2, #fecaca);
-    color: #b91c1c;
-    border: 1px solid #dc2626;
-}
-
+/* The forecasters' confidence line: HIGH is good news, LOW is not. */
+.outlook-confidence { font-weight: 700; }
+.outlook-confidence-high { color: var(--status-good); }
+.outlook-confidence-medium { color: var(--status-warning); }
+.outlook-confidence-low { color: var(--status-danger); }
 
 /* Confidence indicators */
 .confidence-indicator {

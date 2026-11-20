@@ -430,30 +430,6 @@ main.content {
     background-color: var(--usu-light-blue);
 }
 
-/* Risk level indicators */
-.risk-indicator {
-    display: inline-block;
-    padding: 3px 8px;
-    border-radius: var(--radius-sm);
-    font-weight: bold;
-    margin-right: 8px;
-}
-
-.risk-low {
-    background-color: #d4edda;
-    color: #155724;
-}
-
-.risk-moderate {
-    background-color: #fff3cd;
-    color: #856404;
-}
-
-.risk-high {
-    background-color: #f8d7da;
-    color: #721c24;
-}
-
 /* Forecast Tabs */
 .forecast-tabs {
     display: flex;
@@ -626,38 +602,6 @@ main.content {
 .legend-diamond {
     transform: rotate(45deg);
     border-radius: 0 !important;
-}
-
-/* Alerts Tab Grid Layout */
-.alerts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-    gap: 0.875rem;
-}
-
-.alerts-map-link {
-    cursor: pointer;
-}
-
-.live-dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--status-good);
-    margin-right: 4px;
-    animation: pulse-dot 2s ease-in-out infinite;
-}
-
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.4; }
-}
-
-.headline-detail {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
-    font-weight: 400;
 }
 
 /* Dashboard Section Spacing */

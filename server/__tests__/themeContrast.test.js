@@ -54,6 +54,12 @@ const PAIRS = [
     ['--color-on-clyfar', '--clyfar-ember-from'],
     ['--color-on-clyfar', '--clyfar-ember'],
     ['--color-on-clyfar', '--clyfar-ember-to'],
+    // Ozone outlook risk pills: each level's ink on its own fill.
+    ['--risk-none-ink', '--risk-none-fill'],
+    ['--risk-low-ink', '--risk-low-fill'],
+    ['--risk-some-ink', '--risk-some-fill'],
+    ['--risk-moderate-ink', '--risk-moderate-fill'],
+    ['--risk-high-ink', '--risk-high-fill'],
 ];
 
 describe.each([['light', light], ['dark', dark]])('%s theme contrast', (_name, tokens) => {
