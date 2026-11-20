@@ -28,6 +28,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`) + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
 | Convert observation units or derive RH | `public/js/met.js` (pure; null for an unknown unit); the feed is raw SI by design (`CLAUDE.md` §Data pipeline) |
 | Restyle a page, cards, the UI scale | `docs/STYLE-TOKEN-GUIDE.md` §Panes and §Scale; `public/css/theme/panes.css` |
+| Build the NWP dashboard, LLM forecast text or homepage status lights (1.8.0) | `docs/NWP-DASHBOARD-PLAN-nov20.md` (decisions, slices, producer asks); `docs/WEATHER-PAGE-CONTENDERS-nov13.md` for measurements and contender pros/cons |
 | Work on the aviation page (KVEL crosswind) | `public/js/aviation.js` + `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c |
 | Take screenshots on the dev box | no browser is installed and there is no sudo; Playwright's Chromium runs once its missing libraries are unpacked from `apt-get download` into `LD_LIBRARY_PATH` |
 | Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |
