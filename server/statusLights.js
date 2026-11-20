@@ -15,26 +15,15 @@
 
 import { currentSeason, describeOutlook } from '../public/js/outlookSeasons.js';
 import { toMph } from '../public/js/met.js';
+import { mountainTime } from '../public/js/mountainTime.js';
 import { ROAD_KINDS, classifyUdotRoad, isMajorBasinPoint, isMajorBasinRoute } from './roadConditionRules.js';
 
-const TIME_ZONE = 'America/Denver';
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
-// ── Time, in Mountain time, the way a person says it ──────────────────────────────────────
-
-const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: TIME_ZONE, year: 'numeric', month: '2-digit', day: '2-digit' });
-const clock = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, hour: 'numeric', minute: '2-digit', hour12: true });
-const weekday = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, weekday: 'short' });
-
-/** "5 PM", "5:30 PM", or "Fri 5 PM" when that is not today. */
-export function mountainTime(ms, now) {
-    const parts = Object.fromEntries(clock.formatToParts(new Date(ms)).map((p) => [p.type, p.value]));
-    const time = `${parts.hour}${parts.minute === '00' ? '' : `:${parts.minute}`} ${parts.dayPeriod}`;
-    const sameDay = dayKey.format(new Date(ms)) === dayKey.format(new Date(now));
-    return sameDay ? time : `${weekday.format(new Date(ms))} ${time}`;
-}
+// Mountain time, the way a person says it, is shared with the weather page.
+export { mountainTime };
 
 const light = (key, label, href, level, line, detail, asOf = null) => ({ key, label, href, level, line, detail, asOf });
 
@@ -430,6 +419,59 @@ export function precipBands({ forecast, now }) {
         bands,
         detail: `HRRR forecast${init ? ` run at ${mountainTime(Date.parse(init), now)}` : ''}: `
             + 'the kind of precipitation the model expects, not a measurement.',
+        asOf: init,
+    };
+}
+
+/**
+ * The same forecast hour by hour, for the weather page: one type per band for each of the
+ * hours still ahead in the newest run (up to twelve).
+ *
+ * Returns `{ status: 'ok', hours, bands, detail, asOf }`, where `hours` is the valid times and
+ * each band carries `types`, one per hour: 'snow' | 'rain' | 'mix' | 'dry', or null where the
+ * model gives no type for that hour.
+ */
+export function precipByHour({ forecast, now }) {
+    const unavailable = (detail) => ({ status: 'unavailable', hours: [], bands: [], detail, asOf: null });
+    if (!forecast || !Array.isArray(forecast.points)) {
+        return unavailable('The HRRR road forecast is not available right now.');
+    }
+    const points = [...new Map(forecast.points
+        .filter((point) => Number.isFinite(point?.elevation_m) && Array.isArray(point.forecasts))
+        .map((point) => [`${point.lat},${point.lon}`, point])).values()];
+
+    const ahead = (entry) => Number.isFinite(Date.parse(entry?.valid_time)) && Date.parse(entry.valid_time) > now;
+    const hours = [...new Set(points.flatMap((point) => point.forecasts.filter(ahead).map((entry) => entry.valid_time)))].sort();
+    if (hours.length < PRECIP_MIN_HOURS) {
+        return unavailable('The newest HRRR road forecast is too old to say anything about the hours ahead.');
+    }
+
+    const bands = PRECIP_BANDS.map(({ key, label, range, minFt, maxFt }) => {
+        const inBand = points.filter((point) => {
+            const feet = point.elevation_m * FEET_PER_METRE;
+            return feet >= minFt && feet < maxFt;
+        });
+        const types = hours.map((hour) => {
+            const counts = { snow: 0, rain: 0, mixed: 0 };
+            let known = 0;
+            for (const point of inBand) {
+                const entry = point.forecasts.find((candidate) => candidate?.valid_time === hour);
+                if (typeof entry?.precip_type !== 'string') continue;
+                known += 1;
+                if (WET_TYPES.has(entry.precip_type)) counts[entry.precip_type] += 1;
+            }
+            return known === 0 ? null : bandType(counts);
+        });
+        return { key, label, range, places: inBand.map((point) => point.name), types };
+    });
+
+    const init = Number.isFinite(Date.parse(forecast.init_time)) ? forecast.init_time : null;
+    return {
+        status: 'ok',
+        hours,
+        bands,
+        detail: `HRRR forecast${init ? ` run at ${mountainTime(Date.parse(init), now)}` : ''}: `
+            + 'the kind of precipitation the model expects at points along the highways, not a measurement.',
         asOf: init,
     };
 }
