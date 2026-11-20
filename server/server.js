@@ -15,6 +15,7 @@ import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
 import weatherAlertsRoutes from './routes/weatherAlerts.js';
 import statusLightsRoutes, { setStatusLightServices } from './routes/statusLights.js';
+import llmForecastRoutes from './routes/llmForecasts.js';
 import weatherForecastRoutes from './routes/weatherForecast.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
@@ -90,6 +91,7 @@ app.use('/api', fireRestrictionsRoutes);
 app.use('/api', weatherAlertsRoutes);
 app.use('/api', statusLightsRoutes);
 app.use('/api', weatherForecastRoutes);
+app.use('/api', llmForecastRoutes);
 // Pipeline freshness/health for CHPC operators verifying their cron jobs.
 app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));

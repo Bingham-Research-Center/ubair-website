@@ -150,7 +150,8 @@ The `400` body lists every reason at once (the first 25; `errorCount` is the tot
 ### What the site does with a file
 
 - Copies a valid upload to `latest_ffion.json` or `latest_rhiannon.json` beside it, unless the
-  copy already there was issued later. Pages read those two files. Do not upload them.
+  copy already there was issued later. Pages read those two files, through
+  `GET /api/llm-forecasts/latest`. Do not upload them.
 - Hides a block when its file is missing, past `valid_until`, older than **12 h** (Ffion) or
   **6 h** (Rhiannon), or describes an older GEFS cycle than the chart beside it. A missed run
   is therefore invisible for one cycle and blank after two.
