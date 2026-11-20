@@ -1474,15 +1474,16 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         const safeWindDirection = escapeHtml(pass.windDirection || '');
         // Determine icon and color based on pass status
         let iconColor, statusEmoji, statusText;
+        const passRed = '#dc2626';
 
         switch(pass.status) {
             case 'closed':
-                iconColor = '#dc2626'; // Red
+                iconColor = passRed;
                 statusEmoji = '🚫';
                 statusText = 'CLOSED';
                 break;
             case 'hazardous':
-                iconColor = '#dc2626'; // Red
+                iconColor = passRed;
                 statusEmoji = '⚠️';
                 statusText = 'HAZARDOUS';
                 break;

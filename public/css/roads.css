@@ -73,15 +73,15 @@ body[data-page-type="roads"] h1::after {
 .road-feed-status {
     margin: 0;
     padding: 0.75rem 1rem;
-    background: #f1f5f9;
-    color: #334155;
+    background: var(--color-bg);
+    color: var(--color-text);
     font-size: 0.9rem;
 }
 
 .road-feed-status[data-state="unavailable"] {
-    background: #fff3cd;
-    color: #664d03;
-    border-left: 4px solid #b58105;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-left: 4px solid var(--status-warning);
     font-weight: 600;
 }
 
