@@ -24,15 +24,33 @@ fold what is left into issues, once 1.8.0 ships.
 > | S6 #407 | #417 | Weather page rework, gzip; closed #101 (1.7.6-dev) |
 > | docs | #418 | `docs/features/` pages, glossary, README index |
 >
-> **On this branch, not on `dev`:** S4 #405, the LLM text renderer (`public/js/llmText.js`, guards
-> in `public/js/llmForecast.js`), wired to the homepage (`home.summary`) and the weather page
-> (`weather.discussion`) and shown on the preview with sample files from
-> `scripts/preview-llm-samples.mjs`. It is harvested into S5 and S7 when real Ffion files reach
-> `.dev`.
+> **On this branch, not on `dev`, and with no PR open (JRL, 20 Nov):** S4 #405, the LLM text
+> renderer (`public/js/llmText.js`, guards in `public/js/llmForecast.js`), wired to the homepage
+> (`home.summary`) and the weather page (`weather.discussion`). JRL has more work to do on the
+> dashboard and the use of NWP data before any of it is version-bumped, so nothing here is
+> harvested into a PR until he says so. `dev` stays at 1.7.6-dev meanwhile.
+>
+> **To pick this branch up:**
+> - It is level with `dev` at `a25d634`. Merge `origin/dev` in before adding to it.
+> - Tests: from the worktree,
+>   `NODE_OPTIONS='--experimental-vm-modules' /srv/ubair-website/node_modules/.bin/jest --modulePaths=/srv/ubair-website/node_modules --runInBand`.
+>   Everything passes except `iconNames.test.js`, which needs the repo's own `node_modules`.
+> - Preview on `theme.basinwx.dev` (:3003): the README recipe, except that `public/api/static`
+>   must be a **real folder** of links to each live dataType folder, with its own
+>   `llm_forecasts/` filled by `node scripts/preview-llm-samples.mjs <that folder>`. Never link
+>   the whole live `static` folder: the samples would then be written onto `.dev`. (The script
+>   refuses a live destination, also through a link.) Samples go stale after 6 to 12 hours,
+>   and the blocks then hide; run the script again to bring them back.
+> - **Not yet agreed with JRL:** where the homepage summary sits. It is a full-width pane above
+>   the map and outlook; this plan said "beside the AQ outlook".
 >
 > **Decisions (JRL, second session):**
-> - **1.8.0 is held for live LLM text.** Website-only slices go to `ops` as 1.7.x, soaked on
->   `dev`, promoted as one train.
+> - **Nothing goes to `ops` until the LLM text is done**, so that the dashboard does not reach
+>   prod as a placeholder (JRL, 20 Nov, replacing the earlier "one 1.7.x train of website-only
+>   slices"). `ops` and prod stay at v1.7.0. The next promotion is 1.8.0, with live LLM text.
+>   Until then prod keeps two faults that `dev` has fixed: the upload route accepts a dataType
+>   that climbs out of the upload folder (key holders only), and the weather map shows a
+>   snowfall total as inches per hour.
 > - **Homepage:** no tabs. Four tiles, two by two (four across did not fit the header column):
 >   Weather now, Ozone, Roads now, and a new **Precip next 6 h** by elevation band (floor below
 >   5,900 ft, benches, passes above 7,500 ft), with a fuller version on the weather page.
@@ -64,8 +82,9 @@ fold what is left into issues, once 1.8.0 ships.
 > - Kiosk mode on the weather page now needs `?kiosk=1`; NWS point-forecast text and public
 >   verification stay parked (Claude's defaults for §8 item 8; JRL may reverse).
 >
-> **Still to do:** S5, S7, S9, S10 (need P2/P3), S8 (P4), S11 (P6), S12 (P4, P5, P7); the
-> `ops` train for the 1.7.x slices; remove the test outlook from both boxes by 30 Nov; Quinten's
+> **Still to do:** JRL's further work on the dashboard and NWP data use (his to define); S5, S7,
+> S9, S10 (need P2/P3), S8 (P4), S11 (P6), S12 (P4, P5, P7); the 1.8.0 promotion to `ops`;
+> remove the test outlook from both boxes by 30 Nov; Quinten's
 > #401 rebase; roads batches #337–#339 (each now needs `dev` merged in). Producer asks are
 > P1–P10 in `docs/NWP-PRODUCER-HANDOFF-nov20.md` on `dev`.
 

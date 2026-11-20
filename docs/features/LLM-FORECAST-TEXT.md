@@ -4,10 +4,11 @@
 weather model and observation data, shown on the site with a clear label that no human wrote
 them. Each piece comes in three versions for three kinds of reader.
 
-**Where it stands (20 Nov 2026):** the rules and the upload check are live on `.dev`. The
-text itself does not exist yet: the producers have still to build the runs that write it, and
-the part of the site that draws it is built next. **No LLM text is on the site today.**
-Version 1.8.0 is held until real text is flowing.
+**Where it stands (20 Nov 2026):** the rules and the upload check are live on `.dev`. The part
+of the site that draws the text is written and tested on the branch `preview/nwp`, where it
+can be seen with sample text; it is not on `dev`. The text itself does not exist yet: the
+producers have still to build the runs that write it. **No LLM text is on the site today.**
+Nothing goes to the public site until real text is flowing; that release is version 1.8.0.
 
 ## The three tiers
 
@@ -61,7 +62,9 @@ website. Readers never see their names: the site says "LLM forecast".
 | File shape, with a JSON Schema | `DATA_MANIFEST.json` → `dataTypes.llm_forecasts` | Live on `.dev` |
 | Sample files (marked as samples) | `public/js/__tests__/fixtures/llm_forecasts/` | In the repo |
 | What producers must build | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §3 | Waiting |
-| Drawing the tabs and the hide-when-stale guards | #405 | Next |
+| The hide-when-stale guards (`fileState`, `placementText`) | `public/js/llmForecast.js` | On `preview/nwp` |
+| Drawing the label, tabs and text | `public/js/llmText.js`, `public/css/llm-text.css` (#405) | On `preview/nwp` |
+| Sample files for a preview, never for a real site | `scripts/preview-llm-samples.mjs` | On `preview/nwp` |
 
 **See a refusal** (nothing is stored):
 
@@ -73,8 +76,9 @@ curl -s -X POST https://www.basinwx.dev/api/upload/llm_forecasts \
 ```
 
 **Tests:** `public/js/__tests__/llmForecast.test.js` (each test is also a rule a producer must
-meet; one fails if the manifest and the code disagree) and the `llm_forecasts uploads` block
-in `server/__tests__/uploadPolicy.test.js`.
+meet; one fails if the manifest and the code disagree), the `llm_forecasts uploads` block in
+`server/__tests__/uploadPolicy.test.js`, and on `preview/nwp`
+`public/js/__tests__/llmText.test.js` (when a block is drawn, when it is not, what it says).
 
 ## Related issues
 
