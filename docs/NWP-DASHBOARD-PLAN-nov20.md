@@ -7,6 +7,68 @@ issues on milestone `v2.0.0 Ozone season open` (#402–#413; S0 is #336). It sup
 reference for measurements, data inventory and contender pros and cons. Delete both files, or
 fold what is left into issues, once 1.8.0 ships.
 
+> ## Where this stands (updated 20 Nov, evening)
+>
+> A second session on 20 Nov critiqued this plan against the code and the live data, asked
+> JRL twelve questions, and built the website-only slices. **Where this box and the text below
+> disagree, this box is right.**
+>
+> **Merged to `dev` and live on `.dev`** (`dev` is 1.7.6-dev):
+>
+> | Slice | PR | What |
+> |---|---|---|
+> | S0 #336 | #336 | Roads batch A: honest UDOT failure (1.7.2-dev) |
+> | S1 #402 | #414 | Upload path: dataType list, host allowlist, `llm_forecast/1` checked at upload (1.7.3-dev) |
+> | S3 #404 | #415 | NWS alerts helper, `GET /api/weather-alerts` (1.7.4-dev) |
+> | S2 #403 | #416 | Homepage status lights and the precip tile (1.7.5-dev) |
+> | S6 #407 | #417 | Weather page rework, gzip; closed #101 (1.7.6-dev) |
+> | docs | #418 | `docs/features/` pages, glossary, README index |
+>
+> **On this branch, not on `dev`:** S4 #405, the LLM text renderer (`public/js/llmText.js`, guards
+> in `public/js/llmForecast.js`), wired to the homepage (`home.summary`) and the weather page
+> (`weather.discussion`) and shown on the preview with sample files from
+> `scripts/preview-llm-samples.mjs`. It is harvested into S5 and S7 when real Ffion files reach
+> `.dev`.
+>
+> **Decisions (JRL, second session):**
+> - **1.8.0 is held for live LLM text.** Website-only slices go to `ops` as 1.7.x, soaked on
+>   `dev`, promoted as one train.
+> - **Homepage:** no tabs. Four tiles, two by two (four across did not fit the header column):
+>   Weather now, Ozone, Roads now, and a new **Precip next 6 h** by elevation band (floor below
+>   5,900 ft, benches, passes above 7,500 ft), with a fuller version on the weather page.
+>   Icons only where they are data (precipitation type).
+> - **Weather light:** only the two floor zones colour it (UTZ024, UTZ114, their fire zones and
+>   the two counties); mountains and passes are the roads light's job. Station wind turns it
+>   amber on its own: a 40 mph gust at a UDOT road station on the floor, or a sustained 30 mph
+>   in our feed, fresh and plausible, saying "observed; no NWS wind alert".
+> - **Roads light:** snow covered or icy on US-40, US-191 or SR-87 is red, and `/roads` matches
+>   (one rule, `server/roadConditionRules.js`). It reads UDOT's report, never the blended colour.
+> - **Ozone light:** lit for 5 days after an outlook, in three colours.
+> - **dataTypes:** `llm_forecasts` and **`aircraft`** (not `adsb`). **Shared key plus a host
+>   allowlist** from `.env`; no per-producer keys.
+> - **Outlook AI section:** Model guidance (Ffion) is frozen at the run nearest the outlook's
+>   issue; Observed trends (Rhiannon) is live, latest only, under the current outlook only.
+>
+> **Corrections to the text below (found against code and data):**
+> - §5.3 mismatch guard: it compares **GEFS cycles only**. HRRR is hourly and Ffion writes four
+>   times a day, so an HRRR comparison would hide the text almost always.
+> - §5.4 thresholds: the observation feed has **no gusts or visibility at any station**, so the
+>   gust rule reads UDOT road stations and there is no visibility rule (producer ask P8).
+> - §5.5: the map's "special conditions" stay under the map (they need its 1.5 MB run); the
+>   hazards pane carries NWS alerts and the precipitation bands instead.
+> - §5.8: the upload route had **no** dataType list and a name such as `../..` escaped the
+>   upload root. Fixed in S1; **prod still runs the old route until the next `ops` train**.
+> - Two precipitation fields are running totals with hourly names: `precip_1hr` in
+>   `road-forecast` (P9) and `snowfall_1h_mm` in the surface layers (P10). Prod's map shows the
+>   second as in/hr.
+> - Kiosk mode on the weather page now needs `?kiosk=1`; NWS point-forecast text and public
+>   verification stay parked (Claude's defaults for §8 item 8; JRL may reverse).
+>
+> **Still to do:** S5, S7, S9, S10 (need P2/P3), S8 (P4), S11 (P6), S12 (P4, P5, P7); the
+> `ops` train for the 1.7.x slices; remove the test outlook from both boxes by 30 Nov; Quinten's
+> #401 rebase; roads batches #337–#339 (each now needs `dev` merged in). Producer asks are
+> P1–P10 in `docs/NWP-PRODUCER-HANDOFF-nov20.md` on `dev`.
+
 **Goal:** real weather data, observed and modelled, flows into a homepage dashboard, the weather
 forecast page, and LLM forecast text. Each block of LLM text offers Public · Industry · Expert
 tabs and opens on Public. It is on `dev`, then `ops`, before 1 Dec 2026.
