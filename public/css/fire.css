@@ -235,6 +235,12 @@ body[data-page-type="fire"] h1::after {
 }
 .red-flag-banner.is-hidden,
 .red-flag-banner[hidden] { display: none; }
+/* The NWS could not be asked: a quiet note, not an alarm. */
+.red-flag-banner.is-unavailable {
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    animation: none;
+}
 .red-flag-card { background: rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
 .red-flag-card:last-child { margin-bottom: 0; }
 .red-flag-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
