@@ -134,6 +134,12 @@ describe('missing readings', () => {
         expect(service.mapUDOTConditionToColor(surface, weather, restriction).condition).toBe(color);
     });
 
+    it.each([['Snow Covered', 'Cloudy'], ['Spotty Snow', 'Cloudy'], ['Snow Covered', 'Fair'], ['Packed Snow', 'Overcast']])(
+        'reports a snowy surface as caution whatever the sky: %s / %s', (surface, weather) => {
+            expect(service.mapUDOTConditionToColor(surface, weather, '').condition).toBe('yellow');
+        }
+    );
+
     it.each([
         [['unknown', 'none'], 'green'], [['none', 'unknown'], 'green'],
         [['unknown', 'heavy'], 'red'], [['unknown', 'light'], 'yellow'], [['unknown'], undefined]

@@ -153,7 +153,7 @@ class RoadWeatherService {
 
         // Yellow conditions - caution
         if (road.includes('wet') && weather.includes('snow') ||
-            road.includes('slush') || road.includes('packed snow') ||
+            road.includes('slush') || road.includes('snow') ||
             weather.includes('snow') || weather.includes('storm') ||
             restrict.includes('chain') || restrict.includes('traction')) {
             return { condition: 'yellow', status: 'Use Caution', reason: `${roadCondition} - ${weatherCondition}` };
