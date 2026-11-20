@@ -2,7 +2,7 @@
 
 **Status:** plan agreed with JRL on 2026-11-20 in a question-and-answer session; nothing is built
 yet. It lives on branch `preview/nwp` (worktree `/srv/ubair-website-nwp`), and its slices become
-issues on milestone `v2.0.0 Ozone season open`. It supersedes the decisions list (§9) of
+issues on milestone `v2.0.0 Ozone season open` (#402–#413; S0 is #336). It supersedes the decisions list (§9) of
 [`WEATHER-PAGE-CONTENDERS-nov13.md`](WEATHER-PAGE-CONTENDERS-nov13.md), which stays as the
 reference for measurements, data inventory and contender pros and cons. Delete both files, or
 fold what is left into issues, once 1.8.0 ships.
@@ -241,19 +241,19 @@ Cut the Basin-average panes and the invented "next update" (contenders doc §5.7
 
 | # | Slice | Depends on | Notes |
 |---|---|---|---|
-| S0 | **#336 roads batch A** (honest UDOT failure) | Michael's open items (§8) | This session if possible; merge commit; #337–#339 stay parked for 1.9.0 |
-| S1 | Upload allowlist plus new dataTypes accepted (`llm_forecasts`, `adsb`), manifest and contract entries | — | Unblocks every producer; nothing visible |
-| S2 | Status lights row: weather now, ozone, roads (+ `--risk-*` tokens, flat risk pills) | S0 for roads, S3 | Rules and tests; JRL signs off thresholds |
-| S3 | Shared NWS alerts helper for the Basin zones, with honest failure | — | Used by S2, S6 and the chip; also fixes the fire-page pattern, or files an issue for it |
-| S4 | LLM text renderer, tier tabs and guards, with fixture sidecars and tests | S1 | Merges with S5, its first real placement |
-| S5 | Homepage LLM forecast summary panel | S4, P1+P2 on `.dev` | Closes #295 and #166 |
-| S6 | Weather page rework without the LLM: cut the averages, local time and °F, town strip, hazards strip, lazy map and gzip, expert drawer | S3 | #101 (mobile overflow) rides along |
-| S7 | Weather page LLM discussion | S4, P2 | |
-| S8 | GEFS bands, days 1–15 | P4 | Also the snow tile H4 and the next-3-days light upgrade |
-| S9 | AI technical discussion on `/forecast_outlooks` | S4, P2+P3 | |
-| S10 | Clyfar and aviation summaries | S4, P2+P3 | |
-| S11 | Expert page | P6 | 1.8.0 if P6 lands, else 1.9.0 |
-| S12 | Next-3-days light, inversion light | P4+P5, P7 | The inversion light is likely 2.x |
+| S0 #336 | **Roads batch A** (honest UDOT failure) | Michael's open items (§8) | This session if possible; merge commit; #337–#339 stay parked for 1.9.0 |
+| S1 #402 | Upload allowlist plus new dataTypes accepted (`llm_forecasts`, `adsb`), manifest and contract entries | — | Unblocks every producer; nothing visible |
+| S2 #403 | Status lights row: weather now, ozone, roads (+ `--risk-*` tokens, flat risk pills) | S0 for roads, S3 | Rules and tests; JRL signs off thresholds |
+| S3 #404 | Shared NWS alerts helper for the Basin zones, with honest failure | — | Used by S2, S6 and the chip; also fixes the fire-page pattern, or files an issue for it |
+| S4 #405 | LLM text renderer, tier tabs and guards, with fixture sidecars and tests | S1 | Merges with S5, its first real placement |
+| S5 #406 | Homepage LLM forecast summary panel | S4, P1+P2 on `.dev` | Closes #295 and #166 |
+| S6 #407 | Weather page rework without the LLM: cut the averages, local time and °F, town strip, hazards strip, lazy map and gzip, expert drawer | S3 | #101 (mobile overflow) rides along |
+| S7 #408 | Weather page LLM discussion | S4, P2 | |
+| S8 #409 | GEFS bands, days 1–15 | P4 | Also the snow tile H4 and the next-3-days light upgrade |
+| S9 #410 | AI technical discussion on `/forecast_outlooks` | S4, P2+P3 | |
+| S10 #411 | Clyfar and aviation summaries | S4, P2+P3 | |
+| S11 #412 | Expert page | P6 | 1.8.0 if P6 lands, else 1.9.0 |
+| S12 #413 | Next-3-days light, inversion light | P4+P5, P7 | The inversion light is likely 2.x |
 
 **Proposed order:**
 - **20–22 Nov:** S0, S1 and the producer handoff.
