@@ -269,7 +269,7 @@ no LLM key on either box. One file per run per persona. Each text belongs to a *
 (where it appears) and a *tier* (`public`, `industry`, `expert`).
 
 **This is the one dataType the server validates against its contract.** A file that breaks it
-gets `400` with every reason in `errors`, is not stored, and shows in
+gets `400` with every reason in `errors` (the first 25; `errorCount` is the total), is not stored, and shows in
 `/api/monitoring/uploads` as `llm_forecast refused: <first reason>`. Beyond the JSON Schema,
 the server enforces three rules the schema cannot express:
 

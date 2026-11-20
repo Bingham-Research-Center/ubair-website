@@ -106,12 +106,13 @@ manifest; build prompts from that, not from this page.
 7. Unknown placements and tiers are refused. A new one is added on the website side first
    (`PLACEMENTS` in `public/js/llmForecast.js` and the manifest together).
 
-The `400` body lists every reason at once:
+The `400` body lists every reason at once (the first 25; `errorCount` is the total):
 
 ```json
 { "success": false,
   "message": "The file does not meet the llm_forecast/1 contract",
-  "errors": ["\"home.summary\" public is 60 words; the budget is about 35 and the limit is 53."] }
+  "errors": ["\"home.summary\" public is 60 words; the budget is about 35 and the limit is 53."],
+  "errorCount": 1 }
 ```
 
 ### Writing guidance for the prompts

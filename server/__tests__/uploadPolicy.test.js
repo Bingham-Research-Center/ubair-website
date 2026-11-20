@@ -267,6 +267,7 @@ describe('llm_forecasts uploads', () => {
                 '"sources" must list 1 to 30 short strings saying what the text was built from.',
                 '"home.summary" public is 60 words; the budget is about 35 and the limit is 53.',
             ],
+            errorCount: 2,
         });
         expect(fs.readdirSync(dir)).toEqual([]);
         expect(getRecentUploadAttempts(1)[0]).toMatchObject({
@@ -300,6 +301,18 @@ describe('llm_forecasts uploads', () => {
         const future = await post(run(-120)).expect(400);
         expect(future.body.errors).toEqual(['"issued" is in the future.']);
         expect(fs.readdirSync(dir)).toEqual([]);
+    });
+
+    test('a file of nothing but bad placements gets a short answer', async () => {
+        const upload = run(5, (doc) => {
+            doc.placements = Object.fromEntries(
+                Array.from({ length: 400 }, (_, i) => [`${'x'.repeat(500)}${i}`, { public: 'text' }])
+            );
+        });
+        const res = await post(upload).expect(400);
+        expect(res.body.errorCount).toBe(400);
+        expect(res.body.errors).toHaveLength(25);
+        expect(getRecentUploadAttempts(1)[0].detail.length).toBeLessThanOrEqual(200);
     });
 
     test('only JSON is taken', async () => {

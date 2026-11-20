@@ -58,6 +58,9 @@ function updateFileList(uploadDir) {
 
 const router = express.Router();
 
+// How many reasons a refused llm_forecasts upload is told about at once.
+const MAX_ERRORS_RETURNED = 25;
+
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -288,11 +291,14 @@ router.post('/upload/:dataType', validateApiKey, validateOrigin, validateDataTyp
           });
           if (!ok) {
             fs.unlinkSync(req.file.path);
-            noteAttempt(req, 400, `llm_forecast refused: ${errors[0]}`, req.file.originalname);
+            // Placement and tier names in these sentences come from the file, so cap both
+            // the log line and the list: a file of nothing but bad keys stays a short answer.
+            noteAttempt(req, 400, `llm_forecast refused: ${errors[0]}`.slice(0, 200), req.file.originalname);
             return res.status(400).json({
               success: false,
               message: 'The file does not meet the llm_forecast/1 contract',
-              errors
+              errors: errors.slice(0, MAX_ERRORS_RETURNED),
+              errorCount: errors.length
             });
           }
           llmForecast = parsed;
