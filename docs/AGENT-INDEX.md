@@ -32,6 +32,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Take screenshots on the dev box | no browser is installed and there is no sudo; Playwright's Chromium runs once its missing libraries are unpacked from `apt-get download` into `LD_LIBRARY_PATH` |
 | Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |
 | Fix a road weather bug | `docs/HOW_IT_WORKS.md` + `gh issue list --label area:roads` (the former `ROADS_AUDIT.md` findings live there) |
+| Touch roads missing-data / feed-outage behaviour | `docs/ROADS-FALLBACK-AUDIT-sep29.md` — Michael's audit of every fallback path in `public/js/roads/` and the road/traffic services (what was removed, kept, and why), plus the local UDOT failure harness `scripts/dev-road-fallback.js` |
 
 ## Reference docs (cite, don't reread)
 | Topic | File | Notes |

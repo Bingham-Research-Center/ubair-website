@@ -43,6 +43,7 @@ class RoadWeatherService {
         this.nwsUserAgent = 'BasinWX/1.0 (basinwx.com)';
         this.snowDetectionService = new SnowDetectionService();
         this.cameraAnalysisScheduler = cameraAnalysisScheduler;
+        this.lastRoadConditionsUpdate = null;
         this.uintahBasinBounds = {
             north: 41.0,    // Expanded north to include more mountain areas
             south: 39.5,    // Expanded south for broader coverage
@@ -54,7 +55,7 @@ class RoadWeatherService {
     async fetchUDOTRoadConditions() {
         const cacheKey = 'udot_road_conditions';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(road => ({ ...road, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/roadconditions?key=${this.udotApiKey}&format=json`;
@@ -114,7 +115,9 @@ class RoadWeatherService {
                     restriction: road.Restriction,
                     encodedPolyline: road.EncodedPolyline,
                     coordinates: coordinates,
-                    lastUpdated: new Date(road.LastUpdated * 1000).toISOString(),
+                    source: 'UDOT',
+                    cached: false,
+                    lastUpdated: this.udotTimestamp(road.LastUpdated),
                     condition: this.mapUDOTConditionToColor(road.RoadCondition, road.WeatherCondition, road.Restriction)
                 };
             });
@@ -123,14 +126,24 @@ class RoadWeatherService {
             return processedRoads;
         } catch (error) {
             console.error('Error fetching UDOT road conditions:', error);
-            return [];
+            throw error;
         }
     }
 
+    udotTimestamp(value) {
+        const timestamp = Number(value) * 1000;
+        return Number.isFinite(timestamp) && timestamp > 0 ? new Date(timestamp).toISOString() : null;
+    }
+
+    latestUpdate(records) {
+        const times = records.map(record => Date.parse(record.lastUpdated)).filter(Number.isFinite);
+        return times.length ? new Date(Math.max(...times)).toISOString() : null;
+    }
+
     mapUDOTConditionToColor(roadCondition, weatherCondition, restriction) {
-        const road = roadCondition.toLowerCase();
-        const weather = weatherCondition.toLowerCase();
-        const restrict = restriction.toLowerCase();
+        const road = (roadCondition || '').toLowerCase();
+        const weather = (weatherCondition || '').toLowerCase();
+        const restrict = (restriction || '').toLowerCase();
 
         // Red conditions - dangerous
         if (restrict.includes('closed') || restrict.includes('no travel') ||
@@ -140,15 +153,10 @@ class RoadWeatherService {
 
         // Yellow conditions - caution
         if (road.includes('wet') && weather.includes('snow') ||
-            road.includes('slush') || road.includes('packed snow') ||
+            road.includes('slush') || road.includes('snow') ||
             weather.includes('snow') || weather.includes('storm') ||
             restrict.includes('chain') || restrict.includes('traction')) {
             return { condition: 'yellow', status: 'Use Caution', reason: `${roadCondition} - ${weatherCondition}` };
-        }
-
-        // Green conditions - good
-        if (road.includes('dry') && weather.includes('fair')) {
-            return { condition: 'green', status: 'Clear', reason: 'Normal conditions' };
         }
 
         // Default to yellow for wet conditions
@@ -156,8 +164,11 @@ class RoadWeatherService {
             return { condition: 'yellow', status: 'Wet Roads', reason: 'Use caution on wet pavement' };
         }
 
-        // Default green
-        return { condition: 'green', status: 'Normal', reason: roadCondition };
+        if (road.includes('dry')) {
+            return { condition: 'green', status: 'Clear', reason: 'Dry road surface reported' };
+        }
+
+        return { condition: 'gray', status: 'No Data', reason: 'Road condition not reported or not recognized' };
     }
 
     async fetchNWSData(lat, lon) {
@@ -218,9 +229,9 @@ class RoadWeatherService {
     }
 
     determineRoadCondition(station, weatherData) {
-        let condition = 'green';
-        let status = 'Passable';
-        let reason = '';
+        let condition = 'gray';
+        let status = 'No Data';
+        let reason = 'Road surface not reported';
 
         if (!station) {
             return { condition: 'gray', status: 'No Data', reason: 'Station data unavailable' };
@@ -266,7 +277,7 @@ class RoadWeatherService {
             condition = 'green';
             status = 'Passable';
             reason = 'Wet roads';
-        } else if (surfaceStatus.includes('dry') || surfaceStatus === '') {
+        } else if (surfaceStatus.includes('dry')) {
             condition = 'green';
             status = 'Passable';
             reason = 'Normal conditions';
@@ -389,10 +400,10 @@ class RoadWeatherService {
 
         return {
             temperature: fc.temp_2m,
-            precipitation: fc.precip_1hr || 0,
-            snowfall: (fc.precip_type === 'snow') ? (fc.precip_1hr || 0) : 0,
-            windSpeed: fc.wind_speed_10m || 0,
-            visibility: (fc.visibility || 10) * 1000 // km → meters
+            precipitation: fc.precip_1hr ?? null,
+            snowfall: fc.precip_type === 'snow' ? (fc.precip_1hr ?? null) : (fc.precip_type ? 0 : null),
+            windSpeed: fc.wind_speed_10m ?? null,
+            visibility: Number.isFinite(fc.visibility) ? fc.visibility * 1000 : null // km to meters
         };
     }
 
@@ -407,9 +418,10 @@ class RoadWeatherService {
             case 'light':
                 return { condition: 'yellow', status: 'Light Snow', reason: 'Light snow on camera' };
             case 'none':
+                return { condition: 'green', status: 'Clear', reason: 'No snow detected' };
             case 'unknown':
             default:
-                return { condition: 'green', status: 'Clear', reason: 'No snow detected' };
+                return { condition: 'gray', status: 'No Data', reason: 'Camera condition unavailable' };
         }
     }
 
@@ -457,7 +469,8 @@ class RoadWeatherService {
                     segment.coordinates
                 );
                 if (dist < 15) {
-                    nearbyCameraConditions.push(this.cameraSnowLevelToCondition(det.snowLevel));
+                    const condition = this.cameraSnowLevelToCondition(det.snowLevel);
+                    if (condition.condition !== 'gray') nearbyCameraConditions.push(condition);
                 }
             }
             if (nearbyCameraConditions.length > 0) {
@@ -589,7 +602,8 @@ class RoadWeatherService {
                 coordinates: road.waypoints,
                 overallCondition: ensembleResult,
                 type: 'hrrr_estimated',
-                lastUpdated: hrrrForecast.init_time || new Date().toISOString()
+                source: 'HRRR',
+                lastUpdated: hrrrForecast.init_time || null
             };
         });
     }
@@ -603,11 +617,25 @@ class RoadWeatherService {
             }
 
             // 2. Fetch all live data sources in parallel
-            const [udotRoads, cameras, weatherStations] = await Promise.all([
+            const results = await Promise.allSettled([
                 this.fetchUDOTRoadConditions(),
                 this.fetchUDOTCameras(),
                 this.fetchUDOTWeatherStations()
             ]);
+            const [udotRoads, cameras, weatherStations] = results.map(result =>
+                result.status === 'fulfilled' && Array.isArray(result.value) ? result.value : []
+            );
+            const sources = Object.fromEntries(['roads', 'cameras', 'stations'].map((name, index) => {
+                const records = [udotRoads, cameras, weatherStations][index];
+                const available = results[index].status === 'fulfilled' && records.length > 0;
+                return [name, {
+                    status: available ? (records.some(record => record.cached) ? 'cached' : 'available') : 'unavailable',
+                    lastUpdated: this.latestUpdate(records),
+                    message: available ? null : `UDOT ${name} feed unavailable or returned no data`
+                }];
+            }));
+            if (udotRoads.length > 0) this.lastRoadConditionsUpdate = sources.roads.lastUpdated;
+            sources.roads.lastUpdated = this.lastRoadConditionsUpdate;
 
             // Get camera snow detections from scheduler cache (no API calls triggered)
             // If scheduler is not available, fall back to direct analysis (backwards compatibility)
@@ -628,6 +656,8 @@ class RoadWeatherService {
                     coordinates: udotRoad.coordinates,
                     overallCondition: udotRoad.condition,
                     type: 'monitored',
+                    source: udotRoad.source,
+                    cached: udotRoad.cached,
                     lastUpdated: udotRoad.lastUpdated,
                     roadCondition: udotRoad.roadCondition,
                     weatherCondition: udotRoad.weatherCondition,
@@ -642,11 +672,14 @@ class RoadWeatherService {
             });
 
             // 5. Build additional road segments from HRRR (roads not covered by UDOT)
-            const additionalSegments = this.buildAdditionalRoadSegmentsFromHRRR(hrrrForecast);
+            // HRRR has its own forecast layer. Do not fill an unavailable observed feed with it.
+            const additionalSegments = udotRoads.length > 0 ? this.buildAdditionalRoadSegmentsFromHRRR(hrrrForecast) : [];
 
             const allRoadSegments = [...roadSegments, ...additionalSegments];
 
             return {
+                status: sources.roads.status,
+                sources,
                 segments: allRoadSegments,
                 cameras: cameras,
                 stations: weatherStations,
@@ -658,7 +691,7 @@ class RoadWeatherService {
                 cameraAnalyzedLocations: cameraSnowDetections.length,
                 monitoredRoads: roadSegments.length,
                 additionalRoads: additionalSegments.length,
-                lastUpdated: new Date().toISOString()
+                lastUpdated: sources.roads.lastUpdated
             };
         } catch (error) {
             console.error('Error getting complete road data:', error);
@@ -733,21 +766,20 @@ class RoadWeatherService {
             console.warn('Could not fetch current weather for road estimation:', error);
         }
 
-        return {
-            temperature: 10, // Default mild conditions
-            precipitation: 0,
-            snowfall: 0,
-            windSpeed: 5,
-            visibility: 10000
-        };
+        return null;
     }
 
     estimateRoadCondition(road, weather) {
-        const temp = weather.temperature;
-        const precip = weather.precipitation;
-        const snow = weather.snowfall;
-        const wind = weather.windSpeed;
-        const visibility = weather.visibility;
+        if (!weather) {
+            return { condition: 'gray', status: 'No Data', reason: 'Weather data unavailable or incomplete' };
+        }
+        // Missing readings must neither suppress known hazards nor compare as zero.
+        const reading = key => Number.isFinite(weather[key]) ? weather[key] : NaN;
+        const temp = reading('temperature');
+        const precip = reading('precipitation');
+        const snow = reading('snowfall');
+        const wind = reading('windSpeed');
+        const visibility = reading('visibility');
 
         // Estimate based on weather conditions and road type
         let condition = 'green';
@@ -783,9 +815,9 @@ class RoadWeatherService {
         }
 
         // Mountain/forest roads are more susceptible
-        if (road.route.toLowerCase().includes('forest') ||
-            road.route.toLowerCase().includes('mountain') ||
-            road.name.toLowerCase().includes('canyon')) {
+        if ((road.route || '').toLowerCase().includes('forest') ||
+            (road.route || '').toLowerCase().includes('mountain') ||
+            (road.name || '').toLowerCase().includes('canyon')) {
             if (condition === 'green' && (temp < 5 || precip > 0)) {
                 condition = 'yellow';
                 status = 'Mountain Road Caution';
@@ -793,13 +825,16 @@ class RoadWeatherService {
             }
         }
 
+        if (condition === 'green' && ![temp, precip, snow, wind, visibility].every(Number.isFinite)) {
+            return { condition: 'gray', status: 'No Data', reason: 'Weather data unavailable or incomplete' };
+        }
         return { condition, status, reason };
     }
 
     async fetchUDOTCameras() {
         const cacheKey = 'udot_cameras';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(camera => ({ ...camera, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/cameras?key=${this.udotApiKey}&format=json`;
@@ -832,6 +867,9 @@ class RoadWeatherService {
                 roadway: camera.Roadway,
                 lat: parseFloat(camera.Latitude),
                 lng: parseFloat(camera.Longitude),
+                source: 'UDOT',
+                cached: false,
+                lastUpdated: this.udotTimestamp(camera.LastUpdated),
                 views: camera.Views.map(view => ({
                     url: view.Url,
                     status: view.Status,
@@ -843,14 +881,14 @@ class RoadWeatherService {
             return processedCameras;
         } catch (error) {
             console.error('Error fetching UDOT cameras:', error);
-            return [];
+            throw error;
         }
     }
 
     async fetchUDOTWeatherStations() {
         const cacheKey = 'udot_weather_stations';
         const cached = cache.get(cacheKey);
-        if (cached) return cached;
+        if (cached) return cached.map(station => ({ ...station, cached: true }));
 
         try {
             const url = `https://www.udottraffic.utah.gov/api/v2/get/weatherstations?key=${this.udotApiKey}&format=json`;
@@ -896,7 +934,8 @@ class RoadWeatherService {
                 windSpeedGust: station.WindSpeedGust,
                 windDirection: station.WindDirection,
                 source: station.Source,
-                lastUpdated: new Date(station.LastUpdated * 1000).toISOString(),
+                cached: false,
+                lastUpdated: this.udotTimestamp(station.LastUpdated),
                 condition: this.determineStationCondition(station)
             }));
 
@@ -904,7 +943,7 @@ class RoadWeatherService {
             return processedStations;
         } catch (error) {
             console.error('Error fetching UDOT weather stations:', error);
-            return [];
+            throw error;
         }
     }
 
@@ -941,19 +980,27 @@ class RoadWeatherService {
                        lng <= this.uintahBasinBounds.east;
             });
 
-            const processedRestAreas = basinRestAreas.map(restArea => ({
-                id: restArea.Id,
-                name: restArea.Name,
-                lat: parseFloat(restArea.Latitude),
-                lng: parseFloat(restArea.Longitude),
-                location: restArea.Location,
-                yearBuilt: restArea.YearBuilt,
-                carStalls: parseInt(restArea.CarStalls) || 0,
-                truckStalls: parseInt(restArea.TruckStalls) || 0,
-                nearestCommunities: restArea.NearestCommunities,
-                imageUrl: restArea.ImageUrl,
-                totalStalls: (parseInt(restArea.CarStalls) || 0) + (parseInt(restArea.TruckStalls) || 0)
-            }));
+            const processedRestAreas = basinRestAreas.map(restArea => {
+                const reportedCount = value => {
+                    const count = Number.parseInt(value, 10);
+                    return Number.isFinite(count) && count >= 0 ? count : null;
+                };
+                const carStalls = reportedCount(restArea.CarStalls);
+                const truckStalls = reportedCount(restArea.TruckStalls);
+                return {
+                    id: restArea.Id,
+                    name: restArea.Name,
+                    lat: parseFloat(restArea.Latitude),
+                    lng: parseFloat(restArea.Longitude),
+                    location: restArea.Location,
+                    yearBuilt: restArea.YearBuilt,
+                    carStalls,
+                    truckStalls,
+                    nearestCommunities: restArea.NearestCommunities,
+                    imageUrl: restArea.ImageUrl,
+                    totalStalls: carStalls !== null && truckStalls !== null ? carStalls + truckStalls : null
+                };
+            });
 
             // Cache for 1 hour (rest areas don't change frequently)
             cache.set(cacheKey, processedRestAreas, 3600);
@@ -971,9 +1018,9 @@ class RoadWeatherService {
         const precipitation = (station.Precipitation || '').toLowerCase();
         const windSpeed = parseFloat(station.WindSpeedAvg);
 
-        let condition = 'green';
-        let status = 'Normal';
-        let reason = 'Good conditions';
+        let condition = 'gray';
+        let status = 'No Data';
+        let reason = 'Road surface not reported';
 
         // Check for dangerous conditions
         if (surfaceStatus.includes('ice') || surfaceStatus.includes('icy')) {
@@ -1002,7 +1049,7 @@ class RoadWeatherService {
             condition = 'yellow';
             status = 'High Winds';
             reason = `Strong winds at ${windSpeed} mph`;
-        } else if (surfaceStatus.includes('dry') || !surfaceStatus) {
+        } else if (surfaceStatus.includes('dry')) {
             condition = 'green';
             status = 'Clear';
             reason = 'Dry road surface';
@@ -1041,16 +1088,13 @@ class RoadWeatherService {
             return { condition: 'gray', status: 'No Data', reason: 'No station data' };
         }
 
-        const hasRed = conditions.some(c => c.condition === 'red');
-        const hasYellow = conditions.some(c => c.condition === 'yellow');
-
-        if (hasRed) {
-            return conditions.find(c => c.condition === 'red');
-        } else if (hasYellow) {
-            return conditions.find(c => c.condition === 'yellow');
-        } else {
-            return conditions[0];
+        // Worst known level wins; a known green beats gray, so the answer never
+        // depends on the order of the inputs.
+        for (const level of ['red', 'yellow', 'green']) {
+            const match = conditions.find(c => c.condition === level);
+            if (match) return match;
         }
+        return conditions[0];
     }
 
     async fetchSnowPlows() {
@@ -1265,7 +1309,8 @@ class RoadWeatherService {
             return 'windy';
         }
 
-        return 'open';
+        const reportedOpen = pass.SeasonalInfo?.some(info => info.SeasonalClosureStatus === 'OPEN');
+        return reportedOpen || surfaceStatus.includes('dry') ? 'open' : 'unknown';
     }
 
     determinePassSeverity(pass) {
