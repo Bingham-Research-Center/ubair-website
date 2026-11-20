@@ -222,7 +222,10 @@ describe('weather forecast routes', () => {
             const read = jest.spyOn(fs.promises, 'readFile');
             const again = await request(app).get('/api/weather-forecast/observed').expect(200);
             expect(again.body.towns.vernal.air_temp.points).toHaveLength(2);
-            expect(read).not.toHaveBeenCalled();
+            // Other parts of the app read files of their own on any request (the visitor
+            // count, for one): what must not happen is a second read of the route's data.
+            const dataReads = read.mock.calls.map(([file]) => String(file)).filter((file) => file.startsWith(staticRoot));
+            expect(dataReads).toEqual([]);
         });
 
         test('one unreadable observation file loses its ten minutes, not the whole answer', async () => {
