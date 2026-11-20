@@ -623,6 +623,26 @@ describe('forecastLight', () => {
         expect(lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(3), wind_speed_10m: 0 }))).level).toBe('green');
     });
 
+    test('the words never cross a threshold the colour did not', () => {
+        // Just under a red threshold is amber, and must not be rounded up into reading like red.
+        const gust = lightFor(point('Myton', 5100, (i) => (i === 8 ? { wind_gust: 57.6 * MS_PER_MPH } : {})));
+        expect(gust).toMatchObject({ level: 'amber', line: 'Gusts 57 mph near Myton' });
+        const snow = lightFor(point('Duchesne', 5100, (i) => ({ snow_depth: Math.min(i, 6) * (3.8 * 25.4) / 6 })));
+        expect(snow).toMatchObject({ level: 'amber', line: 'About 3.5 in of new snow near Duchesne' });
+        const cold = lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(-19.6), wind_speed_10m: 0 })));
+        expect(cold).toMatchObject({ level: 'amber', line: 'Temperature -19°F near Ouray' });
+        // On the threshold, the number and the colour agree.
+        expect(lightFor(point('Myton', 5100, (i) => (i === 8 ? { wind_gust: 58.2 * MS_PER_MPH } : {})))).toMatchObject({ level: 'red', line: 'Gusts 58 mph near Myton' });
+        expect(lightFor(point('Duchesne', 5100, (i) => ({ snow_depth: Math.min(i, 6) * (4.1 * 25.4) / 6 })))).toMatchObject({ level: 'red', line: 'About 4 in of new snow near Duchesne' });
+        expect(lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(-20.3), wind_speed_10m: 0 })))).toMatchObject({ level: 'red', line: 'Temperature -20°F near Ouray' });
+        // Nor does a quiet tile claim a number that would have lit it: 39.7 mph is "39", not "40".
+        const quiet = lightFor(point('Myton', 5100, () => ({ wind_gust: 39.7 * MS_PER_MPH, temp_2m: fToC(0.4) })));
+        expect(quiet.level).toBe('green');
+        expect(quiet.detail).toContain('strongest gust 39 mph, coldest temperature 1°F');
+        // Just below zero is amber and reads 0, never "-0".
+        expect(lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(-0.4), wind_speed_10m: 0 })))).toMatchObject({ level: 'amber', line: 'Temperature 0°F near Ouray' });
+    });
+
     test('ground above 7,500 ft does not colour it', () => {
         const light = lightFor(point('Myton', 5100), point('Daniels Summit', 8000, () => ({ wind_gust: 70 * MS_PER_MPH, temp_2m: fToC(-30) })));
         expect(light.level).toBe('green');

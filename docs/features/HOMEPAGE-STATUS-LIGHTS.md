@@ -85,6 +85,9 @@ as a whole day needs the 48-hour point forecast (producer ask P13).
 - **Fog is left out on purpose.** The model's visibility fell under a mile at a floor point in
   347 of 720 runs in the month before this was built, and our observation feed has no
   visibility to check it against. John's call: save fog for the aviation page.
+- **The number in the words never crosses a threshold the colour did not.** Values are rounded
+  for reading, but 3.8 inches of snow is amber and reads "3.5 in", not "4 in", and a quiet tile
+  never names a gust of "40 mph".
 - **Green is a claim that three things were looked at.** If the file cannot be read for one of
   them, the tile is grey and says which, unless something it *can* read is already amber or red.
 - It is a model forecast for points along the highways, and "Why" says so, with the run's time
