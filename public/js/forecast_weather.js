@@ -1,4 +1,12 @@
-// Weather Forecast Page - GEFS meteograms + HRRR surface layers
+// Weather forecast page: the HRRR forecast map, and the GEFS ensemble charts in the expert
+// drawer. The hazards pane and the town forecasts above them are weatherHazards.js and
+// townForecast.js.
+//
+// Nothing here loads until it is wanted. The map's model run is 1.5 MB, so it is fetched when
+// the reader scrolls to the map; the ensemble charts are fetched when the drawer is opened.
+// Times are Mountain time, with the model's own UTC hour beside a run.
+
+import { modelRunLabel, mountainTime } from './mountainTime.js';
 
 const API_IMAGES = '/api/static/images';
 const API_FORECASTS = '/api/static/forecasts';
@@ -70,14 +78,54 @@ const surfaceState = {
     kioskCountdown: 30
 };
 
-document.addEventListener('DOMContentLoaded', async function() {
+// Run `start` once, the first time `element` comes within a screen of the viewport.
+function whenNear(element, start) {
+    if (!element) return;
+    if (typeof IntersectionObserver === 'undefined') {
+        start();
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        if (entries.some(entry => entry.isIntersecting)) {
+            observer.disconnect();
+            start();
+        }
+    }, { rootMargin: '600px 0px' });
+    observer.observe(element);
+}
+
+let mapStarted = false;
+async function startMap() {
+    if (mapStarted) return;
+    mapStarted = true;
     setupWeatherMap();
-    initializeTooltips();
-    initializeKioskMode();
+    await initializeSurfaceForecasts();
+}
+
+let meteogramsStarted = false;
+function startMeteograms() {
+    if (meteogramsStarted) return;
+    meteogramsStarted = true;
     initializeMeteograms();
     setupMeteogramTabs();
     setupFullscreen();
-    await initializeSurfaceForecasts();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    whenNear(document.getElementById('weather-map-section'), startMap);
+
+    const drawer = document.getElementById('expert-drawer');
+    if (drawer) {
+        drawer.addEventListener('toggle', () => { if (drawer.open) startMeteograms(); });
+        if (drawer.open) startMeteograms();
+    }
+
+    // Kiosk mode cycles the map for a wall screen. It is off the page unless asked for.
+    if (new URLSearchParams(window.location.search).get('kiosk') === '1') {
+        const controls = document.getElementById('kiosk-controls');
+        if (controls) controls.hidden = false;
+        initializeKioskMode();
+    }
 });
 
 // ============================================
@@ -396,7 +444,7 @@ function populateRunSelector(runs) {
         const option = document.createElement('option');
         option.value = String(index);
         option.textContent = run.init_time
-            ? `HRRR ${formatIsoTimestamp(run.init_time)}`
+            ? `HRRR ${formatRun(run.init_time)}`
             : nameToRunLabel(run.filename);
         runSelect.appendChild(option);
     });
@@ -441,8 +489,8 @@ function populateHourSelector(payload) {
     forecastHours.forEach((hour, index) => {
         const option = document.createElement('option');
         option.value = String(index);
-        const validTime = validTimes[index] ? formatIsoTimestamp(validTimes[index]) : 'Unknown';
-        option.textContent = `F${String(hour).padStart(2, '0')} | ${validTime}`;
+        const validTime = validTimes[index] ? formatValidTime(validTimes[index]) : 'Unknown';
+        option.textContent = `${validTime} (+${hour} h)`;
         timeSelect.appendChild(option);
     });
     timeSelect.value = '0';
@@ -474,12 +522,11 @@ function renderSurfaceForecast() {
     fitMapToPayload(payload);
     updateCurrentDisplay(payload, config);
     updateLegend(variableKey);
-    updateSummaryPanels(payload, variableKey, scalarValues);
-    updateModelInfo(payload);
+    updateSpecialConditions(payload);
+    updateMapSource(payload);
 
-    const run = surfaceState.runs[surfaceState.selectedRunIndex];
-    const hourText = payload.forecast_hours?.[surfaceState.hourIndex];
-    setForecastStatus(`Showing ${config.label.toLowerCase()} for ${run.init_time ? formatIsoTimestamp(run.init_time) : run.filename} at F${String(hourText).padStart(2, '0')}.`);
+    const validTime = payload.valid_times?.[surfaceState.hourIndex];
+    setForecastStatus(`Showing ${config.label.toLowerCase()} for ${validTime ? formatValidTime(validTime) : 'the selected hour'}.`);
 }
 
 function clearMapLayers() {
@@ -579,8 +626,7 @@ function updateCurrentDisplay(payload, config) {
 
     if (currentTime) {
         const validTime = payload.valid_times?.[surfaceState.hourIndex];
-        const forecastHour = payload.forecast_hours?.[surfaceState.hourIndex];
-        currentTime.textContent = `F${String(forecastHour).padStart(2, '0')} | ${validTime ? formatIsoTimestamp(validTime) : 'Unknown valid time'}`;
+        currentTime.textContent = validTime ? formatValidTime(validTime) : 'Unknown valid time';
     }
 }
 
@@ -610,80 +656,9 @@ function updateLegend(variableKey) {
     `;
 }
 
-function updateSummaryPanels(payload, variableKey, scalarValues) {
-    updateWeatherSummary(variableKey, scalarValues, payload);
-    updateForecastSnapshots(payload, variableKey);
-    updateSpecialConditions(payload, scalarValues);
-}
-
-function updateWeatherSummary(variableKey, scalarValues, payload) {
-    const config = VARIABLE_CONFIG[variableKey];
-    const displayValues = scalarValues
-        .filter(value => Number.isFinite(value))
-        .map(value => toDisplay(config, value));
-    const average = displayValues.reduce((sum, value) => sum + value, 0) / displayValues.length;
-    const minimum = Math.min(...displayValues);
-    const maximum = Math.max(...displayValues);
-
-    const summary = document.getElementById('weather-summary');
-    if (summary) {
-        summary.innerHTML = `
-            <p>HRRR ${config.label.toLowerCase()} for the Uintah Basin at ${formatIsoTimestamp(payload.valid_times[surfaceState.hourIndex])}. The map uses a reduced Basin grid for faster display on BasinWX.</p>
-            <div class="summary-stats">
-                <div class="stat-item">
-                    <span class="stat-label">Basin Average:</span>
-                    <span class="stat-value">${formatValue(average, config.units, config.decimals)}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Range:</span>
-                    <span class="stat-value">${formatValue(minimum, config.units, config.decimals)} to ${formatValue(maximum, config.units, config.decimals)}</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-label">Trend:</span>
-                    <span class="stat-value">${computeTrendText(payload, variableKey, average)}</span>
-                </div>
-            </div>
-        `;
-    }
-
-    const basinAverage = document.getElementById('basin-average');
-    const range = document.getElementById('temperature-range');
-    const trend = document.getElementById('trend-indicator');
-    if (basinAverage) basinAverage.textContent = formatValue(average, config.units, config.decimals);
-    if (range) range.textContent = `${formatValue(minimum, config.units, config.decimals)} to ${formatValue(maximum, config.units, config.decimals)}`;
-    if (trend) trend.textContent = computeTrendText(payload, variableKey, average);
-}
-
-function updateForecastSnapshots(payload, variableKey) {
-    const config = VARIABLE_CONFIG[variableKey];
-    const timeline = document.getElementById('forecast-outlook');
-    if (!timeline) return;
-
-    const indices = [surfaceState.hourIndex, surfaceState.hourIndex + 6, surfaceState.hourIndex + 12]
-        .filter(index => index < payload.forecast_hours.length);
-
-    timeline.innerHTML = `
-        <div class="outlook-timeline">
-            ${indices.map(index => {
-                const values = sliceFieldForHour(payload, variableKey, index)
-                    .filter(value => Number.isFinite(value))
-                    .map(value => toDisplay(config, value));
-                const average = values.length
-                    ? values.reduce((sum, value) => sum + value, 0) / values.length
-                    : null;
-                return `
-                    <div class="timeline-item">
-                        <div class="timeline-time">F${String(payload.forecast_hours[index]).padStart(2, '0')}</div>
-                        <div class="timeline-desc">${formatIsoTimestamp(payload.valid_times[index])}</div>
-                        <div class="timeline-temp">${average === null ? '--' : formatValue(average, config.units, config.decimals)}</div>
-                    </div>
-                `;
-            }).join('')}
-        </div>
-    `;
-}
-
-function updateSpecialConditions(payload, scalarValues) {
+// What stands out across the map at the selected hour. Each line is a count or a peak over the
+// grid points shown, said as that: no Basin-wide average, which would describe no real place.
+function updateSpecialConditions(payload) {
     const conditions = document.getElementById('special-conditions');
     if (!conditions) return;
 
@@ -697,41 +672,45 @@ function updateSpecialConditions(payload, scalarValues) {
 
     const items = [];
     if (freezingFraction >= 0.5) {
-        items.push(renderConditionBlock('alert', 'Freezing Surface Layer', `${Math.round(freezingFraction * 100)}% of sampled grid points are at or below 32°F.`));
+        items.push(renderConditionBlock('alert', 'Freezing', `${Math.round(freezingFraction * 100)}% of the map's grid points are at or below 32°F.`));
     }
     if (maxSnow >= 1.0) {
-        items.push(renderConditionBlock('alert', 'Snowfall Signal', `Peak hourly snowfall in the sampled grid is ${mmToIn(maxSnow).toFixed(2)} in/hr.`));
+        items.push(renderConditionBlock('alert', 'Snow', `Snowfall peaks at ${mmToIn(maxSnow).toFixed(2)} in/hr somewhere on the map.`));
     }
     if (maxRain >= 0.5) {
-        items.push(renderConditionBlock('note', 'Rainfall Signal', `Peak hourly rainfall in the sampled grid is ${mmToIn(maxRain).toFixed(2)} in/hr.`));
+        items.push(renderConditionBlock('note', 'Rain', `Rainfall peaks at ${mmToIn(maxRain).toFixed(2)} in/hr somewhere on the map.`));
     }
     if (maxWind >= 10.0) {
-        items.push(renderConditionBlock('note', 'Windy Corridor', `Peak 10 m wind speed on the reduced grid is ${msToMph(maxWind).toFixed(1)} mph.`));
+        items.push(renderConditionBlock('note', 'Wind', `Wind peaks at ${msToMph(maxWind).toFixed(0)} mph somewhere on the map.`));
     }
 
     if (!items.length) {
-        items.push(renderConditionBlock('note', 'Quiet Period', 'No strong rain, snow, freezing dominance, or wind signal is present on the selected HRRR slice.'));
+        items.push(renderConditionBlock('note', 'Quiet hour', 'No strong rain, snow, widespread freezing or wind shows on the map at this hour.'));
     }
 
-    conditions.innerHTML = items.join('');
+    conditions.replaceChildren(...items);
 }
 
-function updateModelInfo(payload) {
-    const updateTime = document.getElementById('model-update-time');
-    const nextUpdateTime = document.getElementById('next-update-time');
-    const gridReduction = document.getElementById('grid-reduction');
-
-    if (updateTime) {
-        updateTime.textContent = formatIsoTimestamp(payload.init_time);
+// Where the map's data came from and how old it is. No "next update": runs reach this page in
+// blocks through the day, and a guessed time would be wrong most of the time.
+function updateMapSource(payload) {
+    const source = document.getElementById('map-source');
+    if (!source) return;
+    const init = Date.parse(payload.init_time);
+    if (!Number.isFinite(init)) {
+        source.textContent = 'HRRR model forecast.';
+        return;
     }
-    if (nextUpdateTime) {
-        const next = new Date(payload.init_time);
-        next.setUTCHours(next.getUTCHours() + 1);
-        nextUpdateTime.textContent = formatDateUTC(next);
-    }
-    if (gridReduction) {
-        gridReduction.textContent = `Stride ${payload.stride || 1}`;
-    }
+    const now = Date.now();
+    const age = Math.max(0, Math.round((now - init) / 3600000));
+    const built = Date.parse(payload.generated_at);
+    const received = Number.isFinite(built) ? `, prepared ${mountainTime(built, now)}` : '';
+    const stride = Number.isFinite(payload.stride) ? payload.stride : 1;
+    const grid = stride > 1
+        ? `Shown on a ${stride * 3} km grid (every ${stride === 2 ? '2nd' : `${stride}th`} point of the 3 km model).`
+        : 'Shown on the model\'s 3 km grid.';
+    source.textContent = `HRRR model run from ${modelRunLabel(init)}, ${age} hour${age === 1 ? '' : 's'} old${received}. `
+        + `${grid} Runs reach this page in blocks through the day, so the newest is usually 3 to 6 hours old.`;
 }
 
 function renderNoSurfaceData(message) {
@@ -774,23 +753,6 @@ function formatValue(value, units, decimals = 1) {
     return `${value.toFixed(decimals)} ${units}`;
 }
 
-function computeTrendText(payload, variableKey, average) {
-    if (surfaceState.hourIndex === 0) {
-        return 'Baseline hour';
-    }
-    const config = VARIABLE_CONFIG[variableKey];
-    const previousValues = sliceFieldForHour(payload, variableKey, surfaceState.hourIndex - 1)
-        .filter(value => Number.isFinite(value))
-        .map(value => toDisplay(config, value));
-    if (!previousValues.length) {
-        return 'Unavailable';
-    }
-    const previousAverage = previousValues.reduce((sum, value) => sum + value, 0) / previousValues.length;
-    const delta = average - previousAverage;
-    if (Math.abs(delta) < 0.2) return 'Steady';
-    return delta > 0 ? `Rising (+${delta.toFixed(1)})` : `Falling (${delta.toFixed(1)})`;
-}
-
 function fractionBelowValue(values, threshold) {
     const validValues = values.filter(value => Number.isFinite(value));
     if (!validValues.length) return 0;
@@ -814,23 +776,15 @@ function maxFinite(values) {
     return validValues.length ? Math.max(...validValues) : 0;
 }
 
+// One note under the map: a bold word and a sentence, with a left rule. Built from text nodes.
 function renderConditionBlock(type, title, description) {
-    const className = type === 'alert' ? 'condition-alert' : 'condition-note';
-    const iconClass = type === 'alert' ? 'alert-icon' : 'note-icon';
-    const icon = type === 'alert' ? 'fas fa-exclamation-triangle' : 'fas fa-info';
-    const contentClass = type === 'alert' ? 'alert-content' : 'note-content';
-
-    return `
-        <div class="${className}">
-            <div class="${iconClass}">
-                <i class="${icon}"></i>
-            </div>
-            <div class="${contentClass}">
-                <h4>${title}</h4>
-                <p>${description}</p>
-            </div>
-        </div>
-    `;
+    const note = document.createElement('p');
+    note.className = 'map-note';
+    note.dataset.kind = type;
+    const strong = document.createElement('strong');
+    strong.textContent = title;
+    note.append(strong, ` ${description}`);
+    return note;
 }
 
 function nameToRunLabel(filename) {
@@ -839,15 +793,15 @@ function nameToRunLabel(filename) {
     return formatInitTime(`${match[1]}-${match[2]}`);
 }
 
-function formatIsoTimestamp(value) {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return formatDateUTC(date);
+// A model run: "Thu 8 PM (03Z)". A forecast hour on the map: "Fri 6 AM", or "6 AM" today.
+function formatRun(value) {
+    const ms = Date.parse(value);
+    return Number.isFinite(ms) ? modelRunLabel(ms) : String(value);
 }
 
-function formatDateUTC(date) {
-    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${monthNames[date.getUTCMonth()]} ${date.getUTCDate()}, ${String(date.getUTCHours()).padStart(2, '0')}:${String(date.getUTCMinutes()).padStart(2, '0')} UTC`;
+function formatValidTime(value) {
+    const ms = Date.parse(value);
+    return Number.isFinite(ms) ? mountainTime(ms, Date.now()) : String(value);
 }
 
 function setForecastStatus(message) {
@@ -945,52 +899,4 @@ function advanceForecastFrame() {
     const timeSelect = document.getElementById('forecast-time');
     if (timeSelect) timeSelect.value = String(surfaceState.hourIndex);
     renderSurfaceForecast();
-}
-
-// ============================================
-// TOOLTIPS
-// ============================================
-
-function initializeTooltips() {
-    const tooltipTriggers = document.querySelectorAll('[data-tooltip]');
-    let tooltip = document.getElementById('tooltip');
-
-    if (!tooltip) {
-        tooltip = document.createElement('div');
-        tooltip.id = 'tooltip';
-        tooltip.className = 'tooltip';
-        tooltip.setAttribute('role', 'tooltip');
-        document.body.appendChild(tooltip);
-    }
-
-    tooltipTriggers.forEach(trigger => {
-        trigger.addEventListener('mouseenter', (e) => {
-            tooltip.textContent = e.target.getAttribute('data-tooltip');
-            tooltip.classList.add('show');
-
-            const rect = e.target.getBoundingClientRect();
-            const tooltipRect = tooltip.getBoundingClientRect();
-
-            let left = rect.left + (rect.width / 2) - (tooltipRect.width / 2);
-            let top = rect.top - tooltipRect.height - 10;
-
-            if (left < 10) left = 10;
-            if (left + tooltipRect.width > window.innerWidth - 10) {
-                left = window.innerWidth - tooltipRect.width - 10;
-            }
-            if (top < 10) {
-                top = rect.bottom + 10;
-                tooltip.classList.add('bottom');
-            } else {
-                tooltip.classList.remove('bottom');
-            }
-
-            tooltip.style.left = `${left}px`;
-            tooltip.style.top = `${top}px`;
-        });
-
-        trigger.addEventListener('mouseleave', () => {
-            tooltip.classList.remove('show');
-        });
-    });
 }

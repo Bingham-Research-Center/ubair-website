@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Weather Forecasts for Uintah Basin with interactive maps and analysis">
+    <meta name="description" content="Weather forecasts for the Uinta Basin: alerts, town forecasts hour by hour, and a forecast map">
     <title>BasinWx</title>
     <link rel="icon" href="/favicon.ico" sizes="32x32">
     <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
@@ -20,6 +20,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/forecast_weather.css">
+    <link rel="stylesheet" href="/public/css/weather-panes.css">
     <link rel="stylesheet" href="/public/css/overlays.css">
 </head>
 <body data-page-type="forecast_weather">
@@ -35,106 +36,85 @@
     <main class="content">
         <h1>Weather Forecasts</h1>
 
-        <!-- GEFS Meteogram Section - Active Feature -->
-        <section class="meteogram-section pane" aria-label="Model Forecast Meteograms">
+        <!-- Hazards: National Weather Service alerts, then rain or snow by elevation.
+             Filled by weatherHazards.js. A failed alerts check says so; it never reads as "none". -->
+        <section class="weather-hazards pane" id="weather-hazards" aria-labelledby="hazards-title">
             <div class="section-header">
-                <h2><i class="fas fa-chart-area"></i> Model Forecast Data</h2>
-                <div class="info-icon" data-tooltip="Ensemble model forecast meteograms showing uncertainty ranges">
-                    <i class="fas fa-info-circle"></i>
-                </div>
+                <h2 id="hazards-title">Hazards</h2>
             </div>
-
-            <div class="meteogram-controls">
-                <div class="control-group">
-                    <label for="model-selector">Model:</label>
-                    <select id="model-selector" class="control-select">
-                        <option value="GEFS">GEFS</option>
-                        <!-- Future models: HRRR, NAM, etc. -->
-                    </select>
-                </div>
-                <div class="control-group">
-                    <label for="meteogram-inittime">Forecast Run:</label>
-                    <select id="meteogram-inittime" class="control-select">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
+            <div id="hazard-alerts" data-state="loading">
+                <p class="hazard-note">Checking National Weather Service alerts…</p>
             </div>
-
-            <!-- Variable Tabs -->
-            <div class="meteogram-tabs" id="meteogram-tabs">
-                <button class="meteogram-tab active" data-variable="temp">
-                    <i class="fas fa-thermometer-half"></i> Temperature
-                </button>
-                <button class="meteogram-tab" data-variable="wind">
-                    <i class="fas fa-wind"></i> Wind
-                </button>
-                <button class="meteogram-tab" data-variable="mslp">
-                    <i class="fas fa-tachometer-alt"></i> Pressure
-                </button>
-                <button class="meteogram-tab" data-variable="snow">
-                    <i class="fas fa-snowflake"></i> Snow
-                </button>
-                <button class="meteogram-tab" data-variable="solar">
-                    <i class="fas fa-sun"></i> Solar
-                </button>
-            </div>
-
-            <!-- Large Meteogram Display -->
-            <div class="meteogram-display" id="meteogram-display">
-                <button class="fullscreen-btn" id="fullscreen-btn" title="View fullscreen">
-                    <i class="fas fa-expand"></i>
-                </button>
-                <div class="meteogram-image-large" id="meteogram-current">
-                    <div class="chart-loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        <p>Loading...</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fullscreen Modal -->
-            <div class="meteogram-fullscreen-modal" id="meteogram-modal">
-                <button class="modal-close" id="modal-close">
-                    <i class="fas fa-times"></i>
-                </button>
-                <div class="modal-content" id="modal-content"></div>
-            </div>
+            <h3 class="hazard-group">Rain or snow, by elevation</h3>
+            <div class="precip-hours-wrap" id="precip-hours-wrap" hidden></div>
+            <p class="hazard-note" id="precip-hours-note">Loading the forecast…</p>
         </section>
 
-        <!-- Control Panel -->
-        <section class="control-panel pane" aria-label="Forecast Controls">
+        <!-- Town forecasts: the HRRR waypoints run, hour by hour. Filled by townForecast.js. -->
+        <section class="town-forecast pane" id="town-forecast" aria-labelledby="towns-title">
+            <div class="section-header">
+                <h2 id="towns-title">Town forecasts</h2>
+                <div class="town-controls">
+                    <label for="town-select">Town or pass</label>
+                    <select id="town-select" class="control-select" disabled></select>
+                </div>
+            </div>
+            <p class="town-summary" id="town-summary">Loading the town forecast…</p>
+            <div class="town-table-wrap">
+                <table class="town-table" id="town-table" hidden>
+                    <thead>
+                        <tr>
+                            <th scope="col">Time</th>
+                            <th scope="col">Temp</th>
+                            <th scope="col">Wind</th>
+                            <th scope="col">Humidity</th>
+                            <th scope="col">Precip</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <p class="town-source" id="town-source"></p>
+        </section>
+
+        <!-- Forecast map: the 1.5 MB model run loads when the reader scrolls here, not before. -->
+        <section class="control-panel pane" aria-label="Forecast map controls">
+            <div class="section-header">
+                <h2>Forecast map</h2>
+            </div>
             <div class="controls-row">
                 <div class="run-selector">
-                    <label for="forecast-run">Forecast Run:</label>
+                    <label for="forecast-run">Model run:</label>
                     <select id="forecast-run" class="control-select">
-                        <option value="">Loading latest HRRR runs...</option>
+                        <option value="">Scroll here to load the map</option>
                     </select>
                 </div>
 
                 <div class="variable-selector">
-                    <label for="weather-variable">Weather Variable:</label>
+                    <label for="weather-variable">Show:</label>
                     <select id="weather-variable" class="control-select">
                         <option value="temperature_2m_c">Temperature</option>
                         <option value="rainfall_1h_mm">Rainfall</option>
                         <option value="snowfall_1h_mm">Snowfall</option>
                     </select>
                 </div>
-                
+
                 <div class="time-selector">
-                    <label for="forecast-time">Forecast Time:</label>
+                    <label for="forecast-time">Time:</label>
                     <select id="forecast-time" class="control-select">
-                        <option value="">Loading forecast hours...</option>
+                        <option value="">--</option>
                     </select>
                 </div>
-                
+
                 <div class="layer-toggles">
                     <label class="toggle-label">
                         <input type="checkbox" id="wind-toggle" checked>
-                        <span class="toggle-text">Wind vectors</span>
+                        <span class="toggle-text">Wind arrows</span>
                     </label>
                 </div>
-                
-                <div class="kiosk-controls">
+
+                <!-- For a wall screen: add ?kiosk=1 to the address to show this control. -->
+                <div class="kiosk-controls" id="kiosk-controls" hidden>
                     <button id="kiosk-toggle" class="kiosk-button">
                         <i class="fas fa-play"></i> Start Kiosk Mode
                     </button>
@@ -146,108 +126,78 @@
                     </div>
                 </div>
             </div>
-            <p class="forecast-status" id="forecast-status">Loading HRRR surface layers...</p>
+            <p class="forecast-status" id="forecast-status">The map loads when you scroll to it.</p>
         </section>
 
-        <!-- Weather Map Container -->
-        <section class="weather-map-section pane" aria-label="Interactive Weather Map">
+        <section class="weather-map-section pane" id="weather-map-section" aria-label="Interactive weather map">
             <div class="map-container">
                 <div id="weather-map" class="weather-map"></div>
                 <div class="map-overlay">
                     <div class="current-display">
                         <h3 id="current-variable">Temperature</h3>
-                        <p id="current-time">Current Conditions</p>
+                        <p id="current-time"></p>
                     </div>
                     <div class="legend-container" id="weather-legend">
                         <!-- Dynamic legend will be inserted here -->
                     </div>
                 </div>
             </div>
-        </section>
-
-        <!-- Weather Analysis -->
-        <section class="analysis-section" aria-label="Weather Analysis and Summary">
-            <div class="analysis-grid">
-                <div class="summary-panel pane">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-clipboard-list"></i> Current Summary</h3>
-                        <div class="info-icon" data-tooltip="Automated analysis of current weather patterns">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                    </div>
-                    <div class="summary-content" id="weather-summary">
-                        <p>Loading the HRRR summary...</p>
-                        <div class="summary-stats">
-                            <div class="stat-item">
-                                <span class="stat-label">Basin Average:</span>
-                                <span class="stat-value" id="basin-average">--°F</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Range:</span>
-                                <span class="stat-value" id="temperature-range">-- to --°F</span>
-                            </div>
-                            <div class="stat-item">
-                                <span class="stat-label">Trend:</span>
-                                <span class="stat-value" id="trend-indicator">--</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="forecast-panel pane">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-chart-line"></i> Forecast Snapshots</h3>
-                        <div class="info-icon" data-tooltip="Short-term forecast highlighting key changes">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                    </div>
-                    <div class="forecast-content" id="forecast-outlook">
-                        <p>Loading forecast snapshots...</p>
-                    </div>
-                </div>
-
-                <div class="conditions-panel pane">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-exclamation-triangle"></i> Special Conditions</h3>
-                        <div class="info-icon" data-tooltip="Notable weather conditions affecting the Basin">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                    </div>
-                    <div class="conditions-content" id="special-conditions">
-                        <p>Loading special conditions...</p>
-                    </div>
-                </div>
-
-                <div class="model-panel pane">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-cogs"></i> Model Information</h3>
-                        <div class="info-icon" data-tooltip="Weather model sources and update times">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                    </div>
-                    <div class="model-content" id="model-info">
-                        <div class="model-source">
-                            <h4>Primary Model: HRRR 3km</h4>
-                            <p>Last Update: <span id="model-update-time">--</span></p>
-                            <p>Next Update: <span id="next-update-time">--</span></p>
-                        </div>
-                        <div class="model-performance">
-                            <div class="performance-metric">
-                                <span class="metric-label">Surface Product:</span>
-                                <span class="metric-value" id="product-scope">Temperature / Rain / Snow / Wind</span>
-                            </div>
-                            <div class="performance-metric">
-                                <span class="metric-label">Grid Reduction:</span>
-                                <span class="metric-value" id="grid-reduction">Stride 2</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="map-notes">
+                <h3>Across the map at this hour</h3>
+                <div class="conditions-content" id="special-conditions"></div>
+                <p class="map-source" id="map-source"></p>
             </div>
         </section>
 
-        <!-- Tooltip Container -->
-        <div id="tooltip" class="tooltip" role="tooltip"></div>
+        <!-- Expert drawer: the 31-member GEFS charts. Closed by default; the charts load on opening. -->
+        <details class="expert-drawer pane" id="expert-drawer">
+            <summary>
+                <span class="expert-drawer-title">For forecasters: GEFS ensemble charts</span>
+                <span class="expert-drawer-hint">31 model runs, about 16 days, in °C and UTC</span>
+            </summary>
+
+            <section class="meteogram-section" aria-label="GEFS ensemble charts">
+                <div class="meteogram-controls">
+                    <div class="control-group">
+                        <label for="model-selector">Model:</label>
+                        <select id="model-selector" class="control-select">
+                            <option value="GEFS">GEFS</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="meteogram-inittime">Forecast run:</label>
+                        <select id="meteogram-inittime" class="control-select">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Variable Tabs -->
+                <div class="meteogram-tabs" id="meteogram-tabs">
+                    <button class="meteogram-tab active" data-variable="temp">Temperature</button>
+                    <button class="meteogram-tab" data-variable="wind">Wind</button>
+                    <button class="meteogram-tab" data-variable="mslp">Pressure</button>
+                    <button class="meteogram-tab" data-variable="snow">Snow</button>
+                    <button class="meteogram-tab" data-variable="solar">Solar</button>
+                </div>
+
+                <!-- Large Meteogram Display -->
+                <div class="meteogram-display" id="meteogram-display">
+                    <button class="fullscreen-btn" id="fullscreen-btn" title="View fullscreen">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                    <div class="meteogram-image-large" id="meteogram-current"></div>
+                </div>
+
+                <!-- Fullscreen Modal -->
+                <div class="meteogram-fullscreen-modal" id="meteogram-modal">
+                    <button class="modal-close" id="modal-close">
+                        <i class="fas fa-times"></i>
+                    </button>
+                    <div class="modal-content" id="modal-content"></div>
+                </div>
+            </section>
+        </details>
     </main>
 
 
@@ -255,6 +205,8 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script type="module" src="/public/js/loadSidebar.js"></script>
     <script type="module" src="/public/js/loadFooter.js"></script>
+    <script type="module" src="/public/js/weatherHazards.js"></script>
+    <script type="module" src="/public/js/townForecast.js"></script>
     <script type="module" src="/public/js/forecast_weather.js"></script>
 
 </body>
