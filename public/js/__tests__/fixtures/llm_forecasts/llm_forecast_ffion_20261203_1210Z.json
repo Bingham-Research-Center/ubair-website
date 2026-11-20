@@ -1,0 +1,35 @@
+{
+  "schema": "llm_forecast/1",
+  "persona": "ffion",
+  "issued": "2026-12-03T12:10:00Z",
+  "valid_until": "2026-12-04T00:10:00Z",
+  "describes": {
+    "gefs": "2026-12-03T06:00Z",
+    "hrrr": "2026-12-03T09:00Z",
+    "obs_through": "2026-12-03T11:50Z"
+  },
+  "generator": {
+    "prompt_version": "fixture 1.0.0",
+    "model": "fixture (no model was run)"
+  },
+  "placements": {
+    "home.summary": {
+      "public": "SAMPLE TEXT, NOT A FORECAST. Cold and calm through Friday with fog in the valleys each morning. Light snow is possible on the passes Saturday.",
+      "industry": "SAMPLE TEXT, NOT A FORECAST. High pressure holds through Friday with light winds and morning fog on the Basin floor. A weak system on Saturday brings one to three inches to Daniels Summit and Indian Canyon. Expect slick passes Saturday morning and poor mixing until then.",
+      "expert": "SAMPLE TEXT, NOT A FORECAST. Ridge axis overhead through Friday; a surface inversion persists with light drainage flow. A shortwave on Saturday brings a brief period of orographic snow above 7,500 ft. Ensemble spread is small through day three and grows after."
+    },
+    "weather.discussion": {
+      "public": "SAMPLE TEXT, NOT A FORECAST. Expect cold, still weather through Friday, with freezing fog possible in low spots each morning. A little snow may fall on the mountain passes on Saturday. Valley roads should stay dry.",
+      "industry": "SAMPLE TEXT, NOT A FORECAST. A ridge of high pressure sits over the Basin through Friday. Overnight lows fall into the single digits on the floor, and afternoon highs stay near freezing under the inversion. Winds stay under 10 mph, so the air near the ground mixes poorly. A weak system crosses on Saturday. It brings one to three inches of snow above 7,500 ft, mainly on Daniels Summit and Indian Canyon, and little or nothing on the floor. Plan pass travel for Friday if you can. Colder, drier air follows on Sunday.",
+      "expert": "SAMPLE TEXT, NOT A FORECAST. The 06Z ensemble keeps a 500 hPa ridge over the eastern Great Basin through Friday, with the axis passing overhead on Thursday night. Surface high pressure builds to about 1034 hPa, and the members agree closely on this. A surface-based inversion persists on the Basin floor, with a depth near 300 m in the morning soundings and little erosion by afternoon. Winds at 10 m stay below 3 m/s at the floor sites, with light drainage flow off the benches overnight. Morning freezing fog is favoured where snow cover remains, mainly from Myton to Ouray. A shortwave trough arrives on Saturday. Most members bring a six-hour period of weak orographic snow above 2,300 m, with a median near 4 cm at Daniels Summit and a 90th percentile near 9 cm. The floor stays dry in about three quarters of the members. Mixing improves briefly behind the trough on Saturday evening, then high pressure rebuilds on Sunday with colder air aloft. Ensemble spread in 2 m temperature is under 2 C through day three and widens to about 6 C by day six, when the members split between a renewed ridge and a second trough."
+    },
+    "outlook.model_guidance": {
+      "expert": "SAMPLE TEXT, NOT A FORECAST. Model guidance keeps the ridge in place through Friday, so the cold pool that formed on Tuesday is likely to persist and deepen. Ensemble snow depth holds near 8 cm on the floor, which is enough to keep the surface reflective. The Saturday trough is weak in most members and mixes the Basin only partly. Members that keep the trough to the north leave the cold pool intact into next week. The main uncertainty is whether Saturday's mixing reaches the floor."
+    }
+  },
+  "sources": [
+    "GEFS 06Z percentiles (fixture)",
+    "HRRR 09Z waypoints (fixture)",
+    "Synoptic observations to 11:50Z (fixture)"
+  ]
+}

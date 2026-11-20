@@ -55,6 +55,8 @@ describe('checkIngestReadiness', () => {
         const result = checkIngestReadiness({
             ...base,
             env: {},
+            // The seven dataTypes that existed on the day of the outage.
+            dataTypes: UPLOAD_DATA_TYPES.slice(0, 7),
             access: denyIf(p => p === '/x/.env' || (!writable.has(p) && !p.endsWith('.json'))),
         });
         expect(result.ready).toBe(false);
@@ -127,6 +129,7 @@ describe('checkIngestReadiness', () => {
     test('covers every dataType the upload route writes', () => {
         expect(UPLOAD_DATA_TYPES).toEqual([
             'observations', 'metadata', 'outlooks', 'llm_outlooks', 'images', 'forecasts', 'road-forecast',
+            'llm_forecasts', 'aircraft',
         ]);
     });
 });

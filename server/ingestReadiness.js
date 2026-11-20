@@ -14,24 +14,19 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { UPLOAD_DATA_TYPES } from './uploadPolicy.js';
 
-// Every directory POST /api/upload/:dataType writes into (the multer dataTypeMap in
-// routes/dataUpload.js). A dataType added there should be added here.
-export const UPLOAD_DATA_TYPES = [
-    'observations',
-    'metadata',
-    'outlooks',
-    'llm_outlooks',
-    'images',
-    'forecasts',
-    'road-forecast',
-];
+// Every directory POST /api/upload/:dataType writes into: one per dataType, listed once in
+// uploadPolicy.js and re-exported here for the readiness check and its tests.
+export { UPLOAD_DATA_TYPES };
 
 // Files the upload route rewrites in place after the data file has landed. A read-only one
 // turns the upload into a 500 even though its directory is writable.
 export const REWRITTEN_FILES = [
     'observations/filelist.json', // after every upload, whatever its dataType
     'road-forecast/latest.json',  // after every road-forecast upload
+    'llm_forecasts/latest_ffion.json',    // after each llm_forecasts upload from that persona
+    'llm_forecasts/latest_rhiannon.json',
 ];
 
 // Observations and metadata each arrive every 10 minutes, so half an hour with no accepted
