@@ -10,7 +10,9 @@ to-do list and the worked example.
 **The one-paragraph version.** The website is ready to receive tiered LLM forecast text and
 aircraft products. It will not generate any text itself. Seven things are asked of the
 producers (P1–P7 below, plus P8, P9 and P10 found on 20 Nov). The website's version 1.8.0 is held until
-P2 delivers live text, so P1 and P2 are the critical path.
+P2 delivers live text, so P1 and P2 are the critical path. A later session the same day
+measured what arrives against what the site reads (§6), agreed four cuts (§7), and added the
+asks for the map, the point forecasts and aviation (P11 to P20, §8 and §9).
 
 ---
 
@@ -209,5 +211,91 @@ runs to `.dev` early is safe and is the rehearsal.
 - **Schema.** None is pinned yet and no page reads the dataType. Propose each product's shape
   as a manifest entry in a website PR before relying on it being displayed.
 
+## 6. What arrives, and what the site does with it
+
+Measured on `.dev` on 2026-11-20 over the newest 24 files of each family. "Lands" is the time
+from a model run's start to its file reaching the box.
+
+| Family | Lands | The site reads | Sent but unread, or under-used |
+|---|---|---|---|
+| `forecast_hrrr_surface_layers_*` (36 × 38 grid, 19 h) | Three runs together every 6 h, 2.8 to 4.8 h after each starts | All five fields. Since 1.7.7 the map also works out wind speed, wind chill, the coldest and warmest hour and a rain total from them | The two older runs of each batch are never compared with the newest |
+| `forecast_hrrr_waypoints_us40_dense_*` (14 places, 19 h) | Hourly, 2 h 51 min | Temperature, wind, humidity, precipitation; `reference_stid` since 1.7.7 | `dewpoint_2m_c`, `mslp_hpa` |
+| `road-forecast` (17 points, 12 h) | Hourly, 1 h 23 min | `/roads`; precipitation type (homepage tile, snow line); gust, temperature, wind and snow depth (homepage forecast tile, 1.7.7) | `visibility`, `cloud_cover`, `rh_2m` are read only by `/roads` |
+| `forecast_hrrr_kvel_crosswind_*` (6 h at 15 min) | Hourly, 2 h 58 min | Aviation page | Three of its six hours are past when it lands |
+| `meteogram_UB-repr_*_GEFS.png` (5 variables) | Four times a day, 10.6 h after the cycle | Expert drawer, fire, air quality | Pictures: no numbers for the site to build on |
+| `map_obs_*` (52 stations) | Every 10 min | Temperature, wind, dew point, ozone, PM2.5, snow depth | `solar_radiation` (22 stations), `altimeter` (17) and `outgoing_radiation_sw` (1) are read by nothing; `soil_temp`, `ceiling` and `pressure` by one file each |
+| `map_obs_meta_*` | Every 10 min | Station names, positions, heights | See R1 |
+
+Never received on `.dev`: `llm_forecasts`, `llm_outlooks`, `aircraft`, GEFS percentiles.
+
+## 7. Agreed on 20 Nov: four cuts
+
+John agreed these in the session that built 1.7.7. They are his to make on CHPC; the website
+needs no change for any of them.
+
+| # | Cut | Why |
+|---|---|---|
+| **R1** | Send station metadata when it changes, or every 6 h as the manifest already says, not every 10 min | The newest 1,000 files are byte for byte the same. `.dev` holds 59,705 of them (703 MB) |
+| **R2** | Once surface layers come hourly (P11), send the newest run only, not three | The page reads one. Three runs are 4.4 MB every 6 h |
+| **R3** | Stop the five GEFS meteogram PNGs per cycle once the percentiles JSON (P4) flows and the page draws its own bands | Until then they stay: the expert drawer has nothing else |
+| **R4** | Prune old files on both boxes (a website job, in a later PR; nothing is deleted yet) | `.dev` holds 5.6 GB of uploads, 47% of its disk. About 30 days of forecasts, road forecasts and observations is the proposal |
+
+## 8. The next asks (P11 to P20)
+
+John expects to work through these in his CHPC sessions, in roughly this order. Names and
+units in **P12** are pinned in `DATA_MANIFEST.json` (manifest 2.3.0), so that the two sides
+agree before either writes code.
+
+| # | Ask | Unlocks on the website | Size |
+|---|---|---|---|
+| **P11** | Surface layers **every hour**, the newest run only, landing as soon after the run as `road-forecast` does | A map that is one or two hours old, not three to nine | S |
+| **P12** | **More map fields** in the surface layers. Drawn on arrival, with no website release: `wind_gust_10m_ms` (m/s), `snow_depth_mm` (Millimeters), `cloud_cover_pct` (percent), `rh_2m_pct` (percent). Names reserved, each needing a layer on the website first: `precip_type`, `visibility_km`, `pbl_height_m`, `temperature_700hpa_c`, and `terrain_m` (the model's terrain, sent once: it gives a snow level and elevation bands from the grid itself) | Gusts and snow on the ground on the map; snow cover is the ozone ingredient | M |
+| **P13** | **One point product** in place of waypoints and `road-forecast`, which overlap at nine towns with different stations and heights (Vernal is `QV4` in one and `KVEL` in the other; Dinosaur is 4,800 ft in one and 6,001 ft in the other). One station per place; the road fields (gust, visibility, precipitation type, snow depth, cloud) at every place; **48 h on the 00/06/12/18Z cycles**. This takes in P5 | "Tomorrow" on the homepage forecast tile and the town views; one source for the town table and `/roads` | M |
+| **P14** | **Fresher points:** waypoints and the KVEL crosswind land almost 3 h after the run; `road-forecast` manages 1 h 23 min | Three more usable hours on the town views and the runway forecast | S |
+| **P15** | Four waypoint `reference_stid`s are **not in the observation feed**: `COOPDSNU1` (Duchesne), `LRFU1` (Little Red Fox), `UTELP` (East Lapoint), `SPMU1` (Split Mountain). Add them to the feed, or pair those points with stations that are in it | Measured dots on the forecast chart for all 14 places (10 today) | S |
+| **P16** | See **R1**: station metadata on change | Less disk, nothing else | S |
+| **P17** | Say whether `wind_u_10m_ms` and `wind_v_10m_ms` are relative to **north or to the model grid**. The grid is turned about 8° from north over the Basin (the website measured this to place the map), so the answer moves every arrow by that much | Wind arrows that can be trusted to the degree | S |
+| **P18** | **Cold-pool fields:** 700 hPa temperature and boundary-layer height on the grid (names in P12), and a model sounding at Vernal or Ouray | An inversion-strength map; a first input to the inversion light (P7) | M |
+| **P19** | **Aviation** (§9) | The aviation page beyond runway winds | S to M |
+| **P20** | See **R3**: retire the meteogram PNGs after P4 | — | S |
+
+Two things found while building 1.7.7 that are questions, not asks:
+
+- **HRRR visibility looks too foggy.** In `road-forecast`, visibility fell under one mile at
+  a floor point in 347 of the last 720 runs, 1,990 point-hours of it with no precipitation
+  and 371 at exactly zero. The observation feed has no visibility to hold it against (P8), so
+  the homepage forecast tile leaves fog out. Is the field what the model gives, or is
+  something lost in the reduction to points?
+- **Daniels Summit's snow depth rose 8.6 inches in 12 h** in the 05Z run on 20 Nov
+  (10.4 to 19.0 in) with 18.6 mm of liquid over the same hours. That is believable for a
+  pass, and the homepage forecast tile now reads the rise in `snow_depth` as new snow (on the
+  floor only). If `snow_depth` is ever changed to water equivalent, that tile's inch
+  thresholds become wrong: please keep it a depth, and say so in the file.
+
+## 9. Aviation: what would be handy (P19)
+
+John asked what else the aviation page could use. In order of value for the effort:
+
+1. **The crosswind file to 18 h, and sooner.** It covers 6 h and lands 3 h in, so a pilot
+   sees 3 h ahead at best and 2 h just before the next file. If HRRR's sub-hourly output runs
+   to 18 h (check), send all of it; if not, hourly steps beyond hour 6 are still worth having.
+2. **Ceiling, visibility and flight category at KVEL** in that same file (`ceiling_ft_agl`,
+   `visibility_sm`, and `flight_category` as `VFR | MVFR | IFR | LIFR`). This is where fog
+   belongs: winter cold-pool fog is the Basin's main aviation hazard, and a pilot reads it as
+   a category, with the caveat above about how foggy the model runs.
+3. **Roosevelt (`K74V`) and Duchesne (`KU69`)** as further airports, each with its own runway
+   headings, in one file per airport or one file with an `airports` list. The page is written
+   around one airport today and would need a picker.
+4. **Winds and temperature aloft over KVEL** at 9,000 and 12,000 ft MSL, and the freezing
+   level. Light surface wind under a strong wind aloft is the cold-pool signature, and it is
+   wind shear on the climb out.
+5. **Surface pressure at KVEL** (or the altimeter setting) in the forecast, so that the
+   website can work out density altitude for summer afternoons. The formula is standard and
+   the website can compute it; it needs the pressure.
+6. In the observation feed, KVEL already sends `ceiling` and `altimeter`, which no page
+   reads. With visibility added (P8) the "Now" card could show the observed flight category
+   beside the forecast one.
+
 <sub>Drafted with Claude Code on 2026-11-20 from `docs/NWP-DASHBOARD-PLAN-nov20.md` (branch
-`preview/nwp`) and John's answers that day.</sub>
+`preview/nwp`) and John's answers that day. §6 to §9 were added the same day from the session
+that built 1.7.7.</sub>

@@ -30,10 +30,11 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Plumb a new forecast dataType from brc-tools | `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — endpoint, schemas, unit traps (permanent); then `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for what is still unanswered and who owns it |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
-| **Understand or change the weather forecast page** (hazards, town forecasts, the map, the expert drawer) | `docs/features/WEATHER-FORECAST-PAGE.md` — what each part shows and why, then the code map and the traps (two precipitation fields are running totals) |
-| Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`), `public/js/hrrrFields.js` + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
+| **Understand or change the weather forecast page** (hazards, town forecasts and their measured dots, the Basin in profile, the snow line, the banded map, the expert drawer) | `docs/features/WEATHER-FORECAST-PAGE.md` — what each part shows and why, what it costs the box, then the code map and the traps (two precipitation fields are running totals; the model grid is turned from north) |
+| Change the weather-forecast maps (HRRR surface layers), or add a map layer | `public/js/mapLayers.js` (scales, layers, the grid fit, the raster), `public/js/forecast_weather.js` (the Leaflet side), `public/js/hrrrFields.js` + `DATA_MANIFEST.json` `forecasts` (`optionalFields` names the fields the map draws on arrival); the old cold-start handoff is in History |
 | Convert observation units or derive RH | `public/js/met.js` (pure; null for an unknown unit); the feed is raw SI by design (`CLAUDE.md` §Data pipeline) |
 | Restyle a page, cards, the UI scale | `docs/STYLE-TOKEN-GUIDE.md` §Panes and §Scale; `public/css/theme/panes.css` |
+| Build the NWP dashboard, LLM forecast text or homepage status lights (1.8.0) | `docs/NWP-DASHBOARD-PLAN-nov20.md` (decisions, slices, producer asks); `docs/WEATHER-PAGE-CONTENDERS-nov13.md` for measurements and contender pros/cons |
 | Work on the aviation page (KVEL crosswind) | `public/js/aviation.js` + `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c |
 | Take screenshots on the dev box | no browser is installed and there is no sudo; Playwright's Chromium runs once its missing libraries are unpacked from `apt-get download` into `LD_LIBRARY_PATH` |
 | Count visitors / change a bot-vs-human rule | `server/middleware/visitorCounts.js` (definitions in its header and `TIERS`); bump `DEFINITIONS_VERSION`, then replay old logs with `node scripts/count-visitors.js` |

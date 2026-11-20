@@ -2,11 +2,28 @@
 // drawer. The hazards pane and the town forecasts above them are weatherHazards.js and
 // townForecast.js.
 //
-// Nothing here loads until it is wanted. The map's model run is 1.5 MB, so it is fetched when
-// the reader scrolls to the map; the ensemble charts are fetched when the drawer is opened.
-// Times are Mountain time, with the model's own UTC hour beside a run.
+// Nothing here loads until it is wanted. The map's model run is 1.5 MB (about 145 KB on the
+// wire), so it is fetched when the reader scrolls to the map; the ensemble charts are fetched
+// when the drawer is opened. Times are Mountain time, with the model's own UTC hour beside a run.
+//
+// The map draws one layer as colour bands, like a contour map, with a time slider under it.
+// What a layer is and how it is worked out is mapLayers.js; this file fetches, draws and
+// listens. Every layer is computed here in the browser from the run already downloaded, so
+// changing layer or hour asks the server for nothing.
 
 import { runningTotalForHour, sliceFieldForHour } from './hrrrFields.js';
+import {
+    DEFAULT_LAYER,
+    SCALES,
+    availableLayers,
+    fitGrid,
+    formatValue,
+    layerByKey,
+    legendBands,
+    rasterise,
+    valueAt,
+} from './mapLayers.js';
+import { bandRgb, cssRgb, tokenRgb } from './themeColours.js';
 import { firstHourFromNow, modelRunLabel, mountainTime } from './mountainTime.js';
 
 const API_IMAGES = '/api/static/images';
@@ -15,52 +32,23 @@ const GEFS_VARIABLES = ['temp', 'wind', 'mslp', 'snow', 'solar'];
 const HRRR_INDEX_FILE = 'forecast_hrrr_surface_layers_index.json';
 const HRRR_RUN_PREFIX = 'forecast_hrrr_surface_layers_';
 
-// Unit conversion helpers. Exporter payload stays in SI; we convert for display only.
-const cToF = c => (c * 9) / 5 + 32;
+// Unit conversion helpers for the notes under the map. The run stays in SI.
 const mmToIn = mm => mm / 25.4;
 const msToMph = ms => ms * 2.23694;
 
-const VARIABLE_CONFIG = {
-    temperature_2m_c: {
-        label: 'Temperature',
-        units: '°F',
-        thresholds: [5, 18, 28, 40, 50],
-        colors: ['#2c3e73', '#3f73b9', '#8fc8ff', '#fee08b', '#f46d43', '#c91d2d'],
-        emptyMessage: 'Temperature data unavailable',
-        displayTransform: cToF,
-        decimals: 1
-    },
-    rainfall_1h_mm: {
-        label: 'Rainfall',
-        units: 'in/hr',
-        thresholds: [0.01, 0.05, 0.10, 0.25, 0.50],
-        colors: ['#f7fbff', '#d9ecff', '#9bc9ff', '#4f97ff', '#2166f3', '#123a97'],
-        emptyMessage: 'Rainfall data unavailable',
-        displayTransform: mmToIn,
-        decimals: 2
-    },
-    // A running total since the run began, not an hourly amount: see hrrrFields.js.
-    snowfall_1h_mm: {
-        label: 'Snow since the run began',
-        units: 'in',
-        thresholds: [0.5, 1, 3, 6, 12],
-        colors: ['#f9fbff', '#dbe8ff', '#b7d2ff', '#7da8ff', '#4a74dd', '#283c96'],
-        emptyMessage: 'Snowfall data unavailable',
-        displayTransform: mmToIn,
-        decimals: 1,
-        runningTotal: true
-    }
-};
-
-function toDisplay(config, value) {
-    if (!Number.isFinite(value)) return value;
-    return config.displayTransform ? config.displayTransform(value) : value;
-}
+// The picture of a field: this many pixels per grid step, at this opacity (0 to 255) so the
+// greyed basemap's roads and names show through it.
+const RASTER_FACTOR = 12;
+const RASTER_ALPHA = 200;
+// The thin line along each band edge: the page's text colour, mostly see-through.
+const EDGE_ALPHA = 90;
+// One forecast hour per step while playing; slower on a wall screen (?kiosk=1).
+const PLAY_MS = 900;
+const KIOSK_PLAY_MS = 5000;
 
 let weatherMap;
-let scalarLayerGroup;
+let fieldOverlay;
 let windLayerGroup;
-let canvasRenderer;
 
 let allMeteograms = [];
 let currentModel = 'GEFS';
@@ -72,13 +60,14 @@ const surfaceState = {
     runs: [],
     selectedRunIndex: 0,
     payload: null,
-    selectedVariable: 'temperature_2m_c',
+    fit: null,          // where this run's grid sits on the map (mapLayers.fitGrid)
+    layerKey: DEFAULT_LAYER,
+    values: [],         // the field on the map now, in the layer's display units
     hourIndex: 0,
+    fromHour: 0,        // the hour under way: earlier hours of the run are history
     showWind: true,
-    kioskMode: false,
-    kioskInterval: null,
-    kioskCountdownInterval: null,
-    kioskCountdown: 30
+    playTimer: null,
+    playMs: PLAY_MS
 };
 
 // Run `start` once, the first time `element` comes within a short scroll of the viewport.
@@ -122,14 +111,10 @@ document.addEventListener('DOMContentLoaded', function() {
         drawer.addEventListener('toggle', () => { if (drawer.open) startMeteograms(); });
         if (drawer.open) startMeteograms();
     }
-
-    // Kiosk mode cycles the map for a wall screen. It is off the page unless asked for.
-    if (new URLSearchParams(window.location.search).get('kiosk') === '1') {
-        const controls = document.getElementById('kiosk-controls');
-        if (controls) controls.hidden = false;
-        initializeKioskMode();
-    }
 });
+
+// For a wall screen: ?kiosk=1 starts the map playing by itself, slowly, once it has loaded.
+const kioskRequested = () => new URLSearchParams(window.location.search).get('kiosk') === '1';
 
 // ============================================
 // MAP SETUP
@@ -139,19 +124,96 @@ function setupWeatherMap() {
     const mapElement = document.getElementById('weather-map');
     if (!mapElement) return;
 
+    // Quarter zoom steps let the map fit the Basin to its box instead of stopping a whole
+    // zoom level short of it.
     weatherMap = L.map('weather-map', {
         zoomControl: true,
-        preferCanvas: true
+        preferCanvas: true,
+        zoomSnap: 0.25
     }).setView([40.3033, -110.0153], 9);
 
-    canvasRenderer = L.canvas({ padding: 0.25 });
-    scalarLayerGroup = L.layerGroup().addTo(weatherMap);
+    fieldOverlay = createFieldOverlay().addTo(weatherMap);
     windLayerGroup = L.layerGroup().addTo(weatherMap);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 15,
         attribution: '© OpenStreetMap contributors'
     }).addTo(weatherMap);
+
+    // The value under the pointer, or under a tap.
+    weatherMap.on('mousemove click', (event) => updateReadout(event.latlng));
+    weatherMap.on('mouseout', () => updateReadout(null));
+    weatherMap.on('zoomend', redrawWindVectors);
+}
+
+/**
+ * A Leaflet layer that shows one picture (a canvas) stretched over the model grid.
+ *
+ * The grid is turned a few degrees from north, so the picture is a parallelogram on the map,
+ * not an upright rectangle, and Leaflet's own image overlay cannot place it. This one sets a
+ * CSS transform from three of the picture's corners. Panning and zooming then cost nothing:
+ * the browser moves the picture; only a change of layer or hour redraws it.
+ */
+function createFieldOverlay() {
+    const FieldOverlay = L.Layer.extend({
+        onAdd(map) {
+            this._canvas = L.DomUtil.create('canvas', 'field-raster leaflet-zoom-animated');
+            this._canvas.width = 0;
+            this._canvas.height = 0;
+            map.getPane('overlayPane').appendChild(this._canvas);
+            map.on('viewreset zoomend moveend resize', this._place, this);
+            map.on('zoomanim', this._animate, this);
+            this._place();
+        },
+
+        onRemove(map) {
+            map.off('viewreset zoomend moveend resize', this._place, this);
+            map.off('zoomanim', this._animate, this);
+            this._canvas.remove();
+        },
+
+        /** Show `picture` ({ width, height, data }) with its corners at the three positions given. */
+        setPicture(picture, corners) {
+            this._canvas.width = picture.width;
+            this._canvas.height = picture.height;
+            this._canvas.getContext('2d').putImageData(new ImageData(picture.data, picture.width, picture.height), 0, 0);
+            this._corners = corners;
+            this._canvas.hidden = false;
+            this._place();
+        },
+
+        clear() {
+            this._corners = null;
+            if (this._canvas) this._canvas.hidden = true;
+        },
+
+        // Pixel centres sit on grid points: the first and last pixel of a row are the grid's
+        // first and last columns. `point` turns a [lat, lon] into a position in the map's layer.
+        _transform(point) {
+            const { width, height } = this._canvas;
+            if (!this._corners || width < 2 || height < 2) return '';
+            const topLeft = point(this._corners.topLeft);
+            const topRight = point(this._corners.topRight);
+            const bottomLeft = point(this._corners.bottomLeft);
+            const a = (topRight.x - topLeft.x) / (width - 1);
+            const b = (topRight.y - topLeft.y) / (width - 1);
+            const c = (bottomLeft.x - topLeft.x) / (height - 1);
+            const d = (bottomLeft.y - topLeft.y) / (height - 1);
+            return `matrix(${a}, ${b}, ${c}, ${d}, ${topLeft.x - (a + c) / 2}, ${topLeft.y - (b + d) / 2})`;
+        },
+
+        _place() {
+            if (!this._map || !this._canvas) return;
+            this._canvas.style.transform = this._transform((position) => this._map.latLngToLayerPoint(position));
+        },
+
+        _animate(event) {
+            if (!this._map || !this._canvas) return;
+            this._canvas.style.transform = this._transform(
+                (position) => this._map._latLngToNewLayerPoint(L.latLng(position), event.zoom, event.center));
+        }
+    });
+    return new FieldOverlay();
 }
 
 // ============================================
@@ -363,9 +425,7 @@ window.closeFullscreen = closeFullscreen;
 // ============================================
 
 async function initializeSurfaceForecasts() {
-    const status = document.getElementById('forecast-status');
-    if (status) status.textContent = 'Loading HRRR surface layers...';
-
+    setForecastStatus('Loading the newest HRRR run…');
     setupSurfaceControls();
 
     try {
@@ -378,7 +438,10 @@ async function initializeSurfaceForecasts() {
 
         populateRunSelector(surfaceState.runs);
         await selectSurfaceRun(0);
-        setForecastStatus(`Loaded ${surfaceState.runs.length} HRRR runs for the Basin map.`);
+        if (kioskRequested()) {
+            surfaceState.playMs = KIOSK_PLAY_MS;
+            startPlaying();
+        }
     } catch (error) {
         console.error('Error initializing HRRR surface layers:', error);
         setForecastStatus('Unable to load HRRR surface layers right now.');
@@ -394,20 +457,27 @@ function setupSurfaceControls() {
         });
     }
 
-    const variableSelect = document.getElementById('weather-variable');
-    if (variableSelect) {
-        variableSelect.addEventListener('change', (event) => {
-            surfaceState.selectedVariable = event.target.value;
+    const layerSelect = document.getElementById('weather-variable');
+    if (layerSelect) {
+        layerSelect.addEventListener('change', (event) => {
+            surfaceState.layerKey = event.target.value;
             renderSurfaceForecast();
         });
     }
 
-    const timeSelect = document.getElementById('forecast-time');
-    if (timeSelect) {
-        timeSelect.addEventListener('change', (event) => {
+    const hourSlider = document.getElementById('forecast-hour');
+    if (hourSlider) {
+        // Dragging the slider is the reader taking over: stop playing.
+        hourSlider.addEventListener('input', (event) => {
+            stopPlaying();
             surfaceState.hourIndex = parseInt(event.target.value, 10);
             renderSurfaceForecast();
         });
+    }
+
+    const playButton = document.getElementById('forecast-play');
+    if (playButton) {
+        playButton.addEventListener('click', () => (surfaceState.playTimer ? stopPlaying() : startPlaying()));
     }
 
     const windToggle = document.getElementById('wind-toggle');
@@ -442,15 +512,14 @@ function populateRunSelector(runs) {
     const runSelect = document.getElementById('forecast-run');
     if (!runSelect) return;
 
-    runSelect.innerHTML = '';
-    runs.forEach((run, index) => {
+    runSelect.replaceChildren(...runs.map((run, index) => {
         const option = document.createElement('option');
         option.value = String(index);
         option.textContent = run.init_time
             ? `HRRR ${formatRun(run.init_time)}`
             : nameToRunLabel(run.filename);
-        runSelect.appendChild(option);
-    });
+        return option;
+    }));
     runSelect.value = '0';
 }
 
@@ -460,10 +529,13 @@ async function selectSurfaceRun(index) {
 
     surfaceState.selectedRunIndex = index;
     surfaceState.payload = await fetchSurfacePayload(run.filename);
+    surfaceState.fit = fitGrid(surfaceState.payload.grid);
     // A run reaches the page hours after it starts: open on the hour under way, not on hour 0.
     surfaceState.hourIndex = firstHourFromNow(surfaceState.payload.valid_times, Date.now());
+    surfaceState.fromHour = surfaceState.hourIndex;
 
-    populateHourSelector(surfaceState.payload);
+    populateLayerSelector(surfaceState.payload);
+    setupHourSlider(surfaceState.payload);
     renderSurfaceForecast();
 }
 
@@ -482,93 +554,177 @@ async function fetchSurfacePayload(filename) {
     return payload;
 }
 
-function populateHourSelector(payload) {
-    const timeSelect = document.getElementById('forecast-time');
-    if (!timeSelect || !payload) return;
+// The picker lists the layers this run can show. A layer whose field the producer has not
+// sent is simply not there; when the field arrives, so does the layer.
+function populateLayerSelector(payload) {
+    const layerSelect = document.getElementById('weather-variable');
+    if (!layerSelect) return;
 
-    const forecastHours = Array.isArray(payload.forecast_hours) ? payload.forecast_hours : [];
-    const validTimes = Array.isArray(payload.valid_times) ? payload.valid_times : [];
-
-    timeSelect.innerHTML = '';
-    forecastHours.forEach((hour, index) => {
+    const layers = availableLayers(payload);
+    if (!layers.some(layer => layer.key === surfaceState.layerKey)) {
+        surfaceState.layerKey = layers.some(layer => layer.key === DEFAULT_LAYER) ? DEFAULT_LAYER : layers[0]?.key;
+    }
+    layerSelect.replaceChildren(...layers.map((layer) => {
         const option = document.createElement('option');
-        option.value = String(index);
-        const validTime = validTimes[index] ? formatValidTime(validTimes[index]) : 'Unknown';
-        option.textContent = `${validTime} (+${hour} h)`;
-        timeSelect.appendChild(option);
-    });
-    timeSelect.value = String(surfaceState.hourIndex);
+        option.value = layer.key;
+        option.textContent = layer.label;
+        return option;
+    }));
+    if (surfaceState.layerKey) layerSelect.value = surfaceState.layerKey;
+    layerSelect.disabled = layers.length === 0;
 }
+
+// The slider runs from the hour under way to the end of the run: a run's first hours are
+// already past when it reaches the page.
+function setupHourSlider(payload) {
+    const hourSlider = document.getElementById('forecast-hour');
+    if (!hourSlider || !payload) return;
+    const last = Math.max(0, (Array.isArray(payload.valid_times) ? payload.valid_times.length : 1) - 1);
+    hourSlider.min = String(Math.min(surfaceState.fromHour, last));
+    hourSlider.max = String(last);
+    hourSlider.value = String(surfaceState.hourIndex);
+}
+
+function startPlaying() {
+    if (surfaceState.playTimer || !surfaceState.payload) return;
+    surfaceState.playTimer = setInterval(advanceForecastFrame, surfaceState.playMs);
+    drawPlayButton();
+}
+
+function stopPlaying() {
+    if (!surfaceState.playTimer) return;
+    clearInterval(surfaceState.playTimer);
+    surfaceState.playTimer = null;
+    drawPlayButton();
+}
+
+function drawPlayButton() {
+    const playButton = document.getElementById('forecast-play');
+    if (!playButton) return;
+    const playing = Boolean(surfaceState.playTimer);
+    playButton.setAttribute('aria-pressed', String(playing));
+    const icon = playButton.querySelector('i');
+    if (icon) icon.className = playing ? 'fas fa-pause' : 'fas fa-play';
+    const label = playButton.querySelector('.play-label');
+    if (label) label.textContent = playing ? 'Pause' : 'Play';
+}
+
+// One hour on; after the run's last hour, back to the hour under way.
+function advanceForecastFrame() {
+    const payload = surfaceState.payload;
+    if (!payload) return;
+    const last = payload.valid_times.length - 1;
+    surfaceState.hourIndex = surfaceState.hourIndex < last ? surfaceState.hourIndex + 1 : Math.min(surfaceState.fromHour, last);
+    renderSurfaceForecast();
+}
+
+// ── Colours ────────────────────────────────────────────────────────────────────────────
+
+const textColour = () => tokenRgb('--color-text');
+
+// ── Drawing ────────────────────────────────────────────────────────────────────────────
 
 function renderSurfaceForecast() {
     const payload = surfaceState.payload;
-    if (!payload || !weatherMap) {
+    const layer = layerByKey(surfaceState.layerKey);
+    if (!payload || !weatherMap || !layer) {
         renderNoSurfaceData('HRRR surface layer data unavailable');
         return;
     }
-
-    const variableKey = surfaceState.selectedVariable;
-    const config = VARIABLE_CONFIG[variableKey];
-    const scalarValues = config.runningTotal
-        ? runningTotalForHour(payload, variableKey, surfaceState.hourIndex)
-        : sliceFieldForHour(payload, variableKey, surfaceState.hourIndex);
-    const validValues = scalarValues.filter(value => Number.isFinite(value));
-
-    if (!validValues.length) {
-        renderNoSurfaceData(config.emptyMessage);
+    if (!surfaceState.fit) {
+        renderNoSurfaceData('This run\'s grid could not be placed on the map');
         return;
     }
 
-    clearMapLayers();
-    renderScalarLayer(payload, variableKey, scalarValues);
-    if (surfaceState.showWind) {
+    const scale = SCALES[layer.scale];
+    const [rows, cols] = payload.grid.shape;
+    const values = layer.values(payload, surfaceState.hourIndex, surfaceState.fromHour);
+    surfaceState.values = values;
+    if (!values.some(value => Number.isFinite(value))) {
+        renderNoSurfaceData(`${layer.label}: this run has no values for this hour`);
+        return;
+    }
+
+    const colours = scale.colours.map((colour) => {
+        const rgb = bandRgb(colour);
+        return rgb ? [...rgb, RASTER_ALPHA] : null;
+    });
+    const ink = textColour();
+    fieldOverlay.setPicture(
+        rasterise(values, rows, cols, RASTER_FACTOR, scale, colours, ink ? [...ink, EDGE_ALPHA] : null),
+        surfaceState.fit.corners);
+
+    fitMapToPayload(payload);
+    if (windLayerGroup) windLayerGroup.clearLayers();
+    // Arrows belong to one hour; a layer that covers the whole run has no one hour to show.
+    if (surfaceState.showWind && !layer.wholeRun) {
         renderWindVectors(payload, surfaceState.hourIndex);
     }
 
-    fitMapToPayload(payload);
-    updateCurrentDisplay(payload, config);
-    updateLegend(variableKey);
+    updateTimeControls(payload, layer);
+    updateCurrentDisplay(payload, layer);
+    updateLegend(layer, scale, values);
     updateSpecialConditions(payload);
     updateMapSource(payload);
+    updateReadout(null);
 
+    const note = document.getElementById('layer-note');
+    if (note) note.textContent = `${layer.note} Colour bands are drawn between model points about 6 km apart, so nothing narrower than that shows.`;
+    setForecastStatus(`Showing ${layer.label.toLowerCase()}${layer.wholeRun ? `, ${runWindowLabel(payload)}` : ` for ${hourLabel(payload)}`}.`);
+}
+
+const hourLabel = (payload) => {
     const validTime = payload.valid_times?.[surfaceState.hourIndex];
-    setForecastStatus(`Showing ${config.label.toLowerCase()} for ${validTime ? formatValidTime(validTime) : 'the selected hour'}.`);
+    return validTime ? formatValidTime(validTime) : 'the selected hour';
+};
+
+/** "11 PM to Fri 8 AM": the hours a whole-run layer covers. */
+function runWindowLabel(payload) {
+    const times = Array.isArray(payload.valid_times) ? payload.valid_times : [];
+    const from = times[Math.min(surfaceState.fromHour, times.length - 1)];
+    const to = times.at(-1);
+    return from && to ? `${formatValidTime(from)} to ${formatValidTime(to)}` : 'now to the end of the run';
 }
 
-function clearMapLayers() {
-    if (scalarLayerGroup) scalarLayerGroup.clearLayers();
-    if (windLayerGroup) windLayerGroup.clearLayers();
-}
-
-function renderScalarLayer(payload, variableKey, scalarValues) {
-    const config = VARIABLE_CONFIG[variableKey];
-    const { lats, lons } = payload.grid;
-    const [rows, cols] = payload.grid.shape;
-
-    for (let row = 0; row < rows; row += 1) {
-        for (let col = 0; col < cols; col += 1) {
-            const index = row * cols + col;
-            const value = scalarValues[index];
-            const lat = lats[index];
-            const lon = lons[index];
-
-            if (!Number.isFinite(value) || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-                continue;
-            }
-
-            const displayValue = toDisplay(config, value);
-
-            const marker = L.circleMarker([lat, lon], {
-                radius: 7,
-                renderer: canvasRenderer,
-                stroke: false,
-                fillOpacity: 0.72,
-                fillColor: colorForValue(config, displayValue)
-            });
-            marker.bindTooltip(`${config.label}: ${formatValue(displayValue, config.units, config.decimals)}`);
-            scalarLayerGroup.addLayer(marker);
-        }
+// The slider and its label. A layer that covers the whole run does not move with the slider,
+// so the slider and the play button are switched off while one is showing.
+function updateTimeControls(payload, layer) {
+    const hourSlider = document.getElementById('forecast-hour');
+    const hourText = document.getElementById('forecast-hour-label');
+    const playButton = document.getElementById('forecast-play');
+    const wholeRun = Boolean(layer.wholeRun);
+    if (wholeRun) stopPlaying();
+    if (hourSlider) {
+        hourSlider.disabled = wholeRun;
+        hourSlider.value = String(surfaceState.hourIndex);
+        hourSlider.setAttribute('aria-valuetext', hourLabel(payload));
     }
+    if (playButton) playButton.disabled = wholeRun;
+    if (hourText) {
+        const hoursOn = surfaceState.hourIndex - surfaceState.fromHour;
+        const ahead = hoursOn <= 0 ? 'the hour under way' : `${hoursOn} hour${hoursOn === 1 ? '' : 's'} on`;
+        hourText.textContent = wholeRun ? runWindowLabel(payload) : `${hourLabel(payload)} (${ahead})`;
+    }
+}
+
+const ARROW_SPACING_PX = 44;
+
+/** How many grid points to skip between arrows so they do not crowd at the map's zoom. */
+function arrowStep(payload) {
+    const { lats, lons } = payload.grid;
+    if (!weatherMap || !Number.isFinite(lats[0]) || !Number.isFinite(lats[1])) return 3;
+    const a = weatherMap.latLngToContainerPoint([lats[0], lons[0]]);
+    const b = weatherMap.latLngToContainerPoint([lats[1], lons[1]]);
+    const spacing = Math.hypot(a.x - b.x, a.y - b.y);
+    return spacing > 0 ? Math.max(1, Math.ceil(ARROW_SPACING_PX / spacing)) : 3;
+}
+
+// Arrows are redrawn after a zoom, so that zooming in shows more of them and zooming out fewer.
+function redrawWindVectors() {
+    const layer = layerByKey(surfaceState.layerKey);
+    if (!windLayerGroup || !surfaceState.payload || !layer) return;
+    windLayerGroup.clearLayers();
+    if (surfaceState.showWind && !layer.wholeRun) renderWindVectors(surfaceState.payload, surfaceState.hourIndex);
 }
 
 function renderWindVectors(payload, hourIndex) {
@@ -576,7 +732,8 @@ function renderWindVectors(payload, hourIndex) {
     const [rows, cols] = payload.grid.shape;
     const uValues = sliceFieldForHour(payload, 'wind_u_10m_ms', hourIndex);
     const vValues = sliceFieldForHour(payload, 'wind_v_10m_ms', hourIndex);
-    const step = Math.max(1, Math.floor((payload.stride || 2) * 1.5));
+    // Far enough apart to read as arrows at this zoom: about one every 44 pixels.
+    const step = arrowStep(payload);
 
     for (let row = 0; row < rows; row += step) {
         for (let col = 0; col < cols; col += step) {
@@ -593,16 +750,14 @@ function renderWindVectors(payload, hourIndex) {
             const speed = Math.hypot(u, v);
             if (speed < 0.5) continue;
 
-            const angle = (Math.atan2(u, v) * 180) / Math.PI;
-            const icon = L.divIcon({
-                className: 'wind-vector-icon',
-                html: `<div class="wind-vector-arrow" style="transform: rotate(${angle}deg)">↑</div>`,
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
+            const arrow = document.createElement('div');
+            arrow.className = 'wind-vector-arrow';
+            arrow.textContent = '↑';
+            arrow.style.transform = `rotate(${(Math.atan2(u, v) * 180) / Math.PI}deg)`;
+            const icon = L.divIcon({ className: 'wind-vector-icon', html: arrow, iconSize: [18, 18], iconAnchor: [9, 9] });
 
-            const marker = L.marker([lat, lon], { icon });
-            marker.bindTooltip(`Wind: ${msToMph(speed).toFixed(1)} mph`);
+            const marker = L.marker([lat, lon], { icon, keyboard: false });
+            marker.bindTooltip(`Wind: ${msToMph(speed).toFixed(0)} mph`);
             windLayerGroup.addLayer(marker);
         }
     }
@@ -623,46 +778,62 @@ function fitMapToPayload(payload) {
     weatherMap._surfaceBoundsSet = true;
 }
 
-function updateCurrentDisplay(payload, config) {
-    const currentVariable = document.getElementById('current-variable');
-    const currentTime = document.getElementById('current-time');
-
-    if (currentVariable) {
-        currentVariable.textContent = surfaceState.showWind
-            ? `${config.label} + Wind`
-            : config.label;
-    }
-
-    if (currentTime) {
-        const validTime = payload.valid_times?.[surfaceState.hourIndex];
-        currentTime.textContent = validTime ? formatValidTime(validTime) : 'Unknown valid time';
-    }
+function updateCurrentDisplay(payload, layer) {
+    const title = document.getElementById('current-variable');
+    const time = document.getElementById('current-time');
+    if (title) title.textContent = layer.label;
+    if (time) time.textContent = layer.wholeRun ? runWindowLabel(payload) : hourLabel(payload);
 }
 
-function updateLegend(variableKey) {
+// The value under the pointer (or under a tap), read from the same blended field the colours
+// are drawn from. `position` is null when the pointer leaves the map.
+function updateReadout(position) {
+    const readout = document.getElementById('map-readout');
+    if (!readout) return;
+    const layer = layerByKey(surfaceState.layerKey);
+    const payload = surfaceState.payload;
+    if (!position || !layer || !payload || !surfaceState.fit || !surfaceState.values.length) {
+        readout.textContent = 'Point at the map, or tap it, to read a value.';
+        return;
+    }
+    const [rows, cols] = payload.grid.shape;
+    const { col, row } = surfaceState.fit.toGrid(position.lat, position.lng);
+    const value = valueAt(surfaceState.values, rows, cols, col, row);
+    readout.textContent = Number.isFinite(value)
+        ? `${layer.label}: ${formatValue(SCALES[layer.scale], value)}`
+        : 'Outside the area the model run covers.';
+}
+
+function updateLegend(layer, scale, values) {
     const legend = document.getElementById('weather-legend');
     if (!legend) return;
 
-    const config = VARIABLE_CONFIG[variableKey];
-    const rows = config.colors.map((color, index) => {
-        const lowerBound = index === 0 ? `<= ${config.thresholds[0]}` : `> ${config.thresholds[index - 1]}`;
-        const upperBound = config.thresholds[index];
-        const label = upperBound === undefined
-            ? `${lowerBound} ${config.units}`
-            : `${lowerBound} to ${upperBound} ${config.units}`;
-        return `
-            <div class="legend-row">
-                <span class="legend-swatch" style="background:${color}"></span>
-                <span class="legend-label">${label}</span>
-            </div>
-        `;
-    }).join('');
+    const title = document.createElement('div');
+    title.className = 'map-legend-title';
+    title.textContent = layer.label;
 
-    legend.innerHTML = `
-        <div class="legend-title">${config.label}</div>
-        <div class="legend-subtitle">${config.units}</div>
-        <div class="legend-scale">${rows}</div>
-    `;
+    const bands = legendBands(scale, values);
+    if (bands.length === 0) {
+        const none = document.createElement('p');
+        none.className = 'map-legend-none';
+        none.textContent = `Under ${scale.edges[0]} ${scale.unit} everywhere on the map.`;
+        legend.replaceChildren(title, none);
+        return;
+    }
+
+    const list = document.createElement('ul');
+    list.className = 'map-legend-scale';
+    list.append(...bands.map((band) => {
+        const row = document.createElement('li');
+        row.className = 'map-legend-row';
+        const swatch = document.createElement('span');
+        swatch.className = 'map-legend-swatch';
+        swatch.setAttribute('aria-hidden', 'true');
+        swatch.style.backgroundColor = cssRgb(bandRgb(band.colour));
+        row.append(swatch, band.label);
+        return row;
+    }));
+    legend.replaceChildren(title, list);
 }
 
 // What stands out across the map at the selected hour. Each line is a count or a peak over the
@@ -670,6 +841,9 @@ function updateLegend(variableKey) {
 function updateSpecialConditions(payload) {
     const conditions = document.getElementById('special-conditions');
     if (!conditions) return;
+
+    const notesTitle = document.getElementById('map-notes-title');
+    if (notesTitle) notesTitle.textContent = `Across the map at ${hourLabel(payload)}`;
 
     const freezingFraction = fractionBelowValue(sliceFieldForHour(payload, 'temperature_2m_c', surfaceState.hourIndex), 0);
     const maxWind = maxSpeed(
@@ -724,28 +898,26 @@ function updateMapSource(payload) {
 }
 
 function renderNoSurfaceData(message) {
-    clearMapLayers();
+    stopPlaying();
+    surfaceState.values = [];
+    if (fieldOverlay) fieldOverlay.clear();
+    if (windLayerGroup) windLayerGroup.clearLayers();
+
     const legend = document.getElementById('weather-legend');
-    if (legend) legend.innerHTML = `<div class="legend-title">HRRR Surface Layers</div><div class="legend-subtitle">${message}</div>`;
-
-    const currentVariable = document.getElementById('current-variable');
-    const currentTime = document.getElementById('current-time');
-    if (currentVariable) currentVariable.textContent = 'HRRR Surface Layers';
-    if (currentTime) currentTime.textContent = message;
-}
-
-function colorForValue(config, value) {
-    for (let index = 0; index < config.thresholds.length; index += 1) {
-        if (value <= config.thresholds[index]) {
-            return config.colors[index];
-        }
+    if (legend) {
+        const title = document.createElement('div');
+        title.className = 'map-legend-title';
+        title.textContent = 'HRRR forecast map';
+        const none = document.createElement('p');
+        none.className = 'map-legend-none';
+        none.textContent = message;
+        legend.replaceChildren(title, none);
     }
-    return config.colors[config.colors.length - 1];
-}
 
-function formatValue(value, units, decimals = 1) {
-    if (!Number.isFinite(value)) return '--';
-    return `${value.toFixed(decimals)} ${units}`;
+    const title = document.getElementById('current-variable');
+    const time = document.getElementById('current-time');
+    if (title) title.textContent = 'HRRR forecast map';
+    if (time) time.textContent = message;
 }
 
 function fractionBelowValue(values, threshold) {
@@ -802,96 +974,4 @@ function formatValidTime(value) {
 function setForecastStatus(message) {
     const status = document.getElementById('forecast-status');
     if (status) status.textContent = message;
-}
-
-// ============================================
-// KIOSK MODE
-// ============================================
-
-function initializeKioskMode() {
-    const kioskToggle = document.getElementById('kiosk-toggle');
-    if (!kioskToggle) return;
-
-    kioskToggle.addEventListener('click', function() {
-        if (surfaceState.kioskMode) {
-            stopKioskMode();
-            this.innerHTML = '<i class="fas fa-play"></i> Start Kiosk Mode';
-        } else {
-            startKioskMode();
-            this.innerHTML = '<i class="fas fa-stop"></i> Stop Kiosk Mode';
-        }
-    });
-}
-
-function startKioskMode() {
-    surfaceState.kioskMode = true;
-    document.body.classList.add('kiosk-mode');
-    resetKioskCountdown();
-
-    const status = document.getElementById('kiosk-status');
-    const timer = document.getElementById('kiosk-timer');
-    if (status) {
-        status.querySelector('.status-text').textContent = 'Kiosk Mode Active';
-    }
-    if (timer) timer.style.display = 'inline-flex';
-
-    surfaceState.kioskInterval = setInterval(() => {
-        advanceForecastFrame();
-        resetKioskCountdown();
-    }, 30000);
-
-    surfaceState.kioskCountdownInterval = setInterval(() => {
-        surfaceState.kioskCountdown = Math.max(0, surfaceState.kioskCountdown - 1);
-        const countdown = document.getElementById('timer-countdown');
-        if (countdown) countdown.textContent = String(surfaceState.kioskCountdown);
-    }, 1000);
-}
-
-function stopKioskMode() {
-    surfaceState.kioskMode = false;
-    document.body.classList.remove('kiosk-mode');
-
-    if (surfaceState.kioskInterval) clearInterval(surfaceState.kioskInterval);
-    if (surfaceState.kioskCountdownInterval) clearInterval(surfaceState.kioskCountdownInterval);
-    surfaceState.kioskInterval = null;
-    surfaceState.kioskCountdownInterval = null;
-
-    const status = document.getElementById('kiosk-status');
-    const timer = document.getElementById('kiosk-timer');
-    if (status) {
-        status.querySelector('.status-text').textContent = 'Manual Mode';
-    }
-    if (timer) timer.style.display = 'none';
-}
-
-function resetKioskCountdown() {
-    surfaceState.kioskCountdown = 30;
-    const countdown = document.getElementById('timer-countdown');
-    if (countdown) countdown.textContent = String(surfaceState.kioskCountdown);
-}
-
-function advanceForecastFrame() {
-    const payload = surfaceState.payload;
-    if (!payload) return;
-
-    if (surfaceState.hourIndex < payload.forecast_hours.length - 1) {
-        surfaceState.hourIndex += 1;
-    } else if (surfaceState.selectedRunIndex < surfaceState.runs.length - 1) {
-        surfaceState.selectedRunIndex += 1;
-        const runSelect = document.getElementById('forecast-run');
-        if (runSelect) runSelect.value = String(surfaceState.selectedRunIndex);
-        selectSurfaceRun(surfaceState.selectedRunIndex);
-        return;
-    } else {
-        surfaceState.selectedRunIndex = 0;
-        surfaceState.hourIndex = 0;
-        const runSelect = document.getElementById('forecast-run');
-        if (runSelect) runSelect.value = '0';
-        selectSurfaceRun(0);
-        return;
-    }
-
-    const timeSelect = document.getElementById('forecast-time');
-    if (timeSelect) timeSelect.value = String(surfaceState.hourIndex);
-    renderSurfaceForecast();
 }

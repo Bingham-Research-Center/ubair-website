@@ -1,8 +1,9 @@
 /**
  * The homepage status lights: the rules that turn data into a colour and a line of words.
  *
- * Four tiles: Weather now, Ozone, Roads now, and Precip next 6 h. Every colour comes from a
- * rule in this file, never from generated text. Two things hold for every light:
+ * Five tiles: Weather now, a forecast tile named for the part of the day it covers ("Tonight"),
+ * Ozone, Roads now, and Precip next 6 h. Every colour comes from a rule in this file, never
+ * from generated text. Two things hold for every light:
  *
  *  - Grey means "we do not know": a source is missing, stale or failed. A failure never shows
  *    green, because green is a claim that someone checked.
@@ -10,12 +11,12 @@
  *    a `detail` sentence saying what it is based on and when that was checked.
  *
  * Thresholds were agreed with JRL on 2026-11-20 (docs/features/HOMEPAGE-STATUS-LIGHTS.md lists them in
- * plain words). Pure functions only: routes/statusLights.js gathers the inputs.
+ * plain words); the forecast tile's were agreed later the same day. Pure functions only: routes/statusLights.js gathers the inputs.
  */
 
 import { currentSeason, describeOutlook } from '../public/js/outlookSeasons.js';
-import { toMph } from '../public/js/met.js';
-import { mountainTime } from '../public/js/mountainTime.js';
+import { feelsLikeColdF, toFahrenheit, toMillimetres, toMph, windChillF } from '../public/js/met.js';
+import { mountainHour, mountainTime } from '../public/js/mountainTime.js';
 import { ROAD_KINDS, classifyUdotRoad, isMajorBasinPoint, isMajorBasinRoute } from './roadConditionRules.js';
 
 const MINUTE = 60 * 1000;
@@ -427,9 +428,10 @@ export function precipBands({ forecast, now }) {
  * The same forecast hour by hour, for the weather page: one type per band for each of the
  * hours still ahead in the newest run (up to twelve).
  *
- * Returns `{ status: 'ok', hours, bands, detail, asOf }`, where `hours` is the valid times and
- * each band carries `types`, one per hour: 'snow' | 'rain' | 'mix' | 'dry', or null where the
- * model gives no type for that hour.
+ * Returns `{ status: 'ok', hours, bands, places, snowLine, detail, asOf }`, where `hours` is
+ * the valid times and each band carries `types`, one per hour: 'snow' | 'rain' | 'mix' | 'dry',
+ * or null where the model gives no type for that hour. `places` is the same for each forecast
+ * point, highest first, and `snowLine` says where rain turns to snow in each hour (`snowLineAt`).
  */
 export function precipByHour({ forecast, now }) {
     const unavailable = (detail) => ({ status: 'unavailable', hours: [], bands: [], detail, asOf: null });
@@ -465,13 +467,265 @@ export function precipByHour({ forecast, now }) {
         return { key, label, range, places: inBand.map((point) => point.name), types };
     });
 
+    // The same hours point by point, highest first, for the picture of the hillside, and where
+    // rain turns to snow in each hour.
+    const places = points
+        .map((point) => ({
+            name: point.name,
+            elevationFt: Math.round((point.elevation_m * FEET_PER_METRE) / 10) * 10,
+            types: hours.map((hour) => {
+                const type = point.forecasts.find((candidate) => candidate?.valid_time === hour)?.precip_type;
+                return typeof type === 'string' ? pointType(type) : null;
+            }),
+        }))
+        .sort((a, b) => b.elevationFt - a.elevationFt);
+    const snowLine = hours.map((_, i) => snowLineAt(places.map((place) => ({ elevationFt: place.elevationFt, type: place.types[i] }))));
+
     const init = Number.isFinite(Date.parse(forecast.init_time)) ? forecast.init_time : null;
     return {
         status: 'ok',
         hours,
         bands,
+        places,
+        snowLine,
         detail: `HRRR forecast${init ? ` run at ${mountainTime(Date.parse(init), now)}` : ''}: `
             + 'the kind of precipitation the model expects at points along the highways, not a measurement.',
         asOf: init,
     };
+}
+
+/** One point's type in one hour, in the tile's four words. Anything frozen but not snow is a mix. */
+function pointType(type) {
+    if (type === 'snow' || type === 'rain') return type;
+    if (type === 'none') return 'dry';
+    return 'mix';
+}
+
+/**
+ * Where rain turns to snow in one hour, from each forecast point's height and type:
+ *
+ *   { kind: 'between', lowFt, highFt }  rain or a mix up to lowFt, snow from highFt up: the
+ *                                       line lies somewhere between the two
+ *   { kind: 'zone', lowFt, highFt }     snow as low as lowFt and rain or a mix as high as
+ *                                       highFt: both fall between them, as they do when the
+ *                                       line sits lower at one end of the Basin than the other
+ *   { kind: 'snow', downToFt }          snow at every point with precipitation, the lowest at downToFt
+ *   { kind: 'rain', upToFt }            rain or a mix at every point with precipitation, the highest at upToFt
+ *   null                                no precipitation at any point, or no forecast
+ *
+ * It is always a range between two forecast points and never a single height: fifteen points
+ * cannot say more. A mix counts with rain: above the range it is all snow.
+ */
+export function snowLineAt(points) {
+    const wet = (points || []).filter((point) => Number.isFinite(point?.elevationFt) && ['snow', 'rain', 'mix'].includes(point.type));
+    if (wet.length === 0) return null;
+    const snow = wet.filter((point) => point.type === 'snow').map((point) => point.elevationFt);
+    const liquid = wet.filter((point) => point.type !== 'snow').map((point) => point.elevationFt);
+    if (liquid.length === 0) return { kind: 'snow', downToFt: Math.min(...snow) };
+    if (snow.length === 0) return { kind: 'rain', upToFt: Math.max(...liquid) };
+    const lowestSnow = Math.min(...snow);
+    const highestLiquid = Math.max(...liquid);
+    return lowestSnow > highestLiquid
+        ? { kind: 'between', lowFt: highestLiquid, highFt: lowestSnow }
+        : { kind: 'zone', lowFt: lowestSnow, highFt: highestLiquid };
+}
+
+// ── The forecast tile: "Tonight", "Tomorrow morning" ─────────────────────────────────────
+
+// The tile is named for the part of the day it covers, in Mountain time, and the name follows
+// the clock: in the afternoon it is "Tonight", after midnight "This morning" (JRL, 2026-11-20).
+// The HRRR road forecast reaches about eleven hours ahead, so one part of the day fits.
+export const FORECAST_HREF = '/forecast_weather';
+// Strong gusts below 7,500 ft: the same 40 mph as Weather now, and the National Weather
+// Service's high wind warning level.
+export const FORECAST_GUST_AMBER_MPH = GUST_MPH;
+export const FORECAST_GUST_RED_MPH = 58;
+// New snow on the Basin floor (below 5,900 ft), from the rise in the model's snow depth. The
+// file's precipitation amount is a running total with an hourly name, so it is not used.
+export const NEW_SNOW_AMBER_IN = 1;
+export const NEW_SNOW_RED_IN = 4;
+// Cold below 7,500 ft: the wind chill, or the air temperature when the wind is too light for
+// a wind chill to be defined.
+export const COLD_AMBER_F = 0;
+export const COLD_RED_F = -20;
+// The run must put at least this many forecast hours inside the part of the day the tile is
+// named for, or the tile is grey: a title is a claim about what was checked.
+export const FORECAST_MIN_HOURS = 3;
+
+const NEW_SNOW_FLOOR_MAX_FT = 5900;
+const MM_PER_INCH = 25.4;
+// Colder or windier than anything the Basin has recorded: a broken value, not a forecast.
+const MIN_PLAUSIBLE_TEMP_F = -70;
+
+/** The next instants after `fromMs` at which a six-hour part of the day begins in Mountain time. */
+function nextBlockStarts(fromMs, count) {
+    const starts = [];
+    // Hour by hour, so a daylight-saving change cannot put a boundary in the wrong place.
+    for (let t = Math.floor(fromMs / HOUR) * HOUR + HOUR; starts.length < count && t < fromMs + 4 * DAY; t += HOUR) {
+        if (mountainHour(t) % 6 === 0) starts.push(t);
+    }
+    return starts;
+}
+
+const BLOCK_NAMES = { 0: 'Overnight', 6: 'This morning', 12: 'This afternoon', 18: 'Tonight' };
+
+/**
+ * Which part of the day the forecast tile covers.
+ *
+ * It is the six hours after the ones under way: "This afternoon" in the morning, "Tonight"
+ * in the afternoon, "Overnight" in the evening, "This morning" after midnight. Late in the
+ * evening, once the newest run reaches at least three hours into the next morning, the tile
+ * looks past the small hours to "Tomorrow morning", which is what a reader is planning for.
+ *
+ * Returns `{ title, startMs, endMs }`. The tile weighs every forecast hour from now to
+ * `endMs`, so "Tomorrow morning" includes the night before it.
+ */
+export function forecastPeriod(now, validTimesMs = []) {
+    const [first, second, third] = nextBlockStarts(now, 3);
+    const next = { title: BLOCK_NAMES[mountainHour(first)], startMs: first, endMs: second };
+    if (mountainHour(first) !== 0) return next;
+    const intoMorning = validTimesMs.filter((t) => t >= second && t < third).length;
+    return intoMorning >= FORECAST_MIN_HOURS ? { title: 'Tomorrow morning', startMs: second, endMs: third } : next;
+}
+
+/** The largest rise in a series, from any value to a later one. Zero if it only falls. */
+export function largestRise(values) {
+    let lowest = Infinity;
+    let rise = 0;
+    for (const value of values) {
+        if (!Number.isFinite(value)) continue;
+        if (value < lowest) lowest = value;
+        if (value - lowest > rise) rise = value - lowest;
+    }
+    return rise;
+}
+
+const aboutInches = (inches) => {
+    const rounded = inches < 2 ? Math.round(inches * 2) / 2 : Math.round(inches);
+    return `${rounded} in`;
+};
+
+/**
+ * The forecast tile.
+ *
+ *   red    gusts of 58 mph, 4 inches of new snow on the floor, or a wind chill of -20 °F
+ *   amber  gusts of 40 mph, 1 inch of new snow on the floor, or a wind chill of 0 °F
+ *   green  none of those in the forecast hours from now to the end of the named part of the day
+ *   grey   no forecast, the newest run does not reach that part of the day, or it lacks the
+ *          gusts, temperatures or snow depth needed to say that nothing is coming
+ *
+ * Gusts and cold are read below 7,500 ft, new snow below 5,900 ft: higher ground is the roads
+ * light's job. Fog is left out on purpose: the model's visibility dips below a mile on the
+ * floor in about half of all runs and we have no visibility observations to hold it against.
+ *
+ * @param forecast  the parsed road-forecast latest.json, or null
+ */
+export function forecastLight({ forecast, now }) {
+    const validTimes = (Array.isArray(forecast?.points) ? forecast.points : [])
+        .flatMap((point) => (Array.isArray(point?.forecasts) ? point.forecasts : []).map((entry) => Date.parse(entry?.valid_time)))
+        .filter(Number.isFinite);
+    const period = forecastPeriod(now, [...new Set(validTimes)]);
+    const make = (level, line, detail, asOf = null) => light('ahead', period.title, FORECAST_HREF, level, line, detail, asOf);
+
+    if (!forecast || !Array.isArray(forecast.points)) {
+        return make('grey', 'Forecast unavailable', 'The HRRR road forecast is not available right now.');
+    }
+    const points = [...new Map(forecast.points
+        .filter((point) => Number.isFinite(point?.elevation_m) && Array.isArray(point.forecasts))
+        .map((point) => [`${point.lat},${point.lon}`, point])).values()]
+        .filter((point) => point.elevation_m * FEET_PER_METRE < FLOOR_MAX_FT);
+
+    const timeOf = (entry) => Date.parse(entry?.valid_time);
+    const inWindow = (entry) => timeOf(entry) > now && timeOf(entry) < period.endMs;
+    const inPeriod = (entry) => inWindow(entry) && timeOf(entry) >= period.startMs;
+    const hours = [...new Set(points.flatMap((point) => point.forecasts.filter(inWindow).map(timeOf)))].sort((a, b) => a - b);
+    const hoursInPeriod = new Set(points.flatMap((point) => point.forecasts.filter(inPeriod).map(timeOf)));
+    if (hoursInPeriod.size < FORECAST_MIN_HOURS) {
+        return make('grey', 'Forecast does not reach this far',
+            `The newest HRRR road forecast does not reach far enough into ${period.title.toLowerCase()} to speak for it.`);
+    }
+
+    const unit = (variable) => forecast.variables?.[variable]?.units;
+    let gust = null;  // { mph, where, time }
+    let cold = null;  // { f, where, time, windChill }
+    let snow = null;  // { inches, where }
+    let snowRead = false; // a snow depth could be read at a floor point
+    for (const point of points) {
+        for (const entry of point.forecasts.filter(inWindow)) {
+            const mph = toMph(entry.wind_gust, unit('wind_gust'));
+            if (mph !== null && mph >= 0 && mph <= MAX_PLAUSIBLE_GUST_MPH && (!gust || mph > gust.mph)) {
+                gust = { mph, where: point.name, time: timeOf(entry) };
+            }
+            const tempF = toFahrenheit(entry.temp_2m, unit('temp_2m'));
+            const windMph = toMph(entry.wind_speed_10m, unit('wind_speed_10m'));
+            const feels = tempF === null || tempF < MIN_PLAUSIBLE_TEMP_F ? null : feelsLikeColdF(tempF, windMph);
+            if (feels !== null && (!cold || feels < cold.f)) {
+                cold = { f: feels, where: point.name, time: timeOf(entry), windChill: windChillF(tempF, windMph) !== null };
+            }
+        }
+        if (point.elevation_m * FEET_PER_METRE < NEW_SNOW_FLOOR_MAX_FT) {
+            // The hour under way is the starting depth, so snow falling in the next hour counts.
+            const depths = point.forecasts
+                .filter((entry) => timeOf(entry) > now - HOUR && timeOf(entry) < period.endMs)
+                .map((entry) => toMillimetres(entry.snow_depth, unit('snow_depth')));
+            if (depths.some((depth) => depth !== null)) snowRead = true;
+            const inches = largestRise(depths) / MM_PER_INCH;
+            if (inches > 0 && (!snow || inches > snow.inches)) snow = { inches, where: point.name };
+        }
+    }
+
+    const coldWords = (c, capital = true) => {
+        const what = c.windChill ? 'wind chill' : 'temperature';
+        return `${capital ? what[0].toUpperCase() + what.slice(1) : what} ${Math.round(c.f)}°F`;
+    };
+    const found = [];
+    if (gust && gust.mph >= FORECAST_GUST_AMBER_MPH) {
+        found.push({
+            red: gust.mph >= FORECAST_GUST_RED_MPH,
+            line: `Gusts ${Math.round(gust.mph)} mph near ${gust.where}`,
+            also: 'strong gusts',
+            detail: `gusts of ${Math.round(gust.mph)} mph near ${gust.where} around ${mountainTime(gust.time, now)}`,
+        });
+    }
+    if (snow && snow.inches >= NEW_SNOW_AMBER_IN) {
+        found.push({
+            red: snow.inches >= NEW_SNOW_RED_IN,
+            line: `About ${aboutInches(snow.inches)} of new snow near ${snow.where}`,
+            also: 'new snow',
+            detail: `about ${aboutInches(snow.inches)} of new snow near ${snow.where}`,
+        });
+    }
+    if (cold && cold.f <= COLD_AMBER_F) {
+        found.push({
+            red: cold.f <= COLD_RED_F,
+            line: `${coldWords(cold)} near ${cold.where}`,
+            also: 'cold',
+            detail: `${coldWords(cold, false)} near ${cold.where} around ${mountainTime(cold.time, now)}`,
+        });
+    }
+    // Red reasons lead; the order above (wind, snow, cold) breaks ties.
+    found.sort((a, b) => Number(b.red) - Number(a.red));
+
+    const init = Number.isFinite(Date.parse(forecast.init_time)) ? forecast.init_time : null;
+    const covers = `HRRR forecast${init ? ` run at ${mountainTime(Date.parse(init), now)}` : ''}, `
+        + `for ${mountainTime(hours[0], now)} to ${mountainTime(hours.at(-1), now)}`;
+    const caveat = 'A model forecast for points along the highways, not a measurement or a warning.';
+
+    if (found.length === 0) {
+        // "Nothing notable" is a claim that all three were looked at. A file without gusts,
+        // temperatures or snow depth in units it states cannot support it.
+        const unread = [gust ? null : 'gusts', cold ? null : 'temperatures', snowRead ? null : 'snow depth'].filter(Boolean);
+        if (unread.length > 0) {
+            return make('grey', 'Forecast incomplete',
+                `The newest HRRR road forecast has no readable ${unread.join(' or ')}, so this tile cannot say that nothing is coming.`);
+        }
+        const quiet = `no gusts of ${FORECAST_GUST_AMBER_MPH} mph, no inch of new snow on the Basin floor, `
+            + `and nothing as cold as ${COLD_AMBER_F}°F`;
+        const extremes = `strongest gust ${Math.round(gust.mph)} mph, coldest ${coldWords(cold, false)}`;
+        return make('green', 'Nothing notable', `${covers}: ${quiet} (${extremes}). ${caveat}`, init);
+    }
+    const others = found.slice(1).map((reason) => reason.also);
+    const line = `${found[0].line}${others.length ? `, and ${others.join(' and ')}` : ''}`;
+    return make(found.some((reason) => reason.red) ? 'red' : 'amber', line,
+        `${covers}: ${found.map((reason) => reason.detail).join('; ')}. ${caveat}`, init);
 }

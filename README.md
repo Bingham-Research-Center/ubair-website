@@ -26,12 +26,12 @@ how to read it) and ends with where the code and tests are. Words you do not kno
 
 | Feature | In one line | Where it stands (20 Nov 2026) | Read more | Issues |
 |---|---|---|---|---|
-| **Homepage status lights** | Four tiles: weather alerts, ozone risk, road trouble, and rain or snow by elevation | On `.dev` | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
-| **Weather forecast page** | Alerts, a forecast for your town hour by hour, then a map | On `.dev` | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
+| **Homepage status lights** | Five tiles: weather alerts, what is forecast for the next part of the day, ozone risk, road trouble, and rain or snow by elevation | On `.dev` | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
+| **Weather forecast page** | Alerts; a forecast for your town hour by hour, checked against its weather station; the Basin in profile; where rain turns to snow; then a map in colour bands with a time slider | On `.dev` | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
 | **NWS weather alerts** | One honest source of official alerts for every page: a failed check never reads as "no alerts" | On `.dev` | [NWS-WEATHER-ALERTS](docs/features/NWS-WEATHER-ALERTS.md) | #404 |
 | **Data upload path** | Who may send data to the site, what they may send, and what is refused | On `.dev` | [DATA-UPLOAD-PATH](docs/features/DATA-UPLOAD-PATH.md) | #402 |
 | **Road weather page** | It no longer invents roads when UDOT is down, and snow covering a main route is red | On `.dev`; three more batches parked | [ROAD-WEATHER-PAGE](docs/features/ROAD-WEATHER-PAGE.md) | #336, #337–#339 |
-| **LLM forecast text** | Forecast text in three versions (Public, Industry, Expert), written by a language model and labelled as such | Rules live on `.dev`; **no text yet**, it waits on the producers | [LLM-FORECAST-TEXT](docs/features/LLM-FORECAST-TEXT.md) | #405, #406, #408, #410, #411 |
+| **LLM forecast text** | Forecast text in three versions (Public, Industry, Expert), written by a language model and labelled as such | Rules and the drawing code live on `.dev`; **no text yet**, it waits on the producers | [LLM-FORECAST-TEXT](docs/features/LLM-FORECAST-TEXT.md) | #405, #406, #408, #410, #411 |
 | GEFS bands on the weather page | Days 1 to 15 as a likely range instead of 31 tangled lines | Waits on producer data | | #409 |
 | Expert page | Aircraft and other research products, labelled experimental | Waits on producer data | | #412 |
 | Next-3-days and inversion lights | Two more homepage tiles | Wait on producer data | | #413 |
@@ -42,8 +42,7 @@ how to read it) and ends with where the code and tests are. Words you do not kno
 - **"Waits on the producers"** means the website side is ready or planned, and the computers
   that make the data have work to do first. Their list:
   [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md).
-- The whole plan, with its reasons: `docs/NWP-DASHBOARD-PLAN-nov20.md` on the branch
-  [`preview/nwp`](https://github.com/Bingham-Research-Center/ubair-website/blob/preview/nwp/docs/NWP-DASHBOARD-PLAN-nov20.md).
+- The whole plan, with its reasons: [`docs/NWP-DASHBOARD-PLAN-nov20.md`](docs/NWP-DASHBOARD-PLAN-nov20.md).
 - This table is a snapshot. Delete it, or fold it into "What's here", once v2.0.0 is out.
 
 ## Human-to-human warnings

@@ -205,3 +205,76 @@ export function validateLlmForecast(doc, { filename = null, now = null } = {}) {
 
     return { ok: errors.length === 0, errors };
 }
+
+// ── Showing a file: the guards every page applies ─────────────────────────────────────────
+//
+// The upload route has already refused a file that breaks the contract. These guards are about
+// time: text that was right when it was written must not outlive the weather it describes.
+// A block that fails a guard is not drawn at all. There is no placeholder and no "stale" badge:
+// old forecast text with a warning beside it is still old forecast text.
+
+const HOUR_MS = 60 * 60 * 1000;
+
+/**
+ * May text from this file be shown now? `{ show, reason }`.
+ *
+ *   'missing'      there is no file, or it is not an llm_forecast/1 file
+ *   'expired'      now is past the file's own valid_until
+ *   'stale'        it is older than its persona's staleHours (two missed runs)
+ *   'future'       it claims to have been issued more than 15 minutes from now
+ *   'older-run'    it describes an older GEFS cycle than the chart beside it
+ *
+ * `chartGefs` is the GEFS cycle (a UTC time string) that the page is showing next to the text,
+ * if it shows one. Only GEFS is compared: HRRR runs hourly and the text is written every six
+ * hours, so an HRRR comparison would hide the text almost all the time.
+ */
+export function fileState(doc, { now, chartGefs = null } = {}) {
+    const hide = (reason) => ({ show: false, reason });
+    if (!isPlainObject(doc) || doc.schema !== LLM_FORECAST_SCHEMA || !Object.hasOwn(PERSONAS, doc.persona)) {
+        return hide('missing');
+    }
+    const issued = parseUtc(doc.issued);
+    const validUntil = parseUtc(doc.valid_until);
+    if (issued === null || validUntil === null) return hide('missing');
+    if (issued > now + FUTURE_SLACK_MS) return hide('future');
+    if (now >= validUntil) return hide('expired');
+    if (now - issued > PERSONAS[doc.persona].staleHours * HOUR_MS) return hide('stale');
+
+    const chart = parseUtc(chartGefs);
+    const described = parseUtc(doc.describes?.gefs);
+    if (chart !== null && described !== null && described < chart) return hide('older-run');
+    return { show: true, reason: null };
+}
+
+/**
+ * The text for one placement, tier by tier, from whichever persona owns each tier.
+ *
+ * `files` is `{ ffion, rhiannon }`: each the parsed latest file for that persona, or null.
+ * Returns `{ tiers }` with only the tiers that have showable text, in tab order; each is
+ * `{ tier, text, persona, issued, describes, sources }`. Returns null when no tier has any, in
+ * which case the page draws nothing.
+ */
+export function placementText(placementKey, files, { now, chartGefs = null } = {}) {
+    if (!Object.hasOwn(PLACEMENTS, placementKey)) return null;
+    const tiers = [];
+    for (const tier of TIERS) {
+        const spec = PLACEMENTS[placementKey].tiers[tier];
+        if (!spec) continue;
+        const doc = files?.[spec.persona];
+        if (!fileState(doc, { now, chartGefs }).show) continue;
+        const text = doc.placements?.[placementKey]?.[tier];
+        if (typeof text !== 'string' || text.trim() === '') continue;
+        // A file that somehow got past the upload check with an overlong text is not shown:
+        // the page never truncates, and a wall of text is worse than no block.
+        if (hasControlChars(text) || wordCount(text) > wordLimit(spec.words)) continue;
+        tiers.push({
+            tier,
+            text: text.trim(),
+            persona: spec.persona,
+            issued: doc.issued,
+            describes: isPlainObject(doc.describes) ? { ...doc.describes } : {},
+            sources: Array.isArray(doc.sources) ? doc.sources.filter(isLine) : [],
+        });
+    }
+    return tiers.length > 0 ? { tiers } : null;
+}

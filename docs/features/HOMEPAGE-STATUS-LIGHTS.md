@@ -1,12 +1,13 @@
 # Homepage Status Lights
 
-**What it is.** Four small tiles at the top of the homepage that answer, at a glance, "is
-anything going on in the Basin right now?" Three are lights (red, amber, green or grey) and one
-is a short forecast:
+**What it is.** Five small tiles at the top of the homepage that answer, at a glance, "is
+anything going on in the Basin, now or in the next few hours?" Four are lights (red, amber,
+green or grey) and one is a short forecast:
 
 | Tile | Question it answers | Where the answer comes from |
 |---|---|---|
 | **Weather now** | Is there a weather alert where people live? | National Weather Service alerts, plus wind measured at stations on the Basin floor |
+| **Tonight** (the name changes with the clock) | Is strong wind, new snow or hard cold forecast for the next part of the day? | The HRRR weather model, at points along the highways |
 | **Ozone** | What do the forecasters expect for ozone over the next ten days? | The forecasters' own ozone outlook, and nothing else |
 | **Roads now** | Are the main highways in trouble? | Utah Department of Transportation (UDOT) road reports |
 | **Precip next 6 h** | Will it rain or snow, and how high up? | The HRRR weather model, at points along the highways |
@@ -14,7 +15,8 @@ is a short forecast:
 Under them sits a plain row of current conditions at Vernal airport: temperature, humidity
 and wind.
 
-**Since:** version 1.7.5 (issue #403). **Live at:** the homepage, `/`.
+**Since:** version 1.7.5 (issue #403); the forecast tile since 1.7.7. **Live at:** the
+homepage, `/`.
 
 ## How to read a tile
 
@@ -48,6 +50,45 @@ constant named in the last column and its test.
   (45 from UDOT's road stations, which report less often), and not an impossible number.
 - Our own observation feed carries no gusts yet, which is why UDOT's road stations are used
   for gusts and our feed for steady wind.
+
+### The forecast tile ("Tonight", "Tomorrow morning")
+
+**Its name is the part of the day it covers**, in Mountain time, and the name follows the clock
+(`forecastPeriod`). John asked for the words people use, not "next 12 hours":
+
+| When you look | The tile is named | And covers |
+|---|---|---|
+| Midnight to 6 AM | **This morning** | now until noon |
+| 6 AM to noon | **This afternoon** | now until 6 PM |
+| Noon to 6 PM | **Tonight** | now until midnight |
+| 6 PM to midnight | **Overnight** | now until 6 AM |
+| Late evening, once the newest run reaches 3 hours into the morning (about 9:30 PM on) | **Tomorrow morning** | now until noon tomorrow |
+
+The model run it reads reaches about 11 hours ahead, so one part of the day fits. "Tomorrow"
+as a whole day needs the 48-hour point forecast (producer ask P13).
+
+| Colour | When | In the code (`server/statusLights.js`) |
+|---|---|---|
+| Red | Gusts of **58 mph**, **4 inches** of new snow on the floor, or a wind chill of **−20 °F** | `FORECAST_GUST_RED_MPH`, `NEW_SNOW_RED_IN`, `COLD_RED_F` |
+| Amber | Gusts of **40 mph**, **1 inch** of new snow on the floor, or a wind chill of **0 °F** | `FORECAST_GUST_AMBER_MPH`, `NEW_SNOW_AMBER_IN`, `COLD_AMBER_F` |
+| Green | None of those in the forecast hours from now to the end of the named part of the day | `forecastLight` |
+| Grey | No forecast; the newest run has fewer than 3 hours inside the named part of the day; or the file lacks the gusts, temperatures or snow depth needed to say that nothing is coming | `FORECAST_MIN_HOURS` |
+
+- **Gusts and cold are read below 7,500 ft, new snow below 5,900 ft.** Higher ground is the
+  roads light's job.
+- **New snow is the rise in the model's snow depth**, not its precipitation amount, which is a
+  running total with an hourly name (producer ask P9). Snow already on the ground does not
+  count, and neither does melting.
+- **Cold is the wind chill** (the National Weather Service formula), or the air temperature
+  itself when the wind is under 3 mph: a still night in a cold pool is cold with no wind
+  chill at all, and the tile then says "Temperature", not "Wind chill".
+- **Fog is left out on purpose.** The model's visibility fell under a mile at a floor point in
+  347 of 720 runs in the month before this was built, and our observation feed has no
+  visibility to check it against. John's call: save fog for the aviation page.
+- **Green is a claim that three things were looked at.** If the file cannot be read for one of
+  them, the tile is grey and says which, unless something it *can* read is already amber or red.
+- It is a model forecast for points along the highways, and "Why" says so, with the run's time
+  and the hours it covers. It is not a warning: the National Weather Service issues those.
 
 ### Ozone
 
@@ -114,10 +155,10 @@ on the homepage, because here the symbol is the data.
 |---|---|---|
 | Rules | `server/statusLights.js` | Pure functions: data in, `{ level, line, detail }` out. Every threshold is a named constant here |
 | Road rule | `server/roadConditionRules.js` | `classifyUdotRoad`, `isMajorBasinRoute`; shared with `server/roadWeatherService.js` |
-| Gathering | `server/routes/statusLights.js` | `GET /api/status-lights`. Reads each source on its own, so one failure greys one tile. Answer cached 60 s |
+| Gathering | `server/routes/statusLights.js` | `GET /api/status-lights`. Reads each source on its own, so one failure greys one tile. Answer cached 60 s. The forecast tile's key is `ahead`; its `label` is the part of the day |
 | NWS alerts | `server/nwsAlerts.js` | `ok` with a list, or `unavailable` with `alerts: null`; never an empty list on failure |
 | Drawing | `public/js/homepage-lights.js` | Fetches the endpoint every 5 minutes; holds no thresholds; text goes in as text |
-| Markup, styles | `views/index.html`, `public/css/status-lights.css` | Tiles start `data-level="grey"`. Colours are the `--status-*` tokens |
+| Markup, styles | `views/index.html`, `public/css/status-lights.css` | Tiles start `data-level="grey"`. Colours are the `--status-*` tokens. The forecast tile says "Coming up" until the server names it; the precipitation tile spans the row under the four lights |
 
 **Try it:**
 
@@ -144,7 +185,8 @@ source is missing, add its tests first, add it to `buildStatusLights`, then add 
 ## Related issues
 
 - #403 the status lights (this feature) · #404 the NWS alerts helper it reads
-- #413 next-3-days and inversion lights (waiting on producer data)
+- #413 next-3-days and inversion lights (waiting on producer data). The forecast tile is the
+  first step of the first: it covers hours, not days, until the 48-hour forecast flows
 - #336 the roads work that made UDOT failures honest
 - Producer asks that would improve it: gusts in our own observation feed (P8), and an hourly
   precipitation amount in the road forecast (`docs/NWP-PRODUCER-HANDOFF-nov20.md`)

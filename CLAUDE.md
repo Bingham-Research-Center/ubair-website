@@ -107,6 +107,14 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   amount: use `precip_type` for "is it snowing", and difference the totals for a rate. In the
   HRRR surface layers, `snowfall_1h_mm` is also a running total, zeroed in some hours
   (`runningTotalForHour` in `public/js/hrrrFields.js`); its `rainfall_1h_mm` is truly hourly.
+- **Derive in the browser only by a standard formula, from fields whose units the file
+  states**, and say so on the page (`public/js/mapLayers.js`: wind chill, totals, extremes).
+  Anything that needs a field we are not sent belongs at CHPC. JRL asks what a feature costs
+  the box before agreeing to it: measure, and put the numbers in the feature page.
+- **Two HRRR point files overlap and are not blended:** waypoints (14 towns, 18 h, lands 2.9 h
+  after the run) feed the town views; `road-forecast` (17 points, 12 h, lands 1.4 h after)
+  feeds `/roads`, the snow line and the homepage tiles. Nine towns are in both, with different
+  stations and heights. One merged product is producer ask P13.
 - **Never invent data.** A failed or missing fetch shows nothing, or says it is unavailable; it
   never falls back to a plausible value. That includes "none": an alerts fetch that failed is
   `unavailable`, not an empty list (`server/nwsAlerts.js`; the fire page read an NWS outage as
@@ -114,7 +122,8 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   months from a file that had never been uploaded (`homepage.test.js` now guards it).
 
 ## Homepage status lights
-Four tiles (Weather now, Ozone, Roads now, Precip next 6 h): `docs/features/HOMEPAGE-STATUS-LIGHTS.md`.
+Five tiles (Weather now, a forecast tile named for the part of the day it covers, Ozone, Roads
+now, Precip next 6 h): `docs/features/HOMEPAGE-STATUS-LIGHTS.md`.
 - **The server decides, the browser draws.** Every rule is a pure function with a named
   threshold in `server/statusLights.js`; `GET /api/status-lights` gathers the inputs one by one
   so a broken source greys one tile; `public/js/homepage-lights.js` holds no thresholds.
@@ -122,6 +131,10 @@ Four tiles (Weather now, Ozone, Roads now, Precip next 6 h): `docs/features/HOME
 - **The roads page and the roads light share `server/roadConditionRules.js`**, so they cannot
   disagree. Snow covering a major Basin route (US-40, US-191, SR-87) is red on both, and a UDOT
   report of a closure, ice or snow cover is not averaged down by the forecast blend.
+- **The forecast tile is titled by the clock** ("Tonight", "Tomorrow morning": JRL dislikes
+  "next 12 h") and reads the HRRR road points: gusts 40/58 mph, new snow on the floor 1/4 in
+  (from the rise in `snow_depth`), wind chill 0/-20 °F. Fog is left out on purpose: the model's
+  visibility cries wolf, and no observation checks it.
 - The thresholds are JRL's (20 Nov 2026). Change one only with him, in the constant and its test.
 
 ## Styling
@@ -140,7 +153,9 @@ Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
 - **A colour that carries meaning never rides on a page's decorative palette.** Status, AQI,
   confidence and fire-restriction colours have their own tokens (`--status-*`, `--epa-*`,
   `--confidence-*`, `--restriction-*`); borrowing `--fire-accent` once turned Stage 1 fire
-  restrictions teal (#353).
+  restrictions teal (#353). Map and chart data have theirs too: `--scale-*` (one hue in five
+  steps; temperature diverges about freezing) and `--precip-*`. A script that must draw in one
+  reads the token through `public/js/themeColours.js`; no script holds a hex.
 - **Nothing unfinished on `dev`:** no "Coming Soon" overlays, badges, disabled links or
   placeholder text (`removedPages.test.js`, `homepage.test.js`); a page that is not ready lives
   on a branch. Agriculture and water are parked at tag `parked/pre-cleanup-2026-11-11`

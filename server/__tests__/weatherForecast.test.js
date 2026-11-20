@@ -4,7 +4,7 @@ import path from 'path';
 import request from 'supertest';
 import { jest } from '@jest/globals';
 import app from '../server.js';
-import { precipByHour } from '../statusLights.js';
+import { precipByHour, snowLineAt } from '../statusLights.js';
 import { _resetWeatherForecastForTests } from '../routes/weatherForecast.js';
 
 // Data routes for the weather forecast page (issue #407), and gzip for JSON.
@@ -44,6 +44,63 @@ describe('precipByHour', () => {
     test('unavailable when there is no file, or the run has fewer than three hours left', () => {
         expect(precipByHour({ forecast: null, now: NOW })).toMatchObject({ status: 'unavailable', hours: [], bands: [] });
         expect(precipByHour({ forecast: FORECAST, now: NOW + 9.2 * 3600000 }).status).toBe('unavailable');
+    });
+});
+
+describe('precipByHour, place by place', () => {
+    test('every forecast point once, highest first, with its type in each hour', () => {
+        const result = precipByHour({ forecast: FORECAST, now: NOW });
+        // Seventeen points in the file; Roosevelt and Starvation are each on two routes.
+        expect(result.places).toHaveLength(15);
+        const heights = result.places.map((place) => place.elevationFt);
+        expect([...heights].sort((a, b) => b - a)).toEqual(heights);
+        expect(result.places[0]).toMatchObject({ name: 'Indian Canyon Summit', elevationFt: 9090 });
+        expect(result.places.at(-1)).toMatchObject({ name: 'Ouray', elevationFt: 4800 });
+        for (const place of result.places) {
+            expect(place.types).toHaveLength(result.hours.length);
+            for (const type of place.types) expect(['snow', 'rain', 'mix', 'dry', null]).toContain(type);
+        }
+        expect(result.snowLine).toHaveLength(result.hours.length);
+    });
+
+    test('a kind of ice that is not snow counts as a mix; "none" is dry', () => {
+        const hours = [1, 2, 3].map((h) => new Date(NOW + h * 3600000).toISOString());
+        const forecast = { init_time: '2026-11-20T04:00:00Z', points: [{
+            name: 'Vernal', lat: 40.45, lon: -109.53, elevation_m: 1609,
+            forecasts: ['freezing_rain', 'ice_pellets', 'none'].map((precip_type, i) => ({ valid_time: hours[i], precip_type })),
+        }] };
+        expect(precipByHour({ forecast, now: NOW }).places[0].types).toEqual(['mix', 'mix', 'dry']);
+    });
+});
+
+describe('snowLineAt: where rain turns to snow', () => {
+    const point = (elevationFt, type) => ({ elevationFt, type });
+
+    test('between two points when rain lies wholly below snow', () => {
+        expect(snowLineAt([point(8000, 'snow'), point(6700, 'snow'), point(5750, 'rain'), point(5200, 'mix'), point(4800, 'dry')]))
+            .toEqual({ kind: 'between', lowFt: 5750, highFt: 6700 });
+    });
+
+    test('a zone when snow reaches lower at one place than rain does at another', () => {
+        // The real hour of 1 AM on 20 Nov 2026: snow at Maeser, rain at Duchesne above it.
+        expect(snowLineAt([point(6700, 'snow'), point(5850, 'mix'), point(5750, 'rain'), point(5290, 'snow'), point(5250, 'snow'), point(4800, 'rain')]))
+            .toEqual({ kind: 'zone', lowFt: 5250, highFt: 5850 });
+        expect(snowLineAt([point(5280, 'snow'), point(5280, 'rain')])).toEqual({ kind: 'zone', lowFt: 5280, highFt: 5280 });
+    });
+
+    test('all snow, all rain, or nothing falling', () => {
+        expect(snowLineAt([point(8000, 'snow'), point(5200, 'snow'), point(4800, 'dry')])).toEqual({ kind: 'snow', downToFt: 5200 });
+        expect(snowLineAt([point(8000, 'dry'), point(5200, 'rain'), point(6000, 'mix')])).toEqual({ kind: 'rain', upToFt: 6000 });
+        expect(snowLineAt([point(8000, 'dry'), point(5200, null)])).toBeNull();
+        expect(snowLineAt([])).toBeNull();
+        expect(snowLineAt(null)).toBeNull();
+    });
+
+    test('it is always a range between forecast points, never one height', () => {
+        for (const line of precipByHour({ forecast: FORECAST, now: NOW }).snowLine.filter(Boolean)) {
+            expect(['between', 'zone', 'snow', 'rain']).toContain(line.kind);
+            expect(Object.keys(line)).not.toContain('ft');
+        }
     });
 });
 
@@ -118,6 +175,78 @@ describe('weather forecast routes', () => {
         expect(res.body.status).toBe('ok');
         expect(res.body.bands).toHaveLength(3);
         expect(res.body.hours.length).toBeGreaterThanOrEqual(11);
+        expect(res.body.places).toHaveLength(15);
+        expect(res.body.snowLine).toHaveLength(res.body.hours.length);
+    });
+
+    describe('observed', () => {
+        const HOUR = 3600000;
+        const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, '').replace(/T(\d{4}).*/, '_$1Z');
+        const obsName = (ms) => `observations/map_obs_${stamp(ms)}.json`;
+        let init;
+
+        beforeEach(() => {
+            init = Math.floor(Date.now() / HOUR) * HOUR - 3 * HOUR;
+            write(`forecasts/forecast_hrrr_waypoints_us40_dense_${stamp(init)}.json`, {
+                init_time: new Date(init).toISOString(),
+                stations: [
+                    { id: 'myton', name: 'Myton', reference_stid: 'UTMYT' },
+                    { id: 'vernal', name: 'Vernal', reference_stid: 'QV4' },
+                    { id: 'split_mountain', name: 'Split Mountain', reference_stid: 'SPMU1' },
+                ],
+            });
+            write('metadata/map_obs_meta_20261120_0000Z.json', [{ stid: 'KVEL', name: 'Vernal Airport', elevation: 5262 }]);
+            const reading = (stid, ms, value) => ({ stid, variable: 'air_temp', value, units: 'Celsius', date_time: new Date(ms).toISOString() });
+            // Before the run: not wanted, and not read.
+            write(obsName(init - 2 * HOUR), [reading('KVEL', init - 2 * HOUR, 9)]);
+            write(obsName(init + 10 * 60000), [reading('KVEL', init + 5 * 60000, 2), reading('UTMYT', init + 10 * 60000, 1), reading('QV4', init, 7)]);
+            // The next file repeats KVEL's reading and adds a new one.
+            write(obsName(init + 20 * 60000), [reading('KVEL', init + 5 * 60000, 2), reading('KVEL', init + 15 * 60000, 1.5)]);
+        });
+
+        test('200 with each town\'s station and its readings since the run began', async () => {
+            const res = await request(app).get('/api/weather-forecast/observed').expect(200);
+            expect(res.headers['cache-control']).toBe('no-store');
+            expect(res.body).toMatchObject({ status: 'ok', run: new Date(init).toISOString() });
+            expect(Object.keys(res.body.towns)).toEqual(['myton', 'vernal', 'split_mountain']);
+            // Vernal is held against the airport, not the town station the run names.
+            expect(res.body.towns.vernal).toMatchObject({ stid: 'KVEL', name: 'Vernal Airport', elevationFt: 5262 });
+            expect(res.body.towns.vernal.air_temp.points.map(([, value]) => value)).toEqual([2, 1.5]);
+            expect(res.body.towns.myton.air_temp.points).toHaveLength(1);
+            // No station in the feed: no series, and no invented one.
+            expect(res.body.towns.split_mountain).toMatchObject({ stid: 'SPMU1', name: null, air_temp: null });
+        });
+
+        test('the answer is kept for five minutes: a second visitor costs no file reads', async () => {
+            await request(app).get('/api/weather-forecast/observed').expect(200);
+            const read = jest.spyOn(fs.promises, 'readFile');
+            const again = await request(app).get('/api/weather-forecast/observed').expect(200);
+            expect(again.body.towns.vernal.air_temp.points).toHaveLength(2);
+            // Other parts of the app read files of their own on any request (the visitor
+            // count, for one): what must not happen is a second read of the route's data.
+            const dataReads = read.mock.calls.map(([file]) => String(file)).filter((file) => file.startsWith(staticRoot));
+            expect(dataReads).toEqual([]);
+        });
+
+        test('one unreadable observation file loses its ten minutes, not the whole answer', async () => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            fs.writeFileSync(path.join(staticRoot, obsName(init + 30 * 60000)), '{half');
+            const res = await request(app).get('/api/weather-forecast/observed').expect(200);
+            expect(res.body.towns.vernal.air_temp.points).toHaveLength(2);
+        });
+
+        test('503 when there is no run, or the newest is more than a day old', async () => {
+            fs.rmSync(path.join(staticRoot, 'forecasts'), { recursive: true });
+            _resetWeatherForecastForTests();
+            const none = await request(app).get('/api/weather-forecast/observed');
+            expect([404, 503]).toContain(none.status);
+            expect(none.body).toMatchObject({ status: 'unavailable', towns: {} });
+
+            _resetWeatherForecastForTests();
+            write('forecasts/forecast_hrrr_waypoints_us40_dense_20261101_0000Z.json', { init_time: '2026-11-01T00:00:00Z', stations: [] });
+            const old = await request(app).get('/api/weather-forecast/observed').expect(503);
+            expect(old.body).toEqual({ status: 'unavailable', message: 'The newest town forecast is too old to compare with observations', towns: {} });
+        });
     });
 });
 

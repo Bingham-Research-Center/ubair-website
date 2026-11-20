@@ -1,5 +1,5 @@
 {
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
   "lastUpdated": "2026-11-20",
   "dataTypes": {
@@ -565,11 +565,98 @@
                   "wind_u_10m_ms": { "type": "array", "items": { "type": ["number", "null"] } },
                   "wind_v_10m_ms": { "type": "array", "items": { "type": ["number", "null"] } },
                   "rainfall_1h_mm": { "type": "array", "items": { "type": ["number", "null"] } },
-                  "snowfall_1h_mm": { "type": "array", "items": { "type": ["number", "null"] } }
+                  "snowfall_1h_mm": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "wind_gust_10m_ms": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "snow_depth_mm": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "cloud_cover_pct": { "type": "array", "items": { "type": ["number", "null"] } },
+                  "rh_2m_pct": { "type": "array", "items": { "type": ["number", "null"] } }
                 }
               }
             }
-          }
+          },
+          "optionalFields": {
+            "description": "Fields the weather map already knows how to draw (public/js/mapLayers.js). None was being sent on 2026-11-20. When a run carries one under this exact name, the same length as the required fields, with this unit in its `variables` entry, the map offers the layer with no website release. A field under another name, or in another unit, is ignored rather than guessed at.",
+            "fields": {
+              "wind_gust_10m_ms": { "units": "m/s", "label": "Wind gusts", "meaning": "Strongest 10 m gust in the hour ending at the valid time" },
+              "snow_depth_mm": { "units": "Millimeters", "label": "Snow on the ground", "meaning": "Depth of snow lying on the ground, not its water equivalent" },
+              "cloud_cover_pct": { "units": "percent", "label": "Cloud cover", "meaning": "Total cloud cover, 0 to 100" },
+              "rh_2m_pct": { "units": "percent", "label": "Relative humidity", "meaning": "2 m relative humidity, 0 to 100" }
+            },
+            "namesReserved": {
+              "description": "Agreed names for fields the map does not draw yet. Each needs a layer added on the website first; sending one early does no harm.",
+              "precip_type": "Categorical: none | rain | snow | mixed | freezing_rain | ice_pellets, the same words as road-forecast",
+              "visibility_km": "Kilometers",
+              "pbl_height_m": "Meters",
+              "temperature_700hpa_c": "Celsius",
+              "terrain_m": "Meters. Model terrain height at each grid point. It does not change from run to run, so it may go in its own file (forecast_hrrr_surface_static.json) sent once"
+            }
+          },
+          "notes": [
+            "`snowfall_1h_mm` is a running total since the run began, with hours that drop to zero, not an hourly amount (producer ask P10). The website shows it as a total and never as a rate.",
+            "`rainfall_1h_mm` is a true hourly amount.",
+            "Runs reach the site three at a time every six hours, each 2.8 to 4.8 h after it starts (measured 2026-11-20), not hourly as the schedule above says. Agreed for the producer's next change: one run an hour, the newest only.",
+            "Whether `wind_u_10m_ms` and `wind_v_10m_ms` are relative to north or to the model grid is not stated. The grid is turned about 8 degrees from north, so the answer changes every arrow by that much (producer ask P17)."
+          ]
+        },
+        "hrrr_waypoints": {
+          "description": "HRRR hourly forecast at named towns and passes along US-40, Daniels Summit to Dinosaur. Read by GET /api/weather-forecast/towns for the weather page's town table, its forecast-and-measured chart and the Basin in profile. It reached both boxes from 2026-08-27 and was read from website 1.7.6, but had no entry here until 2.3.0.",
+          "schedule": {
+            "frequency": "50 * * * *",
+            "description": "Hourly. Measured 2026-11-20: each run lands 2 h 51 min after it starts, so 15 of its 18 forecast hours are still ahead on arrival.",
+            "timezone": "UTC"
+          },
+          "filename": {
+            "pattern": "forecast_hrrr_waypoints_us40_dense_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_hrrr_waypoints_us40_dense_20261120_0300Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["model", "product", "init_time", "valid_times", "variables", "stations"],
+            "properties": {
+              "model": { "type": "string", "enum": ["hrrr"] },
+              "product": { "type": "string", "enum": ["waypoint_forecast"] },
+              "group": { "type": "string" },
+              "init_time": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "generated_at": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+              "forecast_hours": { "type": "array", "items": { "type": "integer", "minimum": 0 } },
+              "valid_times": { "type": "array", "items": { "type": "string" } },
+              "variables": {
+                "type": "object",
+                "description": "One entry per forecast variable, each with `units`. The website converts from the unit stated here and shows nothing for a unit it does not know.",
+                "required": ["temp_2m_c", "wind_speed_10m_ms"]
+              },
+              "stations": {
+                "type": "array",
+                "description": "West to east. The website draws them in this order.",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "name", "lat", "lon", "elevation_m", "forecasts"],
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" },
+                    "lat": { "type": "number" },
+                    "lon": { "type": "number" },
+                    "elevation_m": { "type": "number" },
+                    "reference_stid": { "type": ["string", "null"], "description": "The observing station this point is paired with. The website draws that station's readings against the forecast." },
+                    "forecasts": { "type": "object", "description": "One array per variable, one value per entry of valid_times" }
+                  }
+                }
+              }
+            }
+          },
+          "variablesRead": {
+            "temp_2m_c": "Celsius",
+            "wind_speed_10m_ms": "m/s",
+            "wind_dir_10m_deg": "deg_true",
+            "rh_2m_pct": "percent",
+            "rainfall_1h_mm": "mm. Total liquid precipitation in the hour (it is not zero in snow), a true hourly amount"
+          },
+          "variablesSentButUnread": ["dewpoint_2m_c", "mslp_hpa"],
+          "notes": [
+            "Ten of the fourteen `reference_stid` values are stations in the observation feed. COOPDSNU1 (Duchesne), LRFU1 (Little Red Fox), UTELP (East Lapoint) and SPMU1 (Split Mountain) are not, so those four towns have no readings to draw (producer ask P15).",
+            "The website holds Vernal against KVEL, not the QV4 this file names, so that it agrees with the homepage's current conditions (server/observedSeries.js).",
+            "Nine of these places are also in road-forecast, paired there with different stations and heights. Agreed for the producer's next change: one point product (producer ask P13)."
+          ]
         },
         "hrrr_kvel_crosswind": {
           "description": "HRRR sub-hourly runway head/crosswind forecast for KVEL (Vernal Regional). Runways 17/35 per FAA redesignation (true headings 179/359).",
@@ -672,6 +759,7 @@
           "exceedance_probabilities": 1,
           "percentile_scenarios": 31,
           "hrrr_surface_layers": 4,
+          "hrrr_waypoints": 1,
           "hrrr_kvel_crosswind": 1
         }
       },

@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { LEVEL_WORDS, LEVELS, PRECIP_WORDS, lightView, precipRows } from '../homepage-lights.js';
+import { LEVEL_WORDS, LEVELS, PRECIP_WORDS, lightView, precipRows, tileLabel } from '../homepage-lights.js';
 
 // The homepage status lights, browser side (issue #403). The server decides; this module
 // draws. What must hold here: anything unexpected draws as grey, and nothing is invented.
@@ -18,6 +18,16 @@ describe('lightView', () => {
         }
         expect(lightView(undefined)).toEqual({ level: 'grey', word: 'No data', line: 'Status unavailable', detail: '' });
         expect(lightView({ level: 'green', line: '   ' }).line).toBe('Status unavailable');
+    });
+});
+
+describe('tileLabel', () => {
+    test('the forecast tile takes its name from the server, and keeps its plain one otherwise', () => {
+        expect(tileLabel({ label: 'Tonight' }, 'Coming up')).toBe('Tonight');
+        expect(tileLabel({ label: ' Tomorrow morning ' }, 'Coming up')).toBe('Tomorrow morning');
+        for (const odd of [undefined, null, {}, { label: '' }, { label: '   ' }, { label: 42 }]) {
+            expect(tileLabel(odd, 'Coming up')).toBe('Coming up');
+        }
     });
 });
 

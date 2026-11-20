@@ -16,6 +16,7 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/index.css">
     <link rel="stylesheet" href="/public/css/status-lights.css">
+    <link rel="stylesheet" href="/public/css/llm-text.css">
     <link rel="stylesheet" href="/public/css/outlooks.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -46,6 +47,13 @@
             <div class="status-lights" id="status-lights" aria-label="Basin status">
                 <div class="status-light pane" id="light-weather" data-level="grey">
                     <span class="status-light-label">Weather now</span>
+                    <a class="status-light-line" href="/forecast_weather"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
+                </div>
+                <!-- The forecast tile: the server names it for the part of the day it covers,
+                     from the clock. Until it answers, the tile keeps this plain name. -->
+                <div class="status-light pane" id="light-ahead" data-level="grey">
+                    <span class="status-light-label" data-default-label="Coming up">Coming up</span>
                     <a class="status-light-line" href="/forecast_weather"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
                     <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
                 </div>
@@ -153,6 +161,13 @@
                 </div>
             </div>
 
+            <!-- Right column: the LLM forecast summary, when there is one, above the outlook. -->
+            <div class="dashboard-stack">
+            <!-- LLM forecast summary: drawn by llmText.js only while a current file exists. With no
+                 file, or a stale one, this element stays hidden and empty, and the outlook has
+                 the column to itself. -->
+            <div class="llm-block pane" id="home-llm" data-llm-placement="home.summary" hidden></div>
+
             <!-- Latest Forecast Panel -->
             <div class="dashboard-panel pane forecast-panel">
                 <div class="panel-header">
@@ -171,6 +186,7 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
     </section>
 
@@ -186,6 +202,7 @@
 <script type="module" src="/public/js/index_map.js"></script>
 <script type="module" src="/public/js/homepage-current.js"></script>
 <script type="module" src="/public/js/homepage-lights.js"></script>
+<script type="module" src="/public/js/llmText.js"></script>
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>

@@ -1,0 +1,101 @@
+/* A block of LLM forecast text: a label, reader tabs, the text, and a line saying what it is.
+
+   It is a pane like any other, flat and square, but its tab is neutral grey rather than the
+   page accent or a status colour: this is machine-written text, and it should not look like a
+   forecaster's outlook or like an alert. The reader tabs are the site's one tab style
+   (.dashboard-tabs / .tab-button in main.css); this file only places them.
+
+   Tokens only: this file's style-ratchet ceiling is zero. */
+
+.llm-block {
+    --pane-accent: var(--color-neutral);
+    --pane-tab-inset: 1.5rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+}
+
+.llm-block[hidden] {
+    display: none;
+}
+
+.llm-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.llm-label {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.05rem;
+    text-transform: uppercase;
+}
+
+.llm-tabs {
+    flex: 0 1 auto;
+}
+
+.llm-tabs .tab-button {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.9rem;
+}
+
+.llm-panel[hidden] {
+    display: none;
+}
+
+.llm-panel:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 0.25rem;
+}
+
+.llm-text {
+    margin: 0 0 0.75rem;
+    max-width: 46rem;
+    color: var(--color-text);
+    font-size: 1.05rem;
+    line-height: 1.55;
+}
+
+.llm-sources {
+    margin: 1rem 0 0.75rem;
+    padding-left: 0.875rem;
+    border-left: 0.25rem solid var(--color-border);
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.llm-sources-title {
+    font-weight: 600;
+}
+
+.llm-sources ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.1rem;
+}
+
+.llm-meta,
+.llm-disclaimer {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    line-height: 1.5;
+}
+
+.llm-disclaimer {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+}
+
+@media screen and (max-width: 480px) {
+    .llm-block {
+        --pane-tab-inset: 1rem;
+        padding: 1rem;
+    }
+}

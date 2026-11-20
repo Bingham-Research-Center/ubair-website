@@ -1,4 +1,5 @@
-// Homepage status lights: Weather now, Ozone, Roads now, and Precip next 6 h.
+// Homepage status lights: Weather now, the forecast tile ("Tonight"), Ozone, Roads now, and
+// Precip next 6 h.
 //
 // This file only draws. The server decides every colour and every word
 // (server/statusLights.js) and sends them from /api/status-lights; nothing here has a
@@ -56,9 +57,20 @@ function setWhy(tile, text) {
     if (paragraph) paragraph.textContent = text;
 }
 
+/**
+ * The forecast tile is named for the part of the day it covers ("Tonight", "Tomorrow morning").
+ * The server works the name out from the clock; until it answers, the tile keeps the plain
+ * name the page was sent with.
+ */
+export function tileLabel(light, fallback) {
+    return typeof light?.label === 'string' && light.label.trim() ? light.label.trim() : fallback;
+}
+
 function drawLight(tile, light) {
     const view = lightView(light);
     tile.dataset.level = view.level;
+    const label = tile.querySelector('.status-light-label[data-default-label]');
+    if (label) label.textContent = tileLabel(light, label.dataset.defaultLabel);
     const text = tile.querySelector('.status-light-text');
     if (text) {
         const word = document.createElement('span');
@@ -103,7 +115,7 @@ function drawPrecip(tile, precip) {
 
 function draw(body) {
     const lights = Object.fromEntries((body?.lights || []).map((light) => [light?.key, light]));
-    for (const key of ['weather', 'ozone', 'roads']) {
+    for (const key of ['weather', 'ahead', 'ozone', 'roads']) {
         const tile = document.getElementById(`light-${key}`);
         if (tile) drawLight(tile, lights[key] ?? { level: 'grey', line: 'Status unavailable', detail: UNAVAILABLE });
     }

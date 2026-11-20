@@ -215,6 +215,46 @@ Run files are ~1.5 MB each; a bundle is three of them plus the ~3 KB index. That
 difference is exactly what the nginx trap exploited — the index passed while every run file
 413'd. See §4 and `docs/DEPLOYMENT.md` §8.
 
+**Fields the map draws on arrival (manifest 2.3.0, website 1.7.7).** "Do not invent fields"
+still holds, with four agreed additions. A run that carries one of these, under exactly this
+name, the same length as the five required fields, and with this unit in its `variables`
+entry, gets a map layer with no website release:
+
+| Field | `variables.<field>.units` | Layer |
+|---|---|---|
+| `wind_gust_10m_ms` | `m/s` | Wind gusts |
+| `snow_depth_mm` | `Millimeters` | Snow on the ground (a depth, not water equivalent) |
+| `cloud_cover_pct` | `percent` | Cloud cover |
+| `rh_2m_pct` | `percent` | Relative humidity |
+
+A field under another name or in another unit is ignored, not guessed at. Five more names are
+reserved in the manifest (`optionalFields.namesReserved`) for fields that need a layer written
+first. Each extra field adds about 300 KB to a run before compression: with four, check the
+run against nginx's `client_max_body_size` on both boxes before the first upload (§6).
+
+### 5b-2. `forecast_hrrr_waypoints_us40_dense` (documented in manifest 2.3.0)
+
+**Endpoint** `POST /api/upload/forecasts` · **Filename**
+`forecast_hrrr_waypoints_us40_dense_YYYYMMDD_HHMMZ.json`
+**Schema:** pinned — `DATA_MANIFEST.json` → `dataTypes.forecasts.products.hrrr_waypoints`.
+
+Hourly HRRR at 14 towns and passes along US-40, listed west to east. It has reached both boxes
+since 2026-08-27 and the website has read it since 1.7.6, but it had no contract until now.
+
+- **Consumer:** `GET /api/weather-forecast/towns` passes the newest run through as sent; the
+  page converts from the units in `variables`. Read: `temp_2m_c`, `wind_speed_10m_ms`,
+  `wind_dir_10m_deg`, `rh_2m_pct`, `rainfall_1h_mm`. Not read: `dewpoint_2m_c`, `mslp_hpa`.
+- **`stations[].id` is a key.** The website keys its town picker, its label order and its one
+  station override on these ids (`vernal`, `daniels_summit`, …). Renaming one is a breaking
+  change.
+- **`stations[].reference_stid`** is the observing station the point is paired with. Since
+  1.7.7 the website draws that station's readings against the forecast
+  (`GET /api/weather-forecast/observed`). Four of the fourteen are not in the observation
+  feed, so those towns have no readings to draw (handoff ask P15).
+- **`rainfall_1h_mm` is total liquid precipitation in the hour** (it is not zero in snow) and
+  a true hourly amount. Keep it so, or rename it.
+- **Order matters:** the list is drawn as the Basin in profile, west to east.
+
 ### 5c. `forecast_hrrr_kvel_crosswind`
 
 **Endpoint** `POST /api/upload/forecasts` (shared dataType, distinguished by filename prefix)
