@@ -154,6 +154,21 @@
     --aqi-very-unhealthy: var(--epa-very-unhealthy);
     --aqi-hazardous: var(--epa-hazardous);
 
+    /* Ozone outlook risk, least to most: the five words the forecasters write (NO, LOW, SOME,
+       MODERATE, HIGH). Each has a flat fill and the ink that goes on it. SOME and MODERATE
+       share a hue, as they always have, a shade apart. These colour the risk pills on the
+       outlook pages. The homepage ozone light uses the three status colours instead. */
+    --risk-none-fill: #dcfce7;
+    --risk-none-ink: #166534;
+    --risk-low-fill: #dbeafe;
+    --risk-low-ink: #1e40af;
+    --risk-some-fill: #fef3c7;
+    --risk-some-ink: #854d0e;
+    --risk-moderate-fill: #fde68a;
+    --risk-moderate-ink: #713f12;
+    --risk-high-fill: #fee2e2;
+    --risk-high-ink: #991b1b;
+
     /* Fixed by docs/CONFIDENCE_TAXONOMY.md ("must use these exact colors"). Do not retheme. */
     --confidence-possible: #6c757d;
     --confidence-likely: #ffc107;

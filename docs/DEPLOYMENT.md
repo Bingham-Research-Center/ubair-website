@@ -61,7 +61,8 @@ public answered 401, i.e. it reached the app) already showed the public path car
 traffic.
 
 Both are accepted by the same rule: `server/routes/dataUpload.js` grants access when
-`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`).
+`x-client-hostname` is on the host allowlist, which is `.chpc.utah.edu` unless
+`UPLOAD_ALLOWED_HOSTS` in `.env` says otherwise (log line `Access granted via hostname header`).
 
 Consequences, the same on both boxes:
 
@@ -416,11 +417,13 @@ brc-tools and this repo both agree on, bumped MINOR for additive dataTypes and
 MAJOR when a field or unit changes (which requires a matching brc-tools release
 *before* promotion).
 
-**A dataType can exist on `dev` and not on `ops`.** `server/routes/dataUpload.js`
+**A dataType can exist on `dev` and not on `ops`.** `server/uploadPolicy.js`
 lists accepted dataTypes per branch, so a producer pushing something `ops` has
 never heard of gets a 400 from `.com` while `.dev` accepts it happily. That is
 the intended behaviour, not a bug — it stops half-built features reaching
-production. The corresponding CHPC-side convention lives in
+production. (The 400 dates from 1.7.3. A box on an older version stores an unknown
+dataType unchecked, in a directory named as the request named it, which is one
+more reason to pin.) The corresponding CHPC-side convention lives in
 `brc-tools/docs/WEBSITE-INTEGRATION.md`: a cron wrapper pins
 `BASINWX_API_URLS="https://basinwx.dev"` **if and only if** its consumer is on
 `dev` but not yet on `ops`, and is unpinned in the brc-tools PR that follows the

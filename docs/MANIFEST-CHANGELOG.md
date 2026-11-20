@@ -1,5 +1,42 @@
 # Data Manifest Change Log
 
+## Version 2.2.0 (2026-11-20)
+
+### Type: Minor - Two new dataTypes, no change to an existing one
+
+**Summary:** Adds `llm_forecasts` (tiered LLM forecast text, schema `llm_forecast/1`) and
+`aircraft` (products from the ADS-B hub), and rewrites `globalValidation.originValidation` to
+describe a host allowlist instead of a hard-coded CHPC suffix. Website 1.7.3 is the first
+version that accepts and checks them (issue #402).
+
+### Changes Made
+
+- **Added:** `dataTypes.llm_forecasts`: a JSON Schema, the placement table (which persona
+  writes which tier, and to what word budget), the personas' cadence and stale times, and the
+  filename rule. `public/js/llmForecast.js` holds the same rules as code, and
+  `public/js/__tests__/llmForecast.test.js` fails if the two disagree.
+- **Added:** `dataTypes.aircraft`, with no schema yet. No page reads it; each product gets a
+  schema here before one does.
+- **Changed:** `globalValidation.originValidation` now describes `UPLOAD_ALLOWED_HOSTS`
+  (`.chpc.utah.edu` by default) and says plainly that the hostname is a filter and the API
+  key is the authentication.
+- **Added:** `monitoring.expectedDataFlow` lines for both.
+- **Server:** the upload route now answers 400 for a dataType that is not in the manifest's
+  list. It used to store anything under the name it was given (noted under 2.1.0 below).
+
+### Why MINOR
+
+Additive: no existing dataType, field, unit or filename changes, and CHPC needs no change to
+keep uploading. `/api/monitoring/freshness` will list both new dataTypes as `missing` until
+their producers start, which is true.
+
+### Server-side validation is new, and only for `llm_forecasts`
+
+The manifest has never been enforced by the server (`CLAUDE.md`). `llm_forecasts` is the
+exception: it is prose shown to the public on both boxes, so a file that breaks the contract
+is refused with every reason listed. Three of those rules cannot be written in JSON Schema
+and are listed in the entry's `notes`.
+
 ## Version 2.1.1 (2026-09-28)
 
 ### Type: Patch - Monitoring cadence correction, no schema change

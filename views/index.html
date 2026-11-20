@@ -15,6 +15,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/index.css">
+    <link rel="stylesheet" href="/public/css/status-lights.css">
     <link rel="stylesheet" href="/public/css/outlooks.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 
@@ -39,65 +40,54 @@
         </div>
 
         <div class="headlines-dashboard">
-            <div class="dashboard-header">
-                <div class="dashboard-tabs">
-                    <button class="tab-button active" data-tab="warnings">Alerts</button>
-                    <button class="tab-button" data-tab="conditions">Current</button>
+            <!-- Status lights: filled by homepage-lights.js from /api/status-lights. Every colour
+                 comes from a rule in server/statusLights.js. A tile stays grey until its data
+                 loads, and goes grey again when a source fails: grey means "not known". -->
+            <div class="status-lights" id="status-lights" aria-label="Basin status">
+                <div class="status-light pane" id="light-weather" data-level="grey">
+                    <span class="status-light-label">Weather now</span>
+                    <a class="status-light-line" href="/forecast_weather"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
+                </div>
+                <div class="status-light pane" id="light-ozone" data-level="grey">
+                    <span class="status-light-label">Ozone</span>
+                    <a class="status-light-line" href="/forecast_outlooks"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
+                </div>
+                <div class="status-light pane" id="light-roads" data-level="grey">
+                    <span class="status-light-label">Roads now</span>
+                    <a class="status-light-line" href="/roads"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
+                </div>
+                <div class="status-light pane status-precip" id="light-precip">
+                    <span class="status-light-label">Precip next 6 h</span>
+                    <a class="precip-bands" id="precip-bands" href="/forecast_weather"><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
                 </div>
             </div>
 
-            <div class="tab-content">
-                <!-- Alerts Tab -->
-                <div id="warnings-content" class="tab-panel active">
-                    <div class="alerts-grid">
-                        <a href="/forecast_outlooks" class="headline-item pane info alerts-map-link">
-                            <div class="headline-text">
-                                <span class="headline-label">Next 5 Days</span>
-                                <span class="headline-value" id="alerts-ozone-risk">See the ozone outlook</span>
-                            </div>
-                        </a>
-                        <a href="/live_aq" class="headline-item pane info alerts-map-link">
-                            <div class="headline-text">
-                                <span class="headline-label">Live Map</span>
-                                <span class="headline-value"><span class="live-dot"></span> Active Now</span>
-                            </div>
-                        </a>
-                        <!-- Shown only once a GEFS snow summary exists; none has been uploaded yet. -->
-                        <div class="headline-item pane info" id="alerts-snow" hidden>
-                            <div class="headline-text">
-                                <span class="headline-label">Snow Likely?</span>
-                                <span class="headline-value" id="alerts-snow-value"></span>
-                                <span class="headline-detail" id="alerts-snow-detail"></span>
-                            </div>
-                        </div>
+            <!-- Current conditions: filled by homepage-current.js from the latest observation -->
+            <div class="headline-items">
+                <div class="headline-item pane">
+                    <div class="headline-text">
+                        <span class="headline-label">Temperature</span>
+                        <span class="headline-value" id="current-temp">--</span>
                     </div>
                 </div>
-
-                <!-- Current Conditions Tab: filled by homepage-current.js from the latest observation -->
-                <div id="conditions-content" class="tab-panel">
-                    <div class="headline-items">
-                        <div class="headline-item pane">
-                            <div class="headline-text">
-                                <span class="headline-label">Temperature</span>
-                                <span class="headline-value" id="current-temp">--</span>
-                            </div>
-                        </div>
-                        <div class="headline-item pane">
-                            <div class="headline-text">
-                                <span class="headline-label">Humidity</span>
-                                <span class="headline-value" id="current-rh">--</span>
-                            </div>
-                        </div>
-                        <div class="headline-item pane">
-                            <div class="headline-text">
-                                <span class="headline-label">Wind</span>
-                                <span class="headline-value" id="current-wind">--</span>
-                            </div>
-                        </div>
+                <div class="headline-item pane">
+                    <div class="headline-text">
+                        <span class="headline-label">Humidity</span>
+                        <span class="headline-value" id="current-rh">--</span>
                     </div>
-                    <p class="headline-stamp" id="current-stamp">Loading the latest observation…</p>
+                </div>
+                <div class="headline-item pane">
+                    <div class="headline-text">
+                        <span class="headline-label">Wind</span>
+                        <span class="headline-value" id="current-wind">--</span>
+                    </div>
                 </div>
             </div>
+            <p class="headline-stamp" id="current-stamp">Loading the latest observation…</p>
         </div>
     </div>
 
@@ -192,10 +182,10 @@
 <!-- Load JavaScript Modules -->
 <script type="module" src="/public/js/loadSidebar.js"></script>
 <script type="module" src="/public/js/loadFooter.js"></script>
-<script src="/public/js/headlines-dashboard.js"></script>
 <script type="module" src="/public/js/config.js"></script>
 <script type="module" src="/public/js/index_map.js"></script>
 <script type="module" src="/public/js/homepage-current.js"></script>
+<script type="module" src="/public/js/homepage-lights.js"></script>
 
 <!-- Load markdown-it for homepage preview -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/markdown-it/13.0.1/markdown-it.min.js"></script>
@@ -204,7 +194,8 @@
 <script type="module">
     import { describeOutlook, currentSeason } from '/public/js/outlookSeasons.js';
 
-    // Five-day risk levels say nothing about the next five days once an outlook is a few days old.
+    // The outlook panel marks an outlook with its age once it is this old. (The ozone status
+    // light keeps its own, longer rule in server/statusLights.js.)
     const CURRENT_FOR_DAYS = 2;
 
     document.addEventListener("DOMContentLoaded", async function() {
@@ -216,8 +207,6 @@
 
         // Load initial content
         loadAirQualityForecast();
-        loadAlertsOzoneRisk();
-        loadAlertsSnowForecast();
     });
 
     function initLegendToggle() {
@@ -331,77 +320,6 @@
                     forecastContainer.classList.add('collapsed');
                 }
             });
-        }
-    }
-
-    async function loadAlertsOzoneRisk() {
-        const riskEl = document.getElementById('alerts-ozone-risk');
-        if (!riskEl) return;
-
-        try {
-            const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const outlooks = await response.json();
-            if (outlooks.length === 0) {
-                riskEl.textContent = 'No outlook available';
-                return;
-            }
-
-            // Show its date instead of its risk level once it is no longer current.
-            const info = describeOutlook(outlooks[0].filename);
-            const ageDays = info ? (Date.now() - info.issued.getTime()) / 86400000 : NaN;
-            if (!Number.isFinite(ageDays) || ageDays > CURRENT_FOR_DAYS) {
-                riskEl.textContent = info ? `Last outlook ${info.date}` : 'See the ozone outlook';
-                return;
-            }
-
-            const outlookResponse = await fetch(`/api/static/outlooks/${outlooks[0].filename}`);
-            if (!outlookResponse.ok) throw new Error(`HTTP ${outlookResponse.status}`);
-            const markdown = await outlookResponse.text();
-
-            // The Day 1–5 section of the outlook template: a "### Day 1–5 (...)" heading, then a
-            // line "NO|LOW|SOME|MODERATE|HIGH RISK OF ELEVATED OZONE".
-            const days1to5 = markdown.split(/^###\s/m).find((section) => /^[^\n]*Day\s*1\s*[–-]\s*5/i.test(section));
-            const risk = days1to5?.match(/\b(NO|LOW|SOME|MODERATE|MEDIUM|HIGH)\s+RISK\b/i);
-            if (!risk) {
-                riskEl.textContent = 'See full outlook';
-                return;
-            }
-            riskEl.innerHTML = highlightRiskWords(`${risk[1].toUpperCase()} RISK`);
-
-        } catch (err) {
-            console.error('Error loading alerts ozone risk:', err);
-            riskEl.textContent = 'Unable to load';
-        }
-    }
-
-    async function loadAlertsSnowForecast() {
-        const snowEl = document.getElementById('alerts-snow-value');
-        const detailEl = document.getElementById('alerts-snow-detail');
-        if (!snowEl) return;
-
-        const panel = document.getElementById('alerts-snow');
-
-        // The panel stays hidden unless a real summary loads. It used to say "No significant
-        // snow expected" on any failure, and the file has never been uploaded to either host,
-        // so the homepage gave a confident all-clear with no data behind it.
-        try {
-            const response = await fetch('/api/static/forecasts/gefs_snow_summary.json');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            if (!Number.isFinite(data.median_max_snow_inches)) throw new Error('no median_max_snow_inches');
-
-            if (data.median_max_snow_inches > 0.5) {
-                snowEl.textContent = `${data.median_max_snow_inches.toFixed(1)} inches possible`;
-                if (detailEl && data.period_description) {
-                    detailEl.textContent = data.period_description;
-                }
-            } else {
-                snowEl.textContent = 'No significant snow expected';
-            }
-            if (panel) panel.hidden = false;
-        } catch (err) {
-            if (panel) panel.hidden = true;
         }
     }
 </script>

@@ -52,34 +52,54 @@ POST  https://www.basinwx.com/api/upload/:dataType
 POST  https://www.basinwx.dev/api/upload/:dataType
 ```
 
-**Auth — both required** (`server/routes/dataUpload.js`, `validateApiKey` ~:86 and
-`validateCHPCOrigin` ~:117):
+**Auth — both required** (`server/routes/dataUpload.js`, `validateApiKey` and
+`validateOrigin`; the rules themselves are in `server/uploadPolicy.js`):
 
 - Header `x-api-key: $BASINWX_API_KEY` — must equal `DATA_UPLOAD_API_KEY` on the target box.
-- Either header `x-client-hostname: <host>.chpc.utah.edu`, **or** reverse-DNS of the source IP
-  resolving to `*.chpc.utah.edu`. The header is faster and skips the DNS round-trip.
+  **This is the authentication.**
+- Either header `x-client-hostname: <host>`, **or** reverse-DNS of the source IP, must be on
+  the box's host allowlist. The header is faster and skips the DNS round-trip.
+
+**The host allowlist (1.7.3+).** `UPLOAD_ALLOWED_HOSTS` in each box's `.env` is a comma- or
+space-separated list. An entry that starts with a dot is a suffix (`.chpc.utah.edu` matches
+`chpc.utah.edu` and any host under it); any other entry is one exact hostname. Unset, it is
+`.chpc.utah.edu`, so CHPC needs nothing. Setting it **replaces** the default, so a box that
+takes a second producer lists both: `UPLOAD_ALLOWED_HOSTS=.chpc.utah.edu,<hub's name>`.
+
+- It is a filter, not a second lock: the header is the client's own word. It keeps a
+  misconfigured producer out; the key keeps strangers out.
+- A producer outside CHPC sends a fixed, agreed `x-client-hostname` (not whatever
+  `socket.gethostname()` returns: a Linode may well call itself `localhost`).
+- The match is on a label boundary. Before 1.7.3 it was `endsWith('chpc.utah.edu')`, which
+  also let `evilchpc.utah.edu` through.
 
 **Multipart body** (`upload.single('file')`, route ~:163):
 
 - Field name: `file` — literal.
 - Filename is preserved exactly as uploaded. Match the manifest `filename.pattern`.
 - Size ceiling: **10 MB** (multer `limits.fileSize`, ~:79).
-- Allowed extensions (checked *after* multer writes, ~:169-176): **`.json` `.md` `.txt`
-  `.png` `.pdf`**. Anything else is unlinked and 400s. `.json` is additionally `JSON.parse`d;
-  `.md`/`.txt` are rejected if they contain a NUL byte; `.png`/`.pdf` skip content validation.
+- Allowed extensions (checked *after* multer writes): **`.json` `.md` `.txt` `.png` `.pdf`**
+  for the seven older dataTypes; `llm_forecasts` takes **`.json` only** and `aircraft` takes
+  **`.json` `.png`** (`allowedExtensions` in `server/uploadPolicy.js`). Anything else is
+  unlinked and 400s. `.json` is additionally `JSON.parse`d; `.md`/`.txt` are rejected if they
+  contain a NUL byte; `.png`/`.pdf` skip content validation.
 
-**Supported manifest dataTypes** (`dataTypeMap`, ~:48-57):
+**Accepted dataTypes** (`UPLOAD_DATA_TYPES` in `server/uploadPolicy.js`):
 
 ```
 observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast
+llm_forecasts | aircraft                                              (both new in 1.7.3)
 ```
 
-The upload route currently falls back to the supplied dataType as the storage
-subdirectory; it does not reject unknown dataTypes with an allow-list. Producers
-should use the supported manifest types above rather than relying on that fallback.
+**Any other dataType is a 400 (1.7.3+)**, answered before anything is written, with the
+accepted list in `supported`. Until then the route used the supplied name as a directory name
+as it came, so a typo made a new directory and a name such as `../..` wrote outside the upload
+root. A box still on an older version (check `version` at `/api/health`) stores an unknown
+dataType unchecked: see the pinning rule in `docs/DEPLOYMENT.md` §7a.
 
-**Responses:** `200` stored · `400` invalid file extension / invalid JSON / no file · `401` bad key ·
-`403` not CHPC · `413` over a body limit.
+**Responses:** `200` stored · `400` unknown dataType / invalid file extension / invalid JSON /
+no file / an `llm_forecasts` file that breaks its contract (§5d) · `401` bad key ·
+`403` host not on the allowlist · `413` over a body limit.
 
 **Two body limits, not one.** multer's is 10 MB. nginx's `client_max_body_size` sits in front
 of the public path — 32 MB on dev since 2026-08-25, and unset means a **1 MB** default that
@@ -236,6 +256,50 @@ in brc-tools #59 / v0.1.1. An earlier (deleted) apr27 handoff specified `crosswi
 `crosswind_kt_rwy34` and a nested `metadata.runway_headings_deg_true`; **building to that spec
 renders an empty table.** Recorded here so it is not rediscovered.
 
+### 5d. `llm_forecasts` (1.7.3+)
+
+**Endpoint** `POST /api/upload/llm_forecasts` · **Filename**
+`llm_forecast_<persona>_YYYYMMDD_HHMMZ.json` · **JSON only**
+**Schema:** `llm_forecast/1`, pinned in `DATA_MANIFEST.json` → `dataTypes.llm_forecasts`
+(a JSON Schema plus the placement table). The same rules as code:
+`public/js/llmForecast.js`. Sample files: `public/js/__tests__/fixtures/llm_forecasts/`.
+
+Tiered LLM forecast text. The producer generates and pushes; **the site only renders**, with
+no LLM key on either box. One file per run per persona. Each text belongs to a *placement*
+(where it appears) and a *tier* (`public`, `industry`, `expert`).
+
+**This is the one dataType the server validates against its contract.** A file that breaks it
+gets `400` with every reason in `errors` (the first 25; `errorCount` is the total), is not stored, and shows in
+`/api/monitoring/uploads` as `llm_forecast refused: <first reason>`. Beyond the JSON Schema,
+the server enforces three rules the schema cannot express:
+
+1. **Who writes what.** Each tier of each placement belongs to one persona (the manifest's
+   `placements` table). Rhiannon writes `expert` tiers only; a file in which she writes a
+   `public` tier is refused.
+2. **Word budgets.** Each tier has a budget; a text longer than 1.5× its budget is refused.
+   The site never truncates, so the producer must write to length.
+3. **Name and time.** The filename's persona matches `persona`, its stamp is `issued` to the
+   minute (UTC), and `issued` is not more than 15 minutes ahead of the server's clock.
+
+**`latest_<persona>.json`.** After a valid upload the server copies it to
+`latest_ffion.json` or `latest_rhiannon.json` in the same directory, unless the copy already
+there was issued later (so a late backfill cannot roll the site back). Pages read these;
+**do not upload them yourself** (the name fails rule 3).
+
+**What the site does with it.** Text is shown as written: plain text, blank lines as
+paragraph breaks, no Markdown or HTML. A block is hidden, never replaced by a placeholder,
+when its file is missing, past `valid_until`, older than the persona's `staleHours` (Ffion
+12 h, Rhiannon 6 h), or describes an older GEFS cycle than the chart beside it. Readers see
+the label "LLM forecast", never a persona name.
+
+### 5e. `aircraft` (1.7.3+)
+
+**Endpoint** `POST /api/upload/aircraft` · **Filename**
+`aircraft_<product>_YYYYMMDD_HHMMZ.json` (or `.png`)
+**Schema:** none pinned yet. The dataType exists so the ADS-B hub has somewhere to send
+products; no page reads it. Each file family gets a manifest entry and a schema **before**
+the website reads it. The hub's `x-client-hostname` must be on each box's host allowlist (§2).
+
 ---
 
 ## 6. Traps
@@ -312,9 +376,12 @@ Symbol-anchored; line numbers verified 2026-08-26 against `dev` and expected to 
 
 | Symbol | File | Why |
 |---|---|---|
-| `dataTypeMap` (~:48) | `server/routes/dataUpload.js` | the 8 accepted dataTypes |
-| `validateApiKey` (~:86) | `server/routes/dataUpload.js` | `x-api-key` check |
-| `validateCHPCOrigin` (~:117) | `server/routes/dataUpload.js` | hostname / reverse-DNS check |
+| `UPLOAD_DATA_TYPES`, `allowedExtensions` | `server/uploadPolicy.js` | the nine accepted dataTypes and what files each takes |
+| `parseAllowedHosts`, `isAllowedHost` | `server/uploadPolicy.js` | the host allowlist rules |
+| `validateApiKey` | `server/routes/dataUpload.js` | `x-api-key` check |
+| `validateOrigin`, `validateDataType` | `server/routes/dataUpload.js` | hostname / reverse-DNS check; 400 for an unknown dataType |
+| `validateLlmForecast`, `PLACEMENTS` | `public/js/llmForecast.js` | the `llm_forecast/1` contract, shared with the pages |
+| `updateLatestLlmForecast` | `server/routes/dataUpload.js` | `latest_<persona>.json` side-effect |
 | `multer({limits})` (~:77) | `server/routes/dataUpload.js` | 10 MB ceiling |
 | extension gate (~:169) | `server/routes/dataUpload.js` | allowed extensions + JSON parse |
 | road-forecast copy (~:214) | `server/routes/dataUpload.js` | `latest.json` side-effect |

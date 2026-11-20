@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import compression from 'compression';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
@@ -12,6 +13,9 @@ import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEv
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
+import weatherAlertsRoutes from './routes/weatherAlerts.js';
+import statusLightsRoutes, { setStatusLightServices } from './routes/statusLights.js';
+import weatherForecastRoutes from './routes/weatherForecast.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, {
@@ -54,6 +58,15 @@ const reportEmailService = new ReportEmailService({
 // shared cache and rate limiter, rather than creating their own.
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
 setTrafficEventsService(backgroundRefresh.trafficEventsService);
+setStatusLightServices({
+    roadWeather: backgroundRefresh.roadWeatherService,
+    trafficEvents: backgroundRefresh.trafficEventsService
+});
+
+// gzip for anything compressible over 1 kB, when the browser accepts it. nginx in front
+// compresses HTML only, so until 1.7.6 every JSON file went out whole: a 1.5 MB HRRR map run,
+// or the 1.7 MB list of observation files, to each visitor. They shrink to about a tenth.
+app.use(compression({ threshold: 1024 }));
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads).
 //
@@ -74,6 +87,9 @@ app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api', fireWeatherRoutes);
 app.use('/api', fireRestrictionsRoutes);
+app.use('/api', weatherAlertsRoutes);
+app.use('/api', statusLightsRoutes);
+app.use('/api', weatherForecastRoutes);
 // Pipeline freshness/health for CHPC operators verifying their cron jobs.
 app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
