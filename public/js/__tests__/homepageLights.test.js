@@ -32,7 +32,7 @@ describe('precipRows', () => {
         ] });
         expect(rows.map((row) => `${row.label}: ${row.words} [${row.icons.join(' ')}]`)).toEqual([
             'Passes: Snow [fa-snowflake]',
-            'Benches: Rain and snow [fa-cloud-rain fa-snowflake]',
+            'Benches: Mix [fa-cloud-rain fa-snowflake]',
             'Floor: Rain at times [fa-cloud-rain]',
             'Floor: Dry []',
         ]);

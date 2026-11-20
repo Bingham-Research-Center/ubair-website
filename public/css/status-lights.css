@@ -7,11 +7,19 @@
 
    Tokens only: this file's style-ratchet ceiling is zero. */
 
+/* Two by two beside the wordmark: the header column is too narrow for four tiles whose words
+   do not wrap to a sliver. On a very wide screen there is room for one row. */
 .status-lights {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.875rem;
     margin-bottom: 0.875rem;
+}
+
+@media screen and (min-width: 1700px) {
+    .status-lights {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
 }
 
 .status-light {
@@ -22,6 +30,7 @@
     gap: 0.4rem;
     padding: 1.25rem 1.25rem 1rem;
     min-width: 0;
+    text-align: left;
 }
 
 .status-light[data-level="red"] { --light-color: var(--status-danger); }
@@ -135,7 +144,6 @@
 
 @media screen and (max-width: 480px) {
     .status-lights {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.625rem;
     }
 

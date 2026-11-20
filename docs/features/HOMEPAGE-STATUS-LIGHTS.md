@@ -95,7 +95,7 @@ Three rows, highest ground first:
 | Benches | 5,900 to 7,500 ft | Fruitland |
 | Floor | below 5,900 ft | Vernal, Roosevelt, Duchesne, Myton |
 
-Each row says **Snow**, **Rain**, **Rain and snow** or **Dry**, with "at times" when it is
+Each row says **Snow**, **Rain**, **Mix** (rain and snow) or **Dry**, with "at times" when it is
 only a small part of the six hours. The snowflake and rain-cloud symbols are the only icons
 on the homepage, because here the symbol is the data.
 

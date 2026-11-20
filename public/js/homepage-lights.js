@@ -18,7 +18,7 @@ const REFRESH_MS = 5 * 60 * 1000;
 export const LEVELS = ['red', 'amber', 'green', 'grey'];
 export const LEVEL_WORDS = { red: 'Warning', amber: 'Caution', green: 'Clear', grey: 'No data' };
 
-export const PRECIP_WORDS = { snow: 'Snow', rain: 'Rain', mix: 'Rain and snow', dry: 'Dry' };
+export const PRECIP_WORDS = { snow: 'Snow', rain: 'Rain', mix: 'Mix', dry: 'Dry' };
 // Font Awesome names. homepage.test.js allows exactly these on the homepage.
 export const PRECIP_ICONS = { snow: ['fa-snowflake'], rain: ['fa-cloud-rain'], mix: ['fa-cloud-rain', 'fa-snowflake'], dry: [] };
 
