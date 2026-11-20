@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import path from 'path';
-import { promises as fs, readdirSync } from 'fs';
+import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 
@@ -14,7 +14,9 @@ import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
-import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from './middleware/analytics.js';
+import analyticsMiddleware, {
+    flushVisitorsSync, getAnalyticsStats, getVisitorStats, handleEngagementBeacon
+} from './middleware/analytics.js';
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
@@ -28,18 +30,18 @@ import {
 } from './startup/backgroundJobs.js';
 
 const app = express();
+
+// nginx terminates TLS on both boxes and proxies from loopback, appending the real client to
+// X-Forwarded-For. Trusting loopback (and only loopback) makes req.ip that appended address:
+// the rightmost hop, which a client cannot forge, rather than the first, which it can. Without
+// this every request's req.ip was nginx itself, so analytics counted one visitor a day (#340).
+// It also makes req.protocol honour X-Forwarded-Proto; nothing in the app reads it today.
+app.set('trust proxy', 'loopback');
 const PORT = process.env.PORT || 3000;
 const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const aboutPagesDir = path.join(__dirname, '../views/about');
-const aboutPageAllowlist = new Set(
-    readdirSync(aboutPagesDir, { withFileTypes: true })
-        .filter(entry => entry.isFile() && path.extname(entry.name) === '.html')
-        .map(entry => path.basename(entry.name, '.html'))
-);
-
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
 const reportEmailService = new ReportEmailService({
@@ -79,10 +81,14 @@ app.use('/api/static', express.static(path.join(__dirname, '../public/api/static
 // Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
 app.get('/api/analytics/pipeline', getPipelineStats);
+app.get('/api/analytics/visitors', getVisitorStats);
 // Unauthenticated by necessity (called from every visitor's browser). Cap the body hard —
 // the handler rate-limits per IP and validates every field, but there is no reason to parse
-// more than a few hundred bytes here.
-app.post('/api/analytics/engagement', express.json({ limit: '2kb' }), handleEngagementBeacon);
+// more than a few hundred bytes here. navigator.sendBeacon sends a string body as
+// text/plain, so that type must be parsed as JSON too, or every beacon is a 400.
+app.post('/api/analytics/engagement',
+    express.json({ limit: '2kb', type: ['application/json', 'text/plain'] }),
+    handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -93,6 +99,16 @@ app.use('/public', express.static('public', {
         }
     }
 }));
+
+// One icon for the whole site (docs/FAVICON-INSTALL-STEPS.md). Browsers ask for /favicon.ico
+// and iOS for /apple-touch-icon.png at the site root whatever a page links to (#309).
+const faviconDir = path.join(__dirname, '../public/images/favicons');
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(faviconDir, 'favicon.ico'), { maxAge: '1h' });
+});
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+    res.sendFile(path.join(faviconDir, 'apple-touch-icon.png'), { maxAge: '1h' });
+});
 
 // Locally installed UI assets keep the roads map usable when public CDNs are slow or unavailable.
 const vendorStaticOptions = { maxAge: '1h' };
@@ -134,20 +150,12 @@ app.get('/sports', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/sports.html'));
 });
 
-app.get('/agriculture', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/agriculture.html'));
-});
-
 app.get('/roads', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/roads.html'));
 });
 
 app.get('/aviation', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/aviation.html'));
-});
-
-app.get('/water', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/water.html'));
 });
 
 app.get('/fire', (req, res) => {
@@ -159,31 +167,21 @@ app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));
 });
 
-app.get('/kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk.html'));
+// The dedicated kiosk pages were retired on 2026-11-11 (parked at tag
+// parked/pre-cleanup-2026-11-11). Their URLs go to the homepage in display mode so a wall
+// screen still pointed at one keeps showing something; 302 so the target can change.
+app.get(['/kiosk', '/kiosk-portrait', '/portrait-kiosk'], (req, res) => {
+    res.redirect(302, '/?display=1');
 });
 
-app.get('/portrait-kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/about.html'));
 });
 
-app.get('/kiosk-portrait', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
-});
-
-app.get('/test-viz', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/test-viz.html'));
-});
-
-app.get('/about/:page', (req, res) => {
-    const { page } = req.params;
-
-    if (!aboutPageAllowlist.has(page)) {
-        return res.status(404).send('Not Found');
-    }
-
-    res.sendFile(path.join(aboutPagesDir, `${page}.html`));
-});
+// The About Clyfar and FAQ pages were merged into /about on 2026-11-12. Their old URLs still
+// land somewhere useful; 302 so the targets can change if those pages come back.
+app.get('/about/clyfar', (req, res) => res.redirect(302, '/about#clyfar'));
+app.get('/about/faq', (req, res) => res.redirect(302, '/about'));
 
 // NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
 // served a deploy-time fossil (./public/api/static/filelist.json) that
@@ -297,6 +295,9 @@ const shutdown = async (signal, options = {}) => {
     isShuttingDown = true;
 
     console.log(`\nReceived ${signal}. Shutting down services...`);
+
+    // Before anything async: pm2 sends SIGKILL 1.6 s after SIGINT by default.
+    flushVisitorsSync();
 
     const shutdownContext = {
         signal,

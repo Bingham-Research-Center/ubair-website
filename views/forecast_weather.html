@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Weather Forecasts for Uintah Basin with interactive maps and analysis">
     <title>BasinWx</title>
-    <link rel="icon" type="image/x-icon" href="/public/images/favicons/gemini-wx.ico">
+    <link rel="icon" href="/favicon.ico" sizes="32x32">
+    <link rel="icon" href="/public/images/favicons/favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
     <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="/vendor/fontawesome/css/all.min.css">
 
     <!-- Leaflet -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -37,7 +36,7 @@
         <h1>Weather Forecasts</h1>
 
         <!-- GEFS Meteogram Section - Active Feature -->
-        <section class="meteogram-section" aria-label="Model Forecast Meteograms">
+        <section class="meteogram-section pane" aria-label="Model Forecast Meteograms">
             <div class="section-header">
                 <h2><i class="fas fa-chart-area"></i> Model Forecast Data</h2>
                 <div class="info-icon" data-tooltip="Ensemble model forecast meteograms showing uncertainty ranges">
@@ -103,7 +102,7 @@
         </section>
 
         <!-- Control Panel -->
-        <section class="control-panel" aria-label="Forecast Controls">
+        <section class="control-panel pane" aria-label="Forecast Controls">
             <div class="controls-row">
                 <div class="run-selector">
                     <label for="forecast-run">Forecast Run:</label>
@@ -150,30 +149,8 @@
             <p class="forecast-status" id="forecast-status">Loading HRRR surface layers...</p>
         </section>
 
-        <!-- Weather AI Summaries Section -->
-        <section class="weather-summaries-section" aria-label="AI Weather Summaries">
-            <div class="section-header">
-                <h2><i class="fas fa-cloud-sun-rain"></i> AI Weather Summaries</h2>
-                <div class="info-icon" data-tooltip="AI-generated weather summaries at different complexity levels">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-            </div>
-
-            <div class="summary-tabs">
-                <button class="tab-button active" data-tab="plain" data-tooltip="For general public">Plain</button>
-                <button class="tab-button" data-tab="extended" data-tooltip="For general stakeholders">Extended</button>
-                <button class="tab-button" data-tab="detailed" data-tooltip="For meteorologists and researchers">Detailed</button>
-            </div>
-
-            <div class="tab-content">
-                <div id="weather-plain-content" class="summary-content active">Loading plain weather summary...</div>
-                <div id="weather-extended-content" class="summary-content">Loading extended weather summary...</div>
-                <div id="weather-detailed-content" class="summary-content">Loading detailed weather summary...</div>
-            </div>
-        </section>
-
         <!-- Weather Map Container -->
-        <section class="weather-map-section" aria-label="Interactive Weather Map">
+        <section class="weather-map-section pane" aria-label="Interactive Weather Map">
             <div class="map-container">
                 <div id="weather-map" class="weather-map"></div>
                 <div class="map-overlay">
@@ -191,7 +168,7 @@
         <!-- Weather Analysis -->
         <section class="analysis-section" aria-label="Weather Analysis and Summary">
             <div class="analysis-grid">
-                <div class="summary-panel">
+                <div class="summary-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-clipboard-list"></i> Current Summary</h3>
                         <div class="info-icon" data-tooltip="Automated analysis of current weather patterns">
@@ -199,7 +176,7 @@
                         </div>
                     </div>
                     <div class="summary-content" id="weather-summary">
-                        <p>Current weather conditions across the Uintah Basin show typical winter patterns with temperature inversions common in valley areas. Snow cover remains variable across elevation gradients.</p>
+                        <p>Loading the HRRR summary...</p>
                         <div class="summary-stats">
                             <div class="stat-item">
                                 <span class="stat-label">Basin Average:</span>
@@ -211,15 +188,15 @@
                             </div>
                             <div class="stat-item">
                                 <span class="stat-label">Trend:</span>
-                                <span class="stat-value" id="trend-indicator">Stable</span>
+                                <span class="stat-value" id="trend-indicator">--</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="forecast-panel">
+                <div class="forecast-panel pane">
                     <div class="panel-header">
-                        <h3><i class="fas fa-crystal-ball"></i> Forecast Snapshots</h3>
+                        <h3><i class="fas fa-chart-line"></i> Forecast Snapshots</h3>
                         <div class="info-icon" data-tooltip="Short-term forecast highlighting key changes">
                             <i class="fas fa-info-circle"></i>
                         </div>
@@ -229,7 +206,7 @@
                     </div>
                 </div>
 
-                <div class="conditions-panel">
+                <div class="conditions-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-exclamation-triangle"></i> Special Conditions</h3>
                         <div class="info-icon" data-tooltip="Notable weather conditions affecting the Basin">
@@ -241,7 +218,7 @@
                     </div>
                 </div>
 
-                <div class="model-panel">
+                <div class="model-panel pane">
                     <div class="panel-header">
                         <h3><i class="fas fa-cogs"></i> Model Information</h3>
                         <div class="info-icon" data-tooltip="Weather model sources and update times">
@@ -251,8 +228,8 @@
                     <div class="model-content" id="model-info">
                         <div class="model-source">
                             <h4>Primary Model: HRRR 3km</h4>
-                            <p>Last Update: <span id="model-update-time">06:00 UTC</span></p>
-                            <p>Next Update: <span id="next-update-time">12:00 UTC</span></p>
+                            <p>Last Update: <span id="model-update-time">--</span></p>
+                            <p>Next Update: <span id="next-update-time">--</span></p>
                         </div>
                         <div class="model-performance">
                             <div class="performance-metric">
@@ -273,12 +250,6 @@
         <div id="tooltip" class="tooltip" role="tooltip"></div>
     </main>
 
-    <!-- Footer -->
-    <footer class="main-footer">
-        <div class="footer-content">
-            <p>&copy; <span id="current-year">2026</span> Bingham Research Center. Weather forecasts are experimental research products. All rights reserved.</p>
-        </div>
-    </footer>
 
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -286,8 +257,5 @@
     <script type="module" src="/public/js/loadFooter.js"></script>
     <script type="module" src="/public/js/forecast_weather.js"></script>
 
-    <!-- Easter Eggs - Activated via Konami Code -->
-    <link rel="stylesheet" href="/public/css/easter-eggs.css">
-    <script src="/public/js/easter-eggs.js"></script>
 </body>
 </html>

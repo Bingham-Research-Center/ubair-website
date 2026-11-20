@@ -1,22 +1,41 @@
-:root {
-    --about-primary: #b8860b;    /* Dark goldenrod */
-    --about-secondary: #daa520;  /* Goldenrod */
-    --about-accent: #ffd700;     /* Gold */
-    --about-background: #fffbf0; /* Cornsilk */
+/* About page: one column of panes (see panes.css), readable line length. */
+.about-page {
+    max-width: 52rem;
 }
 
-body[data-page-type="about"] {
-    background: linear-gradient(135deg, var(--about-background) 0%, #faf0e6 100%);
+.about-section {
+    padding: 1.5rem 2rem;
+    margin-bottom: 1.25rem;
+    --pane-tab-inset: 2rem;
 }
 
-body[data-page-type="about"] .sidebar {
-    background: linear-gradient(180deg, var(--about-primary), var(--about-secondary));
+.about-section h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.25rem;
+    color: var(--color-brand);
 }
 
-.about-content {
-    background: white;
-    border-radius: 12px;
-    padding: 2rem;
-    box-shadow: 0 4px 20px rgba(184, 134, 11, 0.1);
-    border-left: 4px solid var(--about-accent);
+.about-section p,
+.about-section li {
+    line-height: 1.6;
+}
+
+.about-section p:last-child {
+    margin-bottom: 0;
+}
+
+.about-section ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.about-section a {
+    color: var(--color-link);
+}
+
+/* Room for Clyfar's ember round the words, without moving them (theme/clyfar.css) */
+.about-section a.clyfar-glow {
+    display: inline-block;
+    padding: 0 0.25em;
+    margin: 0 -0.25em;
 }

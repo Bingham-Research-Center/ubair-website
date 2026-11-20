@@ -3,16 +3,22 @@
  *
  * Logs to: /logs/analytics/pipeline.log
  * Summary: /logs/analytics/pipeline_summary.json
+ * (ANALYTICS_LOG_DIR overrides; tests use a temp dir, as page analytics does, so a test run in
+ * a live checkout cannot add uploads, or a failed one, to that box's pipeline record)
  */
 
 import { promises as fs } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import os from 'os';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const LOG_DIR = path.join(__dirname, '../../logs/analytics');
+const LOG_DIR = process.env.ANALYTICS_LOG_DIR ||
+    (process.env.NODE_ENV === 'test'
+        ? path.join(os.tmpdir(), `ubair-analytics-test-${process.pid}`)
+        : path.join(__dirname, '../../logs/analytics'));
 const PIPELINE_LOG = path.join(LOG_DIR, 'pipeline.log');
 const PIPELINE_SUMMARY = path.join(LOG_DIR, 'pipeline_summary.json');
 

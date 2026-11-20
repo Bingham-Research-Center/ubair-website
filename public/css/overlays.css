@@ -8,8 +8,8 @@
     z-index: 1000;
     background-color: rgba(255, 255, 255, 0.95);
     padding: 10px;
-    border-radius: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
 }
 
@@ -17,7 +17,7 @@
     height: 30vh;
     width: auto;
     display: block;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 /* Study area overlay */
@@ -27,10 +27,10 @@
     left: calc(250px + 20px);
     background-color: rgba(255, 255, 255, 0.95);
     padding: 15px;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     z-index: 1000;
     max-width: 200px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-overlay);
     border: 2px solid var(--usu-blue);
 }
 
@@ -38,7 +38,7 @@
     display: block;
     max-width: 100%;
     height: auto;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .study-area-toggle {
@@ -50,16 +50,15 @@
     background-color: var(--usu-blue);
     color: white;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     cursor: pointer;
     font-weight: 500;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: var(--shadow-card);
     transition: all 0.3s ease;
 }
 
 .study-area-toggle:hover {
     background-color: var(--usu-light-blue);
-    transform: translateY(-2px);
 }
 
 /* USU Logo positioning */
@@ -81,82 +80,3 @@
     opacity: 0.5;
 }
 
-/* Coming Soon Overlay - for unreleased pages */
-.coming-soon-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.92);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 2rem;
-    z-index: 100;
-    backdrop-filter: blur(2px);
-}
-
-.coming-soon-overlay h2 {
-    font-size: 2.5rem;
-    color: var(--usu-blue, #00263a);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin: 0 0 0.5rem 0;
-    font-weight: 700;
-}
-
-.coming-soon-overlay p {
-    font-size: 1.1rem;
-    color: #666;
-    margin: 0;
-}
-
-/* Partial overlay - covers only specific sections */
-.coming-soon-overlay.partial {
-    position: relative;
-    min-height: 200px;
-    border-radius: 8px;
-    margin: 1rem 0;
-}
-
-/* Coming Soon Wrapper - for sections within a page */
-.coming-soon-wrapper {
-    position: relative;
-    min-height: 400px;
-}
-
-.coming-soon-wrapper > .coming-soon-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.95);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 3rem;
-    z-index: 50;
-    backdrop-filter: blur(4px);
-    border-radius: 16px;
-}
-
-.coming-soon-wrapper > .coming-soon-overlay h2 {
-    font-size: 2rem;
-    color: var(--usu-blue, #00263a);
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    margin: 0 0 0.5rem 0;
-    font-weight: 700;
-}
-
-.coming-soon-wrapper > .coming-soon-overlay p {
-    font-size: 1rem;
-    color: #666;
-    margin: 0;
-    text-align: center;
-    max-width: 400px;
-}

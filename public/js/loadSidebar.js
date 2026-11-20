@@ -1,53 +1,3 @@
-// Define disclaimers for different pages
-const PAGE_DISCLAIMERS = {
-    '/forecast_air_quality': `DISCLAIMER: Clyfar AI forecasts are experimental research products and have not been operationally validated.
-        Real-time data are preliminary and subject to quality control. For official air quality forecasts,
-        please visit the Utah Department of Environmental Quality. ©2024, Utah State University.`,
-
-    '/forecast_weather': `DISCLAIMER: Weather forecasts are experimental research products for Basin-specific analysis.
-        For official weather forecasts and warnings, please visit the National Weather Service.
-        Real-time data are preliminary and subject to quality control. ©2024, Utah State University.`,
-
-    '/agriculture': `DISCLAIMER: Agricultural weather forecasts are experimental and for research purposes only.
-        Consult with agricultural extension services and professional agronomists for farming decisions.
-        ©2024, Utah State University.`,
-
-    '/roads': `UDOT data may be delayed. Verify critical trips with official sources.`,
-
-    '/aviation': `DISCLAIMER: Aviation weather products are for planning purposes only. Always obtain official
-        weather briefings from Flight Service or approved sources before flight operations.
-        ©2024, Utah State University.`,
-
-    '/water': `DISCLAIMER: Water recreation forecasts are experimental.
-        Always check current conditions and weather warnings before water activities.
-        ©2025, Utah State University.`,
-
-    '/fire': `DISCLAIMER: Fire-weather products are experimental research outputs and informational only.
-        They are NOT a substitute for official NWS forecasts and must NOT be used for fire-suppression decisions.
-        Satellite hotspot detections (NASA FIRMS) can lag by ~3 hours and may include false positives.
-        For active wildfires and operational guidance, consult Utah Fire Info and the National Weather Service.
-        ©2026, Utah State University.`,
-
-    '/sports': `DISCLAIMER: Sports weather products are experimental research outputs for planning
-        and recreation only. Crosswind drift figures are modelled estimates, not measurements, and assume a
-        steady crosswind with no spin on the ball. Real-time data are preliminary and subject to quality
-        control. For official forecasts and warnings, please visit the National Weather Service.
-        ©2026, Utah State University.`,
-
-    '/locations': `DISCLAIMER: Real-time data are preliminary and have yet to undergo quality control.
-        Some data are obtained in cooperation with other agencies, including the Ute Indian Tribe and the Utah Department of Environmental Quality. ©2025, Utah State University.`,
-
-    '/forecast_outlooks': `DISCLAIMER: Forecasts are experimental and subject to change.
-        For official air quality forecasts, please visit the Utah Department of Environmental Quality.
-        ©2024, Utah State University.`,
-
-    '/': `DISCLAIMER: This information is provided by Utah State University's Bingham Research Center.
-        For official air quality data, please visit the Utah DEQ website. ©2025, Utah State University.`,
-
-    '/live_aq': 'Real-time data are preliminary and subject to quality control. ©2025, Utah State University.',
-
-};
-
 // Function to load the sidebar content
 async function loadSidebar() {
     try {
@@ -76,22 +26,6 @@ async function loadSidebar() {
             currentPageLink.parentElement.classList.add('nav-active');
         }
 
-
-        // Get current page disclaimer
-        const pageDisclaimer = PAGE_DISCLAIMERS[currentPath];
-
-        // Update disclaimer text if there's a page-specific one
-        const disclaimer = document.querySelector('.sidebar-disclaimer');
-        if (disclaimer && pageDisclaimer) {
-            disclaimer.querySelector('p').textContent = pageDisclaimer;
-        }
-
-        // Update the copyright year to current year
-        if (disclaimer) {
-            const currentYear = new Date().getFullYear();
-            disclaimer.querySelector('p').textContent = disclaimer.querySelector('p').textContent.replace(/©\d{4}/g, '©' + currentYear);
-        }
-
         // Load mobile menu script after sidebar is loaded
         if (!document.querySelector('script[src="/public/js/mobile-menu.js"]')) {
             const mobileMenuScript = document.createElement('script');
@@ -110,89 +44,20 @@ async function loadSidebar() {
             }, 100);
         }
 
-        // Initialize dev mode features
-        initializeDevMode();
     } catch (error) {
         console.error('Error loading sidebar:', error);
     }
 }
 
-// Secret code to open kiosk mode via typing "lawsondavies"
-function initializeDevMode() {
-    const secretCode = 'lawsondavies';
-    let userInput = '';
-    let inputTimer = null;
-
-    // Listen for keyboard input
-    document.addEventListener('keydown', (e) => {
-        // Add the key to the input string
-        userInput += e.key.toLowerCase();
-
-        // Keep only the last characters matching the secret code length
-        if (userInput.length > secretCode.length) {
-            userInput = userInput.slice(-secretCode.length);
-        }
-
-        // Reset input after 3 seconds of no typing
-        clearTimeout(inputTimer);
-        inputTimer = setTimeout(() => {
-            userInput = '';
-        }, 3000);
-
-        // Check if the secret code was typed
-        if (userInput === secretCode) {
-            userInput = ''; // Reset
-            openKioskMode();
-        }
-    });
-}
-
-function openKioskMode() {
-    // Open kiosk page in new tab
-    window.open('/kiosk', '_blank', 'noopener,noreferrer');
-
-    // Show feedback message
-    showDevModeMessage('Opening Kiosk Mode');
-}
-
-function showDevModeMessage(message) {
-    const messageEl = document.createElement('div');
-    messageEl.className = 'dev-mode-message';
-    messageEl.textContent = `🔧 ${message}`;
-    messageEl.style.cssText = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 20px 40px;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: bold;
-        z-index: 10000;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        animation: devModePop 0.5s ease-out;
-    `;
-
-    // Add animation
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes devModePop {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-        }
-    `;
-    document.head.appendChild(style);
-
-    document.body.appendChild(messageEl);
-
-    setTimeout(() => {
-        messageEl.style.animation = 'fadeOut 0.5s ease-out forwards';
-        setTimeout(() => messageEl.remove(), 500);
-    }, 2000);
-}
-
 // Load the sidebar when the document is ready
 document.addEventListener('DOMContentLoaded', loadSidebar);
+
+// Time-on-page beacon. Loaded from here because every page with the sidebar runs this file,
+// so no page can forget it; kiosk pages have no sidebar and so send none, which is right for
+// an unattended display. The beacon guards itself against loading twice.
+(function loadEngagementBeacon() {
+    const script = document.createElement('script');
+    script.src = '/public/js/engagement-beacon.js';
+    script.async = true;
+    (document.head || document.documentElement).appendChild(script);
+})();

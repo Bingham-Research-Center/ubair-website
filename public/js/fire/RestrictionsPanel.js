@@ -34,7 +34,7 @@ function renderRestrictions(restrictions) {
             : `<span class="restriction-no-link">Contact the issuing agency for the official text.</span>`;
 
         return `
-            <article class="restriction-card">
+            <article class="restriction-card pane" data-type="${esc(typeAttr)}">
                 <header class="restriction-card-head">
                     <span class="restriction-agency">${esc(r.agency || 'Issuing agency')}</span>
                     <span class="restriction-type-pill" data-type="${esc(typeAttr)}">${esc(type)}</span>

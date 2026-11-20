@@ -42,6 +42,15 @@ describe('generateOutlooksList', () => {
         expect(latest.formattedDate).toMatch(/^December 30, 2024 at \d{1,2}:\d{2}\s?[AP]M$/);
     });
 
+    // The filename's 1430 is Mountain time (the outlook says "2.30pm Mountain Time").
+    test('dates each outlook at its Mountain-time instant, with its season', async () => {
+        const [latest] = await generateOutlooksList(dir);
+
+        expect(latest.date).toBe('2024-12-30T21:30:00.000Z');
+        expect(latest.formattedDate).toBe('December 30, 2024 at 2:30 PM');
+        expect(latest.season).toBe('2024–25');
+    });
+
     test('writes the same list to outlooks_list.json', async () => {
         const outlooks = await generateOutlooksList(dir);
         const written = JSON.parse(await fs.readFile(path.join(dir, 'outlooks_list.json'), 'utf8'));

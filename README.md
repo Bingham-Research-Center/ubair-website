@@ -31,27 +31,94 @@ frontend reads from `/api/static/*`. DNS for `.dev` is at Namecheap with a wildc
 feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins them up at
 `<name>.basinwx.dev`. Forecast schemas are pinned in `DATA_MANIFEST.json`.
 
+## Look and feel (theme)
+The current look is **Ink + Teal**: near-black ink, one teal accent, IBM Plex Sans (served from
+`public/fonts/`, no font CDN), flat surfaces and a greyed basemap. A dark mode exists in the
+tokens (`<html data-mode="dark">`) but is a draft and is not switched on.
+
+Every colour, corner radius, shadow and font is defined once, in `public/css/theme/tokens.css`.
+Page stylesheets read those tokens with `var(--…)` and add no raw values of their own, so
+changing the site's look is an edit to that one file.
+
+| To | Do this |
+|---|---|
+| Style something in page CSS | use the semantic names: `var(--color-text-muted)`, `var(--radius-md)`, `var(--shadow-card)`, `var(--font-sans)`; never a hex or px literal |
+| Give one page or card its own accent | set `--page-accent` on `body[data-page-type="…"]`, or `--card-accent` on the card |
+| Change the look of the whole site | edit values in `tokens.css`, nothing else |
+| Check you kept to it | `npm test`: `styleRatchet` fails if a file gains raw values, `themeContrast` fails if text drops below WCAG AA |
+
+House rules for new work: flat surfaces separated by a hairline rather than a drop shadow;
+corners of 4, 6 or 8 px; hover and keyboard focus change colour or border and never move the
+element; icons come from the one vendored Font Awesome (`/vendor/fontawesome`), not emoji or a
+CDN. Tiers, the ratchet and how to add a token: `docs/STYLE-TOKEN-GUIDE.md`.
+
+**Branch previews carry the theme with them.** Every page loads `tokens.css` through
+`main.css`, so a preview of a branch that is current with `dev` shows the current theme with no
+extra work, and a branch that edits `tokens.css` previews its own look. To compare several
+looks on one preview, put each candidate's values in an `html[data-theme="name"]` block in a
+preview-only stylesheet and switch the attribute. Keep that off `dev`: `styleRatchet` fails if
+the switcher is present.
+
+## Branch previews (dev box only)
+Any branch or PR can run beside the dev site at its own `<name>.basinwx.dev`. One slot is
+already wired: **`theme.basinwx.dev` → port 3003** has its certificate and nginx vhost, and
+answers 502 while nothing runs there. Nothing below needs root. As `deploy` on the dev box:
+
+```bash
+cd /srv/ubair-website && git fetch origin
+git worktree add --detach /srv/ubair-website-preview-theme origin/<branch>
+cd /srv/ubair-website-preview-theme
+cp /srv/ubair-website/.env .env && sed -i 's/^PORT=.*/PORT=3003/' .env && echo PREVIEW_MODE=true >> .env
+ln -s /srv/ubair-website/node_modules node_modules
+rm -rf public/api/static && ln -s /srv/ubair-website/public/api/static public/api/static
+env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin \
+  PM2_APP_NAME=basinwx-preview-theme bash -c 'cd /srv/ubair-website-preview-theme && pm2 start ecosystem.config.cjs'
+curl -s https://theme.basinwx.dev/api/health    # "commit" should be the branch's
+```
+
+To take it down, which is also the first step of pointing the slot at a different branch:
+
+```bash
+pm2 delete basinwx-preview-theme
+rm /srv/ubair-website-preview-theme/node_modules /srv/ubair-website-preview-theme/public/api/static
+git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-theme
+```
+
+- **A PR instead of a branch:** `git fetch origin pull/<N>/head`, then use `FETCH_HEAD` in place
+  of `origin/<branch>`. **The look switcher** from the Nov 2026 comparison, also the quickest
+  way to try dark mode, is the branch `preview/theme`; it exists only in the repo on the dev box.
+- The two symlinks give the preview the dev site's packages and its live data. Unlink them
+  before removing the folder, as above. If the branch changes dependencies, run `npm install`
+  in place of the `node_modules` link.
+- `PREVIEW_MODE=true` keeps the preview's background jobs off, `env -i` keeps the calling
+  shell's variables out of the app, and there is no `pm2 save` because previews stay out of the
+  reboot set.
+- A second preview at another name needs its own port, a certificate and an nginx vhost,
+  which only root can add: `docs/howto/preview-a-branch.md`.
+
 ## Documentation
 | Audience | Start here |
 |---|---|
-| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — Home ("what do I do today?"), How-We-Work, Definition-of-Done, Roadmap, Team, Glossary |
+| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — one page: what to work on and how a change gets merged |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
+| **Styling** | `docs/STYLE-TOKEN-GUIDE.md` (tokens, the style ratchet); summary under "Look and feel" above |
 | **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json`; producer side in [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) |
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
 Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
-(labels `student-ready`, `copilot-ok`) on the "BasinWx Winter 2026/27" project, not in docs files.
+on two milestones (`v1.6.0 Beta relaunch`, `v2.0.0 Ozone season open`), not in docs files.
+Unscheduled ideas live in one thread, [Ideas parking lot](https://github.com/Bingham-Research-Center/ubair-website/discussions/342).
 
 ## Contributing
 Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
 and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
-audience-appropriate. Open bugs and tasks with the issue templates; PRs go into `dev`.
+audience-appropriate. PRs go into `dev`.
 
 - **Style:** low verbosity; prune bloat
 - **Tests:** TDD where practical (`npm test`)
 - **AI authorship:** every commit involving AI assistance must list the agent as a co-author
-- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki's How-We-Work page
+- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki
 
 ## Quick health checks
 ```bash

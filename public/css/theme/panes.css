@@ -1,0 +1,42 @@
+/* Panes: the site's card style since v1.6.2.
+
+   Square, separated from the page by a hairline, and marked by a short accent tab on the top
+   edge. The tab replaces the coloured left bar that curved round a rounded corner. Opt in with
+   class="pane"; nothing else is needed.
+
+   Colour: a pane uses --pane-accent if it sets one (status panes point it at --status-*), else
+   the page's --page-accent. Size and position of the tab are the --pane-tab-* tokens; a pane
+   with different padding sets --pane-tab-inset so the tab lines up with its text.
+
+   Callouts inside a pane (quotes, notes) keep a plain left rule: the tab marks a pane, the
+   left rule marks an aside. */
+
+.pane {
+    position: relative;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-card);
+    border-radius: var(--radius-lg);
+}
+
+.pane::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: var(--pane-tab-inset);
+    width: var(--pane-tab-width);
+    height: var(--pane-tab-height);
+    background: var(--pane-accent, var(--page-accent));
+    pointer-events: none;
+}
+
+/* A pane that is a link: colour changes on hover and focus, nothing moves. */
+a.pane {
+    color: inherit;
+    text-decoration: none;
+}
+
+a.pane:hover,
+a.pane:focus-visible {
+    box-shadow: var(--shadow-card-hover);
+    background: var(--color-bg);
+}

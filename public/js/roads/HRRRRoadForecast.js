@@ -514,7 +514,7 @@ export class HRRRRoadForecastController {
     renderSingleRouteUnavailable(container, message) {
         container.dataset.state = 'unavailable';
         const unavailable = createElement('p', 'hrrr-route-unavailable');
-        const icon = createElement('i', 'fas fa-cloud-slash');
+        const icon = createElement('i', 'fas fa-circle-info');
         icon.setAttribute('aria-hidden', 'true');
         unavailable.append(icon, document.createTextNode(message));
         container.replaceChildren(unavailable);
