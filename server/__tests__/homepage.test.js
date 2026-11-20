@@ -17,6 +17,18 @@ describe('homepage', () => {
         expect(main).toMatch(/id="forecast-collapse"[^>]*>\s*<i class="fas fa-chevron-up">/);
     });
 
+    test('and the only icons its scripts add are precipitation types, which are data', async () => {
+        const { PRECIP_ICONS } = await import('../../public/js/homepage-lights.js');
+        expect(PRECIP_ICONS).toEqual({
+            snow: ['fa-snowflake'], rain: ['fa-cloud-rain'], mix: ['fa-cloud-rain', 'fa-snowflake'], dry: [],
+        });
+        // No other icon name appears in either homepage script.
+        for (const file of ['public/js/homepage-lights.js', 'public/js/homepage-current.js']) {
+            const names = new Set(read(file).match(/(?<![\w-])fa-[a-z0-9-]+/g) || []);
+            expect([...names].filter((name) => !['fa-snowflake', 'fa-cloud-rain'].includes(name))).toEqual([]);
+        }
+    });
+
     test('shows no placeholder or invented content', () => {
         expect(html).not.toMatch(/coming\s+(soon|december)/i);
         expect(html).not.toMatch(/AI Summary|ai-summary/);
@@ -26,16 +38,44 @@ describe('homepage', () => {
         expect(html).toContain('/public/js/homepage-current.js');
     });
 
-    test('keeps the snow panel hidden until a real summary loads', () => {
-        expect(main).toMatch(/id="alerts-snow"[^>]*\bhidden\b/);
-        // No fallback that turns a failed fetch into an all-clear.
-        const loader = html.slice(html.indexOf('async function loadAlertsSnowForecast'));
-        const catchBlock = loader.slice(loader.indexOf('catch (err)'), loader.indexOf('}', loader.indexOf('catch (err)')));
-        expect(catchBlock).not.toMatch(/No significant snow/);
+    test('the Alerts tab and its snow panel are gone, with the file nobody ever uploaded', () => {
+        // The panel waited on gefs_snow_summary.json, which no producer has made. The Precip
+        // tile in the status lights now answers the question from a forecast that does arrive.
+        expect(html).not.toMatch(/gefs_snow_summary|alerts-snow|No significant snow|alerts-ozone-risk/);
+        expect(html).not.toMatch(/dashboard-tabs|tab-button|tab-panel|headlines-dashboard\.js/);
+        expect(fs.existsSync(path.join(repoRoot, 'public/js/headlines-dashboard.js'))).toBe(false);
+    });
+
+    test('shows four status tiles, each grey until its data arrives', () => {
+        const tiles = [...main.matchAll(/<div class="status-light pane[^"]*" id="light-([a-z]+)"([^>]*)>/g)];
+        expect(tiles.map((m) => m[1])).toEqual(['weather', 'ozone', 'roads', 'precip']);
+        // A light has no colour in the page source: the server's rules set it, and until they
+        // answer the tile is grey. Never green by default.
+        for (const [, key, attributes] of tiles.slice(0, 3)) {
+            expect([key, attributes.trim()]).toEqual([key, 'data-level="grey"']);
+        }
+        expect(main).not.toMatch(/data-level="(green|amber|red)"/);
+        expect(html).toContain('/public/js/homepage-lights.js');
+        expect(html).toContain('/public/css/status-lights.css');
+    });
+
+    test('each tile links to its page and can say why', () => {
+        const hrefs = [...main.matchAll(/<a class="(?:status-light-line|precip-bands)"[^>]*href="([^"]+)"/g)].map((m) => m[1]);
+        expect(hrefs).toEqual(['/forecast_weather', '/forecast_outlooks', '/roads', '/forecast_weather']);
+        expect(main.match(/<details class="status-light-why" hidden>/g).length).toBe(4);
+    });
+
+    test('current conditions are always on show, not behind a tab', () => {
+        const lights = main.indexOf('id="status-lights"');
+        const conditions = main.indexOf('id="current-temp"');
+        expect(lights).toBeGreaterThan(-1);
+        expect(conditions).toBeGreaterThan(lights);
+        expect(main.slice(lights, conditions)).not.toMatch(/<button/);
     });
 
     test('uses the shared pane style', () => {
-        expect(main.match(/class="headline-item pane\b/g).length).toBeGreaterThanOrEqual(5);
+        expect(main.match(/class="headline-item pane\b/g).length).toBe(3);
+        expect(main.match(/class="status-light pane\b/g).length).toBe(4);
         expect(main.match(/class="dashboard-panel pane\b/g).length).toBe(2);
         expect(read('public/css/main.css')).toContain("@import url('theme/panes.css');");
         expect(fs.existsSync(path.join(repoRoot, 'public/css/theme/panes.css'))).toBe(true);

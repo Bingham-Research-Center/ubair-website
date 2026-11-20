@@ -1,0 +1,155 @@
+/* Homepage status lights: Weather now, Ozone, Roads now, Precip next 6 h.
+
+   Flat square tiles in the pane style. A tile's colour is one custom property, --light-color,
+   set from data-level; the pane's tab and the square block beside the words both read it.
+   Colours are the status tokens, which carry meaning site-wide: never a page palette.
+   Grey (--status-nodata) is the default, so a tile that has not loaded, or cannot, is grey.
+
+   Tokens only: this file's style-ratchet ceiling is zero. */
+
+.status-lights {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+    gap: 0.875rem;
+    margin-bottom: 0.875rem;
+}
+
+.status-light {
+    --light-color: var(--status-nodata);
+    --pane-accent: var(--light-color);
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    padding: 1.25rem 1.25rem 1rem;
+    min-width: 0;
+}
+
+.status-light[data-level="red"] { --light-color: var(--status-danger); }
+.status-light[data-level="amber"] { --light-color: var(--status-warning); }
+.status-light[data-level="green"] { --light-color: var(--status-good); }
+
+/* The precipitation tile is a forecast, not a status: it keeps the page accent. */
+.status-light.status-precip { --pane-accent: var(--page-accent); }
+
+.status-light-label {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+}
+
+.status-light-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+}
+
+.status-light-line:hover .status-light-text,
+.status-light-line:focus-visible .status-light-text,
+.precip-bands:hover .precip-band-value,
+.precip-bands:focus-visible .precip-band-value {
+    text-decoration: underline;
+}
+
+.status-light-block {
+    flex: none;
+    width: 0.9rem;
+    height: 0.9rem;
+    margin-top: 0.2rem;
+    background: var(--light-color);
+}
+
+/* Precipitation: one row per elevation band, the type as an icon and a word. */
+.precip-bands {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.2rem 0.6rem;
+    align-items: baseline;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    text-decoration: none;
+}
+
+.precip-bands > .status-light-text {
+    grid-column: 1 / -1;
+    font-weight: 600;
+}
+
+.precip-band-label {
+    color: var(--color-text-muted);
+}
+
+.precip-band-value {
+    font-weight: 600;
+}
+
+.precip-band-value i {
+    width: 1.1rem;
+    margin-right: 0.25rem;
+    color: var(--color-text-muted);
+    text-align: center;
+}
+
+/* "Why": the reason for the colour, one tap or click away. */
+.status-light-why {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+}
+
+.status-light-why summary {
+    cursor: pointer;
+    width: fit-content;
+}
+
+.status-light-why summary:hover,
+.status-light-why summary:focus-visible {
+    color: var(--color-text);
+}
+
+.status-light-why p {
+    margin: 0.35rem 0 0;
+    line-height: 1.4;
+}
+
+.status-light .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* Current conditions sit under the lights at every width: three short tiles in a row, so a
+   phone shows all of it without the row turning into three screens of scrolling. */
+.headlines-dashboard .headline-items {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media screen and (max-width: 480px) {
+    .status-lights {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.625rem;
+    }
+
+    .status-light {
+        padding: 1rem 0.75rem 0.75rem;
+        --pane-tab-inset: 0.75rem;
+    }
+
+    .headlines-dashboard .headline-items {
+        gap: 0.625rem;
+    }
+
+    .headlines-dashboard .headline-item {
+        padding: 1rem 0.75rem 0.75rem;
+        --pane-tab-inset: 0.75rem;
+    }
+}

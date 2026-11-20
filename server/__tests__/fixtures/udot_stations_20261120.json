@@ -1,0 +1,344 @@
+[
+ {
+  "name": "US-40 @ Mayflower",
+  "lat": 40.6529,
+  "lng": -111.4569,
+  "windSpeedAvg": "8.34",
+  "windSpeedGust": "12.71",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-6 @ Helper",
+  "lat": 39.6934,
+  "lng": -110.8627,
+  "windSpeedAvg": "6.05",
+  "windSpeedGust": "8.99",
+  "surfaceStatus": "Dry",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-40 @ Daniels Summit",
+  "lat": 40.3033,
+  "lng": -111.2578,
+  "windSpeedAvg": "7.01",
+  "windSpeedGust": "10.08",
+  "surfaceStatus": "Ice",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "US-40 @ MP 66 Fruitland",
+  "lat": 40.20525,
+  "lng": -110.77125,
+  "windSpeedAvg": "6.67",
+  "windSpeedGust": "10.96",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "Monument Peak",
+  "lat": 39.614327,
+  "lng": -111.177347,
+  "windSpeedAvg": "27.53",
+  "windSpeedGust": "34.38",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:17:06.000Z"
+ },
+ {
+  "name": "US-191 @ MP 386 Willie Spring",
+  "lat": 40.8539,
+  "lng": -109.46205,
+  "windSpeedAvg": "10.82",
+  "windSpeedGust": "26.52",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-44 @ MP 9 Moose Pond",
+  "lat": 40.84185,
+  "lng": -109.64705,
+  "windSpeedAvg": "8.39",
+  "windSpeedGust": "22.14",
+  "surfaceStatus": "Snow",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-224 @ MP 3 Ontario Mine",
+  "lat": 40.6253,
+  "lng": -111.4968,
+  "windSpeedAvg": "6.77",
+  "windSpeedGust": "11.62",
+  "surfaceStatus": "Snow",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-121 @ MP 31.5 East Lapoint",
+  "lat": 40.4204,
+  "lng": -109.67016,
+  "windSpeedAvg": "6.82",
+  "windSpeedGust": "13.37",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T03:40:00.000Z"
+ },
+ {
+  "name": "SR-87 @ MP 16 Mountain Home",
+  "lat": 40.358,
+  "lng": -110.3876,
+  "windSpeedAvg": "5.70",
+  "windSpeedGust": "8.11",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "I-80 @ Silver Ck Jct",
+  "lat": 40.732,
+  "lng": -111.4983,
+  "windSpeedAvg": "9.62",
+  "windSpeedGust": "13.81",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "SR-35 @ Wolf Creek",
+  "lat": 40.557,
+  "lng": -111.135,
+  "windSpeedAvg": "1.46",
+  "windSpeedGust": "7.89",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-191 @ Indian Canyon Summit",
+  "lat": 39.8857,
+  "lng": -110.7479,
+  "windSpeedAvg": "3.24",
+  "windSpeedGust": "8.11",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "SR-248",
+  "lat": 40.6338,
+  "lng": -111.3849,
+  "windSpeedAvg": "7.01",
+  "windSpeedGust": "14.91",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-6 @ Red Narrows",
+  "lat": 39.989,
+  "lng": -111.37,
+  "windSpeedAvg": "0.00",
+  "windSpeedGust": "3.95",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-40 @ Heber",
+  "lat": 40.5636,
+  "lng": -111.4288,
+  "windSpeedAvg": "3.21",
+  "windSpeedGust": "7.67",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "US-40 @ MP 81.5 Starvation",
+  "lat": 40.173,
+  "lng": -110.493,
+  "windSpeedAvg": "2.82",
+  "windSpeedGust": "4.60",
+  "surfaceStatus": "Dry",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "I-80 @ MP 155.5 Wanship",
+  "lat": 40.81295,
+  "lng": -111.40141,
+  "windSpeedAvg": "2.37",
+  "windSpeedGust": "4.60",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "SR-35 @ Wolf Creek Pass",
+  "lat": 40.4872,
+  "lng": -111.0344,
+  "windSpeedAvg": "4.42",
+  "windSpeedGust": "8.11",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-40 @ MP 41 Co-Op Creek",
+  "lat": 40.2418,
+  "lng": -111.1771,
+  "windSpeedAvg": "6.37",
+  "windSpeedGust": "8.94",
+  "surfaceStatus": "Slushy",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "US-40 @ MP 140 Asphalt Ridge",
+  "lat": 40.41635,
+  "lng": -109.58215,
+  "windSpeedAvg": "4.46",
+  "windSpeedGust": "8.11",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "US-191 @ MP 377 Bassett Spring",
+  "lat": 40.724,
+  "lng": -109.4688,
+  "windSpeedAvg": "9.30",
+  "windSpeedGust": "14.16",
+  "surfaceStatus": "Snow",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-43 @ MP 0.5 West Stateline",
+  "lat": 40.9918,
+  "lng": -109.8445,
+  "windSpeedAvg": "14.29",
+  "windSpeedGust": "20.60",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "I-80 @ MP 151 Tollgate Canyon",
+  "lat": 40.7749,
+  "lng": -111.4678,
+  "windSpeedAvg": "1.61",
+  "windSpeedGust": "14.47",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-19T22:50:00.000Z"
+ },
+ {
+  "name": "US-6 @ Bear BS Tripod",
+  "lat": 39.75715,
+  "lng": -110.91698,
+  "windSpeedAvg": null,
+  "windSpeedGust": null,
+  "surfaceStatus": null,
+  "lastUpdated": "2026-10-26T15:18:01.000Z"
+ },
+ {
+  "name": "US-89 @ MP 290 Hilltop",
+  "lat": 39.716,
+  "lng": -111.4708,
+  "windSpeedAvg": "4.22",
+  "windSpeedGust": "15.56",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-31 @ Skyline",
+  "lat": 39.636,
+  "lng": -111.329,
+  "windSpeedAvg": "5.26",
+  "windSpeedGust": "10.06",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-6 @ Soldier Summit",
+  "lat": 39.928,
+  "lng": -111.083,
+  "windSpeedAvg": "5.17",
+  "windSpeedGust": "8.77",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "SR-32 @ MP 16.5 Marion",
+  "lat": 40.69837,
+  "lng": -111.28088,
+  "windSpeedAvg": "15.61",
+  "windSpeedGust": "23.24",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-6 @ MP 256 SR-123",
+  "lat": 39.526,
+  "lng": -110.5744,
+  "windSpeedAvg": "5.91",
+  "windSpeedGust": "9.86",
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "US-191 @ MP 369 Windy Point",
+  "lat": 40.64125,
+  "lng": -109.4859,
+  "windSpeedAvg": "0.13",
+  "windSpeedGust": "1.32",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "I-80 @ MP 163 Coalville",
+  "lat": 40.91775,
+  "lng": -111.40721,
+  "windSpeedAvg": "5.57",
+  "windSpeedGust": "17.76",
+  "surfaceStatus": "Dry",
+  "lastUpdated": "2026-08-25T03:30:00.000Z"
+ },
+ {
+  "name": "SR-150 @ Bald Mountain Pass",
+  "lat": 40.6872,
+  "lng": -110.9045,
+  "windSpeedAvg": "13.83",
+  "windSpeedGust": "24.22",
+  "surfaceStatus": null,
+  "lastUpdated": "2026-11-20T03:40:00.000Z"
+ },
+ {
+  "name": "US-189 @ Charleston",
+  "lat": 40.4558,
+  "lng": -111.4707,
+  "windSpeedAvg": "14.92",
+  "windSpeedGust": "21.48",
+  "surfaceStatus": "Dry",
+  "lastUpdated": "2026-06-24T19:00:00.000Z"
+ },
+ {
+  "name": "US-40 @ MP 105 Myton",
+  "lat": 40.19943,
+  "lng": -110.06792,
+  "windSpeedAvg": "2.98",
+  "windSpeedGust": "6.58",
+  "surfaceStatus": "Damp",
+  "lastUpdated": "2026-11-20T05:10:00.000Z"
+ },
+ {
+  "name": "SR-248 @ MP 1 Comstock Dr.",
+  "lat": 40.66786,
+  "lng": -111.49192,
+  "windSpeedAvg": null,
+  "windSpeedGust": null,
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "US-40 @ Silver Creek Bridge",
+  "lat": 40.73,
+  "lng": -111.49705,
+  "windSpeedAvg": null,
+  "windSpeedGust": null,
+  "surfaceStatus": "Wet",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ },
+ {
+  "name": "SR-264 @ MP 11 Eccles Summit",
+  "lat": 39.67925,
+  "lng": -111.2219,
+  "windSpeedAvg": "1.52",
+  "windSpeedGust": "10.81",
+  "surfaceStatus": "Slushy",
+  "lastUpdated": "2026-11-20T05:00:00.000Z"
+ }
+]
