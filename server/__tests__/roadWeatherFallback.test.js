@@ -141,6 +141,26 @@ describe('missing readings', () => {
     );
 
     it.each([
+        [['gray', 'green'], 'green'], [['green', 'gray'], 'green'],
+        [['gray', 'yellow', 'green'], 'yellow'], [['green', 'red'], 'red'], [['gray'], 'gray']
+    ])('picks the worst known condition independently of order: %j', (levels, expected) => {
+        const conditions = levels.map(condition => ({ condition, status: condition, reason: 'test' }));
+        expect(service.getWorstCondition(conditions).condition).toBe(expected);
+    });
+
+    it('does not let a gray HRRR waypoint hide a known reading on the same road', () => {
+        // Every road's first waypoint lacks an input; the rest are clear.
+        jest.spyOn(service, 'getHRRRConditionAtPoint').mockImplementation((lat, lon) => ({ lat, lon }));
+        jest.spyOn(service, 'estimateRoadCondition').mockImplementation((hrrrRoad, weather) =>
+            weather.lat === hrrrRoad.waypoints[0][0] && weather.lon === hrrrRoad.waypoints[0][1]
+                ? { condition: 'gray', status: 'No Data', reason: 'missing input' }
+                : { condition: 'green', status: 'Clear', reason: 'clear' });
+        const segments = service.buildAdditionalRoadSegmentsFromHRRR({ points: [] });
+        expect(segments.length).toBeGreaterThan(0);
+        for (const segment of segments) expect(segment.overallCondition.condition).toBe('green');
+    });
+
+    it.each([
         [['unknown', 'none'], 'green'], [['none', 'unknown'], 'green'],
         [['unknown', 'heavy'], 'red'], [['unknown', 'light'], 'yellow'], [['unknown'], undefined]
     ])('uses known camera evidence independently of order: %j', (levels, expected) => {

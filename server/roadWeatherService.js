@@ -1088,16 +1088,13 @@ class RoadWeatherService {
             return { condition: 'gray', status: 'No Data', reason: 'No station data' };
         }
 
-        const hasRed = conditions.some(c => c.condition === 'red');
-        const hasYellow = conditions.some(c => c.condition === 'yellow');
-
-        if (hasRed) {
-            return conditions.find(c => c.condition === 'red');
-        } else if (hasYellow) {
-            return conditions.find(c => c.condition === 'yellow');
-        } else {
-            return conditions[0];
+        // Worst known level wins; a known green beats gray, so the answer never
+        // depends on the order of the inputs.
+        for (const level of ['red', 'yellow', 'green']) {
+            const match = conditions.find(c => c.condition === level);
+            if (match) return match;
         }
+        return conditions[0];
     }
 
     async fetchSnowPlows() {
