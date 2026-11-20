@@ -1,7 +1,7 @@
 {
-  "version": "2.1.1",
+  "version": "2.2.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2026-09-28",
+  "lastUpdated": "2026-11-20",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
@@ -835,6 +835,370 @@
         "Currently 17 waypoints across 3 corridors (9 us40 + 4 us191 + 4 basin_roads). Densification is a possible future upgrade.",
         "Producer: brc-tools brc_tools.download.get_road_forecast (proof-of-concept; not yet on a cron)."
       ]
+    },
+    "llm_forecasts": {
+      "description": "Tiered LLM forecast text. One JSON file per run per persona, written by a producer and only rendered by the site (no LLM key or spend on either box). Each text belongs to a placement (where it appears) and a tier (public, industry or expert). Kept apart from llm_outlooks so it can never take over the ozone PDF button. The upload route validates every file against this contract (public/js/llmForecast.js) and answers 400 with every reason listed when a file breaks it.",
+      "format": "json",
+      "endpoint": "/api/upload/llm_forecasts",
+      "producers": [
+        "brc-tools on CHPC (both personas)"
+      ],
+      "schedule": {
+        "frequency": "0 */6 * * *",
+        "description": "Ffion 4x daily on the GEFS cycles; Rhiannon 8x daily (every 3 h). The monitor's interval is the slower of the two, so the dataType reads stale only when both have missed two Ffion cycles.",
+        "timezone": "UTC",
+        "automation": "automatic"
+      },
+      "filename": {
+        "pattern": "llm_forecast_<persona>_YYYYMMDD_HHMMZ.json",
+        "example": "llm_forecast_ffion_20261203_1210Z.json",
+        "rule": "The stamp is the file's own \"issued\" time to the minute, in UTC, and <persona> matches the \"persona\" field. A mismatch is refused.",
+        "latestCopies": "public/api/static/llm_forecasts/latest_<persona>.json (server copies a valid upload there unless the copy already present was issued later)"
+      },
+      "personas": {
+        "ffion": {
+          "cadenceHours": 6,
+          "staleHours": 12,
+          "role": "Communicator. Writes every public and industry tier, and the expert tier of forecast placements."
+        },
+        "rhiannon": {
+          "cadenceHours": 3,
+          "staleHours": 6,
+          "role": "Nowcaster and flight-data specialist. Writes expert tiers only."
+        }
+      },
+      "tiers": [
+        "public",
+        "industry",
+        "expert"
+      ],
+      "budgetTolerance": 1.5,
+      "placements": {
+        "home.summary": {
+          "where": "Homepage, LLM forecast panel",
+          "tiers": {
+            "public": {
+              "persona": "ffion",
+              "words": 35
+            },
+            "industry": {
+              "persona": "ffion",
+              "words": 60
+            },
+            "expert": {
+              "persona": "ffion",
+              "words": 60
+            }
+          }
+        },
+        "weather.discussion": {
+          "where": "Top of /forecast_weather",
+          "tiers": {
+            "public": {
+              "persona": "ffion",
+              "words": 40
+            },
+            "industry": {
+              "persona": "ffion",
+              "words": 150
+            },
+            "expert": {
+              "persona": "ffion",
+              "words": 400
+            }
+          }
+        },
+        "clyfar.summary": {
+          "where": "Clyfar page, in ozone season",
+          "tiers": {
+            "public": {
+              "persona": "ffion",
+              "words": 35
+            },
+            "industry": {
+              "persona": "ffion",
+              "words": 90
+            },
+            "expert": {
+              "persona": "ffion",
+              "words": 120
+            }
+          }
+        },
+        "aviation.summary": {
+          "where": "Aviation page, beside the KVEL runway winds",
+          "tiers": {
+            "public": {
+              "persona": "ffion",
+              "words": 35
+            },
+            "industry": {
+              "persona": "ffion",
+              "words": 90
+            },
+            "expert": {
+              "persona": "rhiannon",
+              "words": 120
+            }
+          }
+        },
+        "outlook.model_guidance": {
+          "where": "AI technical discussion under an ozone outlook",
+          "tiers": {
+            "expert": {
+              "persona": "ffion",
+              "words": 150
+            }
+          }
+        },
+        "outlook.observed_trends": {
+          "where": "AI technical discussion under an ozone outlook",
+          "tiers": {
+            "expert": {
+              "persona": "rhiannon",
+              "words": 150
+            }
+          }
+        }
+      },
+      "schema": {
+        "type": "object",
+        "required": [
+          "schema",
+          "persona",
+          "issued",
+          "valid_until",
+          "describes",
+          "generator",
+          "placements",
+          "sources"
+        ],
+        "properties": {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "llm_forecast/1"
+            ]
+          },
+          "persona": {
+            "type": "string",
+            "enum": [
+              "ffion",
+              "rhiannon"
+            ]
+          },
+          "issued": {
+            "type": "string",
+            "description": "When the text was written (UTC). Not more than 15 minutes ahead of the server's clock.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?Z$"
+          },
+          "valid_until": {
+            "type": "string",
+            "description": "The site hides the text at this time, or once it is older than the persona's staleHours, whichever comes first. Later than issued.",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?Z$"
+          },
+          "describes": {
+            "type": "object",
+            "description": "The inputs the text describes and their times, e.g. gefs (cycle), hrrr (init), obs_through, aircraft_through. A block is hidden when it describes an older GEFS cycle than the chart beside it.",
+            "minProperties": 1,
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2})?Z$"
+            }
+          },
+          "generator": {
+            "type": "object",
+            "required": [
+              "prompt_version",
+              "model"
+            ],
+            "properties": {
+              "prompt_version": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            }
+          },
+          "placements": {
+            "type": "object",
+            "description": "A file may carry any subset of its persona's placements, and at least one.",
+            "minProperties": 1,
+            "additionalProperties": false,
+            "properties": {
+              "home.summary": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "public": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 35 words, refused above 53."
+                  },
+                  "industry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 60 words, refused above 90."
+                  },
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 60 words, refused above 90."
+                  }
+                }
+              },
+              "weather.discussion": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "public": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 40 words, refused above 60."
+                  },
+                  "industry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 150 words, refused above 225."
+                  },
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 400 words, refused above 600."
+                  }
+                }
+              },
+              "clyfar.summary": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "public": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 35 words, refused above 53."
+                  },
+                  "industry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 90 words, refused above 135."
+                  },
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 120 words, refused above 180."
+                  }
+                }
+              },
+              "aviation.summary": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "public": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 35 words, refused above 53."
+                  },
+                  "industry": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 90 words, refused above 135."
+                  },
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by rhiannon; about 120 words, refused above 180."
+                  }
+                }
+              },
+              "outlook.model_guidance": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by ffion; about 150 words, refused above 225."
+                  }
+                }
+              },
+              "outlook.observed_trends": {
+                "type": "object",
+                "minProperties": 1,
+                "additionalProperties": false,
+                "properties": {
+                  "expert": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Written by rhiannon; about 150 words, refused above 225."
+                  }
+                }
+              }
+            }
+          },
+          "sources": {
+            "type": "array",
+            "description": "What the text was built from; shown as the expert tier's \"Built from\" list.",
+            "minItems": 1,
+            "maxItems": 30,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            }
+          }
+        }
+      },
+      "validation": {
+        "maxFileSize": "10MB",
+        "allowedExtensions": [
+          ".json"
+        ]
+      },
+      "notes": [
+        "The text is plain text. The site shows it as written, with blank lines as paragraph breaks; it does not render Markdown or HTML and never truncates.",
+        "The JSON Schema above cannot express three rules the server also enforces: each tier is written by the persona named in \"placements\"; a text longer than budgetTolerance x its word budget is refused; the filename must match persona and issued.",
+        "The site's readers see the label \"LLM forecast\", never a persona name.",
+        "Sample files: public/js/__tests__/fixtures/llm_forecasts/."
+      ]
+    },
+    "aircraft": {
+      "description": "Aircraft-derived products (profiles, a cold-pool index and similar) from the ADS-B hub. No page reads this dataType yet; each file family gets a product entry and a schema here before the website does.",
+      "format": "json",
+      "endpoint": "/api/upload/aircraft",
+      "producers": [
+        "brc-adsb-buffer hub (its x-client-hostname must be listed in UPLOAD_ALLOWED_HOSTS on each box)"
+      ],
+      "schedule": {
+        "frequency": "ad-hoc",
+        "description": "Cadence to be set with the hub when the first product is agreed (plan item P6).",
+        "timezone": "UTC",
+        "automation": "automatic"
+      },
+      "filename": {
+        "pattern": "aircraft_<product>_YYYYMMDD_HHMMZ.json",
+        "example": "aircraft_profile_kvel_20261203_1140Z.json"
+      },
+      "validation": {
+        "maxFileSize": "10MB",
+        "allowedExtensions": [
+          ".json",
+          ".png"
+        ]
+      },
+      "notes": [
+        "No schema is pinned yet, so the server checks only that a .json file parses.",
+        "The fused inversion product (plan item P7) will also live here."
+      ]
     }
   },
   "globalValidation": {
@@ -844,8 +1208,10 @@
       "required": true
     },
     "originValidation": {
-      "requiredHostname": "chpc.utah.edu",
-      "method": "reverse_dns_or_header"
+      "allowedHosts": ".chpc.utah.edu by default; UPLOAD_ALLOWED_HOSTS in each box's .env replaces the list",
+      "entryForms": "\".suffix\" matches that domain and any host under it; any other entry is one exact hostname",
+      "method": "reverse_dns_or_header",
+      "note": "A filter, not authentication: x-client-hostname is written by the client. The API key is the authentication."
     },
     "rateLimits": {
       "requestsPerMinute": 60,
@@ -863,7 +1229,9 @@
       "metadata": "Every 6 hours (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
       "images": "Every 6 hours (automatic; one batch of GEFS meteograms per cycle, ~9.5 h after 00/06/12/18Z)",
-      "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly"
+      "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly",
+      "llm_forecasts": "Ffion every 6 hours, Rhiannon every 3 hours (automatic, once the producer runs exist)",
+      "aircraft": "To be set with the ADS-B hub"
     },
     "alertThresholds": {
       "missingDataMinutes": 30,
