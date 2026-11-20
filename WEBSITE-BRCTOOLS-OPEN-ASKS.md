@@ -48,6 +48,7 @@ the file.
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
 | P1–P10 | brc-tools + hub | **OPEN** | The NWP dashboard asks (LLM forecast text, GEFS percentiles year-round, 48 h waypoints, aircraft products, gusts in the obs feed, the road-forecast precipitation total, the map file's snowfall total): listed with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md). P1 overlaps A5 |
+| P11–P20, R1–R4 | brc-tools | **OPEN** | Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
 
 ---
 

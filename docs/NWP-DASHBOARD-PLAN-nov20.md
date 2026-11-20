@@ -7,7 +7,30 @@ issues on milestone `v2.0.0 Ozone season open` (#402–#413; S0 is #336). It sup
 reference for measurements, data inventory and contender pros and cons. Delete both files, or
 fold what is left into issues, once 1.8.0 ships.
 
-> ## Where this stands (updated 20 Nov, evening)
+> ## Third session, 20 Nov (late): the branch goes to `dev` as 1.7.7-dev
+>
+> JRL lifted the "no PR yet" hold and, over three rounds of questions, set what this branch
+> carries to `dev` in **one PR**, the LLM renderer included and dormant:
+>
+> | Built | Where |
+> |---|---|
+> | A fifth homepage tile, a **forecast light titled by the part of the day** ("Tonight", "Tomorrow morning"): gusts 40/58 mph, new snow on the floor 1/4 in, wind chill 0/-20 °F; fog left for aviation | `server/statusLights.js` `forecastLight` |
+> | The LLM summary **beside the AQ outlook**, in the right-hand column (settles the open point below) | `views/index.html` `.dashboard-stack` |
+> | The forecast map as **colour bands with a time slider**, and layers derived in the browser | `public/js/mapLayers.js` |
+> | **Forecast and measured** dots, **Across the Basin** (US-40 in profile), **Where rain turns to snow** | `townChart.js`, `basinProfile.js`, `snowLine.js` |
+> | Manifest 2.3.0: the waypoints entry, and the names of the map fields to come | `DATA_MANIFEST.json` |
+> | What arrives against what is read, four agreed cuts, asks **P11 to P20** with aviation | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
+>
+> Not chosen, and so not built: places on the map, town-by-hour stripes, floor-against-pass
+> lines, a temperature ladder, a drive-time forecast, a film strip, a sunshine meter, a
+> barometer. Model against measured is a time series only, by JRL's choice.
+>
+> What this changes below: S4 #405 is on `dev` (dormant); S5 and S7 are wired in and need only
+> a real file (P2); the "next 3 days" light of S12 has its first step, in hours not days,
+> until the 48-hour point forecast (P13) flows. The order of producer work is now the
+> handoff's §8.
+>
+> ## Where this stood (20 Nov, evening)
 >
 > A second session on 20 Nov critiqued this plan against the code and the live data, asked
 > JRL twelve questions, and built the website-only slices. **Where this box and the text below

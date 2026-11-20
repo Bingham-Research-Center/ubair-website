@@ -1,5 +1,39 @@
 # Data Manifest Change Log
 
+## Version 2.3.0 (2026-11-20)
+
+### Type: Minor - One product documented, optional fields named; nothing a producer sends changes
+
+**Summary:** Gives the HRRR waypoints product the entry it never had, and names the fields the
+weather map will draw when the surface layers carry them. Website 1.7.7 is the first version
+that reads them.
+
+### Changes Made
+
+- **Added:** `forecasts.products.hrrr_waypoints`. The town table has read
+  `forecast_hrrr_waypoints_us40_dense_*` since website 1.7.6 with no entry here. The schema is
+  what the website reads; `variablesRead` gives each variable's unit, and
+  `variablesSentButUnread` lists the two it ignores.
+- **Added:** `forecasts.products.hrrr_surface_layers.optionalFields`: `wind_gust_10m_ms`,
+  `snow_depth_mm`, `cloud_cover_pct` and `rh_2m_pct`, each with its unit. The map draws one as
+  soon as a run carries it (`public/js/mapLayers.js`). `namesReserved` holds five more names
+  agreed for later.
+- **Added:** `notes` on the surface layers: the snowfall field is a running total (P10), the
+  runs arrive three at a time every six hours rather than hourly, and the direction the wind
+  components are measured from is not stated (P17).
+
+### Why MINOR
+
+Additive. No existing field, unit, filename or schedule changes, and CHPC needs no change to
+keep uploading. The new fields are optional: a run without them validates as before.
+
+### Declared cadence is still wrong for two products
+
+The surface layers' schedule says hourly and the waypoints entry gives the measured time, but
+`/api/monitoring/freshness` reads only the dataType's own schedule (`forecasts`, four times a
+day), so neither affects the monitor. The surface-layers schedule is left as declared until
+the producer moves it to hourly (handoff ask P11); the note says what happens today.
+
 ## Version 2.2.0 (2026-11-20)
 
 ### Type: Minor - Two new dataTypes, no change to an existing one

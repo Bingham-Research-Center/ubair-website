@@ -4,11 +4,12 @@
 weather model and observation data, shown on the site with a clear label that no human wrote
 them. Each piece comes in three versions for three kinds of reader.
 
-**Where it stands (20 Nov 2026):** the rules and the upload check are live on `.dev`. The part
-of the site that draws the text is written and tested on the branch `preview/nwp`, where it
-can be seen with sample text; it is not on `dev`. The text itself does not exist yet: the
-producers have still to build the runs that write it. **No LLM text is on the site today.**
-Nothing goes to the public site until real text is flowing; that release is version 1.8.0.
+**Where it stands (20 Nov 2026):** the rules, the upload check and, since 1.7.7, the part of
+the site that draws the text are all on `.dev`. The text itself does not exist yet: the
+producers have still to build the runs that write it. Until a real file arrives the two blocks
+that are wired in (the homepage summary and the weather page discussion) stay hidden and
+empty, with no placeholder. **No LLM text is on the site today.** Nothing goes to the public
+site until real text is flowing; that release is version 1.8.0.
 
 ## The three tiers
 
@@ -24,8 +25,8 @@ Every block of text has three tabs and always opens on the first:
 
 | Placement | Where on the site | Issue |
 |---|---|---|
-| `home.summary` | Homepage, beside the air-quality outlook | #406 |
-| `weather.discussion` | Top of the weather page | #408 |
+| `home.summary` | Homepage, in the right-hand column above the air-quality outlook (wired in, hidden until a file arrives) | #406 |
+| `weather.discussion` | Top of the weather page (wired in, hidden until a file arrives) | #408 |
 | `outlook.model_guidance` and `outlook.observed_trends` | Under each ozone outlook, as an "AI technical discussion" | #410 |
 | `clyfar.summary`, `aviation.summary` | Clyfar and aviation pages | #411 |
 
@@ -62,9 +63,9 @@ website. Readers never see their names: the site says "LLM forecast".
 | File shape, with a JSON Schema | `DATA_MANIFEST.json` → `dataTypes.llm_forecasts` | Live on `.dev` |
 | Sample files (marked as samples) | `public/js/__tests__/fixtures/llm_forecasts/` | In the repo |
 | What producers must build | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §3 | Waiting |
-| The hide-when-stale guards (`fileState`, `placementText`) | `public/js/llmForecast.js` | On `preview/nwp` |
-| Drawing the label, tabs and text | `public/js/llmText.js`, `public/css/llm-text.css` (#405) | On `preview/nwp` |
-| Sample files for a preview, never for a real site | `scripts/preview-llm-samples.mjs` | On `preview/nwp` |
+| The hide-when-stale guards (`fileState`, `placementText`) | `public/js/llmForecast.js` | On `.dev` since 1.7.7 |
+| Drawing the label, tabs and text | `public/js/llmText.js`, `public/css/llm-text.css` (#405) | On `.dev` since 1.7.7, drawing nothing until a file arrives |
+| Sample files for a preview, never for a real site | `scripts/preview-llm-samples.mjs` | In the repo. It refuses to write inside a live checkout |
 
 **See a refusal** (nothing is stored):
 
@@ -77,10 +78,14 @@ curl -s -X POST https://www.basinwx.dev/api/upload/llm_forecasts \
 
 **Tests:** `public/js/__tests__/llmForecast.test.js` (each test is also a rule a producer must
 meet; one fails if the manifest and the code disagree), the `llm_forecasts uploads` block in
-`server/__tests__/uploadPolicy.test.js`, and on `preview/nwp`
-`public/js/__tests__/llmText.test.js` (when a block is drawn, when it is not, what it says).
+`server/__tests__/uploadPolicy.test.js`, and `public/js/__tests__/llmText.test.js` (when a
+block is drawn, when it is not, what it says).
+
+**To see it before real text exists,** run a branch preview and fill its own `llm_forecasts`
+folder with `node scripts/preview-llm-samples.mjs <that folder>` (README "Branch previews").
+Every sample begins "SAMPLE TEXT, NOT A FORECAST." and goes stale after 6 to 12 hours.
 
 ## Related issues
 
 #402 the upload check · #405 the renderer · #406, #408, #410, #411 the placements · the full
-plan: `docs/NWP-DASHBOARD-PLAN-nov20.md` on branch `preview/nwp`
+plan: `docs/NWP-DASHBOARD-PLAN-nov20.md`
