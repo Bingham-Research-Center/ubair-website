@@ -2,9 +2,19 @@
    Uses aria-live="polite" via the static markup so screen readers
    announce new alerts on refresh. */
 
+// `alerts` is a list (empty when the NWS reports none) or null when the NWS could not be
+// asked. Null must not look like an empty list: a hidden banner reads as "no Red Flag Warning".
 function renderRedFlagBanner(alerts) {
     const banner = document.getElementById('red-flag-banner');
     if (!banner) return;
+    banner.classList.toggle('is-unavailable', alerts === null);
+    if (alerts === null) {
+        banner.hidden = false;
+        banner.classList.remove('is-hidden');
+        banner.textContent = 'Red Flag Warnings and Fire Weather Watches could not be checked just now. '
+            + 'See weather.gov for current alerts.';
+        return;
+    }
     if (!Array.isArray(alerts) || alerts.length === 0) {
         banner.hidden = true;
         banner.classList.add('is-hidden');

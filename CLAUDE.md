@@ -104,7 +104,9 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
   derive it with `met.js` meanwhile. KVEL in the obs feed has no gusts or visibility either.
 - **Never invent data.** A failed or missing fetch shows nothing, or says it is unavailable; it
-  never falls back to a plausible value. The homepage said "No significant snow expected" for
+  never falls back to a plausible value. That includes "none": an alerts fetch that failed is
+  `unavailable`, not an empty list (`server/nwsAlerts.js`; the fire page read an NWS outage as
+  "no Red Flag Warning" until 1.7.4). The homepage said "No significant snow expected" for
   months from a file that had never been uploaded (`homepage.test.js` now guards it).
 
 ## Styling
