@@ -53,6 +53,19 @@ describe('weather forecast page', () => {
         expect(drawer).toContain('id="meteogram-current"');
     });
 
+    test('snow on the map is a total since the run began, never a rate', () => {
+        // The file's snowfall_1h_mm is a running total (public/js/hrrrFields.js). Until 1.7.6 the
+        // map and its notes showed it as inches per hour: 20 in/hr in the Uintas on 19 Nov 2026.
+        const snow = script.slice(script.indexOf('snowfall_1h_mm: {'), script.indexOf('};', script.indexOf('snowfall_1h_mm: {')));
+        expect(snow).toMatch(/label: 'Snow since the run began'/);
+        expect(snow).toMatch(/units: 'in',/);
+        expect(snow).toMatch(/runningTotal: true/);
+        expect(snow).not.toMatch(/in\/hr/);
+        expect(script).toMatch(/in since this run began, somewhere on the map/);
+        expect(script).not.toMatch(/sliceFieldForHour\(payload, 'snowfall_1h_mm'/);
+        expect(main).toContain('<option value="snowfall_1h_mm">Snow since the run began</option>');
+    });
+
     test('kiosk mode is off the page unless the address asks for it', () => {
         expect(main).toMatch(/<div class="kiosk-controls" id="kiosk-controls" hidden>/);
         expect(script).toMatch(/get\('kiosk'\) === '1'/);

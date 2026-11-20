@@ -6,6 +6,7 @@
 // the reader scrolls to the map; the ensemble charts are fetched when the drawer is opened.
 // Times are Mountain time, with the model's own UTC hour beside a run.
 
+import { runningTotalForHour, sliceFieldForHour } from './hrrrFields.js';
 import { firstHourFromNow, modelRunLabel, mountainTime } from './mountainTime.js';
 
 const API_IMAGES = '/api/static/images';
@@ -38,14 +39,16 @@ const VARIABLE_CONFIG = {
         displayTransform: mmToIn,
         decimals: 2
     },
+    // A running total since the run began, not an hourly amount: see hrrrFields.js.
     snowfall_1h_mm: {
-        label: 'Snowfall',
-        units: 'in/hr',
-        thresholds: [0.1, 0.5, 1.0, 2.0, 4.0],
+        label: 'Snow since the run began',
+        units: 'in',
+        thresholds: [0.5, 1, 3, 6, 12],
         colors: ['#f9fbff', '#dbe8ff', '#b7d2ff', '#7da8ff', '#4a74dd', '#283c96'],
         emptyMessage: 'Snowfall data unavailable',
         displayTransform: mmToIn,
-        decimals: 2
+        decimals: 1,
+        runningTotal: true
     }
 };
 
@@ -506,7 +509,9 @@ function renderSurfaceForecast() {
 
     const variableKey = surfaceState.selectedVariable;
     const config = VARIABLE_CONFIG[variableKey];
-    const scalarValues = sliceFieldForHour(payload, variableKey, surfaceState.hourIndex);
+    const scalarValues = config.runningTotal
+        ? runningTotalForHour(payload, variableKey, surfaceState.hourIndex)
+        : sliceFieldForHour(payload, variableKey, surfaceState.hourIndex);
     const validValues = scalarValues.filter(value => Number.isFinite(value));
 
     if (!validValues.length) {
@@ -671,15 +676,16 @@ function updateSpecialConditions(payload) {
         sliceFieldForHour(payload, 'wind_u_10m_ms', surfaceState.hourIndex),
         sliceFieldForHour(payload, 'wind_v_10m_ms', surfaceState.hourIndex)
     );
-    const maxSnow = maxFinite(sliceFieldForHour(payload, 'snowfall_1h_mm', surfaceState.hourIndex));
+    // Snow is a total since the run began (hrrrFields.js); rain is a true hourly amount.
+    const snowTotal = maxFinite(runningTotalForHour(payload, 'snowfall_1h_mm', surfaceState.hourIndex));
     const maxRain = maxFinite(sliceFieldForHour(payload, 'rainfall_1h_mm', surfaceState.hourIndex));
 
     const items = [];
     if (freezingFraction >= 0.5) {
         items.push(renderConditionBlock('alert', 'Freezing:', `${Math.round(freezingFraction * 100)}% of the map's grid points are at or below 32°F.`));
     }
-    if (maxSnow >= 1.0) {
-        items.push(renderConditionBlock('alert', 'Snow:', `up to ${mmToIn(maxSnow).toFixed(2)} in/hr somewhere on the map.`));
+    if (mmToIn(snowTotal) >= 1.0) {
+        items.push(renderConditionBlock('alert', 'Snow:', `up to ${mmToIn(snowTotal).toFixed(1)} in since this run began, somewhere on the map.`));
     }
     if (maxRain >= 0.5) {
         items.push(renderConditionBlock('note', 'Rain:', `up to ${mmToIn(maxRain).toFixed(2)} in/hr somewhere on the map.`));
@@ -726,21 +732,6 @@ function renderNoSurfaceData(message) {
     const currentTime = document.getElementById('current-time');
     if (currentVariable) currentVariable.textContent = 'HRRR Surface Layers';
     if (currentTime) currentTime.textContent = message;
-}
-
-function sliceFieldForHour(payload, fieldName, hourIndex) {
-    const flat = payload.fields?.[fieldName];
-    const shape = payload.field_shape || [];
-    if (!Array.isArray(flat) || shape.length !== 3) {
-        return [];
-    }
-
-    const [, rows, cols] = shape;
-    const sliceSize = rows * cols;
-    const offset = hourIndex * sliceSize;
-    return flat.slice(offset, offset + sliceSize).map(value => (
-        value === null || value === undefined ? NaN : Number(value)
-    ));
 }
 
 function colorForValue(config, value) {
