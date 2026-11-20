@@ -84,11 +84,13 @@ One branch, its own worktree, a spare port, served at `<name>.basinwx.dev`.
 
 ## Data pipeline
 CHPC `brc-tools` (Synoptic + HRRR) → POST `/api/upload/:dataType` with `x-api-key` +
-CHPC-hostname validation → fanned out to every URL in `BASINWX_API_URLS` (first = primary,
+a hostname allowlist (`UPLOAD_ALLOWED_HOSTS`, CHPC by default) → fanned out to every URL in `BASINWX_API_URLS` (first = primary,
 rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:dataType`.
 
-- Accepted dataTypes (`server/routes/dataUpload.js`):
-  `observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast`.
+- Accepted dataTypes (`server/uploadPolicy.js`; any other name is a 400):
+  `observations | metadata | outlooks | llm_outlooks | images | forecasts | road-forecast |
+  llm_forecasts | aircraft`. `llm_forecasts` (tiered LLM text) is the one dataType the server
+  checks against its contract at upload (`public/js/llmForecast.js`).
 - `DATA_MANIFEST.json` pins the forecast schemas and is the canonical contract. brc-tools holds
   it for new dataTypes; the server does not enforce it. Producers check `manifestVersion` at
   `GET /api/health` before every upload.
