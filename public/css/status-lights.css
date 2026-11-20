@@ -1,4 +1,4 @@
-/* Homepage status lights: Weather now, Ozone, Roads now, Precip next 6 h.
+/* Homepage status lights: Weather now, the forecast tile, Ozone, Roads now, Precip next 6 h.
 
    Flat square tiles in the pane style. A tile's colour is one custom property, --light-color,
    set from data-level; the pane's tab and the square block beside the words both read it.
@@ -7,8 +7,9 @@
 
    Tokens only: this file's style-ratchet ceiling is zero. */
 
-/* Two by two beside the wordmark: the header column is too narrow for four tiles whose words
-   do not wrap to a sliver. On a very wide screen there is room for one row. */
+/* The four lights sit two by two beside the wordmark: the header column is too narrow for four
+   tiles whose words do not wrap to a sliver. On a very wide screen there is room for one row.
+   The precipitation tile takes the full row beneath them. */
 .status-lights {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -37,8 +38,12 @@
 .status-light[data-level="amber"] { --light-color: var(--status-warning); }
 .status-light[data-level="green"] { --light-color: var(--status-good); }
 
-/* The precipitation tile is a forecast, not a status: it keeps the page accent. */
-.status-light.status-precip { --pane-accent: var(--page-accent); }
+/* The precipitation tile is a forecast, not a status: it keeps the page accent. It spans the
+   row, with its three elevation bands side by side. */
+.status-light.status-precip {
+    --pane-accent: var(--page-accent);
+    grid-column: 1 / -1;
+}
 
 .status-light-label {
     font-size: 0.8rem;
@@ -75,10 +80,11 @@
     background: var(--light-color);
 }
 
-/* Precipitation: one row per elevation band, the type as an icon and a word. */
+/* Precipitation: the three elevation bands across the tile, the type as an icon and a word.
+   On a phone they stack, one band per row. */
 .precip-bands {
     display: grid;
-    grid-template-columns: auto 1fr;
+    grid-template-columns: repeat(3, auto 1fr);
     gap: 0.2rem 0.6rem;
     align-items: baseline;
     color: var(--color-text);
@@ -145,6 +151,10 @@
 @media screen and (max-width: 480px) {
     .status-lights {
         gap: 0.625rem;
+    }
+
+    .precip-bands {
+        grid-template-columns: auto 1fr;
     }
 
     .status-light {

@@ -55,3 +55,27 @@ export function relativeHumidityFromDewPoint(tempC, dewPointC) {
     const rh = (100 * saturationPressure(dewPointC)) / saturationPressure(tempC);
     return Math.min(100, Math.max(0, rh));
 }
+
+/**
+ * Wind chill in °F, by the National Weather Service formula (2001).
+ *
+ * The formula is defined only at or below 50 °F with a wind of at least 3 mph. Outside that
+ * range this returns null: there is no wind chill to report, and a caller that wants a
+ * "feels like" number falls back to the air temperature itself (`feelsLikeColdF`).
+ */
+export function windChillF(tempF, windMph) {
+    if (!Number.isFinite(tempF) || !Number.isFinite(windMph)) return null;
+    if (tempF > 50 || windMph < 3) return null;
+    const v = windMph ** 0.16;
+    return 35.74 + 0.6215 * tempF - 35.75 * v + 0.4275 * tempF * v;
+}
+
+/**
+ * How cold it feels, in °F: the wind chill where one is defined, otherwise the air temperature.
+ * A calm night in a Basin cold pool is cold without any wind, and must not read as "no value".
+ * Null only when the temperature itself is unknown.
+ */
+export function feelsLikeColdF(tempF, windMph) {
+    if (!Number.isFinite(tempF)) return null;
+    return windChillF(tempF, windMph) ?? tempF;
+}

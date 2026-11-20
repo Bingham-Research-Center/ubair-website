@@ -1,11 +1,20 @@
 import fs from 'fs';
 import {
+    COLD_AMBER_F,
+    COLD_RED_F,
     FLOOR_BOX,
+    FORECAST_GUST_AMBER_MPH,
+    FORECAST_GUST_RED_MPH,
     GUST_MPH,
+    NEW_SNOW_AMBER_IN,
+    NEW_SNOW_RED_IN,
     OUTLOOK_CURRENT_DAYS,
     PRECIP_BANDS,
     SUSTAINED_MPH,
     bandType,
+    forecastLight,
+    forecastPeriod,
+    largestRise,
     mountainTime,
     outlookRisk,
     ozoneLight,
@@ -488,3 +497,189 @@ describe('precipBands', () => {
         expect(precipBands({ forecast: withAmounts, now: NOW })).toEqual(precipBands({ forecast: FORECAST, now: NOW }));
     });
 });
+
+// ── The forecast tile ─────────────────────────────────────────────────────────────────────
+
+describe('forecastPeriod: the tile is named for the part of the day it covers', () => {
+    const at = (iso) => Date.parse(iso);
+    const hourly = (fromIso, count) => Array.from({ length: count }, (_, i) => at(fromIso) + i * 3600000);
+    // 20 Nov 2026 is in Mountain Standard Time: local = UTC - 7.
+
+    test.each([
+        ['2026-11-20T07:30:00Z', 'This morning'],    // 12:30 AM
+        ['2026-11-20T12:59:00Z', 'This morning'],    // 5:59 AM
+        ['2026-11-20T13:00:00Z', 'This afternoon'],  // 6 AM
+        ['2026-11-20T18:30:00Z', 'This afternoon'],  // 11:30 AM
+        ['2026-11-20T19:00:00Z', 'Tonight'],         // noon
+        ['2026-11-21T00:30:00Z', 'Tonight'],         // 5:30 PM
+        ['2026-11-21T01:00:00Z', 'Overnight'],       // 6 PM
+    ])('at %s it is "%s"', (now, title) => {
+        expect(forecastPeriod(at(now)).title).toBe(title);
+    });
+
+    test('"Tonight" is 6 PM to midnight, and the tile weighs every hour from now until then', () => {
+        const period = forecastPeriod(at('2026-11-20T21:10:00Z')); // 2:10 PM
+        expect(period).toEqual({ title: 'Tonight', startMs: at('2026-11-21T01:00:00Z'), endMs: at('2026-11-21T07:00:00Z') });
+    });
+
+    test('late in the evening it looks to "Tomorrow morning" once the run reaches three hours into it', () => {
+        const now = at('2026-11-21T05:30:00Z'); // 10:30 PM
+        // A run reaching 8 AM puts 6, 7 and 8 AM inside tomorrow morning.
+        expect(forecastPeriod(now, hourly('2026-11-21T06:00:00Z', 10))).toEqual({
+            title: 'Tomorrow morning', startMs: at('2026-11-21T13:00:00Z'), endMs: at('2026-11-21T19:00:00Z'),
+        });
+        // One reaching only 7 AM does not: the tile stays on the small hours.
+        expect(forecastPeriod(now, hourly('2026-11-21T06:00:00Z', 9)).title).toBe('Overnight');
+        expect(forecastPeriod(now).title).toBe('Overnight');
+    });
+
+    test('keeps to the local clock across a daylight-saving change', () => {
+        // 8 Mar 2026: clocks go from 2 AM MST to 3 AM MDT. At 1 AM MST the morning still starts at 6 AM MDT (12Z).
+        const period = forecastPeriod(at('2026-03-08T08:00:00Z'));
+        expect(period).toMatchObject({ title: 'This morning', startMs: at('2026-03-08T12:00:00Z'), endMs: at('2026-03-08T18:00:00Z') });
+        // In July, Mountain Daylight Time: noon is 18Z.
+        expect(forecastPeriod(at('2026-07-01T18:00:00Z')).title).toBe('Tonight');
+    });
+});
+
+describe('largestRise', () => {
+    test('the biggest climb from any value to a later one', () => {
+        expect(largestRise([0, 10, 30, 25, 60])).toBe(60);
+        expect(largestRise([50, 20, 45])).toBe(25);
+        expect(largestRise([40, 30, 10])).toBe(0);
+        expect(largestRise([])).toBe(0);
+        expect(largestRise([null, 5, undefined, 30])).toBe(25);
+    });
+});
+
+describe('forecastLight', () => {
+    const HAZARDS = fixture('road_forecast_hazards_20261120.json'); // the 05Z run, received 06:22Z
+    const NOON = Date.parse('2026-11-20T19:00:00Z'); // noon MST: the tile is "Tonight", 6 PM to midnight
+    const VARIABLES = {
+        temp_2m: { units: 'Celsius' }, wind_speed_10m: { units: 'm/s' }, wind_gust: { units: 'm/s' }, snow_depth: { units: 'mm' },
+    };
+    const MS_PER_MPH = 1 / 2.23694;
+    const fToC = (f) => ((f - 32) * 5) / 9;
+    // Twelve hourly values from 1 PM to midnight MST. `hour` fills in one point's hours.
+    const point = (name, elevationFt, hour = () => ({})) => ({
+        route_id: 'us40', name, lat: 40 + elevationFt / 1e5, lon: -110, elevation_m: elevationFt / 3.28084,
+        forecasts: Array.from({ length: 12 }, (_, i) => ({
+            valid_time: new Date(NOON + (i + 1) * 3600000).toISOString(),
+            temp_2m: fToC(35), wind_speed_10m: 1, wind_gust: 5, snow_depth: 0, ...hour(i),
+        })),
+    });
+    const run = (...points) => ({ model: 'hrrr', init_time: '2026-11-20T18:00:00Z', variables: VARIABLES, points });
+    const lightFor = (...points) => forecastLight({ forecast: run(...points), now: NOON });
+
+    test('green when nothing crosses a threshold, naming the hours it covers and the worst it saw', () => {
+        const light = lightFor(point('Myton', 5100), point('Vernal', 5300, () => ({ wind_gust: 12 })));
+        expect(light).toMatchObject({ key: 'ahead', label: 'Tonight', href: '/forecast_weather', level: 'green', line: 'Nothing notable' });
+        expect(light.detail).toBe('HRRR forecast run at 11 AM, for 1 PM to 11 PM: no gusts of 40 mph, no inch of new snow on the '
+            + 'Basin floor, and nothing as cold as 0°F (strongest gust 27 mph, coldest temperature 35°F). '
+            + 'A model forecast for points along the highways, not a measurement or a warning.');
+        expect(light.asOf).toBe('2026-11-20T18:00:00Z');
+    });
+
+    test('gusts: amber at 40 mph, red at 58 mph', () => {
+        const gusting = (mph) => lightFor(point('Myton', 5100, (i) => (i === 8 ? { wind_gust: mph * MS_PER_MPH } : {})));
+        expect(FORECAST_GUST_AMBER_MPH).toBe(GUST_MPH);
+        expect([FORECAST_GUST_AMBER_MPH, FORECAST_GUST_RED_MPH]).toEqual([40, 58]);
+        expect(gusting(39).level).toBe('green');
+        expect(gusting(45)).toMatchObject({ level: 'amber', line: 'Gusts 45 mph near Myton' });
+        expect(gusting(45).detail).toContain('gusts of 45 mph near Myton around 9 PM');
+        expect(gusting(60)).toMatchObject({ level: 'red', line: 'Gusts 60 mph near Myton' });
+        // A gust no station here has ever seen is a broken value, not a forecast.
+        expect(gusting(300).level).toBe('green');
+    });
+
+    test('new snow on the floor: amber at 1 inch, red at 4, from the rise in snow depth', () => {
+        const snowing = (inches, elevationFt = 5100) => lightFor(
+            point('Myton', 5000),
+            point('Duchesne', elevationFt, (i) => ({ snow_depth: Math.min(i, 6) * (inches * 25.4) / 6 })),
+        );
+        expect([NEW_SNOW_AMBER_IN, NEW_SNOW_RED_IN]).toEqual([1, 4]);
+        expect(snowing(0.6).level).toBe('green');
+        expect(snowing(1.4)).toMatchObject({ level: 'amber', line: 'About 1.5 in of new snow near Duchesne' });
+        expect(snowing(5)).toMatchObject({ level: 'red', line: 'About 5 in of new snow near Duchesne' });
+        // The benches and passes are the roads light's and the precipitation tile's job.
+        expect(snowing(5, 6500).level).toBe('green');
+    });
+
+    test('snow already on the ground is not new snow, and melting is not a hazard', () => {
+        expect(lightFor(point('Duchesne', 5100, () => ({ snow_depth: 200 }))).level).toBe('green');
+        expect(lightFor(point('Duchesne', 5100, (i) => ({ snow_depth: 200 - i * 10 }))).level).toBe('green');
+    });
+
+    test('cold: amber at 0°F, red at -20°F, by wind chill or by the air itself when it is calm', () => {
+        expect([COLD_AMBER_F, COLD_RED_F]).toEqual([0, -20]);
+        // 10°F in a 20 mph wind is a wind chill of -9°F.
+        const windy = lightFor(point('Myton', 5100, (i) => (i === 10 ? { temp_2m: fToC(10), wind_speed_10m: 20 * MS_PER_MPH } : {})));
+        expect(windy).toMatchObject({ level: 'amber', line: 'Wind chill -9°F near Myton' });
+        expect(windy.detail).toContain('wind chill -9°F near Myton around 11 PM');
+        // A calm cold pool: no wind chill is defined, so the air temperature is weighed.
+        const calm = lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(-4), wind_speed_10m: 0.5 })));
+        expect(calm).toMatchObject({ level: 'amber', line: 'Temperature -4°F near Ouray' });
+        expect(lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(-25), wind_speed_10m: 0 }))).level).toBe('red');
+        expect(lightFor(point('Ouray', 4800, () => ({ temp_2m: fToC(3), wind_speed_10m: 0 }))).level).toBe('green');
+    });
+
+    test('ground above 7,500 ft does not colour it', () => {
+        const light = lightFor(point('Myton', 5100), point('Daniels Summit', 8000, () => ({ wind_gust: 70 * MS_PER_MPH, temp_2m: fToC(-30) })));
+        expect(light.level).toBe('green');
+    });
+
+    test('several reasons: a red one leads, the others are named after it', () => {
+        const light = lightFor(
+            point('Myton', 5100, (i) => (i === 7 ? { wind_gust: 44 * MS_PER_MPH } : {})),
+            point('Duchesne', 5500, (i) => ({ snow_depth: i * 12 })),
+        );
+        expect(light).toMatchObject({ level: 'red', line: 'About 5 in of new snow near Duchesne, and strong gusts' });
+        expect(light.detail).toContain('about 5 in of new snow near Duchesne; gusts of 44 mph near Myton around 8 PM');
+    });
+
+    test('only hours from now to the end of the named part of the day are weighed', () => {
+        // The last value is at midnight, which belongs to "Overnight", not "Tonight".
+        expect(lightFor(point('Myton', 5100, (i) => (i === 11 ? { wind_gust: 50 * MS_PER_MPH } : {}))).level).toBe('green');
+        // An hour already past is not a forecast any more.
+        const later = forecastLight({
+            forecast: run(point('Myton', 5100, (i) => (i === 0 ? { wind_gust: 50 * MS_PER_MPH } : {}))),
+            now: NOON + 90 * 60000,
+        });
+        expect(later.level).toBe('green');
+    });
+
+    test('grey, never green, with no forecast or one that does not reach the named part of the day', () => {
+        expect(forecastLight({ forecast: null, now: NOON })).toMatchObject({
+            label: 'Tonight', level: 'grey', line: 'Forecast unavailable',
+        });
+        expect(forecastLight({ forecast: { points: 'x' }, now: NOON }).level).toBe('grey');
+        // Nine hours on, the same run has only one hour left before 6 AM.
+        const stale = forecastLight({ forecast: run(point('Myton', 5100)), now: NOON + 9 * 3600000 });
+        expect(stale).toMatchObject({ label: 'Overnight', level: 'grey', line: 'Forecast does not reach this far' });
+        expect(stale.detail).toBe('The newest HRRR road forecast does not reach far enough into overnight to speak for it.');
+    });
+
+    test('a file that does not state its units cannot be read as "nothing notable": grey', () => {
+        const forecast = run(point('Myton', 5100, () => ({ wind_gust: 30 })));
+        forecast.variables = {};
+        expect(forecastLight({ forecast, now: NOON })).toMatchObject({
+            level: 'grey', line: 'Forecast incomplete',
+            detail: 'The newest HRRR road forecast has no readable gusts or temperatures or snow depth, so this tile cannot say that nothing is coming.',
+        });
+        // One missing field is enough, and the tile says which.
+        const noDepth = run(point('Myton', 5100, () => ({ snow_depth: null })));
+        expect(forecastLight({ forecast: noDepth, now: NOON }).detail).toContain('no readable snow depth');
+    });
+
+    test('but a hazard it can read still shows when another field is missing', () => {
+        const forecast = run(point('Myton', 5100, (i) => ({ snow_depth: null, wind_gust: i === 8 ? 45 * MS_PER_MPH : 5 })));
+        expect(forecastLight({ forecast, now: NOON })).toMatchObject({ level: 'amber', line: 'Gusts 45 mph near Myton' });
+    });
+
+    test('the real night of 19 Nov 2026: about two inches of new snow on the floor by morning', () => {
+        const light = forecastLight({ forecast: HAZARDS, now: Date.parse('2026-11-20T07:10:00Z') }); // 12:10 AM
+        expect(light).toMatchObject({ label: 'This morning', level: 'amber', line: 'About 2 in of new snow near Bluebell' });
+        expect(light.detail).toMatch(/^HRRR forecast run at Thu 10 PM, for 1 AM to 10 AM: about 2 in of new snow near Bluebell\./);
+    });
+});
+

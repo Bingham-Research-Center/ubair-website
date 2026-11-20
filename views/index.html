@@ -50,6 +50,13 @@
                     <a class="status-light-line" href="/forecast_weather"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
                     <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
                 </div>
+                <!-- The forecast tile: the server names it for the part of the day it covers,
+                     from the clock. Until it answers, the tile keeps this plain name. -->
+                <div class="status-light pane" id="light-ahead" data-level="grey">
+                    <span class="status-light-label" data-default-label="Coming up">Coming up</span>
+                    <a class="status-light-line" href="/forecast_weather"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
+                    <details class="status-light-why" hidden><summary>Why</summary><p></p></details>
+                </div>
                 <div class="status-light pane" id="light-ozone" data-level="grey">
                     <span class="status-light-label">Ozone</span>
                     <a class="status-light-line" href="/forecast_outlooks"><span class="status-light-block" aria-hidden="true"></span><span class="status-light-text">Loading…</span></a>
@@ -97,10 +104,6 @@
         <div class="section-header">
             <h2>Air Quality and Weather Overview</h2>
         </div>
-
-        <!-- LLM forecast summary: drawn by llmText.js only while a current file exists. With no
-             file, or a stale one, this element stays hidden and empty. -->
-        <div class="llm-block pane" id="home-llm" data-llm-placement="home.summary" hidden></div>
 
         <div class="dashboard-grid">
             <!-- Live Map Panel -->
@@ -158,6 +161,13 @@
                 </div>
             </div>
 
+            <!-- Right column: the LLM forecast summary, when there is one, above the outlook. -->
+            <div class="dashboard-stack">
+            <!-- LLM forecast summary: drawn by llmText.js only while a current file exists. With no
+                 file, or a stale one, this element stays hidden and empty, and the outlook has
+                 the column to itself. -->
+            <div class="llm-block pane" id="home-llm" data-llm-placement="home.summary" hidden></div>
+
             <!-- Latest Forecast Panel -->
             <div class="dashboard-panel pane forecast-panel">
                 <div class="panel-header">
@@ -175,6 +185,7 @@
                         </div>
                     </div>
                 </div>
+            </div>
             </div>
         </div>
     </section>

@@ -8,6 +8,13 @@ const clock = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, hour: 'num
 const weekday = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, weekday: 'short' });
 const utcHour = (ms) => `${String(new Date(ms).getUTCHours()).padStart(2, '0')}Z`;
 
+const hour24 = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, hour: 'numeric', hourCycle: 'h23' });
+
+/** The hour of the day in Mountain time, 0 to 23. */
+export function mountainHour(ms) {
+    return Number(hour24.format(new Date(ms)));
+}
+
 /** "5 PM" or "5:30 PM". */
 export function mountainClock(ms) {
     const parts = Object.fromEntries(clock.formatToParts(new Date(ms)).map((p) => [p.type, p.value]));

@@ -3,9 +3,9 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { getNwsAlertsService } from '../nwsAlerts.js';
 import { OUTLOOK_FILE_RE, describeOutlook } from '../../public/js/outlookSeasons.js';
-import { ozoneLight, precipBands, roadsLight, weatherLight } from '../statusLights.js';
+import { FORECAST_HREF, forecastLight, forecastPeriod, ozoneLight, precipBands, roadsLight, weatherLight } from '../statusLights.js';
 
-// GET /api/status-lights: the homepage's four tiles in one small answer.
+// GET /api/status-lights: the homepage's five tiles in one small answer.
 //
 // This file only gathers inputs; every rule is in ../statusLights.js. Each input is read on its
 // own, and a failed read becomes null, so one broken source greys one tile and leaves the
@@ -128,6 +128,9 @@ export async function buildStatusLights(now = Date.now()) {
         generatedAt: new Date(now).toISOString(),
         lights: [
             safely('weather', 'Weather now', '/forecast_weather', () => weatherLight({ alerts, obs, rwis, now })),
+            // Named for the part of the day it covers; the name comes from the clock alone, so
+            // it is right even when the rule cannot run.
+            safely('ahead', forecastPeriod(now).title, FORECAST_HREF, () => forecastLight({ forecast, now })),
             safely('ozone', 'Ozone', '/forecast_outlooks', () => ozoneLight({ outlook, now })),
             safely('roads', 'Roads now', '/roads', () => roadsLight({ roads, events, now })),
         ],

@@ -68,7 +68,7 @@ describe('buildStatusLights', () => {
     test('reads the newest observation file, the newest outlook, the road reports and the forecast', async () => {
         const body = await buildStatusLights(NOW);
         expect(body.generatedAt).toBe('2026-11-20T05:25:00.000Z');
-        expect(body.lights.map((light) => light.key)).toEqual(['weather', 'ozone', 'roads']);
+        expect(body.lights.map((light) => light.key)).toEqual(['weather', 'ahead', 'ozone', 'roads']);
 
         const lights = byKey(body);
         expect(lights.weather).toMatchObject({ level: 'green', line: 'No alerts' });
@@ -76,6 +76,27 @@ describe('buildStatusLights', () => {
         expect(lights.ozone).toMatchObject({ level: 'amber', line: 'Some risk, days 6 to 10' });
         expect(lights.roads).toMatchObject({ level: 'red', line: 'Snow covered: US-191 north of Vernal' });
         expect(body.precip.bands.map((band) => band.type)).toEqual(['snow', 'mix', 'snow']);
+    });
+
+    test('the forecast tile is named from the clock and reads the same road forecast', async () => {
+        write('road-forecast/latest.json', fixture('road_forecast_hazards_20261120.json'));
+        const ahead = byKey(await buildStatusLights(NOW)).ahead; // 10:25 PM on 19 Nov
+        expect(ahead).toMatchObject({ label: 'Tomorrow morning', href: '/forecast_weather', level: 'amber' });
+        expect(ahead.line).toMatch(/of new snow near /);
+    });
+
+    test('a forecast without the fields it needs greys the forecast tile and leaves the precipitation tile alone', async () => {
+        // The older fixture carries precipitation type only.
+        const body = await buildStatusLights(NOW);
+        expect(byKey(body).ahead).toMatchObject({ label: 'Tomorrow morning', level: 'grey', line: 'Forecast incomplete' });
+        expect(body.precip.status).toBe('ok');
+    });
+
+    test('no road forecast at all: the forecast tile is grey and still named for the part of the day', async () => {
+        fs.rmSync(path.join(staticRoot, 'road-forecast'), { recursive: true });
+        const body = await buildStatusLights(NOW);
+        expect(byKey(body).ahead).toMatchObject({ label: 'Overnight', level: 'grey', line: 'Forecast unavailable' });
+        expect(body.precip.status).toBe('unavailable');
     });
 
     test('UDOT down: the roads tile is grey, the weather tile says gusts are unavailable, the rest stand', async () => {
@@ -132,10 +153,10 @@ describe('buildStatusLights', () => {
 });
 
 describe('GET /api/status-lights', () => {
-    test('200 with three lights and the precipitation tile, not cached by the browser', async () => {
+    test('200 with four lights and the precipitation tile, not cached by the browser', async () => {
         const res = await request(app).get('/api/status-lights').expect(200);
         expect(res.headers['cache-control']).toBe('no-store');
-        expect(res.body.lights).toHaveLength(3);
+        expect(res.body.lights).toHaveLength(4);
         for (const light of res.body.lights) {
             expect(Object.keys(light).sort()).toEqual(['asOf', 'detail', 'href', 'key', 'label', 'level', 'line']);
             expect(['red', 'amber', 'green', 'grey']).toContain(light.level);
