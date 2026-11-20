@@ -9,7 +9,7 @@ to-do list and the worked example.
 
 **The one-paragraph version.** The website is ready to receive tiered LLM forecast text and
 aircraft products. It will not generate any text itself. Seven things are asked of the
-producers (P1–P7 below, plus P8 and P9 found on 20 Nov). The website's version 1.8.0 is held until
+producers (P1–P7 below, plus P8, P9 and P10 found on 20 Nov). The website's version 1.8.0 is held until
 P2 delivers live text, so P1 and P2 are the critical path.
 
 ---
@@ -52,6 +52,14 @@ without `latest_<persona>.json`.
 
 Each new file family needs a manifest entry before the website reads it. For P4 and P5 the
 families already exist; say so in the PR if the shape changes.
+
+**P10, found the same day.** In `forecast_hrrr_surface_layers_*`, `snowfall_1h_mm` is not an
+hourly amount either. At a snowy grid point it reads `0, 0.1, 0.3, 1.9, 10.0 … 91.9, 0, 98.4,
+98.6, 0`: a total since the run began (509 mm at one point within 18 h in the 21Z run on
+19 Nov) that drops to exactly zero in some hours, 1,615 times in one run, and then carries on.
+The weather page labelled it in/hr until 1.7.6; it now takes the largest value so far and shows
+a total. Please send either a true hourly snowfall or a clean total under a name that says so,
+and say whether it is snow depth or liquid. `rainfall_1h_mm` in the same file is truly hourly.
 
 ## 3. The `llm_forecast/1` file (P2, P3)
 

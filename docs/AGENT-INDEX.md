@@ -29,7 +29,8 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Plumb a new forecast dataType from brc-tools | `docs/WEBSITE-BRCTOOLS-CONTRACT.md` — endpoint, schemas, unit traps (permanent); then `WEBSITE-BRCTOOLS-OPEN-ASKS.md` (root) for what is still unanswered and who owns it |
 | Add or change a frontend page | `docs/JAVASCRIPT-PATTERNS.md` |
 | Touch the camera scheduler | `docs/CAMERA_ANALYSIS_SCHEDULER.md` + `docs/CONFIDENCE_TAXONOMY.md` |
-| Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`) + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
+| **Understand or change the weather forecast page** (hazards, town forecasts, the map, the expert drawer) | `docs/features/WEATHER-FORECAST-PAGE.md` — what each part shows and why, then the code map and the traps (two precipitation fields are running totals) |
+| Change the weather-forecast maps (HRRR surface layers) | `public/js/forecast_weather.js` (`fetchSurfaceRunIndex`), `public/js/hrrrFields.js` + `DATA_MANIFEST.json` `forecasts`; the old cold-start handoff is in History |
 | Convert observation units or derive RH | `public/js/met.js` (pure; null for an unknown unit); the feed is raw SI by design (`CLAUDE.md` §Data pipeline) |
 | Restyle a page, cards, the UI scale | `docs/STYLE-TOKEN-GUIDE.md` §Panes and §Scale; `public/css/theme/panes.css` |
 | Work on the aviation page (KVEL crosswind) | `public/js/aviation.js` + `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c |
