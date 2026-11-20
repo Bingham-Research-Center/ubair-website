@@ -21,6 +21,7 @@
     <link rel="stylesheet" href="/public/css/main.css">
     <link rel="stylesheet" href="/public/css/forecast_weather.css">
     <link rel="stylesheet" href="/public/css/weather-panes.css">
+    <link rel="stylesheet" href="/public/css/weather-map.css">
     <link rel="stylesheet" href="/public/css/llm-text.css">
     <link rel="stylesheet" href="/public/css/overlays.css">
 </head>
@@ -81,32 +82,24 @@
             <p class="town-source" id="town-source"></p>
         </section>
 
-        <!-- Forecast map: the 1.5 MB model run loads when the reader scrolls here, not before. -->
+        <!-- Forecast map: the 1.5 MB model run loads when the reader scrolls here, not before.
+             forecast_weather.js fills the layer list from what the run carries. -->
         <section class="control-panel pane" aria-label="Forecast map controls">
             <div class="section-header">
                 <h2>Forecast map</h2>
             </div>
             <div class="controls-row">
+                <div class="variable-selector">
+                    <label for="weather-variable">Show</label>
+                    <select id="weather-variable" class="control-select" disabled>
+                        <option value="temperature">Temperature</option>
+                    </select>
+                </div>
+
                 <div class="run-selector">
-                    <label for="forecast-run">Model run:</label>
+                    <label for="forecast-run">Model run</label>
                     <select id="forecast-run" class="control-select">
                         <option value="">Scroll here to load the map</option>
-                    </select>
-                </div>
-
-                <div class="variable-selector">
-                    <label for="weather-variable">Show:</label>
-                    <select id="weather-variable" class="control-select">
-                        <option value="temperature_2m_c">Temperature</option>
-                        <option value="rainfall_1h_mm">Rainfall</option>
-                        <option value="snowfall_1h_mm">Snow since the run began</option>
-                    </select>
-                </div>
-
-                <div class="time-selector">
-                    <label for="forecast-time">Time:</label>
-                    <select id="forecast-time" class="control-select">
-                        <option value="">--</option>
                     </select>
                 </div>
 
@@ -116,24 +109,22 @@
                         <span class="toggle-text">Wind arrows</span>
                     </label>
                 </div>
-
-                <!-- For a wall screen: add ?kiosk=1 to the address to show this control. -->
-                <div class="kiosk-controls" id="kiosk-controls" hidden>
-                    <button id="kiosk-toggle" class="kiosk-button">
-                        <i class="fas fa-play"></i> Start Kiosk Mode
-                    </button>
-                    <div class="kiosk-status" id="kiosk-status">
-                        <span class="status-text">Manual Mode</span>
-                        <div class="kiosk-timer" id="kiosk-timer" style="display: none;">
-                            <span id="timer-countdown">30</span>s
-                        </div>
-                    </div>
-                </div>
             </div>
+            <p class="layer-note" id="layer-note"></p>
             <p class="forecast-status" id="forecast-status">The map loads when you scroll to it.</p>
         </section>
 
         <section class="weather-map-section pane" id="weather-map-section" aria-label="Interactive weather map">
+            <!-- One hour of the run at a time. Play steps through the hours ahead; for a wall
+                 screen, ?kiosk=1 in the address starts it playing by itself. -->
+            <div class="map-time">
+                <button type="button" id="forecast-play" class="map-play" aria-pressed="false">
+                    <i class="fas fa-play" aria-hidden="true"></i><span class="play-label">Play</span>
+                </button>
+                <label class="map-time-label" for="forecast-hour">Forecast hour</label>
+                <input type="range" id="forecast-hour" class="map-time-slider" min="0" max="18" step="1" value="0">
+                <output class="map-time-value" id="forecast-hour-label" for="forecast-hour"></output>
+            </div>
             <div class="map-container">
                 <div id="weather-map" class="weather-map"></div>
                 <div class="map-overlay">
@@ -141,13 +132,14 @@
                         <h3 id="current-variable">Temperature</h3>
                         <p id="current-time"></p>
                     </div>
-                    <div class="legend-container" id="weather-legend">
-                        <!-- Dynamic legend will be inserted here -->
+                    <div class="map-legend" id="weather-legend">
+                        <!-- The colour bands on the map now, filled by forecast_weather.js -->
                     </div>
                 </div>
             </div>
+            <p class="map-readout" id="map-readout" aria-live="off"></p>
             <div class="map-notes">
-                <h3>Across the map at this hour</h3>
+                <h3 id="map-notes-title">Across the map at this hour</h3>
                 <div class="conditions-content" id="special-conditions"></div>
                 <p class="map-source" id="map-source"></p>
             </div>

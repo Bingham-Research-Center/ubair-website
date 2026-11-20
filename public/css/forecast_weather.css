@@ -62,16 +62,14 @@ body[data-page-type="forecast_weather"] h1::after {
 }
 
 .variable-selector,
-.run-selector,
-.time-selector {
+.run-selector {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
 .run-selector label,
-.variable-selector label,
-.time-selector label {
+.variable-selector label {
     color: var(--weather-primary);
     font-weight: 600;
     font-size: 0.9rem;
@@ -132,60 +130,6 @@ body[data-page-type="forecast_weather"] h1::after {
     font-size: 0.9rem;
 }
 
-.kiosk-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    align-items: center;
-}
-
-.kiosk-button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.5rem;
-    background: var(--weather-secondary);
-    color: white;
-    border: none;
-    border-radius: var(--radius-lg);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-size: 0.9rem;
-}
-
-.kiosk-button:hover {
-    background: var(--weather-primary);
-    box-shadow: var(--shadow-card-hover);
-}
-
-.kiosk-button.active {
-    background: var(--weather-warning);
-    color: var(--weather-primary);
-}
-
-.kiosk-status {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.status-text {
-    color: var(--weather-primary);
-    font-size: 0.85rem;
-    font-weight: 500;
-}
-
-.kiosk-timer {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    color: var(--weather-warning);
-    font-weight: 600;
-    font-size: 0.9rem;
-}
-
 /* Weather Map Section: the section is the pane; the map sits inside its padding so the
    tab is not drawn under the map tiles. */
 .weather-map-section {
@@ -202,104 +146,6 @@ body[data-page-type="forecast_weather"] h1::after {
     width: 100%;
     height: 500px;
     border-radius: var(--radius-lg);
-}
-
-.map-overlay {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    right: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.current-display {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 1rem 1.5rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    pointer-events: auto;
-}
-
-.current-display h3 {
-    color: var(--weather-primary);
-    font-size: 1.2rem;
-    font-weight: 700;
-    margin: 0 0 0.25rem 0;
-}
-
-.current-display p {
-    color: var(--weather-secondary);
-    font-size: 0.9rem;
-    margin: 0;
-    font-weight: 500;
-}
-
-.legend-container {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    padding: 1rem;
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-overlay);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    max-width: 200px;
-    pointer-events: auto;
-}
-
-.legend-title {
-    color: var(--weather-primary);
-    font-size: 0.95rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.legend-subtitle {
-    color: #666;
-    font-size: 0.8rem;
-    margin-bottom: 0.75rem;
-}
-
-.legend-scale {
-    display: grid;
-    gap: 0.4rem;
-}
-
-.legend-row {
-    display: grid;
-    grid-template-columns: 18px 1fr;
-    gap: 0.5rem;
-    align-items: center;
-}
-
-.legend-swatch {
-    width: 18px;
-    height: 18px;
-    border-radius: var(--radius-sm);
-    border: 1px solid rgba(47, 79, 79, 0.12);
-}
-
-.legend-label {
-    color: #555;
-    font-size: 0.82rem;
-}
-
-.wind-vector-icon {
-    background: transparent;
-    border: none;
-}
-
-.wind-vector-arrow {
-    color: var(--storm-dark);
-    font-size: 16px;
-    font-weight: 700;
-    line-height: 1;
-    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
-    transform-origin: center center;
 }
 
 .weather-map-empty {
@@ -339,25 +185,8 @@ body[data-page-type="forecast_weather"] h1::after {
         gap: 1rem;
     }
     
-    .map-overlay {
-        flex-direction: column;
-        gap: 1rem;
-        align-items: stretch;
-    }
-    
-    .current-display,
-    .legend-container {
-        max-width: none;
-    }
-
-
-    
     .weather-map {
         height: 400px;
-    }
-    
-    .kiosk-controls {
-        align-items: stretch;
     }
     
     .layer-toggles {
@@ -369,66 +198,9 @@ body[data-page-type="forecast_weather"] h1::after {
 }
 
 @media (max-width: 480px) {
-    .map-overlay {
-        position: relative;
-        top: auto;
-        left: auto;
-        right: auto;
-        margin: 1rem;
-    }
-    
     .weather-map {
         height: 300px;
     }
-}
-
-/* Kiosk Mode Specific Styles */
-.kiosk-mode .control-panel {
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.kiosk-mode .kiosk-button {
-    pointer-events: auto;
-}
-
-.kiosk-mode .current-display {
-    animation: pulse-weather 3s infinite;
-}
-
-@keyframes pulse-weather {
-    0%, 100% { 
-        box-shadow: var(--shadow-card);
-    }
-    50% { 
-        box-shadow: var(--shadow-card);
-    }
-}
-
-/* Weather Variable Specific Colors */
-.weather-map[data-variable="temperature"] + .map-overlay .current-display {
-    border-left: 4px solid #ff6b6b;
-}
-
-.weather-map[data-variable="precipitation"] + .map-overlay .current-display {
-    border-left: 4px solid var(--sky-blue);
-}
-
-.weather-map[data-variable="wind"] + .map-overlay .current-display {
-    border-left: 4px solid var(--cloud-gray);
-}
-
-.weather-map[data-variable="pressure"] + .map-overlay .current-display {
-    border-left: 4px solid #9b59b6;
-}
-
-.weather-map[data-variable="humidity"] + .map-overlay .current-display {
-    border-left: 4px solid #3498db;
-}
-
-.weather-map[data-variable="snow"] + .map-overlay .current-display {
-    border-left: 4px solid var(--snow-white);
-    border-color: #bdc3c7;
 }
 
 /* Loading States */
@@ -441,7 +213,6 @@ body[data-page-type="forecast_weather"] h1::after {
 
 /* Focus states for accessibility */
 .control-select:focus,
-.kiosk-button:focus,
 .toggle-label:focus-within {
     outline: 2px solid var(--weather-warning);
     outline-offset: 2px;
@@ -462,38 +233,6 @@ body[data-page-type="forecast_weather"] h1::after {
 
 /* Enhanced interactive elements */
 
-
-/* Map legend styling */
-
-
-.legend-title {
-    font-weight: 600;
-    color: var(--weather-primary);
-    margin-bottom: 0.75rem;
-    font-size: 0.9rem;
-}
-
-.legend-scale {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-
-/* Status indicators */
-
-
-/* Enhanced button states */
-.kiosk-button.stopping {
-    background: #e74c3c;
-    animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
 
 /* ============================================
    GEFS METEOGRAM SECTION

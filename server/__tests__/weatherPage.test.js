@@ -10,6 +10,7 @@ const read = (file) => fs.readFileSync(path.join(repoRoot, file), 'utf8');
 const html = read('views/forecast_weather.html');
 const main = html.slice(html.indexOf('<main'), html.indexOf('</main>'));
 const script = read('public/js/forecast_weather.js');
+const layers = read('public/js/mapLayers.js');
 
 describe('weather forecast page', () => {
     test('runs top to bottom: hazards, town forecasts, the map, then the expert drawer', () => {
@@ -58,23 +59,72 @@ describe('weather forecast page', () => {
         expect(drawer).toContain('id="meteogram-current"');
     });
 
-    test('snow on the map is a total since the run began, never a rate', () => {
+    test('snow on the map is a total since the run began, never a rate', async () => {
         // The file's snowfall_1h_mm is a running total (public/js/hrrrFields.js). Until 1.7.6 the
         // map and its notes showed it as inches per hour: 20 in/hr in the Uintas on 19 Nov 2026.
-        const snow = script.slice(script.indexOf('snowfall_1h_mm: {'), script.indexOf('};', script.indexOf('snowfall_1h_mm: {')));
-        expect(snow).toMatch(/label: 'Snow since the run began'/);
-        expect(snow).toMatch(/units: 'in',/);
-        expect(snow).toMatch(/runningTotal: true/);
-        expect(snow).not.toMatch(/in\/hr/);
+        const { SCALES, layerByKey } = await import('../../public/js/mapLayers.js');
+        const snow = layerByKey('snowfall_1h_mm');
+        expect(snow).toMatchObject({ label: 'Snow since the run began', runningTotal: true });
+        expect(SCALES[snow.scale].unit).toBe('in');
         expect(script).toMatch(/in since this run began, somewhere on the map/);
-        expect(script).not.toMatch(/sliceFieldForHour\(payload, 'snowfall_1h_mm'/);
-        expect(main).toContain('<option value="snowfall_1h_mm">Snow since the run began</option>');
+        for (const text of [script, layers]) {
+            expect(text).not.toMatch(/sliceFieldForHour\(payload, 'snowfall_1h_mm'/);
+        }
     });
 
-    test('kiosk mode is off the page unless the address asks for it', () => {
-        expect(main).toMatch(/<div class="kiosk-controls" id="kiosk-controls" hidden>/);
+    test('the map is one picture of colour bands, drawn in the browser from the run already fetched', () => {
+        // Until 1.7.7 it was 1,368 circle markers, redrawn every hour.
+        expect(script).not.toMatch(/circleMarker/);
+        expect(script).toMatch(/rasterise\(values, rows, cols, RASTER_FACTOR, scale, colours/);
+        expect(script).toMatch(/fitGrid\(surfaceState\.payload\.grid\)/);
+        // Changing layer or hour asks the server for nothing: one fetch per run, then a cache.
+        expect(script.match(/fetch\(`\$\{API_FORECASTS\}\/\$\{filename\}`\)/g)).toHaveLength(1);
+        expect(script).toMatch(/surfaceState\.cache\.set\(filename, payload\)/);
+        expect(html).toContain('/public/css/weather-map.css');
+    });
+
+    test('the map\'s colours come from the theme tokens, not from the script', () => {
+        for (const text of [script, layers]) {
+            expect(text).not.toMatch(/#[0-9a-fA-F]{6}\b/);
+            expect(text).not.toMatch(/style=["'`]/);
+        }
+        expect(script).toMatch(/`--scale-\$\{name\}-\$\{step\}`/);
+        const tokens = read('public/css/theme/tokens.css');
+        for (const ramp of ['cold', 'warm', 'wind', 'rain', 'snow', 'cloud']) {
+            for (const step of [1, 2, 3, 4, 5]) expect(tokens).toMatch(new RegExp(`--scale-${ramp}-${step}:`));
+        }
+        expect(tokens).toMatch(/--scale-freezing:/);
+        // Every ramp a layer's scale names has tokens behind it.
+        const named = new Set([...layers.matchAll(/ramp: '([a-z]+)'/g)].map((m) => m[1]));
+        named.add('wind').add('rain').add('snow').add('cloud');
+        for (const ramp of named) {
+            expect(tokens).toMatch(ramp === 'freezing' ? /--scale-freezing:/ : new RegExp(`--scale-${ramp}-1:`));
+        }
+    });
+
+    test('the layer picker is filled from what the run carries; the page source offers only temperature', () => {
+        const picker = main.slice(main.indexOf('<select id="weather-variable"'), main.indexOf('</select>', main.indexOf('<select id="weather-variable"')));
+        expect([...picker.matchAll(/<option value="([^"]*)"/g)].map((m) => m[1])).toEqual(['temperature']);
+        expect(script).toMatch(/availableLayers\(payload\)/);
+    });
+
+    test('time is a slider with a play button, opening on the hour under way', () => {
+        expect(main).toMatch(/<input type="range" id="forecast-hour"/);
+        expect(main).toMatch(/<button type="button" id="forecast-play" class="map-play" aria-pressed="false">/);
+        expect(main).not.toMatch(/id="forecast-time"/);
+        // A run's first hours are past when it arrives: the slider starts at the hour under way.
+        expect(script).toMatch(/surfaceState\.hourIndex = firstHourFromNow\(surfaceState\.payload\.valid_times, Date\.now\(\)\)/);
+        expect(script).toMatch(/surfaceState\.fromHour = surfaceState\.hourIndex/);
+        expect(script).toMatch(/hourSlider\.min = String\(Math\.min\(surfaceState\.fromHour, last\)\)/);
+        expect(script).toMatch(/hourSlider\.value = String\(surfaceState\.hourIndex\)/);
+    });
+
+    test('nothing plays until asked: a click, or ?kiosk=1 for a wall screen', () => {
+        // The old kiosk panel is gone; its job is the play button's.
+        expect(main).not.toMatch(/kiosk-controls|kiosk-toggle|Kiosk Mode/);
         expect(script).toMatch(/get\('kiosk'\) === '1'/);
-        expect(script.match(/\binitializeKioskMode\(\)/g)).toHaveLength(2);
+        expect(script.match(/\bstartPlaying\(\)/g)).toHaveLength(3); // its definition, the button, the kiosk start
+        expect(script).toMatch(/if \(kioskRequested\(\)\) \{\s*surfaceState\.playMs = KIOSK_PLAY_MS;\s*startPlaying\(\);/);
     });
 
     test('the hazards pane and the town table start empty, never with a made-up value', () => {
@@ -86,7 +136,7 @@ describe('weather forecast page', () => {
 
     test('loads its three scripts and its pane styles', () => {
         for (const file of ['/public/js/weatherHazards.js', '/public/js/townForecast.js', '/public/js/forecast_weather.js',
-            '/public/css/weather-panes.css']) {
+            '/public/css/weather-panes.css', '/public/css/weather-map.css']) {
             expect(html).toContain(file);
         }
     });
@@ -105,8 +155,4 @@ describe('weather forecast page', () => {
         expect(rule).toMatch(/position:\s*relative/);
     });
 
-    test('the map opens on the hour under way, not on a run\'s first hour, which is long past', () => {
-        expect(script).toMatch(/surfaceState\.hourIndex = firstHourFromNow\(surfaceState\.payload\.valid_times, Date\.now\(\)\)/);
-        expect(script).toMatch(/timeSelect\.value = String\(surfaceState\.hourIndex\)/);
-    });
 });

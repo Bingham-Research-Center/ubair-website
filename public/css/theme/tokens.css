@@ -169,6 +169,51 @@
     --risk-high-fill: #fee2e2;
     --risk-high-ink: #991b1b;
 
+    /* Data scales for the forecast map and the weather charts (public/js/mapLayers.js). Each is
+       one hue in five steps, light to dark, at the same five lightnesses, so a step means the
+       same amount on every scale. Temperature diverges about freezing: the cold arm below it,
+       the warm arm above, and a neutral grey for the band that holds 32 °F. Wind, rain, snow
+       and cloud are magnitudes and get one arm each. They mean something, so they do not follow a
+       page palette. */
+    --scale-cold-1: #cde2fb;
+    --scale-cold-2: #86b6ef;
+    --scale-cold-3: #3987e5;
+    --scale-cold-4: #1c5cab;
+    --scale-cold-5: #0d366b;
+    --scale-warm-1: #fed4cf;
+    --scale-warm-2: #f1968c;
+    --scale-warm-3: #e14d45;
+    --scale-warm-4: #a62825;
+    --scale-warm-5: #671311;
+    --scale-freezing: var(--grey-200);
+    --scale-wind-1: #c2e9e4;
+    --scale-wind-2: #60c6bb;
+    --scale-wind-3: #009c91;
+    --scale-wind-4: #026c64;
+    --scale-wind-5: #01413c;
+    --scale-rain-1: var(--scale-cold-1);
+    --scale-rain-2: var(--scale-cold-2);
+    --scale-rain-3: var(--scale-cold-3);
+    --scale-rain-4: var(--scale-cold-4);
+    --scale-rain-5: var(--scale-cold-5);
+    --scale-snow-1: #e4daf9;
+    --scale-snow-2: #bca4ea;
+    --scale-snow-3: #986adc;
+    --scale-snow-4: #6c44a3;
+    --scale-snow-5: #412666;
+    --scale-cloud-1: var(--grey-200);
+    --scale-cloud-2: var(--grey-300);
+    --scale-cloud-3: var(--grey-400);
+    --scale-cloud-4: var(--grey-600);
+    --scale-cloud-5: var(--grey-700);
+
+    /* Kinds of precipitation, where they are told apart by colour as well as by a word and
+       an icon. Checked as a set for colour-blind readers: snow blue, rain green, a mix orange. */
+    --precip-snow: #2a78d6;
+    --precip-rain: #1baf7a;
+    --precip-mix: #eb6834;
+    --precip-dry: var(--grey-300);
+
     /* Fixed by docs/CONFIDENCE_TAXONOMY.md ("must use these exact colors"). Do not retheme. */
     --confidence-possible: #6c757d;
     --confidence-likely: #ffc107;
