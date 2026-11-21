@@ -1,0 +1,1208 @@
+[
+ {
+  "name": "I-80 US 40 Jct at Silver Ck to Wanship",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.732,
+    -111.498
+   ],
+   [
+    40.749,
+    -111.471
+   ],
+   [
+    40.752,
+    -111.47
+   ],
+   [
+    40.769,
+    -111.469
+   ],
+   [
+    40.782,
+    -111.459
+   ],
+   [
+    40.801,
+    -111.443
+   ],
+   [
+    40.808,
+    -111.411
+   ],
+   [
+    40.809,
+    -111.408
+   ]
+  ]
+ },
+ {
+  "name": "I-80 Wanship to Echo Jct",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.809,
+    -111.408
+   ],
+   [
+    40.85,
+    -111.389
+   ],
+   [
+    40.915,
+    -111.405
+   ],
+   [
+    40.95,
+    -111.42
+   ],
+   [
+    40.934,
+    -111.41
+   ],
+   [
+    40.961,
+    -111.43
+   ],
+   [
+    40.969,
+    -111.439
+   ],
+   [
+    40.969,
+    -111.439
+   ]
+  ]
+ },
+ {
+  "name": "US-191 Greendale Jct to Wyoming Stateline",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.864,
+    -109.483
+   ],
+   [
+    40.898,
+    -109.455
+   ],
+   [
+    40.909,
+    -109.439
+   ],
+   [
+    40.911,
+    -109.415
+   ],
+   [
+    40.942,
+    -109.415
+   ],
+   [
+    40.954,
+    -109.471
+   ],
+   [
+    40.999,
+    -109.431
+   ],
+   [
+    41.0,
+    -109.431
+   ]
+  ]
+ },
+ {
+  "name": "US-191 Vernal to Greendale Jct",
+  "roadCondition": "snow covered",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.456,
+    -109.529
+   ],
+   [
+    40.579,
+    -109.475
+   ],
+   [
+    40.619,
+    -109.473
+   ],
+   [
+    40.653,
+    -109.49
+   ],
+   [
+    40.708,
+    -109.494
+   ],
+   [
+    40.768,
+    -109.471
+   ],
+   [
+    40.863,
+    -109.479
+   ],
+   [
+    40.864,
+    -109.483
+   ]
+  ]
+ },
+ {
+  "name": "US-89 Thistle South to Sanpete Co Ln",
+  "roadCondition": "wet",
+  "weatherCondition": "mixed rain and snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.996,
+    -111.469
+   ],
+   [
+    39.988,
+    -111.499
+   ],
+   [
+    39.966,
+    -111.513
+   ],
+   [
+    39.953,
+    -111.53
+   ],
+   [
+    39.922,
+    -111.545
+   ],
+   [
+    39.88,
+    -111.543
+   ],
+   [
+    39.817,
+    -111.507
+   ],
+   [
+    39.812,
+    -111.506
+   ]
+  ]
+ },
+ {
+  "name": "US-89 Through Mt. Pleasant",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.812,
+    -111.506
+   ],
+   [
+    39.726,
+    -111.474
+   ],
+   [
+    39.651,
+    -111.451
+   ],
+   [
+    39.597,
+    -111.445
+   ],
+   [
+    39.535,
+    -111.457
+   ],
+   [
+    39.469,
+    -111.531
+   ],
+   [
+    39.423,
+    -111.558
+   ],
+   [
+    39.422,
+    -111.559
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Silver Ck Jct to Mayflower Summit",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.733,
+    -111.499
+   ],
+   [
+    40.714,
+    -111.484
+   ],
+   [
+    40.695,
+    -111.47
+   ],
+   [
+    40.68,
+    -111.461
+   ],
+   [
+    40.648,
+    -111.455
+   ],
+   [
+    40.632,
+    -111.448
+   ],
+   [
+    40.625,
+    -111.441
+   ],
+   [
+    40.625,
+    -111.441
+   ]
+  ]
+ },
+ {
+  "name": "SR-150 Kamas to Mirror Lake Gate",
+  "roadCondition": "wet",
+  "weatherCondition": "mixed rain and snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.643,
+    -111.281
+   ],
+   [
+    40.635,
+    -111.256
+   ],
+   [
+    40.619,
+    -111.216
+   ],
+   [
+    40.625,
+    -111.159
+   ],
+   [
+    40.613,
+    -111.127
+   ],
+   [
+    40.595,
+    -111.091
+   ],
+   [
+    40.583,
+    -111.05
+   ],
+   [
+    40.581,
+    -111.048
+   ]
+  ]
+ },
+ {
+  "name": "I-80 Echo Jct to Wyoming Stateline",
+  "roadCondition": "Dry",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.969,
+    -111.439
+   ],
+   [
+    41.01,
+    -111.377
+   ],
+   [
+    41.045,
+    -111.31
+   ],
+   [
+    41.087,
+    -111.232
+   ],
+   [
+    41.127,
+    -111.166
+   ],
+   [
+    41.184,
+    -111.131
+   ],
+   [
+    41.248,
+    -111.047
+   ]
+  ]
+ },
+ {
+  "name": "I-84 Henefer to I-80 at Echo Jct",
+  "roadCondition": "wet",
+  "weatherCondition": "mixed rain and snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    41.044,
+    -111.523
+   ],
+   [
+    41.036,
+    -111.51
+   ],
+   [
+    41.02,
+    -111.493
+   ],
+   [
+    41.009,
+    -111.48
+   ],
+   [
+    40.995,
+    -111.464
+   ],
+   [
+    40.985,
+    -111.45
+   ],
+   [
+    40.971,
+    -111.442
+   ],
+   [
+    40.97,
+    -111.439
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Mayflower Summit to Heber",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.625,
+    -111.441
+   ],
+   [
+    40.604,
+    -111.429
+   ],
+   [
+    40.585,
+    -111.437
+   ],
+   [
+    40.568,
+    -111.43
+   ],
+   [
+    40.544,
+    -111.417
+   ],
+   [
+    40.52,
+    -111.411
+   ],
+   [
+    40.493,
+    -111.413
+   ]
+  ]
+ },
+ {
+  "name": "US 6 Spanish Fork to Skyview",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.128,
+    -111.649
+   ],
+   [
+    40.064,
+    -111.571
+   ],
+   [
+    40.034,
+    -111.516
+   ],
+   [
+    39.995,
+    -111.453
+   ],
+   [
+    39.989,
+    -111.371
+   ],
+   [
+    39.958,
+    -111.302
+   ],
+   [
+    39.953,
+    -111.228
+   ],
+   [
+    39.95,
+    -111.22
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Through Duchesne",
+  "roadCondition": "wet",
+  "weatherCondition": "mixed rain and snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.175,
+    -110.506
+   ],
+   [
+    40.166,
+    -110.424
+   ],
+   [
+    40.16,
+    -110.381
+   ],
+   [
+    40.172,
+    -110.332
+   ],
+   [
+    40.156,
+    -110.25
+   ],
+   [
+    40.192,
+    -110.079
+   ],
+   [
+    40.253,
+    -110.068
+   ],
+   [
+    40.253,
+    -110.068
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Through Roosevelt",
+  "roadCondition": "wet",
+  "weatherCondition": "fog",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.251,
+    -110.068
+   ],
+   [
+    40.294,
+    -109.99
+   ],
+   [
+    40.302,
+    -109.842
+   ],
+   [
+    40.315,
+    -109.714
+   ],
+   [
+    40.347,
+    -109.626
+   ],
+   [
+    40.386,
+    -109.601
+   ],
+   [
+    40.425,
+    -109.581
+   ],
+   [
+    40.433,
+    -109.573
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Through Daniels Canyon",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "Traction devices required for all vehicles",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.493,
+    -111.413
+   ],
+   [
+    40.416,
+    -111.332
+   ],
+   [
+    40.382,
+    -111.3
+   ],
+   [
+    40.335,
+    -111.261
+   ],
+   [
+    40.243,
+    -111.184
+   ],
+   [
+    40.199,
+    -110.909
+   ],
+   [
+    40.175,
+    -110.506
+   ]
+  ]
+ },
+ {
+  "name": "I-80 Jeremy Ranch to US 40 at Silver Ck Jct",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.754,
+    -111.572
+   ],
+   [
+    40.734,
+    -111.552
+   ],
+   [
+    40.728,
+    -111.544
+   ],
+   [
+    40.724,
+    -111.534
+   ],
+   [
+    40.722,
+    -111.519
+   ],
+   [
+    40.729,
+    -111.504
+   ],
+   [
+    40.732,
+    -111.498
+   ]
+  ]
+ },
+ {
+  "name": "SR-31 Fairview Canyon",
+  "roadCondition": "patchy snow",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.634,
+    -111.437
+   ],
+   [
+    39.642,
+    -111.419
+   ],
+   [
+    39.649,
+    -111.402
+   ],
+   [
+    39.648,
+    -111.365
+   ],
+   [
+    39.665,
+    -111.347
+   ],
+   [
+    39.678,
+    -111.324
+   ],
+   [
+    39.678,
+    -111.314
+   ]
+  ]
+ },
+ {
+  "name": "SR-31 Huntington Canyon",
+  "roadCondition": "patchy snow",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.336,
+    -110.967
+   ],
+   [
+    39.385,
+    -111.075
+   ],
+   [
+    39.431,
+    -111.13
+   ],
+   [
+    39.537,
+    -111.156
+   ],
+   [
+    39.594,
+    -111.205
+   ],
+   [
+    39.607,
+    -111.278
+   ],
+   [
+    39.637,
+    -111.328
+   ],
+   [
+    39.676,
+    -111.315
+   ]
+  ]
+ },
+ {
+  "name": "SR-10 Price to Huntington",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.601,
+    -110.811
+   ],
+   [
+    39.578,
+    -110.816
+   ],
+   [
+    39.525,
+    -110.823
+   ],
+   [
+    39.453,
+    -110.862
+   ],
+   [
+    39.393,
+    -110.898
+   ],
+   [
+    39.34,
+    -110.943
+   ],
+   [
+    39.335,
+    -110.965
+   ]
+  ]
+ },
+ {
+  "name": "US 6 Skyview over Soldier Summit",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.95,
+    -111.22
+   ],
+   [
+    39.93,
+    -111.198
+   ],
+   [
+    39.933,
+    -111.154
+   ],
+   [
+    39.934,
+    -111.127
+   ],
+   [
+    39.93,
+    -111.086
+   ],
+   [
+    39.904,
+    -111.058
+   ],
+   [
+    39.854,
+    -111.016
+   ],
+   [
+    39.853,
+    -111.014
+   ]
+  ]
+ },
+ {
+  "name": "US-191 Duchesne to Helper through Indian Canyon",
+  "roadCondition": "patchy snow",
+  "weatherCondition": "snow",
+  "restriction": "Traction devices required for semis",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.725,
+    -110.868
+   ],
+   [
+    39.777,
+    -110.795
+   ],
+   [
+    39.867,
+    -110.765
+   ],
+   [
+    39.923,
+    -110.682
+   ],
+   [
+    40.03,
+    -110.548
+   ],
+   [
+    40.09,
+    -110.494
+   ],
+   [
+    40.156,
+    -110.409
+   ],
+   [
+    40.163,
+    -110.402
+   ]
+  ]
+ },
+ {
+  "name": "US-6/191 Price to Green River",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.598,
+    -110.792
+   ],
+   [
+    39.545,
+    -110.744
+   ],
+   [
+    39.552,
+    -110.66
+   ],
+   [
+    39.524,
+    -110.571
+   ],
+   [
+    39.418,
+    -110.437
+   ],
+   [
+    39.148,
+    -110.337
+   ],
+   [
+    39.03,
+    -110.304
+   ],
+   [
+    38.985,
+    -110.235
+   ]
+  ]
+ },
+ {
+  "name": "SR-224 Park City to Empire Pass",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "Traction devices required for all vehicles",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.676,
+    -111.522
+   ],
+   [
+    40.66,
+    -111.509
+   ],
+   [
+    40.646,
+    -111.497
+   ],
+   [
+    40.628,
+    -111.503
+   ],
+   [
+    40.624,
+    -111.496
+   ],
+   [
+    40.62,
+    -111.502
+   ],
+   [
+    40.607,
+    -111.507
+   ],
+   [
+    40.606,
+    -111.521
+   ],
+   [
+    40.606,
+    -111.524
+   ]
+  ]
+ },
+ {
+  "name": "SR-35 Francis to Woodland",
+  "roadCondition": "wet",
+  "weatherCondition": "mixed rain and snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.611,
+    -111.281
+   ],
+   [
+    40.61,
+    -111.26
+   ],
+   [
+    40.605,
+    -111.253
+   ],
+   [
+    40.599,
+    -111.245
+   ],
+   [
+    40.596,
+    -111.243
+   ],
+   [
+    40.585,
+    -111.243
+   ],
+   [
+    40.58,
+    -111.224
+   ],
+   [
+    40.58,
+    -111.224
+   ]
+  ]
+ },
+ {
+  "name": "SR-248 Quinns Jct to Kamas",
+  "roadCondition": "wet",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.683,
+    -111.462
+   ],
+   [
+    40.681,
+    -111.437
+   ],
+   [
+    40.668,
+    -111.421
+   ],
+   [
+    40.648,
+    -111.402
+   ],
+   [
+    40.634,
+    -111.372
+   ],
+   [
+    40.637,
+    -111.336
+   ],
+   [
+    40.64,
+    -111.283
+   ],
+   [
+    40.64,
+    -111.281
+   ]
+  ]
+ },
+ {
+  "name": "US-189 Provo Canyon",
+  "roadCondition": "Dry",
+  "weatherCondition": "Fair",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.313,
+    -111.656
+   ],
+   [
+    40.329,
+    -111.627
+   ],
+   [
+    40.351,
+    -111.587
+   ],
+   [
+    40.38,
+    -111.552
+   ],
+   [
+    40.408,
+    -111.529
+   ],
+   [
+    40.414,
+    -111.479
+   ],
+   [
+    40.453,
+    -111.477
+   ],
+   [
+    40.456,
+    -111.472
+   ]
+  ]
+ },
+ {
+  "name": "SR-44 Greendale Jct to Manila",
+  "roadCondition": "patchy snow",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.864,
+    -109.483
+   ],
+   [
+    40.852,
+    -109.627
+   ],
+   [
+    40.875,
+    -109.692
+   ],
+   [
+    40.898,
+    -109.705
+   ],
+   [
+    40.913,
+    -109.684
+   ],
+   [
+    40.933,
+    -109.716
+   ],
+   [
+    40.987,
+    -109.723
+   ],
+   [
+    40.988,
+    -109.723
+   ]
+  ]
+ },
+ {
+  "name": "US-40 Through Vernal to Colorado Stateline",
+  "roadCondition": "wet",
+  "weatherCondition": "rain",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    40.433,
+    -109.573
+   ],
+   [
+    40.449,
+    -109.503
+   ],
+   [
+    40.399,
+    -109.465
+   ],
+   [
+    40.37,
+    -109.338
+   ],
+   [
+    40.321,
+    -109.255
+   ],
+   [
+    40.289,
+    -109.156
+   ],
+   [
+    40.273,
+    -109.051
+   ]
+  ]
+ },
+ {
+  "name": "US 6 Helper through Price",
+  "roadCondition": "wet",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.694,
+    -110.864
+   ],
+   [
+    39.675,
+    -110.868
+   ],
+   [
+    39.64,
+    -110.867
+   ],
+   [
+    39.619,
+    -110.86
+   ],
+   [
+    39.609,
+    -110.838
+   ],
+   [
+    39.59,
+    -110.816
+   ],
+   [
+    39.589,
+    -110.794
+   ],
+   [
+    39.589,
+    -110.794
+   ]
+  ]
+ },
+ {
+  "name": "US 6 Colton to Helper",
+  "roadCondition": "slushy",
+  "weatherCondition": "snow",
+  "restriction": "none",
+  "lastUpdated": "2026-11-19T21:09:58.000Z",
+  "coordinates": [
+   [
+    39.853,
+    -111.014
+   ],
+   [
+    39.816,
+    -110.939
+   ],
+   [
+    39.789,
+    -110.93
+   ],
+   [
+    39.764,
+    -110.901
+   ],
+   [
+    39.741,
+    -110.876
+   ],
+   [
+    39.72,
+    -110.866
+   ],
+   [
+    39.693,
+    -110.86
+   ],
+   [
+    39.692,
+    -110.858
+   ]
+  ]
+ }
+]

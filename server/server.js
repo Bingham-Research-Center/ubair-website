@@ -1,7 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
+import compression from 'compression';
 import path from 'path';
-import { promises as fs, readdirSync } from 'fs';
+import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer } from 'http';
 
@@ -12,13 +13,22 @@ import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEv
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
+import weatherAlertsRoutes from './routes/weatherAlerts.js';
+import statusLightsRoutes, { setStatusLightServices } from './routes/statusLights.js';
+import llmForecastRoutes from './routes/llmForecasts.js';
+import weatherForecastRoutes from './routes/weatherForecast.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
-import analyticsMiddleware, { getAnalyticsStats, handleEngagementBeacon } from './middleware/analytics.js';
+import analyticsMiddleware, {
+    flushVisitorsSync, getAnalyticsStats, getVisitorStats, handleEngagementBeacon
+} from './middleware/analytics.js';
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
-import { envFileProblem, getIngestReadiness, processUser, seedLastUploadFromDisk } from './ingestReadiness.js';
+import { envFileProblem, getIngestReadiness, processUser, seedLastUpload } from './ingestReadiness.js';
+import { isKnownDataType } from './uploadPolicy.js';
+import { getUploadIndex, removeLegacyFilelist } from './uploadIndex.js';
+import { enableAttemptLog } from './monitoring/uploadAttempts.js';
 import { generateOutlooksList } from './generateOutlooksList.js';
 import {
     getPreviewSkipLog,
@@ -28,18 +38,18 @@ import {
 } from './startup/backgroundJobs.js';
 
 const app = express();
+
+// nginx terminates TLS on both boxes and proxies from loopback, appending the real client to
+// X-Forwarded-For. Trusting loopback (and only loopback) makes req.ip that appended address:
+// the rightmost hop, which a client cannot forge, rather than the first, which it can. Without
+// this every request's req.ip was nginx itself, so analytics counted one visitor a day (#340).
+// It also makes req.protocol honour X-Forwarded-Proto; nothing in the app reads it today.
+app.set('trust proxy', 'loopback');
 const PORT = process.env.PORT || 3000;
 const previewMode = isPreviewMode();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const aboutPagesDir = path.join(__dirname, '../views/about');
-const aboutPageAllowlist = new Set(
-    readdirSync(aboutPagesDir, { withFileTypes: true })
-        .filter(entry => entry.isFile() && path.extname(entry.name) === '.html')
-        .map(entry => path.basename(entry.name, '.html'))
-);
-
 // Initialize background refresh service (includes camera analysis scheduler)
 const backgroundRefresh = new BackgroundRefreshService();
 const reportEmailService = new ReportEmailService({
@@ -52,6 +62,15 @@ const reportEmailService = new ReportEmailService({
 // shared cache and rate limiter, rather than creating their own.
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
 setTrafficEventsService(backgroundRefresh.trafficEventsService);
+setStatusLightServices({
+    roadWeather: backgroundRefresh.roadWeatherService,
+    trafficEvents: backgroundRefresh.trafficEventsService
+});
+
+// gzip for anything compressible over 1 kB, when the browser accepts it. nginx in front
+// compresses HTML only, so until 1.7.6 every JSON file went out whole: a 1.5 MB HRRR map run,
+// or the 1.7 MB list of observation files, to each visitor. They shrink to about a tenth.
+app.use(compression({ threshold: 1024 }));
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads).
 //
@@ -72,6 +91,10 @@ app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api', fireWeatherRoutes);
 app.use('/api', fireRestrictionsRoutes);
+app.use('/api', weatherAlertsRoutes);
+app.use('/api', statusLightsRoutes);
+app.use('/api', weatherForecastRoutes);
+app.use('/api', llmForecastRoutes);
 // Pipeline freshness/health for CHPC operators verifying their cron jobs.
 app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
@@ -79,10 +102,14 @@ app.use('/api/static', express.static(path.join(__dirname, '../public/api/static
 // Analytics endpoints
 app.get('/api/analytics/stats', getAnalyticsStats);
 app.get('/api/analytics/pipeline', getPipelineStats);
+app.get('/api/analytics/visitors', getVisitorStats);
 // Unauthenticated by necessity (called from every visitor's browser). Cap the body hard —
 // the handler rate-limits per IP and validates every field, but there is no reason to parse
-// more than a few hundred bytes here.
-app.post('/api/analytics/engagement', express.json({ limit: '2kb' }), handleEngagementBeacon);
+// more than a few hundred bytes here. navigator.sendBeacon sends a string body as
+// text/plain, so that type must be parsed as JSON too, or every beacon is a 400.
+app.post('/api/analytics/engagement',
+    express.json({ limit: '2kb', type: ['application/json', 'text/plain'] }),
+    handleEngagementBeacon);
 
 // Single static files middleware with all headers
 app.use('/public', express.static('public', {
@@ -93,6 +120,16 @@ app.use('/public', express.static('public', {
         }
     }
 }));
+
+// One icon for the whole site (docs/FAVICON-INSTALL-STEPS.md). Browsers ask for /favicon.ico
+// and iOS for /apple-touch-icon.png at the site root whatever a page links to (#309).
+const faviconDir = path.join(__dirname, '../public/images/favicons');
+app.get('/favicon.ico', (req, res) => {
+    res.sendFile(path.join(faviconDir, 'favicon.ico'), { maxAge: '1h' });
+});
+app.get(['/apple-touch-icon.png', '/apple-touch-icon-precomposed.png'], (req, res) => {
+    res.sendFile(path.join(faviconDir, 'apple-touch-icon.png'), { maxAge: '1h' });
+});
 
 // Locally installed UI assets keep the roads map usable when public CDNs are slow or unavailable.
 const vendorStaticOptions = { maxAge: '1h' };
@@ -134,20 +171,12 @@ app.get('/sports', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/sports.html'));
 });
 
-app.get('/agriculture', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/agriculture.html'));
-});
-
 app.get('/roads', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/roads.html'));
 });
 
 app.get('/aviation', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/aviation.html'));
-});
-
-app.get('/water', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/water.html'));
 });
 
 app.get('/fire', (req, res) => {
@@ -159,44 +188,52 @@ app.get('/webcam-viewer', (req, res) => {
     res.sendFile(path.join(__dirname, '../views/webcam-viewer.html'));
 });
 
-app.get('/kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk.html'));
+// The dedicated kiosk pages were retired on 2026-11-11 (parked at tag
+// parked/pre-cleanup-2026-11-11). Their URLs go to the homepage in display mode so a wall
+// screen still pointed at one keeps showing something; 302 so the target can change.
+app.get(['/kiosk', '/kiosk-portrait', '/portrait-kiosk'], (req, res) => {
+    res.redirect(302, '/?display=1');
 });
 
-app.get('/portrait-kiosk', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
+app.get('/about', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/about.html'));
 });
 
-app.get('/kiosk-portrait', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/kiosk-portrait.html'));
-});
-
-app.get('/test-viz', (req, res) => {
-    res.sendFile(path.join(__dirname, '../views/test-viz.html'));
-});
-
-app.get('/about/:page', (req, res) => {
-    const { page } = req.params;
-
-    if (!aboutPageAllowlist.has(page)) {
-        return res.status(404).send('Not Found');
-    }
-
-    res.sendFile(path.join(aboutPagesDir, `${page}.html`));
-});
+// The About Clyfar and FAQ pages were merged into /about on 2026-11-12. Their old URLs still
+// land somewhere useful; 302 so the targets can change if those pages come back.
+app.get('/about/clyfar', (req, res) => res.redirect(302, '/about#clyfar'));
+app.get('/about/faq', (req, res) => res.redirect(302, '/about'));
 
 // NOTE: The legacy /api/filelist.json route was removed in 2026-04 — it
 // served a deploy-time fossil (./public/api/static/filelist.json) that
 // nothing ever regenerated, so it pinned operators to stale snapshots
 // during diagnostics. Use /api/filelist/:dataType below (dynamic
 // fs.readdir on the per-type directory) instead.
+//
+// A page that wants one file should not ask for this list: on .com the observations list is
+// 99,000 names. GET /api/latest/:dataType?prefix= (below) names the newest file of a product,
+// and ?prefix= here trims the list to one family of files before it is sent.
+
+// A prefix is the start of a file name, nothing else.
+const FILE_PREFIX_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/;
 
 app.get('/api/filelist/:dataType', async (req, res) => {
     const { dataType } = req.params;
+    // The name becomes part of a path, and Express decodes %2F inside it: "..%2F.." listed
+    // public/ until 1.7.9. Only an upload directory is ever listed.
+    if (!isKnownDataType(dataType)) {
+        return res.status(404).json({ error: `No such dataType: ${String(dataType).slice(0, 40)}`, reason: 'unknown-dataType' });
+    }
+    const prefix = req.query.prefix === undefined ? '' : String(req.query.prefix);
+    if (prefix !== '' && !FILE_PREFIX_RE.test(prefix)) {
+        return res.status(400).json({ error: 'prefix must be the start of a file name' });
+    }
     try {
-        const dataDir = path.join(__dirname, '../public/api/static', dataType);
+        // Where the upload route writes: public/api/static under the working directory.
+        const dataDir = path.join(getUploadIndex().staticRoot, dataType);
         const files = await fs.readdir(dataDir);
-        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf'));
+        const allowedFiles = files.filter(f => f.startsWith(prefix) && !f.startsWith('.')
+            && (f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf')));
         res.json(allowedFiles);
     } catch (error) {
         // A directory that was never created means "this producer has never uploaded here",
@@ -215,31 +252,38 @@ app.get('/api/filelist/:dataType', async (req, res) => {
     }
 });
 
+// The newest file of one product, by the time stamp in its name: the answer every map and
+// current-conditions panel needs before it can fetch anything. Answered from the upload index
+// (server/uploadIndex.js), so it costs nothing however many files the directory holds.
+// "No such file yet" is an ordinary answer (filename: null), not a 404 in a visitor's console.
+app.get('/api/latest/:dataType', async (req, res) => {
+    const { dataType } = req.params;
+    if (!isKnownDataType(dataType)) {
+        return res.status(404).json({ error: `No such dataType: ${String(dataType).slice(0, 40)}`, reason: 'unknown-dataType' });
+    }
+    const prefix = String(req.query.prefix ?? '');
+    if (!FILE_PREFIX_RE.test(prefix)) {
+        return res.status(400).json({ error: 'prefix is required: the file name up to its time stamp, e.g. map_obs_' });
+    }
+    const index = getUploadIndex();
+    await index.ready();
+    const newest = index.latest(dataType, prefix);
+    res.set('Cache-Control', 'no-store').json({ dataType, prefix, filename: newest?.filename ?? null });
+});
+
 app.get('/api/live-observations', async (req, res) => {
     try {
-        // Get the latest observation file from the observations subdirectory
-        const staticDir = path.join(__dirname, '../public/api/static');
-        const observationsDir = path.join(staticDir, 'observations');
-        const fileListPath = path.join(observationsDir, 'filelist.json');
-
-        if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
-            return res.status(404).json({ error: 'No data files available' });
-        }
-
-        const fileList = JSON.parse(await fs.readFile(fileListPath, 'utf8'));
-        const obsFiles = fileList.filter(f => f.includes('map_obs_') && !f.includes('meta'));
-
-        if (obsFiles.length === 0) {
+        const index = getUploadIndex();
+        await index.ready();
+        const newest = index.latest('observations', 'map_obs_');
+        if (!newest) {
             return res.status(404).json({ error: 'No observation files found' });
         }
 
-        // Get the latest file (assuming filename contains timestamp)
-        const latestFile = obsFiles.sort().reverse()[0];
-        const latestFilePath = path.join(observationsDir, latestFile);
-        
-        const data = await fs.readFile(latestFilePath, 'utf8');
+        const latestFile = newest.filename;
+        const data = await fs.readFile(path.join(index.staticRoot, 'observations', latestFile), 'utf8');
         const parsedData = JSON.parse(data);
-        
+
         // Add metadata about the file
         res.json({
             timestamp: new Date().toISOString(),
@@ -247,7 +291,7 @@ app.get('/api/live-observations', async (req, res) => {
             totalObservations: parsedData.length,
             data: parsedData
         });
-        
+
     } catch (error) {
         console.error('Live observations error:', error);
         res.status(500).json({ error: 'Failed to fetch live observations' });
@@ -270,7 +314,16 @@ if (!isTestEnvironment) {
         process.exit(1);
     }
 
-    seedLastUploadFromDisk();
+    // Nothing writes observations/filelist.json any more; a stale one must not be served.
+    removeLegacyFilelist();
+    // Read the upload directories once, in the background, and take "last upload" from the
+    // newest file found so that a restart does not read as an outage.
+    const uploadIndex = getUploadIndex();
+    uploadIndex.ready().then(() => seedLastUpload(uploadIndex.newestReceivedAtMs()));
+    // Upload attempts survive a restart: read back the last process's, append from now on.
+    enableAttemptLog().then(({ loaded }) => {
+        if (loaded > 0) console.log(`Upload attempts on record from before this start: ${loaded}`);
+    });
     const ingest = getIngestReadiness();
     if (!ingest.ready && !previewMode) {
         console.error(`⚠️  Ingest not ready (running as ${processUser()}): ` +
@@ -297,6 +350,9 @@ const shutdown = async (signal, options = {}) => {
     isShuttingDown = true;
 
     console.log(`\nReceived ${signal}. Shutting down services...`);
+
+    // Before anything async: pm2 sends SIGKILL 1.6 s after SIGINT by default.
+    flushVisitorsSync();
 
     const shutdownContext = {
         signal,

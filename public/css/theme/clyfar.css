@@ -1,0 +1,58 @@
+/*
+ * Clyfar's hover: the one hover on the site whose colour moves.
+ *
+ * Anything that leads to or belongs to Clyfar (the sidebar row on every page, the buttons on
+ * the Clyfar page, the link on About) fills with a dark red whose hue drifts slowly between
+ * wine, oxblood and rust while the pointer rests on it, and its icon warms. Opt in with
+ * class="clyfar-glow". It is still colour only, as docs/STYLE-TOKEN-GUIDE.md asks: nothing
+ * lifts, grows or changes position.
+ *
+ * The fill is a ::before layer under the content, so it fades in rather than snapping, and it
+ * covers whatever background the box already has. Keyboard focus gets the same state as hover.
+ * With reduced motion the red stays and the drift stops.
+ */
+
+.clyfar-glow {
+    position: relative;
+    isolation: isolate;
+}
+
+.clyfar-glow::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-color: var(--clyfar-ember);
+    background-image: var(--clyfar-glow);
+    background-size: 300% 100%;
+    background-position: 0% 50%;
+    opacity: 0;
+    transition: opacity var(--motion-fast);
+}
+
+/* :is() so that a browser without :has() still gets the hover and focus states */
+.clyfar-glow:is(:hover, :focus-visible, :has(:focus-visible)) {
+    color: var(--color-on-clyfar);
+    border-color: var(--clyfar-ember);
+}
+
+.clyfar-glow:is(:hover, :focus-visible, :has(:focus-visible))::before {
+    opacity: 1;
+    animation: clyfar-drift var(--motion-drift) infinite alternate;
+}
+
+.clyfar-glow:is(:hover, :focus-visible, :has(:focus-visible)) i {
+    color: var(--clyfar-spark);
+}
+
+@keyframes clyfar-drift {
+    from { background-position: 0% 50%; }
+    to { background-position: 100% 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .clyfar-glow:is(:hover, :focus-visible, :has(:focus-visible))::before {
+        animation: none;
+    }
+}

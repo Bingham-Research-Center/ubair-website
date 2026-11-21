@@ -1,0 +1,253 @@
+/* The forecast map on /forecast_weather: the time row, the picture of the field laid over the
+   basemap, the legend and the value under the pointer.
+
+   Flat and square like the rest of the site: hairline boxes, no blur, no shadow. The colours
+   of the field itself are the data-scale tokens (--scale-* in theme/tokens.css), read by
+   forecast_weather.js; nothing here names a colour of its own.
+
+   Tokens only: this file's style-ratchet ceiling is zero. */
+
+.layer-note {
+    margin: 1rem 0 0;
+    max-width: 60rem;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* ── The time row: play, the slider, and the hour in words ───────────────────────────── */
+
+.map-time {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.map-play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-width: 6.5rem;
+    padding: 0.6rem 1rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.map-play:hover,
+.map-play:focus-visible {
+    border-color: var(--color-text);
+}
+
+.map-play[aria-pressed="true"] {
+    border-color: var(--color-text);
+    background: var(--color-text);
+    color: var(--color-surface);
+}
+
+.map-play:disabled {
+    border-color: var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    cursor: default;
+}
+
+.map-play:focus-visible,
+.map-time-slider:focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+.map-time-label {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.03rem;
+    text-transform: uppercase;
+}
+
+.map-time-slider {
+    flex: 1 1 12rem;
+    min-width: 8rem;
+    accent-color: var(--page-accent);
+}
+
+.map-time-value {
+    flex: 0 1 auto;
+    min-width: 13rem;
+    color: var(--color-text);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ── On the map ──────────────────────────────────────────────────────────────────────── */
+
+/* Tall enough for the whole Basin at a zoom where the towns can be read. */
+.weather-map-section .weather-map {
+    height: 44rem;
+}
+
+@media screen and (max-width: 768px) {
+    .weather-map-section .weather-map {
+        height: 30rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .weather-map-section .weather-map {
+        height: 24rem;
+    }
+}
+
+/* The picture of the field. forecast_weather.js sets its transform: the model grid is turned
+   a few degrees from north, so the picture is placed by three corners, not as a rectangle. */
+.field-raster {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
+
+.field-raster[hidden] {
+    display: none;
+}
+
+.wind-vector-icon {
+    border: none;
+    background: transparent;
+}
+
+.wind-vector-arrow {
+    color: var(--color-text);
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.125rem;
+    text-align: center;
+    text-shadow: 0 0 2px var(--color-surface), 0 0 2px var(--color-surface);
+    transform-origin: center center;
+}
+
+/* Two boxes over the map's top edge: what is showing, and its legend. The left one starts
+   clear of the zoom buttons. */
+.map-overlay {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    left: 3.5rem;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    pointer-events: none;
+}
+
+.current-display,
+.map-legend {
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text);
+    pointer-events: auto;
+}
+
+.current-display {
+    padding: 0.5rem 0.75rem;
+}
+
+.current-display h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.current-display p {
+    margin: 0.1rem 0 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.map-legend {
+    max-width: 12rem;
+    max-height: 26rem;
+    overflow-y: auto;
+    padding: 0.5rem 0.75rem 0.6rem;
+    font-size: 0.8rem;
+}
+
+.map-legend-title {
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+}
+
+.map-legend-none {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+/* The bands stack with no gap, so the swatches read as one colour bar. */
+.map-legend-scale {
+    display: grid;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.map-legend-row {
+    display: grid;
+    grid-template-columns: 1rem 1fr;
+    gap: 0.5rem;
+    align-items: center;
+    line-height: 1.15rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.map-legend-swatch {
+    width: 1rem;
+    height: 1.15rem;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+}
+
+.map-readout {
+    min-height: 1.4rem;
+    margin: 0.75rem 0 0;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+}
+
+@media screen and (max-width: 768px) {
+    .map-time-value {
+        min-width: 0;
+        flex-basis: 100%;
+    }
+}
+
+/* On a phone the boxes would cover the map: the title box goes (the time row says the hour)
+   and the legend shrinks into the corner. */
+@media screen and (max-width: 480px) {
+    .map-overlay {
+        top: 0.5rem;
+        right: 0.5rem;
+        justify-content: flex-end;
+    }
+
+    .current-display {
+        display: none;
+    }
+
+    .map-legend {
+        max-width: 9.5rem;
+        max-height: 11rem;
+        padding: 0.35rem 0.5rem 0.4rem;
+        font-size: 0.7rem;
+    }
+}

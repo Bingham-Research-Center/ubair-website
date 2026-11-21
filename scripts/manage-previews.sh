@@ -13,6 +13,10 @@
 #   scripts/manage-previews.sh status          # list all preview apps
 #
 # Must be run as the 'deploy' user (same as the main pm2 process).
+#
+# Every pm2 start goes through pm2_clean, so the app never inherits the
+# calling shell's environment, and nothing here runs `pm2 save`: previews
+# stay out of the reboot set. After a reboot, re-run `up <user>`.
 
 set -euo pipefail
 
@@ -51,6 +55,15 @@ const branch = '$branch'
   .replace(/^-+|-+\$/, '') || 'unknown';
 process.stdout.write('basinwx-' + branch);
 EOF
+}
+
+# pm2 copies the calling shell's environment into every app it starts or
+# restarts, and `pm2 save` then writes that environment to the dump. Run it
+# from an empty environment so a token in the caller's shell (a Claude Code
+# session, say) cannot reach the app. The app reads its settings from .env.
+pm2_clean() {
+  env -i HOME="$HOME" USER="$(whoami)" LOGNAME="$(whoami)" SHELL=/bin/bash \
+    LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin pm2 "$@"
 }
 
 worktree_dir_for() {
@@ -122,11 +135,10 @@ cmd_up() {
   echo "Installing npm dependencies..."
   npm install --prefix "$worktree_dir" --silent
 
-  # Start pm2 and persist the dump so the preview survives a reboot
-  # (the pm2 systemd unit only restores apps captured by the last `pm2 save`)
+  # No `pm2 save`: it would write every running app, with the environment
+  # each holds, into the reboot set. Previews are restarted by hand.
   echo "Starting pm2 app..."
-  pm2 start "$worktree_dir/ecosystem.config.cjs"
-  pm2 save
+  pm2_clean start "$worktree_dir/ecosystem.config.cjs"
 
   local pm2_name
   pm2_name=$(pm2_name_for_branch "$branch")
@@ -153,9 +165,10 @@ cmd_down() {
   pm2_name=$(pm2_name_for_branch "$branch")
 
   echo "Stopping pm2 app: $pm2_name..."
-  pm2 delete "$pm2_name" 2>/dev/null || echo "  (app not found in pm2 — already stopped?)"
-  # Refresh the saved dump so the deleted app isn't resurrected on reboot
-  pm2 save
+  pm2_clean delete "$pm2_name" 2>/dev/null || echo "  (app not found in pm2 — already stopped?)"
+  # No `pm2 save` here either. An earlier version of this script saved
+  # previews; if `pm2 save` was run while this one was up, run it again
+  # from your own shell so a reboot does not try to start it.
 
   if [ -d "$worktree_dir" ]; then
     echo "Removing worktree: $worktree_dir..."
@@ -185,8 +198,11 @@ cmd_update() {
   echo "Updating npm dependencies..."
   npm install --prefix "$worktree_dir" --silent
 
+  # Delete and start rather than restart, so the app picks up the clean
+  # environment even if an earlier plain start leaked one into it.
   echo "Restarting pm2 app: $pm2_name..."
-  pm2 restart "$pm2_name"
+  pm2_clean delete "$pm2_name" 2>/dev/null || true
+  pm2_clean start "$worktree_dir/ecosystem.config.cjs"
 
   echo "✓ Preview for '$user' updated to latest origin/$branch."
 }

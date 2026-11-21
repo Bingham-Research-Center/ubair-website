@@ -1,4 +1,6 @@
-// Enhanced forecast_outlooks.js with proper risk word highlighting
+// /forecast_outlooks: one outlook in full, and every issued outlook listed by season.
+import { describeOutlook, groupBySeason } from './outlookSeasons.js';
+
 document.addEventListener("DOMContentLoaded", function() {
     if (typeof markdownit === 'undefined') {
         return;
@@ -11,102 +13,53 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     const outlookContainer = document.getElementById("current-outlook");
+    const outlookHeading = outlookContainer?.querySelector("h2");
     const outlookContent = outlookContainer?.querySelector(".outlook-content");
-    const archiveContainer = document.getElementById("outlook-archive");
-    const archiveList = archiveContainer?.querySelector(".archive-list");
-    const outlookSummary = document.getElementById("outlook-summary");
+    const archiveList = document.querySelector("#outlook-archive .archive-list");
 
-    let currentFile = null;
+    if (!outlookContent) return;
 
-    async function loadOutlook(filename, summaryOnly = false) {
-        try {
-            if (outlookContent && !summaryOnly) {
-                outlookContent.innerHTML = '<div class="loading">Loading outlook...</div>';
-            } else if (outlookSummary && summaryOnly) {
-                outlookSummary.innerHTML = '<div class="loading">Loading latest outlook...</div>';
-            }
+    let newestFile = null;
 
-            const response = await fetch(`/api/static/outlooks/${filename}`);
-            if (!response.ok) {
-                const target = summaryOnly ? outlookSummary : outlookContent;
-                if (target) {
-                    target.innerHTML = `
-                        <div class="error">
-                            <p>Failed to load outlook: ${response.status}</p>
-                        </div>
-                    `;
-                }
-                return;
-            }
-
-            const markdown = await response.text();
-
-            if (summaryOnly && outlookSummary) {
-                const firstLines = markdown.split('\n').slice(0, 5).join('\n');
-                let renderedHtml = md.render(firstLines);
-                renderedHtml = highlightRiskWords(renderedHtml);
-                outlookSummary.innerHTML = renderedHtml;
-
-                const linkContainer = document.getElementById('see-more');
-                if (linkContainer) {
-                    linkContainer.href = `/forecast_outlooks?file=${filename}`;
-                }
-                return;
-            }
-
-            if (outlookContent) {
-                let renderedHtml = md.render(markdown);
-                renderedHtml = highlightRiskWords(renderedHtml);
-
-                outlookContent.innerHTML = `
-                    <div class="markdown-content">
-                        ${renderedHtml}
-                    </div>
-                    <div class="outlook-meta">
-                        <strong>Issued:</strong> ${formatDateFromFilename(filename)}
-                    </div>
-                `;
-
-                history.pushState({ filename }, '', `/forecast_outlooks?file=${filename}`);
-                currentFile = filename;
-
-                if (archiveList) {
-                    document.querySelectorAll('.archive-item').forEach(item => {
-                        item.classList.toggle('active', item.dataset.filename === filename);
-                    });
-                }
-
-                // Make day sections collapsible
-                makeCollapsible();
-            }
-        } catch (error) {
-            const target = summaryOnly ? outlookSummary : outlookContent;
-            if (target) {
-                target.innerHTML = `
-                    <div class="error">
-                        <p>Failed to load outlook: ${error.message}</p>
-                    </div>
-                `;
-            }
+    async function loadOutlook(filename, { pushHistory = true } = {}) {
+        const info = describeOutlook(filename);
+        if (!info) {
+            outlookContent.innerHTML = '<div class="error"><p>No outlook by that name.</p></div>';
+            return;
         }
-    }
 
-    function formatDateFromFilename(filename) {
-        const match = filename.match(/outlook_(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})\.md/);
-        if (!match) return "Unknown date";
+        outlookContent.innerHTML = '<div class="loading">Loading outlook...</div>';
+        try {
+            const response = await fetch(`/api/static/outlooks/${encodeURIComponent(filename)}`);
+            if (!response.ok) {
+                outlookContent.innerHTML = `<div class="error"><p>Failed to load outlook: ${response.status}</p></div>`;
+                return;
+            }
 
-        const [_, year, month, day, hour, minute] = match;
-        const date = new Date(`${year}-${month}-${day}T${hour}:${minute}:00`);
+            const renderedHtml = highlightRiskWords(md.render(await response.text()));
 
-        return date.toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: 'numeric',
-            minute: '2-digit',
-            hour12: true,
-            timeZone: 'America/Denver' // Mountain Time
-        }) + ' MT';
+            if (outlookHeading) {
+                outlookHeading.textContent = filename === newestFile ? 'Latest outlook' : 'Archived outlook';
+            }
+            outlookContent.innerHTML = `
+                <p class="outlook-meta">
+                    Issued ${info.date}, ${info.time} <span class="outlook-season">${info.season} season</span>
+                </p>
+                <div class="markdown-content">
+                    ${renderedHtml}
+                </div>
+            `;
+
+            if (pushHistory) {
+                history.pushState({ filename }, '', `/forecast_outlooks?file=${encodeURIComponent(filename)}`);
+            }
+            markActive(filename);
+
+            // Make day sections collapsible
+            makeCollapsible();
+        } catch (error) {
+            outlookContent.innerHTML = `<div class="error"><p>Failed to load outlook: ${error.message}</p></div>`;
+        }
     }
 
     // Enhanced collapsible functionality
@@ -196,117 +149,75 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     }
 
-    async function loadOutlooksList() {
-        if (outlookSummary && !outlookContent) {
-            loadLatestOutlook(true);
-            return;
-        }
-
+    // Seasons newest first. The season holding the open outlook starts expanded; the others
+    // start folded, so a long archive stays short.
+    function populateArchiveList(groups, openFile) {
         if (!archiveList) return;
 
-        try {
-            archiveList.innerHTML = '<div class="loading">Loading archive...</div>';
-
-            const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) {
-                archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${response.status}</p></div>`;
-                return;
-            }
-
-            const outlooks = await response.json();
-            populateArchiveList(outlooks);
-
-        } catch (error) {
-            archiveList.innerHTML = `<div class="error"><p>Failed to load outlooks: ${error.message}</p></div>`;
-        }
-    }
-
-    function populateArchiveList(outlooks) {
-        if (!archiveList) return;
-
-        archiveList.innerHTML = outlooks.map((outlook, index) => {
-            const date = new Date(outlook.date);
-            const formattedDate = date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-            });
-            const formattedTime = date.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-
+        archiveList.innerHTML = groups.map((group) => {
+            const open = group.outlooks.some((o) => o.filename === openFile);
+            const items = group.outlooks.map((outlook) => `
+                <a href="/forecast_outlooks?file=${encodeURIComponent(outlook.filename)}" class="archive-item" data-filename="${outlook.filename}">
+                    <span class="archive-item-when">
+                        <span class="archive-date">${outlook.date}</span>
+                        <span class="archive-item-time">${outlook.time}</span>
+                    </span>
+                    ${outlook.filename === newestFile ? '<span class="archive-latest">Latest</span>' : ''}
+                </a>`).join('');
+            const count = group.outlooks.length;
             return `
-                <a href="#" class="archive-item" data-filename="${outlook.filename}">
-                    <div style="display: flex; flex-direction: column;">
-                        <div class="archive-date">${formattedDate}</div>
-                        <div class="archive-item-time">${formattedTime}</div>
-                    </div>
-                    <div class="archive-title">${index === 0 ? 'Latest' : `#${index + 1}`}</div>
-                    <div class="archive-icon">
-                        <i class="fas fa-file-alt"></i>
-                    </div>
-                </a>
-            `;
+                <details class="archive-season"${open ? ' open' : ''}>
+                    <summary class="archive-season-title">
+                        <span>${group.season} season</span>
+                        <span class="archive-season-count">${count} outlook${count === 1 ? '' : 's'}</span>
+                    </summary>
+                    ${items}
+                </details>`;
         }).join('');
 
-        // Add click handlers
-        document.querySelectorAll('.archive-item').forEach(item => {
+        archiveList.querySelectorAll('.archive-item').forEach((item) => {
             item.addEventListener('click', (e) => {
                 e.preventDefault();
-                const filename = item.dataset.filename;
-                loadOutlook(filename);
+                loadOutlook(item.dataset.filename);
             });
+        });
+        markActive(openFile);
+    }
+
+    function markActive(filename) {
+        archiveList?.querySelectorAll('.archive-item').forEach((item) => {
+            item.classList.toggle('active', item.dataset.filename === filename);
         });
     }
 
-    async function loadLatestOutlook(summaryOnly = false) {
+    async function init() {
+        let groups = [];
         try {
             const response = await fetch('/api/static/outlooks/outlooks_list.json');
-            if (!response.ok) {
-                const target = summaryOnly ? outlookSummary : outlookContent;
-                if (target) target.innerHTML = 'Error loading latest outlook.';
-                return;
-            }
-
-            const outlooks = await response.json();
-            if (!outlooks || outlooks.length === 0) {
-                const target = summaryOnly ? outlookSummary : outlookContent;
-                if (target) target.innerHTML = 'No outlooks available.';
-                return;
-            }
-
-            loadOutlook(outlooks[0].filename, summaryOnly);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            groups = groupBySeason(await response.json());
         } catch (error) {
-            const target = summaryOnly ? outlookSummary : outlookContent;
-            if (target) target.innerHTML = 'Error loading latest outlook.';
-        }
-    }
-
-    function init() {
-        const isHomepage = !!outlookSummary && !outlookContent;
-        const isOutlooksPage = !!outlookContent;
-
-        if (isHomepage) {
-            loadLatestOutlook(true);
+            outlookContent.innerHTML = `<div class="error"><p>Failed to load outlooks: ${error.message}</p></div>`;
+            if (archiveList) archiveList.innerHTML = '';
             return;
         }
 
-        if (isOutlooksPage) {
-            const urlParams = new URLSearchParams(window.location.search);
-            const fileParam = urlParams.get('file');
-
-            if (fileParam) {
-                currentFile = fileParam;
-                loadOutlook(fileParam);
-            } else {
-                loadLatestOutlook(false);
-            }
-
-            loadOutlooksList();
+        newestFile = groups[0]?.outlooks[0]?.filename ?? null;
+        if (!newestFile) {
+            outlookContent.innerHTML = '<p>No outlooks have been issued yet.</p>';
+            if (archiveList) archiveList.innerHTML = '';
+            return;
         }
+
+        const requested = new URLSearchParams(window.location.search).get('file');
+        const openFile = requested && describeOutlook(requested) ? requested : newestFile;
+        populateArchiveList(groups, openFile);
+        loadOutlook(openFile, { pushHistory: false });
     }
+
+    window.addEventListener('popstate', (event) => {
+        if (event.state?.filename) loadOutlook(event.state.filename, { pushHistory: false });
+    });
 
     init();
 });

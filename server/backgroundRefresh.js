@@ -171,8 +171,12 @@ class BackgroundRefreshService {
 
             // Update camera analysis scheduler with new camera list
             if (cameras.status === 'fulfilled') {
+                // A failed station fetch keeps the previous readings (#157): camera
+                // decisions use them, and [] would wipe them until the next success.
                 this.cameraAnalysisScheduler.updateCameraList(cameras.value,
-                    weatherStations.status === 'fulfilled' ? weatherStations.value : []);
+                    weatherStations.status === 'fulfilled'
+                        ? weatherStations.value
+                        : (this.cameraAnalysisScheduler.weatherStations ?? []));
             } else if (weatherStations.status === 'fulfilled') {
                 this.cameraAnalysisScheduler.updateCameraList(this.cameraAnalysisScheduler.cameraQueue,
                     weatherStations.value);

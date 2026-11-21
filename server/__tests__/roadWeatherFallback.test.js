@@ -43,6 +43,22 @@ describe('road weather availability', () => {
         expect(scheduler.currentBatch).toBe(2);
     });
 
+    it('keeps the previous station readings when only the station fetch fails (#157)', async () => {
+        const { default: BackgroundRefreshService } = await import('../backgroundRefresh.js');
+        const cameras = [{ id: 'camera', lastUpdated: updated }];
+        const previous = [{ id: 'station', surfaceTemp: 28, surfaceStatus: 'Wet' }];
+        jest.spyOn(service, 'fetchUDOTRoadConditions').mockResolvedValue([]);
+        jest.spyOn(service, 'fetchUDOTCameras').mockResolvedValue(cameras);
+        jest.spyOn(service, 'fetchUDOTWeatherStations').mockRejectedValue(new Error('offline'));
+        const scheduler = { cameraQueue: [], weatherStations: previous,
+            updateCameraList: jest.fn(function(queue, readings) { this.cameraQueue = queue; this.weatherStations = readings; }) };
+        await BackgroundRefreshService.prototype.refreshEssentialData.call({ roadWeatherService: service,
+            cameraAnalysisScheduler: scheduler,
+            stats: { errors: { essential: 0 }, lastRefresh: {}, refreshCount: { essential: 0 } } });
+        expect(scheduler.updateCameraList).toHaveBeenCalledWith(cameras, previous);
+        expect(scheduler.weatherStations).toBe(previous);
+    });
+
     it('keeps successful camera refreshes when the background road fetch fails', async () => {
         const { default: BackgroundRefreshService } = await import('../backgroundRefresh.js');
         otherFeeds();
@@ -132,6 +148,32 @@ describe('missing readings', () => {
         ['Dry with ice', 'Fair', '', 'red']
     ])('keeps hazards ahead of Dry: %s / %s / %s', (surface, weather, restriction, color) => {
         expect(service.mapUDOTConditionToColor(surface, weather, restriction).condition).toBe(color);
+    });
+
+    it.each([['Snow Covered', 'Cloudy'], ['Spotty Snow', 'Cloudy'], ['Snow Covered', 'Fair'], ['Packed Snow', 'Overcast']])(
+        'reports a snowy surface as caution whatever the sky: %s / %s', (surface, weather) => {
+            expect(service.mapUDOTConditionToColor(surface, weather, '').condition).toBe('yellow');
+        }
+    );
+
+    it.each([
+        [['gray', 'green'], 'green'], [['green', 'gray'], 'green'],
+        [['gray', 'yellow', 'green'], 'yellow'], [['green', 'red'], 'red'], [['gray'], 'gray']
+    ])('picks the worst known condition independently of order: %j', (levels, expected) => {
+        const conditions = levels.map(condition => ({ condition, status: condition, reason: 'test' }));
+        expect(service.getWorstCondition(conditions).condition).toBe(expected);
+    });
+
+    it('does not let a gray HRRR waypoint hide a known reading on the same road', () => {
+        // Every road's first waypoint lacks an input; the rest are clear.
+        jest.spyOn(service, 'getHRRRConditionAtPoint').mockImplementation((lat, lon) => ({ lat, lon }));
+        jest.spyOn(service, 'estimateRoadCondition').mockImplementation((hrrrRoad, weather) =>
+            weather.lat === hrrrRoad.waypoints[0][0] && weather.lon === hrrrRoad.waypoints[0][1]
+                ? { condition: 'gray', status: 'No Data', reason: 'missing input' }
+                : { condition: 'green', status: 'Clear', reason: 'clear' });
+        const segments = service.buildAdditionalRoadSegmentsFromHRRR({ points: [] });
+        expect(segments.length).toBeGreaterThan(0);
+        for (const segment of segments) expect(segment.overallCondition.condition).toBe('green');
     });
 
     it.each([

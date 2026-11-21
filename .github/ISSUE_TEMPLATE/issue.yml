@@ -1,0 +1,21 @@
+name: Bug or task
+description: Something is wrong, or a piece of work scheduled for a release
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What
+      description: What is wrong, or what should exist. For a bug, say what you expected and what happened.
+    validations:
+      required: true
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      description: Page URL, or file:line if known.
+      placeholder: "https://www.basinwx.com/live_aq or public/js/mapUtils.js:13"
+  - type: textarea
+    id: success
+    attributes:
+      label: Success looks like
+      description: One thing a reviewer can check without asking you. Screenshots welcome.

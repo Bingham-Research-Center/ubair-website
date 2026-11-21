@@ -2,6 +2,7 @@ import express from 'express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { promisify } from 'util';
 import dns from 'dns';
 import { fileURLToPath } from 'url';
@@ -14,6 +15,16 @@ import {
     noteAcceptedUpload,
     UPLOAD_STALE_MINUTES
 } from '../ingestReadiness.js';
+import {
+    UPLOAD_DATA_TYPES,
+    allowedExtensions,
+    extensionAllowed,
+    isAllowedHost,
+    isKnownDataType,
+    parseAllowedHosts
+} from '../uploadPolicy.js';
+import { parseUtc, validateLlmForecast } from '../../public/js/llmForecast.js';
+import { TEMP_PREFIX, TEMP_SUFFIX, getUploadIndex } from '../uploadIndex.js';
 
 const reverseLookup = promisify(dns.reverse);
 
@@ -35,38 +46,22 @@ function readJsonField(relPath, field) {
 const SERVER_VERSION = readJsonField('../../package.json', 'version');
 const MANIFEST_VERSION = readJsonField('../../DATA_MANIFEST.json', 'version');
 
-// Add this helper at the top (after imports)
-function updateFileList(uploadDir) {
-  const files = fs.readdirSync(uploadDir);
-  const filtered = files.filter(name =>
-    /^map_obs(_meta)?_\d{8}_\d{4}Z\.json$/.test(name)
-  );
-  fs.writeFileSync(
-    path.join(uploadDir, 'filelist.json'),
-    JSON.stringify(filtered, null, 2)
-  );
-}
-
 const router = express.Router();
+
+// How many reasons a refused llm_forecasts upload is told about at once.
+const MAX_ERRORS_RETURNED = 25;
 
 // Configure file storage
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // Map data types to subdirectories. ingestReadiness.js lists the same set to check
-        // they are writable; add a new dataType there too.
-        const dataTypeMap = {
-            'observations': 'observations',
-            'metadata': 'metadata',
-            'outlooks': 'outlooks',
-            'llm_outlooks': 'llm_outlooks',
-            'images': 'images',
-            'forecasts': 'forecasts',
-            'road-forecast': 'road-forecast'
-        };
-
-        const dataType = req.params.dataType || 'observations';
-        const subDir = dataTypeMap[dataType] || dataType;
-        const uploadDir = path.join(process.cwd(), 'public', 'api', 'static', subDir);
+        // A dataType is the name of its own directory. validateDataType has already checked it
+        // against UPLOAD_DATA_TYPES; the check is repeated here because this line turns a
+        // request parameter into a path, and "../.." must never get that far.
+        const { dataType } = req.params;
+        if (!isKnownDataType(dataType)) {
+            return cb(new Error(`Unknown dataType: ${dataType}`));
+        }
+        const uploadDir = path.join(process.cwd(), 'public', 'api', 'static', dataType);
 
         // Create directory if it doesn't exist
         if (!fs.existsSync(uploadDir)) {
@@ -76,10 +71,41 @@ const storage = multer.diskStorage({
         cb(null, uploadDir);
     },
     filename: function (req, file, cb) {
-        // Keep original filename
-        cb(null, file.originalname);
+        // Written under a temporary name and renamed once it has passed every check. Until
+        // 1.7.9 the file went straight to its final name, so a page could read half of it, and
+        // a refused re-send of a fixed-name file (the surface-layers index) deleted the good
+        // copy. Dot-names are not served, listed or counted.
+        cb(null, `${TEMP_PREFIX}${process.pid}-${crypto.randomBytes(6).toString('hex')}${TEMP_SUFFIX}`);
     }
 });
+
+// The name a file is stored under is the producer's own, as long as it is a plain file name.
+// A leading dot is refused because dot-names are this route's temporary files.
+function storedName(originalname) {
+    if (typeof originalname !== 'string' || originalname === '' || originalname.includes('\u0000')) return null;
+    if (path.basename(originalname) !== originalname || originalname.startsWith('.')) return null;
+    return originalname;
+}
+
+function removeQuietly(file) {
+    try {
+        fs.unlinkSync(file);
+    } catch {
+        // Already gone.
+    }
+}
+
+// Copy `source` over `target` so that a reader sees the old file or the new one, never part of one.
+function replaceWithCopy(source, target) {
+    const tmpPath = path.join(path.dirname(target), `${TEMP_PREFIX}${process.pid}-${crypto.randomBytes(6).toString('hex')}${TEMP_SUFFIX}`);
+    try {
+        fs.copyFileSync(source, tmpPath);
+        fs.renameSync(tmpPath, target);
+    } catch (error) {
+        removeQuietly(tmpPath);
+        throw error;
+    }
+}
 
 const upload = multer({
     storage,
@@ -89,8 +115,8 @@ const upload = multer({
 });
 
 // Client IP as the proxy in front of us reports it (first X-Forwarded-For hop), else the
-// socket peer. Prod's proxy does not set the header, so prod logs ::ffff:127.0.0.1 for every
-// upload; dev's nginx does, so dev logs CHPC's real IP. Same producer, same public HTTPS path.
+// socket peer. Both boxes' nginx set the header (prod since 2026-10-27; before that prod
+// logged ::ffff:127.0.0.1 for every upload).
 function clientIpOf(req) {
     return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
 }
@@ -147,16 +173,31 @@ export function validateApiKey(req, res, next) {
     next();
 }
 
-async function validateCHPCOrigin(req, res, next) {
+// UPLOAD_ALLOWED_HOSTS is read on each request, so the parsed rules are kept per value.
+let allowedHostsCache = { value: null, rules: null };
+function allowedHostRules() {
+    const value = process.env.UPLOAD_ALLOWED_HOSTS ?? '';
+    if (allowedHostsCache.rules === null || allowedHostsCache.value !== value) {
+        allowedHostsCache = { value, rules: parseAllowedHosts(value) };
+    }
+    return allowedHostsCache.rules;
+}
+
+// Is this producer one we expect? The hostname the client states, or failing that the reverse
+// DNS of its address, must be on the allowlist (UPLOAD_ALLOWED_HOSTS in .env; CHPC by default).
+// This is a filter, not authentication: the header is the client's own word. The API key
+// checked before this is what keeps strangers out.
+async function validateOrigin(req, res, next) {
     try {
         const clientIp = clientIpOf(req);
         const clientHostname = req.headers['x-client-hostname'];
+        const rules = allowedHostRules();
 
         // Log access attempts for security monitoring
         console.log(`Access attempt from IP: ${clientIp}, Hostname: ${clientHostname}`);
 
         // Method 1: Check custom hostname header
-        if (clientHostname && clientHostname.endsWith('chpc.utah.edu')) {
+        if (isAllowedHost(clientHostname, rules)) {
             console.log('Access granted via hostname header');
             return next();
         }
@@ -164,11 +205,7 @@ async function validateCHPCOrigin(req, res, next) {
         // Method 2: Fallback to reverse DNS lookup
         try {
             const hostnames = await reverseLookup(clientIp);
-            const isValidHostname = hostnames.some(hostname =>
-                hostname.endsWith('chpc.utah.edu')
-            );
-
-            if (isValidHostname) {
+            if (hostnames.some(hostname => isAllowedHost(hostname, rules))) {
                 console.log('Access granted via reverse DNS');
                 return next();
             }
@@ -178,10 +215,10 @@ async function validateCHPCOrigin(req, res, next) {
 
         // Both methods failed
         console.log(`Access denied from ${clientIp}`);
-        noteAttempt(req, 403, 'not a chpc host');
+        noteAttempt(req, 403, 'host not allowed');
         return res.status(403).json({
             success: false,
-            message: 'Forbidden: Not from authorized CHPC system'
+            message: 'Forbidden: this host is not on the upload allowlist'
         });
 
     } catch (error) {
@@ -194,24 +231,64 @@ async function validateCHPCOrigin(req, res, next) {
     }
 }
 
+// Refuse a dataType that is not on the list before multer writes anything. Until 1.7.3 an
+// unknown name was used as a directory name as it came, so a name such as "../.." wrote
+// outside the upload root.
+function validateDataType(req, res, next) {
+    if (isKnownDataType(req.params.dataType)) return next();
+    noteAttempt(req, 400, 'unknown dataType');
+    return res.status(400).json({
+        success: false,
+        message: 'Unknown dataType',
+        supported: UPLOAD_DATA_TYPES
+    });
+}
+
+// llm_forecasts keeps a latest_<persona>.json beside the run files, so a page fetches one known
+// URL instead of listing the directory. It is replaced only by a file that passed validation and
+// is not older than the one already there, and by rename, so a reader never sees half a file.
+function updateLatestLlmForecast(uploadedPath, doc) {
+    const latestPath = path.join(path.dirname(uploadedPath), `latest_${doc.persona}.json`);
+    try {
+        const current = JSON.parse(fs.readFileSync(latestPath, 'utf8'));
+        if (parseUtc(current.issued) > parseUtc(doc.issued)) return false;
+    } catch {
+        // No latest file yet, or an unreadable one: replace it.
+    }
+    replaceWithCopy(uploadedPath, latestPath);
+    return true;
+}
+
 // Main upload route
-router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.single('file'), async (req, res) => {
+router.post('/upload/:dataType', validateApiKey, validateOrigin, validateDataType, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) {
       noteAttempt(req, 400, 'no file in request');
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
 
-    const ext = path.extname(req.file.originalname).toLowerCase();
-    const textExts = ['.md', '.txt'];
+    const { dataType } = req.params;
+    const filename = storedName(req.file.originalname);
+    if (!filename) {
+      removeQuietly(req.file.path);
+      noteAttempt(req, 400, 'invalid file name');
+      return res.status(400).json({ success: false, message: 'Invalid file name' });
+    }
+    const ext = path.extname(filename).toLowerCase();
     const binaryExts = ['.png', '.pdf'];
 
-    // Invalid type
-    if (ext !== '.json' && !textExts.includes(ext) && !binaryExts.includes(ext)) {
+    // Invalid type for this dataType
+    if (!extensionAllowed(dataType, ext)) {
       fs.unlinkSync(req.file.path);
       noteAttempt(req, 400, 'invalid file type', req.file.originalname);
-      return res.status(400).json({ success: false, message: 'Invalid file type' });
+      return res.status(400).json({
+        success: false,
+        message: `Invalid file type: ${dataType} takes ${allowedExtensions(dataType).join(', ')}`
+      });
     }
+
+    // Set when the upload is an llm_forecasts file that passed its contract checks.
+    let llmForecast = null;
 
     // Skip content validation for binary files (images, PDFs)
     if (!binaryExts.includes(ext)) {
@@ -220,12 +297,36 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
 
       if (ext === '.json') {
         // JSON validation
+        let parsed;
         try {
-          JSON.parse(content);
+          parsed = JSON.parse(content);
         } catch {
           fs.unlinkSync(req.file.path);
           noteAttempt(req, 400, 'invalid json', req.file.originalname);
           return res.status(400).json({ success: false, message: 'Invalid JSON file' });
+        }
+
+        // LLM text is the one dataType checked against its contract here: it is prose shown to
+        // the public on both boxes, so a malformed or overlong file is refused, with every
+        // reason listed, rather than stored for a page to trip over.
+        if (dataType === 'llm_forecasts') {
+          const { ok, errors } = validateLlmForecast(parsed, {
+            filename: req.file.originalname,
+            now: Date.now()
+          });
+          if (!ok) {
+            fs.unlinkSync(req.file.path);
+            // Placement and tier names in these sentences come from the file, so cap both
+            // the log line and the list: a file of nothing but bad keys stays a short answer.
+            noteAttempt(req, 400, `llm_forecast refused: ${errors[0]}`.slice(0, 200), req.file.originalname);
+            return res.status(400).json({
+              success: false,
+              message: 'The file does not meet the llm_forecast/1 contract',
+              errors: errors.slice(0, MAX_ERRORS_RETURNED),
+              errorCount: errors.length
+            });
+          }
+          llmForecast = parsed;
         }
       } else {
         // Text validation: accept UTF-8 markdown/plain text, reject binary-like payloads.
@@ -237,21 +338,28 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
       }
     }
 
-    // Success
-    const { dataType } = req.params;
-    const { filename, size } = req.file;
+    // Success: the file takes its own name. Same directory, so the rename is atomic and a
+    // file of that name already there is replaced whole.
+    const { size } = req.file;
+    const finalPath = path.join(path.dirname(req.file.path), filename);
+    const isNew = !fs.existsSync(finalPath);
+    fs.renameSync(req.file.path, finalPath);
     console.log(`[${new Date().toISOString()}] File uploaded: ${filename} (${size} bytes) - Type: ${dataType}`);
-
-    // Update file list for the observations directory (where obs files actually live)
-    const observationsDir = path.join(process.cwd(), 'public', 'api', 'static', 'observations');
-    updateFileList(observationsDir);
 
     // Copy road-forecast uploads to latest.json for easy access
     if (dataType === 'road-forecast') {
-      const latestPath = path.join(process.cwd(), 'public', 'api', 'static', 'road-forecast', 'latest.json');
-      fs.copyFileSync(req.file.path, latestPath);
+      replaceWithCopy(finalPath, path.join(path.dirname(finalPath), 'latest.json'));
       console.log(`[${new Date().toISOString()}] Road forecast latest.json updated`);
     }
+
+    if (llmForecast) {
+      const replaced = updateLatestLlmForecast(finalPath, llmForecast);
+      console.log(`[${new Date().toISOString()}] latest_${llmForecast.persona}.json ${replaced ? 'updated' : 'kept (it is newer)'}`);
+    }
+
+    // The index is how pages and the freshness check find the newest file of each product
+    // without listing the directory (server/uploadIndex.js).
+    getUploadIndex().noteUpload(dataType, filename, { isNew });
 
     // Counted as a success only now: either step above can still throw and turn this into a 500.
     // Fire-and-forget; logPipelineEvent swallows its own errors, and the .catch() is a
@@ -270,6 +378,8 @@ router.post('/upload/:dataType', validateApiKey, validateCHPCOrigin, upload.sing
     });
   } catch (error) {
     console.error('Error handling file upload:', error);
+    // Still under its temporary name if the failure came before the rename.
+    if (req.file?.path) removeQuietly(req.file.path);
     noteAttempt(req, 500, 'server error', req.file?.originalname ?? null);
     logPipelineEvent({ dataType: req.params.dataType, filename: req.file?.originalname, size: 0, success: false, error: error.message })
         .catch(err => console.error('[Pipeline] log failed:', err.message));
@@ -310,7 +420,10 @@ router.get('/health', (req, res) => {
 // For an external uptime monitor, not for producers: 503 whenever uploads cannot succeed or
 // none has fully succeeded for UPLOAD_STALE_MINUTES. Either one would have paged someone on
 // 2026-10-26, when /api/health stayed 200 through a day of rejected uploads.
-router.get('/health/ingest', (req, res) => {
+router.get('/health/ingest', async (req, res) => {
+    // "Last upload" is seeded from the upload index at startup. Wait for that first read (a
+    // fraction of a second, once) so a monitor polling as the app comes up is not told 503.
+    await getUploadIndex().ready();
     const { ready, problems } = getIngestReadiness();
     const lastUploadMinutes = lastUploadAgeMinutes();
     const reasons = [...problems];

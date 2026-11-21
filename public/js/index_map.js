@@ -1,7 +1,9 @@
-import { stations } from './config.js';
-import { getMarkerColor, getRoadCautionLevel, isRoadWeatherStation, createPopupContent} from './mapUtils.js';
+import { createStationIcon, createStationPopup, legendMarkup } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
-import { buildStationMeasurements } from './mapShared.js';
+import { describeStation, homeStationIds, markerLayer } from './mapShared.js';
+
+// The Basin floor, used until the stations are drawn and whenever there are none to frame.
+const BASIN_VIEW = { center: [40.25, -109.9], zoom: 9 };
 
 // Initialize map with proper center and zoom for dashboard view
 const map = L.map('map', {
@@ -12,14 +14,13 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
+}).setView(BASIN_VIEW.center, BASIN_VIEW.zoom);
 
-// Add window resize handler to re-fit map
+// Re-fit on resize: the map cannot be dragged or zoomed, so it must always frame the stations.
 window.addEventListener('resize', function() {
     setTimeout(() => {
         map.invalidateSize();
-        // Re-center on Uintah Basin after resize
-        map.setView([40.45, -110.0], 8);
+        frameStations();
     }, 100);
 });
 
@@ -35,6 +36,8 @@ let currentStationIndex = 0;
 let kioskOrder = []; // Random order for cycling
 let markers = [];
 let useCelsius = false; // Default to Fahrenheit
+let lastUnits = {}; // The feed's unit names, kept for rebuilding popups on a unit toggle
+const POPUP_OPTIONS = { maxWidth: 300, className: 'station-popup' };
 const AUTO_CYCLE_POPUP_DELAY_MS = 220;
 const AUTO_CYCLE_PAN_OFFSET_PX = { x: 70, y: 10 };
 const AUTO_CYCLE_PAN_DURATION_S = 0.8;
@@ -43,6 +46,7 @@ let kioskMoveEndHandler = null;
 
 // Wait for DOM to load before setting up
 document.addEventListener('DOMContentLoaded', () => {
+    renderLegend();
     setupKioskControl();
     updateMiniMap();
 
@@ -136,16 +140,12 @@ function startKioskMode() {
     clearInterval(kioskInterval);
     clearKioskPopupTimeout();
 
-    // Generate random order for cycling (preserved until page leave)
-    // Always start with Castle Peak
+    // A shuffled order, kept until the page is left. It opens on the first station that
+    // reports ozone, so the first popup shows what the map is for.
     if (kioskOrder.length !== markers.length) {
-        // Find Castle Peak index
-        const castlePeakIndex = markers.findIndex(m => m.options.stationName === 'Castle Peak');
+        const firstIndex = Math.max(0, markers.findIndex(m => !['weather', 'nodata'].includes(m.options.station.status)));
+        let otherIndices = [...Array(markers.length).keys()].filter(i => i !== firstIndex);
 
-        // Create array of all indices except Castle Peak
-        let otherIndices = [...Array(markers.length).keys()].filter(i => i !== castlePeakIndex);
-
-        // Shuffle the other indices
         const seed = Date.now() % 1000000;
         let rng = seed;
         for (let i = otherIndices.length - 1; i > 0; i--) {
@@ -154,13 +154,12 @@ function startKioskMode() {
             [otherIndices[i], otherIndices[j]] = [otherIndices[j], otherIndices[i]];
         }
 
-        // Put Castle Peak first, then shuffled others
-        kioskOrder = castlePeakIndex >= 0 ? [castlePeakIndex, ...otherIndices] : otherIndices;
+        kioskOrder = [firstIndex, ...otherIndices];
     }
 
     currentStationIndex = 0;
 
-    // Start immediately with Castle Peak
+    // Start immediately with the first station
     map.closePopup();
     focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
     currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
@@ -198,225 +197,66 @@ function toggleTemperature() {
 
     // Update all marker popups
     markers.forEach(marker => {
-        const stationName = marker.options.stationName;
-        const measurements = marker.options.measurements;
-        const dateTime = marker.options.dateTime;
-        const isRoad = marker.options.isRoadStation || false;
-
-        if (stationName && measurements) {
-            const popupContent = createTwoColumnPopup(stationName, measurements, dateTime, isRoad);
-            marker.bindPopup(popupContent, {
-                maxWidth: 300,
-                className: 'two-column-popup'
-            });
+        if (marker.options.station) {
+            marker.bindPopup(popupFor(marker.options.station), POPUP_OPTIONS);
         }
     });
+}
+
+function popupFor(station) {
+    return createStationPopup(station.name, station.measurements, {
+        units: lastUnits,
+        observedAt: station.observedAt,
+        shownAt: station.shownAt,
+        lastReportAt: station.lastReportAt,
+        notReportingSince: station.notReportingSince,
+        companions: station.companions,
+        imperial: !useCelsius
+    });
+}
+
+// The same legend as Live AQ, from the bands the markers use (mapUtils.js).
+function renderLegend() {
+    const legend = document.getElementById('aq-legend');
+    if (legend) legend.innerHTML = legendMarkup();
+}
+
+function frameStations() {
+    if (markers.length === 0) {
+        map.setView(BASIN_VIEW.center, BASIN_VIEW.zoom);
+        return;
+    }
+    const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 10 });
 }
 
 async function updateMiniMap() {
     try {
-        // Fetch live observations data
-        const result = await fetchLiveObservations();
-        
-        // Check if we got valid data
-        if (!result || !result.observations) {
-            console.error('No observation data available');
-            return;
-        }
-        
-        const data = result.observations;
+        const { observations, metadata } = await fetchLiveObservations();
+        lastUnits = observations._units || {};
+        const now = new Date();
 
-        // Clear existing markers
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
-        // Add markers for each station
-        for (const [stationName, coordinates] of Object.entries(stations)) {
-            const measurements = buildStationMeasurements(data, stationName);
+        // The Basin floor stations (config.js), each with its own readings; a monitor known to
+        // have stopped reporting is drawn grey with the date.
+        for (const stid of homeStationIds(observations, metadata)) {
+            const station = describeStation(stid, { observations, metadata, now });
+            if (!station) continue;
 
-            const stationTimestamp = data._timestamps?.[stationName] ?? null;
-            // Check if this is a road weather station by type from config
-            const isRoadStation = isRoadWeatherStation(coordinates.type);
-            const popupContent = createTwoColumnPopup(stationName, measurements, stationTimestamp, isRoadStation);
-
-            let markerColor;
-            if (isRoadStation) {
-                const caution = getRoadCautionLevel(measurements);
-                markerColor = caution.color;
-            } else {
-                markerColor = getMarkerColor(measurements);
-            }
-
-            // Create different marker shapes for road weather stations
-            let markerHtml;
-            if (isRoadStation) {
-                // Square/diamond shape for road weather stations
-                markerHtml = `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5); transform: rotate(45deg);"></div>`;
-            } else {
-                // Circle for regular air quality stations
-                markerHtml = `<div style="background-color: ${markerColor}; width: 20px; height: 20px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>`;
-            }
-
-            const markerIcon = L.divIcon({
-                className: 'custom-marker',
-                html: markerHtml,
-                iconSize: [24, 24]
-            });
-
-            const marker = L.marker([coordinates.lat, coordinates.lng], {
-                icon: markerIcon,
-                stationName: stationName,
-                measurements: measurements,
-                dateTime: stationTimestamp,
-                isRoadStation: isRoadStation
-            })
-                .bindPopup(popupContent, {
-                    maxWidth: 300,
-                    className: 'two-column-popup'
-                });
+            const marker = L.marker([station.lat, station.lng], {
+                icon: createStationIcon(station.status),
+                zIndexOffset: markerLayer(station.status),
+                title: station.name,
+                station
+            }).bindPopup(popupFor(station), POPUP_OPTIONS);
 
             marker.addTo(map);
             markers.push(marker);
         }
-
-        // Set map to balanced Uintah Basin view
-        if (markers.length > 0) {
-            map.setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
-        }
-
+        frameStations();
     } catch (error) {
         console.error('Error loading observation data:', error);
     }
-}
-
-function formatMeasurement(pollutant, value) {
-    if (value === null || value === undefined || isNaN(value)) {
-        return { displayValue: 'N/A', unit: '' };
-    }
-    
-    const numValue = parseFloat(value);
-    
-    switch (pollutant) {
-        case 'Temperature':
-            let tempValue = numValue;
-            let tempUnit = '°C';
-            
-            // Convert to Fahrenheit if needed
-            if (!useCelsius) {
-                tempValue = (numValue * 9/5) + 32;
-                tempUnit = '°F';
-            }
-            
-            return { displayValue: Math.round(tempValue), unit: tempUnit };
-        case 'Ozone':
-            return { displayValue: Math.round(numValue), unit: ' ppb' };
-        case 'Wind Speed':
-            let windValue = numValue;
-            let windUnit = ' m/s';
-            if (!useCelsius) {
-                windValue = numValue * 2.237;
-                windUnit = ' mph';
-            }
-            const roundedWind = Math.round(windValue);
-            if (roundedWind === 0) {
-                return { displayValue: 'Calm', unit: '' };
-            }
-            return { displayValue: roundedWind, unit: windUnit };
-        case 'Wind Direction':
-            return { displayValue: getCardinalDirection(numValue), unit: '' };
-        case 'Pressure':
-            // Convert Pascals to hectopascals (hPa) by dividing by 100
-            return { displayValue: Math.round(numValue / 100), unit: ' hPa' };
-        case 'PM2.5':
-        case 'PM10':
-            return { displayValue: Math.round(numValue), unit: ' µg/m³' };
-        case 'NOx':
-        case 'NO':
-        case 'NO2':
-            return { displayValue: Math.round(numValue), unit: ' ppb' };
-        case 'Snow Depth':
-            return { displayValue: Math.round(numValue), unit: ' mm' };
-        case 'Humidity':
-            return { displayValue: Math.round(numValue), unit: '%' };
-        default:
-            return { displayValue: Math.round(numValue * 10) / 10, unit: '' };
-    }
-}
-
-
-function getCardinalDirection(degrees) {
-    if (degrees === null || degrees === undefined || isNaN(degrees)) return 'N/A';
-
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const index = Math.round(degrees / 22.5) % 16;
-    return directions[index];
-}
-
-
-function createTwoColumnPopup(stationName, measurements, timestamp = null, isRoadStation = false) {
-    // Priority variables: Air quality + essential meteorology
-    const priorityVars = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2', 'Temperature', 'Wind Speed', 'Wind Direction', 'Snow Depth'];
-
-    // Filter for priority variables only
-    const validMeasurements = Object.entries(measurements)
-        .filter(([variable, value]) =>
-            value !== null &&
-            !isNaN(value) &&
-            priorityVars.includes(variable)
-        )
-        .sort((a, b) => priorityVars.indexOf(a[0]) - priorityVars.indexOf(b[0]));
-
-    if (validMeasurements.length === 0) {
-        return `<div><h3>${stationName}</h3><div>No air quality data available</div></div>`;
-    }
-
-    let leftCol = '';
-    let rightCol = '';
-
-    validMeasurements.forEach(([pollutant, value], index) => {
-        const { displayValue, unit } = formatMeasurement(pollutant, value);
-        const item = `<div style="margin: 4px 0;"><strong>${pollutant}:</strong> ${displayValue}${unit}</div>`;
-
-        if (index % 2 === 0) {
-            leftCol += item;
-        } else {
-            rightCol += item;
-        }
-    });
-
-    // Format timestamp
-    let timestampHtml = '';
-    if (timestamp) {
-        try {
-            const date = new Date(timestamp);
-            const formatOptions = {
-                month: 'short',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZoneName: 'short'
-            };
-            const formattedTime = date.toLocaleString('en-US', formatOptions);
-            timestampHtml = `<div style="text-align: center; font-size: 0.85em; color: #666; margin-top: 8px; font-style: italic;">Data from: ${formattedTime}</div>`;
-        } catch (e) {
-            // If timestamp parsing fails, don't show it
-            console.warn('Failed to parse timestamp:', timestamp);
-        }
-    }
-
-    const roadLink = isRoadStation
-        ? `<div style="text-align: center; margin-top: 8px;"><a href="/roads" style="color: var(--usu-blue); font-size: 0.85em; font-weight: 500;">View Road Weather &rarr;</a></div>`
-        : '';
-
-    return `
-        <div style="min-width: 280px;">
-            <h3 style="text-align: center; margin: 0 0 10px 0; color: var(--usu-blue);">${stationName}</h3>
-            <div style="display: flex; gap: 20px;">
-                <div style="flex: 1;">${leftCol}</div>
-                <div style="flex: 1;">${rightCol}</div>
-            </div>
-            ${timestampHtml}
-            ${roadLink}
-        </div>
-    `;
 }

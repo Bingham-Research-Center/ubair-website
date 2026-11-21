@@ -9,6 +9,15 @@ researchers, and policymakers.
 > products are experimental; do not use them for critical decisions. Feedback to
 > [john.lawson@usu.edu](mailto:john.lawson@usu.edu).
 
+## Picking the work up
+- **On the dev box** (`/srv/ubair-website`, user `deploy`), or for the state of play anywhere:
+  [`docs/NEXT-SESSION-HANDOFF-nov21.md`](docs/NEXT-SESSION-HANDOFF-nov21.md): versions, open
+  PRs, what is parked, what comes next.
+- **On CHPC** (producer work in `brc-tools`):
+  [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md): the asks P1–P24,
+  in order, and how to check an upload landed.
+- Rules for AI agents: `CLAUDE.md`. Newer handoffs replace these; the date is in the name.
+
 ## What's here
 - **Real-time observations** — live weather + air-quality, year-round
 - **Ozone Alert outlooks** — human-written wintertime ozone forecasts
@@ -17,6 +26,34 @@ researchers, and policymakers.
 - **Road conditions** — UDoT data, advisory only (go to [udottraffic.utah.gov](https://udottraffic.utah.gov) for real decisions)
 - **AI overviews** — experimental plain-language risk communication
 - **Mobile responsive**
+
+## New here? What changed in November 2026
+The site is being rebuilt in small steps on the way to **v2.0.0 on 1 Dec 2026**, the start of
+ozone season. Each row below is one feature. Its page opens in plain language (what it is,
+how to read it) and ends with where the code and tests are. Words you do not know are in the
+[glossary](docs/features/PLAIN-WORDS-GLOSSARY.md).
+
+| Feature | In one line | Where it stands (21 Nov 2026) | Read more | Issues |
+|---|---|---|---|---|
+| **Air-quality maps** | Homepage and Live AQ maps show each station's own readings (never a neighbour's), grey when nothing recent, under one short ozone legend | On `.dev` (1.7.8-dev) | `public/js/config.js` (the station list) | #423 |
+| **Homepage status lights** | Five tiles: weather alerts, what is forecast for the next part of the day, ozone risk, road trouble, and rain or snow by elevation | On `.dev` | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
+| **Weather forecast page** | Alerts; a forecast for your town hour by hour, checked against its weather station; the Basin in profile; where rain turns to snow; then a map in colour bands with a time slider | On `.dev` | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
+| **NWS weather alerts** | One honest source of official alerts for every page: a failed check never reads as "no alerts" | On `.dev` | [NWS-WEATHER-ALERTS](docs/features/NWS-WEATHER-ALERTS.md) | #404 |
+| **Data upload path** | Who may send data to the site, what they may send, and what is refused | On `.dev` | [DATA-UPLOAD-PATH](docs/features/DATA-UPLOAD-PATH.md) | #402 |
+| **Road weather page** | It no longer invents roads when UDOT is down, and snow covering a main route is red | On `.dev`; three more batches parked | [ROAD-WEATHER-PAGE](docs/features/ROAD-WEATHER-PAGE.md) | #336, #337–#339 |
+| **LLM forecast text** | Forecast text in three versions (Public, Industry, Expert), written by a language model and labelled as such | Rules and the drawing code live on `.dev`; **no text yet**, it waits on the producers | [LLM-FORECAST-TEXT](docs/features/LLM-FORECAST-TEXT.md) | #405, #406, #408, #410, #411 |
+| GEFS bands on the weather page | Days 1 to 15 as a likely range instead of 31 tangled lines | Waits on producer data | | #409 |
+| Expert page | Aircraft and other research products, labelled experimental | Waits on producer data | | #412 |
+| Next-3-days and inversion lights | Two more homepage tiles | Wait on producer data | | #413 |
+
+- **"On `.dev`"** means it is live at [www.basinwx.dev](https://www.basinwx.dev), the rehearsal
+  copy, and reaches [www.basinwx.com](https://www.basinwx.com) with the next release. To see
+  what each site runs right now: `python3 scripts/probe.py`.
+- **"Waits on the producers"** means the website side is ready or planned, and the computers
+  that make the data have work to do first. Their list:
+  [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md).
+- The whole plan, with its reasons: [`docs/NWP-DASHBOARD-PLAN-nov20.md`](docs/NWP-DASHBOARD-PLAN-nov20.md).
+- This table is a snapshot. Delete it, or fold it into "What's here", once v2.0.0 is out.
 
 ## Human-to-human warnings
 This codebase moves fast. Repo bloat is a known problem.
@@ -31,27 +68,97 @@ frontend reads from `/api/static/*`. DNS for `.dev` is at Namecheap with a wildc
 feature-branch previews need no DNS work — `scripts/manage-previews.sh` spins them up at
 `<name>.basinwx.dev`. Forecast schemas are pinned in `DATA_MANIFEST.json`.
 
+## Look and feel (theme)
+The current look is **Ink + Teal**: near-black ink, one teal accent, IBM Plex Sans (served from
+`public/fonts/`, no font CDN), flat surfaces and a greyed basemap. A dark mode exists in the
+tokens (`<html data-mode="dark">`) but is a draft and is not switched on.
+
+Every colour, corner radius, shadow and font is defined once, in `public/css/theme/tokens.css`.
+Page stylesheets read those tokens with `var(--…)` and add no raw values of their own, so
+changing the site's look is an edit to that one file.
+
+| To | Do this |
+|---|---|
+| Style something in page CSS | use the semantic names: `var(--color-text-muted)`, `var(--radius-md)`, `var(--shadow-card)`, `var(--font-sans)`; never a hex or px literal |
+| Give one page or card its own accent | set `--page-accent` on `body[data-page-type="…"]`, or `--card-accent` on the card |
+| Change the look of the whole site | edit values in `tokens.css`, nothing else |
+| Check you kept to it | `npm test`: `styleRatchet` fails if a file gains raw values, `themeContrast` fails if text drops below WCAG AA |
+
+House rules for new work: flat surfaces separated by a hairline rather than a drop shadow;
+corners of 4, 6 or 8 px; hover and keyboard focus change colour or border and never move the
+element; icons come from the one vendored Font Awesome (`/vendor/fontawesome`), not emoji or a
+CDN. Tiers, the ratchet and how to add a token: `docs/STYLE-TOKEN-GUIDE.md`.
+
+**Branch previews carry the theme with them.** Every page loads `tokens.css` through
+`main.css`, so a preview of a branch that is current with `dev` shows the current theme with no
+extra work, and a branch that edits `tokens.css` previews its own look. To compare several
+looks on one preview, put each candidate's values in an `html[data-theme="name"]` block in a
+preview-only stylesheet and switch the attribute. Keep that off `dev`: `styleRatchet` fails if
+the switcher is present.
+
+## Branch previews (dev box only)
+Any branch or PR can run beside the dev site at its own `<name>.basinwx.dev`. One slot is
+already wired: **`theme.basinwx.dev` → port 3003** has its certificate and nginx vhost, and
+answers 502 while nothing runs there. Nothing below needs root. As `deploy` on the dev box:
+
+```bash
+cd /srv/ubair-website && git fetch origin
+git worktree add --detach /srv/ubair-website-preview-theme origin/<branch>
+cd /srv/ubair-website-preview-theme
+cp /srv/ubair-website/.env .env && sed -i 's/^PORT=.*/PORT=3003/' .env && echo PREVIEW_MODE=true >> .env
+ln -s /srv/ubair-website/node_modules node_modules
+rm -rf public/api/static && ln -s /srv/ubair-website/public/api/static public/api/static
+env -i HOME=/home/deploy USER=deploy LOGNAME=deploy SHELL=/bin/bash LANG=C.UTF-8 PATH=/usr/local/bin:/usr/bin:/bin \
+  PM2_APP_NAME=basinwx-preview-theme bash -c 'cd /srv/ubair-website-preview-theme && pm2 start ecosystem.config.cjs'
+curl -s https://theme.basinwx.dev/api/health    # "commit" should be the branch's
+```
+
+To take it down, which is also the first step of pointing the slot at a different branch:
+
+```bash
+pm2 delete basinwx-preview-theme
+rm /srv/ubair-website-preview-theme/node_modules /srv/ubair-website-preview-theme/public/api/static
+git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-theme
+```
+
+- **A PR instead of a branch:** `git fetch origin pull/<N>/head`, then use `FETCH_HEAD` in place
+  of `origin/<branch>`. **The look switcher** from the Nov 2026 comparison, also the quickest
+  way to try dark mode, is the branch `preview/theme`; it exists only in the repo on the dev box.
+- The two symlinks give the preview the dev site's packages and its live data. Unlink them
+  before removing the folder, as above. If the branch changes dependencies, run `npm install`
+  in place of the `node_modules` link.
+- `PREVIEW_MODE=true` keeps the preview's background jobs off, `env -i` keeps the calling
+  shell's variables out of the app, and there is no `pm2 save` because previews stay out of the
+  reboot set.
+- A second preview at another name needs its own port, a certificate and an nginx vhost,
+  which only root can add: `docs/howto/preview-a-branch.md`.
+
 ## Documentation
 | Audience | Start here |
 |---|---|
-| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — Home ("what do I do today?"), How-We-Work, Definition-of-Done, Roadmap, Team, Glossary |
+| **New to the project** | The table under "New here?" above, then [`docs/features/PLAIN-WORDS-GLOSSARY.md`](docs/features/PLAIN-WORDS-GLOSSARY.md) |
+| **Picking up the last session** | "Picking the work up" at the top |
+| **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — one page: what to work on and how a change gets merged |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
+| **Styling** | `docs/STYLE-TOKEN-GUIDE.md` (tokens, the style ratchet); summary under "Look and feel" above |
 | **Data pipeline** | `docs/DATA-PIPELINE-OVERVIEW.md` + `DATA_MANIFEST.json`; producer side in [brc-tools](https://github.com/Bingham-Research-Center/brc-tools) |
+| **Per-feature guides** | `docs/features/*.md`: one page per feature, plain language first, code map after |
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
 Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
-(labels `student-ready`, `copilot-ok`) on the "BasinWx Winter 2026/27" project, not in docs files.
+on the open milestone (`v2.0.0 Ozone season open`; `v1.6.0 Beta relaunch` closed 21 Nov), not in docs files.
+Unscheduled ideas live in one thread, [Ideas parking lot](https://github.com/Bingham-Research-Center/ubair-website/discussions/342).
 
 ## Contributing
 Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
 and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
-audience-appropriate. Open bugs and tasks with the issue templates; PRs go into `dev`.
+audience-appropriate. PRs go into `dev`.
 
 - **Style:** low verbosity; prune bloat
 - **Tests:** TDD where practical (`npm test`)
 - **AI authorship:** every commit involving AI assistance must list the agent as a co-author
-- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki's How-We-Work page
+- **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki
 
 ## Quick health checks
 ```bash
@@ -71,7 +178,7 @@ triage in `docs/DEPLOYMENT.md`.
 
 ## Data sources
 - **Synoptic** — real-time meteorological observations (EPA, DAQ, Union Pacific, etc.)
-- **UBAIR sensors** — research-grade monitoring maintained by Trevor O'Neil and Seth Lyman at the Bingham Research Center
+- **UBAIR sensors** — research-grade monitoring maintained by Trevor O'Neil and Seth Lyman at the Bingham Research Center (no data on Synoptic since late 2025; the maps show them as "not reporting since")
 - **NOAA models** — federal data freely available at the [NCEP product portal](https://www.nco.ncep.noaa.gov/pmb/products/gens/)
 - **UDoT** — road conditions under fair-use limits (advisory only)
 
