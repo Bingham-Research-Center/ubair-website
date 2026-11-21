@@ -76,8 +76,26 @@ export async function fetchAvailableStations() {
   }
 }
 
+/**
+ * The newest file named `<prefix><YYYYMMDD_HHMMZ>.json` in a dataType.
+ *
+ * The server is asked for the one name (GET /api/latest, website 1.7.9). Until then every map
+ * and current-conditions panel downloaded the whole directory listing and sorted it here: on
+ * .com that was 99,000 names, 255 KB gzipped, twice per map load.
+ */
 export async function getLatestFilename(prefix, dataType) {
-  const res = await fetch(`/api/filelist/${dataType}`);
+  const query = `prefix=${encodeURIComponent(prefix)}`;
+  const asked = await fetch(`/api/latest/${dataType}?${query}`, { cache: 'no-store' }).catch(() => null);
+  if (asked?.ok) {
+    const { filename } = await asked.json();
+    if (!filename) throw new Error(`No files found for prefix \`${prefix}\` in ${dataType}`);
+    return filename;
+  }
+
+  // The route is not there between a deploy's `git pull` (this file changes at once) and its
+  // restart (routes load then), so the list is still the fallback. `?prefix=` trims it on a
+  // server that knows the parameter and is ignored by one that does not.
+  const res = await fetch(`/api/filelist/${dataType}?${query}`);
   if (!res.ok) throw new Error(`Unable to list files: ${res.status}`);
   const files = await res.json();
   const regex = new RegExp(`^${prefix}(\\d{8}_\\d{4}Z)\\.json$`);

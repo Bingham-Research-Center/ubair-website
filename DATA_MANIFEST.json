@@ -1,15 +1,15 @@
 {
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
-  "lastUpdated": "2026-11-20",
+  "lastUpdated": "2026-11-21",
   "dataTypes": {
     "observations": {
       "description": "Live weather observations from stations",
       "format": "json",
       "endpoint": "/api/upload/observations",
       "schedule": {
-        "frequency": "*/10 * * * *",
-        "description": "Every 10 minutes",
+        "frequency": "*/5 * * * *",
+        "description": "Every 5 minutes (the crontab line on notchpeak1, read 2026-11-21; declared as every 10 until 2.4.0)",
         "timezone": "UTC"
       },
       "filename": {
@@ -97,7 +97,7 @@
       "endpoint": "/api/upload/metadata",
       "schedule": {
         "frequency": "0 */6 * * *",
-        "description": "Every 6 hours",
+        "description": "When the station list changes, and at least every 6 hours (brc-tools #76, live 2026-11-21 04:46Z). Every 5 minutes before that.",
         "timezone": "UTC"
       },
       "filename": {
@@ -171,9 +171,10 @@
       "format": "pdf",
       "endpoint": "/api/upload/llm_outlooks",
       "schedule": {
-        "frequency": "ad-hoc",
-        "description": "Produced alongside the Clyfar forecast cycle during ozone season; dormant out of season (last run 2026-03-30 0600Z).",
-        "timezone": "UTC",
+        "frequency": "15 3,9,15,21 * * *",
+        "description": "Produced by the Clyfar job in ozone season (its crontab line on notchpeak1; the files land about 20 minutes later). Dormant out of season: the 2025-26 season ended 2026-03-30 0600Z and the 2026-27 one began with the 2026-11-20 1800Z run.",
+        "timezone": "America/Denver",
+        "seasonal": true,
         "automation": "automatic"
       },
       "filename": {
@@ -195,8 +196,9 @@
       "endpoint": "/api/upload/images",
       "schedule": {
         "frequency": "0 */6 * * *",
-        "description": "Every 6 hours: GEFS meteograms for the 00/06/12/18Z cycles, uploaded ~9.5 h after each cycle. Freshness flags stale at 2x this (12 h), i.e. one missed cycle.",
-        "timezone": "UTC"
+        "description": "Every 6 hours: GEFS meteograms for the 00/06/12/18Z cycles, uploaded ~9.5 h after each cycle. Freshness flags stale at 2x this (12 h), i.e. one missed cycle. Sent by the Clyfar job, so dormant out of ozone season.",
+        "timezone": "UTC",
+        "seasonal": true
       },
       "filename": {
         "pattern": "{type}_YYYYMMDD_HHMMZ.png",
@@ -219,9 +221,10 @@
       "format": "json",
       "endpoint": "/api/upload/forecasts",
       "schedule": {
-        "frequency": "30 3,9,15,21 * * *",
-        "description": "Automatic - Four times daily at 03:30, 09:30, 15:30, 21:30 UTC (3.5hr after GEFS runs at 00Z, 06Z, 12Z, 18Z)",
-        "timezone": "UTC",
+        "frequency": "15 3,9,15,21 * * *",
+        "description": "Clyfar's crontab line on notchpeak1 (Mountain time: the crontab sets no CRON_TZ), in ozone season only. Four jobs write to this directory; each product below carries its own schedule and freshness is judged product by product. This entry is the fallback for a product that states none.",
+        "timezone": "America/Denver",
+        "seasonal": true,
         "automation": "automatic",
         "gefsRuns": "00Z, 06Z, 12Z, 18Z",
         "gefsLatency": "~3 hours for full GEFS ensemble availability"
@@ -229,6 +232,12 @@
       "products": {
         "possibility_heatmap": {
           "description": "Per-member possibility values for ozone categories (31 files)",
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season only (crontab on notchpeak1, Mountain time; the run takes about 20 minutes)",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
           "filename": {
             "pattern": "forecast_possibility_heatmap_{member}_YYYYMMDD_HHMMZ.json",
             "example": "forecast_possibility_heatmap_clyfar001_20250115_1230Z.json"
@@ -316,6 +325,12 @@
         },
         "exceedance_probabilities": {
           "description": "Ensemble consensus for threshold exceedance (1 file)",
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season only (crontab on notchpeak1, Mountain time; the run takes about 20 minutes)",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
           "filename": {
             "pattern": "forecast_exceedance_probabilities_YYYYMMDD_HHMMZ.json",
             "example": "forecast_exceedance_probabilities_20250115_1230Z.json"
@@ -383,6 +398,12 @@
         },
         "percentile_scenarios": {
           "description": "Per-member defuzzified ozone values in ppb (31 files)",
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season only (crontab on notchpeak1, Mountain time; the run takes about 20 minutes)",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
           "filename": {
             "pattern": "forecast_percentile_scenarios_{member}_YYYYMMDD_HHMMZ.json",
             "example": "forecast_percentile_scenarios_clyfar001_20250115_1230Z.json"
@@ -457,9 +478,9 @@
         "hrrr_surface_layers": {
           "description": "Reduced HRRR surface-layer Basin subset for weather-map rendering",
           "schedule": {
-            "frequency": "0 * * * *",
-            "description": "Automatic - hourly HRRR surface layer export using the latest three runs",
-            "timezone": "UTC"
+            "frequency": "45 0,6,12,18 * * *",
+            "description": "The three newest runs and their index, every six hours (crontab on notchpeak1, Mountain time; the files land about :47). Declared hourly until 2.4.0, which it never was. One run an hour, the newest only, is producer ask P11.",
+            "timezone": "America/Denver"
           },
           "filename": {
             "pattern": "forecast_hrrr_surface_layers_YYYYMMDD_HHMMZ.json",
@@ -592,10 +613,10 @@
             }
           },
           "notes": [
-            "`snowfall_1h_mm` is a running total since the run began, with hours that drop to zero, not an hourly amount (producer ask P10). The website shows it as a total and never as a rate.",
+            "`snowfall_1h_mm` is a running total of snow depth since the run began (HRRR ASNOW), not an hourly amount. Since brc-tools #77 (live 2026-11-21 04:46Z) it no longer drops to zero in hours without snow; runs made before that do. The website shows it as a total and never as a rate.",
             "`rainfall_1h_mm` is a true hourly amount.",
-            "Runs reach the site three at a time every six hours, each 2.8 to 4.8 h after it starts (measured 2026-11-20), not hourly as the schedule above says. Agreed for the producer's next change: one run an hour, the newest only.",
-            "Whether `wind_u_10m_ms` and `wind_v_10m_ms` are relative to north or to the model grid is not stated. The grid is turned about 8 degrees from north, so the answer changes every arrow by that much (producer ask P17)."
+            "Runs reach the site three at a time every six hours, each 2.8 to 4.8 h after it starts (measured 2026-11-20 and 21). Agreed for the producer's next change (P11): one run an hour, the newest only.",
+            "`wind_u_10m_ms` and `wind_v_10m_ms` are the east and north components, relative to true north, since brc-tools #78 (live 2026-11-21 04:46Z). Checked from the files: waypoint directions stepped -7.8 degrees at that run, and the two products agree within 0.5 degrees. Earlier runs are relative to the model grid, about 8 degrees off. The file itself does not say which frame it is in."
           ]
         },
         "hrrr_waypoints": {
@@ -800,10 +821,10 @@
       "format": "json",
       "endpoint": "/api/upload/road-forecast",
       "schedule": {
-        "frequency": "ad-hoc (proof-of-concept)",
-        "description": "Manual runs from CHPC during development. Cron schedule TBD; expected hourly once promoted out of POC.",
+        "frequency": "20 * * * *",
+        "description": "Hourly (crontab on notchpeak1). The file lands about two minutes later, 83 minutes after the model run it holds began. A proof of concept until 2.4.0, when its cadence was declared (open ask A11).",
         "timezone": "UTC",
-        "automation": "manual"
+        "automation": "automatic"
       },
       "filename": {
         "pattern": "road_forecast_YYYYMMDD_HHMMZ.json",
@@ -1313,13 +1334,21 @@
   },
   "monitoring": {
     "expectedDataFlow": {
-      "observations": "Every 10 minutes (automatic)",
-      "metadata": "Every 6 hours (automatic)",
+      "observations": "Every 5 minutes (automatic)",
+      "metadata": "When the station list changes, at least every 6 hours (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
       "images": "Every 6 hours (automatic; one batch of GEFS meteograms per cycle, ~9.5 h after 00/06/12/18Z)",
-      "forecasts": "Mixed cadence - GEFS ozone products 4x daily, HRRR surface layers hourly",
+      "forecasts": "Per product, see dataTypes.forecasts.products.*.schedule: HRRR town and runway points hourly, HRRR surface layers every six hours, Clyfar every six hours in ozone season",
+      "road-forecast": "Hourly (automatic)",
+      "llm_outlooks": "With each Clyfar run, in ozone season",
       "llm_forecasts": "Ffion every 6 hours, Rhiannon every 3 hours (automatic, once the producer runs exist)",
       "aircraft": "To be set with the ADS-B hub"
+    },
+    "freshness": {
+      "rule": "GET /api/monitoring/freshness calls a product stale when its newest file is older than twice the interval of its schedule.frequency. A frequency that is not a cron expression ('ad-hoc') is never judged: the product reads 'unscheduled'.",
+      "perProduct": "A dataType that lists products is judged product by product, by filename pattern, and is as stale as its stalest product. Files that match no listed product are reported as 'undeclared'.",
+      "seasonal": "schedule.seasonal: true marks a product that is switched off out of season (Clyfar and what it sends). Once it has sent nothing for 7 days it reads 'dormant', not stale.",
+      "timezone": "The crontab on notchpeak1 sets no CRON_TZ, so every line fires in Mountain time. Only the interval between fires is used here, so the offset does not matter to freshness."
     },
     "alertThresholds": {
       "missingDataMinutes": 30,

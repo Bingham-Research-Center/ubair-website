@@ -41,6 +41,21 @@ export function toMillimetres(value, unit) {
     return null;
 }
 
+// Visibility. The observation feed states it in statute miles (brc-tools #76, 2026-11-21), the
+// one variable it does not send in SI; the road forecast states kilometres.
+export function toMiles(value, unit) {
+    if (!Number.isFinite(value)) return null;
+    if (unit === 'Statute miles' || unit === 'miles' || unit === 'mi') return value;
+    if (unit === 'Kilometers' || unit === 'km') return value / 1.609344;
+    if (unit === 'Meters' || unit === 'm') return value / 1609.344;
+    return null;
+}
+
+export function toKilometres(value, unit) {
+    const miles = toMiles(value, unit);
+    return miles === null ? null : miles * 1.609344;
+}
+
 /**
  * Relative humidity from temperature and dew point, via the Magnus formula.
  *

@@ -8,7 +8,7 @@ import {
     envFileProblem,
     lastUploadAgeMinutes,
     noteAcceptedUpload,
-    seedLastUploadFromDisk,
+    seedLastUpload,
     UPLOAD_DATA_TYPES,
     UPLOAD_STALE_MINUTES,
     _resetIngestReadinessForTests,
@@ -72,7 +72,6 @@ describe('checkIngestReadiness', () => {
         checkIngestReadiness({ ...base, env, access: (p, mode) => calls.push([p, mode]) });
         expect(calls).toContainEqual(['/x/.env', R_OK]);
         expect(calls).toContainEqual(['/x/static/metadata', R_OK | W_OK | X_OK]);
-        expect(calls).toContainEqual(['/x/static/observations/filelist.json', W_OK]);
         expect(calls).toContainEqual(['/x/static/road-forecast/latest.json', W_OK]);
     });
 
@@ -85,7 +84,7 @@ describe('checkIngestReadiness', () => {
         expect(result.problems).toEqual(['upload directories lack read/write/search permission: images']);
     });
 
-    test('an observations directory that cannot be listed is not ready (every upload re-lists it)', () => {
+    test('an observations directory that cannot be listed is not ready (the upload index and /api/filelist list it)', () => {
         const result = checkIngestReadiness({
             ...base,
             env,
@@ -94,23 +93,29 @@ describe('checkIngestReadiness', () => {
         expect(result.problems).toEqual(['upload directories lack read/write/search permission: observations']);
     });
 
-    test('a directory where a rewritten index should be is not ready (W_OK passes, the rewrite EISDIRs)', () => {
+    test('a directory where a replaced file should be is not ready (W_OK passes, the rename EISDIRs)', () => {
         const result = checkIngestReadiness({
             ...base,
             env,
-            isFile: p => p !== '/x/static/observations/filelist.json',
+            isFile: p => p !== '/x/static/road-forecast/latest.json',
         });
-        expect(result.problems).toEqual(['files rewritten on upload are not writable: observations/filelist.json']);
+        expect(result.problems).toEqual(['files rewritten on upload are not writable: road-forecast/latest.json']);
     });
 
-    test('a read-only index the upload route rewrites is not ready', () => {
+    test('a read-only file the upload route replaces is not ready', () => {
         const result = checkIngestReadiness({
             ...base,
             env,
-            access: denyIf(p => p === '/x/static/observations/filelist.json'),
+            access: denyIf(p => p === '/x/static/road-forecast/latest.json'),
         });
         expect(result.ready).toBe(false);
-        expect(result.problems).toEqual(['files rewritten on upload are not writable: observations/filelist.json']);
+        expect(result.problems).toEqual(['files rewritten on upload are not writable: road-forecast/latest.json']);
+    });
+
+    test('observations/filelist.json is no longer one of them: nothing writes it since 1.7.9', () => {
+        const calls = [];
+        checkIngestReadiness({ ...base, env, access: (p, mode) => calls.push([p, mode]) });
+        expect(calls.map(([p]) => p)).not.toContain('/x/static/observations/filelist.json');
     });
 
     test('a missing directory only needs a writable parent, since the upload creates it', () => {
@@ -139,31 +144,22 @@ describe('lastUploadAgeMinutes', () => {
         expect(lastUploadAgeMinutes()).toBeNull();
     });
 
-    test('is seeded once from observations/filelist.json at startup', () => {
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ingest-'));
-        fs.mkdirSync(path.join(root, 'observations'));
-        const file = path.join(root, 'observations', 'filelist.json');
-        fs.writeFileSync(file, '[]');
+    test('is seeded at startup with the arrival time of the newest file on disk', () => {
         const now = Date.now();
-        const fortyMinutesAgo = new Date(now - 40 * 60000);
-        fs.utimesSync(file, fortyMinutesAgo, fortyMinutesAgo);
-        seedLastUploadFromDisk({ staticRoot: root });
-
-        // A later rewrite of the file (as a failing upload also does) does not move the time.
-        fs.utimesSync(file, new Date(now), new Date(now));
+        seedLastUpload(now - 40 * 60000);
         expect(lastUploadAgeMinutes(now)).toBe(40);
     });
 
-    test('a directory at the filelist path does not seed a time', () => {
-        const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ingest-'));
-        fs.mkdirSync(path.join(root, 'observations', 'filelist.json'), { recursive: true });
-        seedLastUploadFromDisk({ staticRoot: root });
+    test('an empty box seeds no time', () => {
+        seedLastUpload(null);
+        expect(lastUploadAgeMinutes()).toBeNull();
+        seedLastUpload(undefined);
         expect(lastUploadAgeMinutes()).toBeNull();
     });
 
     test('a fully successful upload overrides the seed', () => {
         const now = Date.now();
-        seedLastUploadFromDisk({ stat: () => ({ mtimeMs: now - 90 * 60000, isFile: () => true }) });
+        seedLastUpload(now - 90 * 60000);
         noteAcceptedUpload(now - 2 * 60000);
         expect(lastUploadAgeMinutes(now)).toBe(2);
     });
@@ -229,10 +225,14 @@ describe('health and upload routes', () => {
 
     test('an upload that fails after the file landed does not count as accepted', async () => {
         process.env.DATA_UPLOAD_API_KEY = 'k';
-        // filelist.json as a directory makes the post-upload index rewrite throw, even as root.
-        fs.mkdirSync(path.join(root, 'public', 'api', 'static', 'observations', 'filelist.json'));
-        await upload('metadata').expect(500);
+        // latest.json as a directory makes the copy made after a road-forecast upload throw,
+        // even as root.
+        const dir = path.join(root, 'public', 'api', 'static', 'road-forecast');
+        fs.mkdirSync(path.join(dir, 'latest.json'), { recursive: true });
+        await upload('road-forecast').expect(500);
         const res = await request(app).get('/api/health/ingest').expect(503);
         expect(res.body.lastUploadMinutes).toBeNull();
+        // Nothing temporary is left behind by the failure.
+        expect(fs.readdirSync(dir).sort()).toEqual(['latest.json', 'probe_20261027_0000Z.json']);
     });
 });

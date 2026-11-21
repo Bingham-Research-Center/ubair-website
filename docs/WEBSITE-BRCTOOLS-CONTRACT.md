@@ -351,16 +351,27 @@ happily pass a Kelvin value: schema validation catches structural errors, not un
 **Until a bound is added, the Kelvin assertion belongs in the producer.**
 
 **Declared cadence drives our staleness window.** `/api/monitoring/freshness` derives each
-dataType's staleness threshold from the manifest's cron expression
-(`parseCronIntervalMinutes`, `server/monitoring/dataMonitor.js` ~:111). A declared expression
-that disagrees with the real cron produces false "stale" or false "fresh". An unparseable
-expression (fewer than five fields) silently falls back to **60 minutes**. brc-tools is the
-contract-holder: move the cron, or send the correct expression and we update the manifest —
-but do not leave them disagreeing.
+staleness threshold from the manifest's cron expression (`scheduleIntervalMinutes`,
+`server/monitoring/dataMonitor.js`): stale is older than twice the interval. A declared
+expression that disagrees with the real cron produces false "stale" or false "fresh".
+brc-tools is the contract-holder: move the cron, or send the correct expression and we update
+the manifest, but do not leave them disagreeing. Since website 1.7.9 and manifest 2.4.0:
 
-**`latestFile` is mtime-ordered, not init-time-ordered.** When a bundle uploads three runs
+- **Each product is judged on its own schedule.** A dataType that lists `products` (today
+  `forecasts`) is matched to them by filename pattern and is as stale as its stalest product.
+  Before, the hourly HRRR point files kept `forecasts` "fresh" whatever else had stopped.
+- **A frequency that is not a cron expression (`ad-hoc`) is never judged**: the product reads
+  `unscheduled`. It used to be read as hourly, so `outlooks` warned nearly all the time.
+- **`schedule.seasonal: true`** (everything the Clyfar job sends) reads `dormant`, not stale,
+  once nothing has arrived for 7 days. Within those 7 days a missed run is stale as usual.
+- **Files that match no listed product** are named under `undeclared`. On 2026-11-21 that is
+  `forecast_clustering_summary_*`, `forecast_gefs_weather_*` and the hand-run RRFS draft.
+- The crontab on notchpeak1 runs in Mountain time (no `CRON_TZ`). Only the interval between
+  fires is used, so the offset does not matter here.
+
+**`latestFile` is arrival-ordered, not init-time-ordered.** When a bundle uploads three runs
 newest-first, the freshness readout names the *oldest* init time in that bundle. Cosmetic, but
-do not read it as "the newest run we have".
+do not read it as "the newest run we have"; `GET /api/latest/forecasts?prefix=<name>_` is that.
 
 ---
 
@@ -386,7 +397,12 @@ python3 scripts/chpc_uploader.py --health-check
 ```
 
 `/api/filelist/:dataType` returns **404** when a dataType's directory has never been created —
-that is "never uploaded here", distinguishable from a 500 since v1.5.2.
+that is "never uploaded here", distinguishable from a 500 since v1.5.2. Since 1.7.9 a name that
+is not a dataType is also a 404 (`reason: unknown-dataType`), and `?prefix=` trims the list.
+
+**A file is in place whole or not at all (1.7.9).** An upload is written under a temporary name
+and renamed once it has passed every check, so a page never reads half a file, and a refused
+re-send of a fixed-name file (an index) leaves the copy already there untouched.
 
 ---
 
