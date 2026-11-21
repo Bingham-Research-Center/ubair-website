@@ -201,7 +201,7 @@ describe('upload route', () => {
         await post('forecasts', { name: '../../../escaped.json' });
         // Whatever the answer, nothing lands outside the dataType's own directory.
         expect(filesWritten().filter((file) => !file.startsWith(path.join('public', 'api', 'static', 'forecasts'))))
-            .toEqual([path.join('public', 'api', 'static', 'observations', 'filelist.json')]);
+            .toEqual([]);
     });
 });
 

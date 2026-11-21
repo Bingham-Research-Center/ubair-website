@@ -20,17 +20,18 @@ import { UPLOAD_DATA_TYPES } from './uploadPolicy.js';
 // uploadPolicy.js and re-exported here for the readiness check and its tests.
 export { UPLOAD_DATA_TYPES };
 
-// Files the upload route rewrites in place after the data file has landed. A read-only one
-// turns the upload into a 500 even though its directory is writable.
+// Files the upload route replaces after the data file has landed. Something at one of these
+// paths that is not a writable file turns the upload into a 500 even though its directory is
+// writable. (observations/filelist.json headed this list until 1.7.9, when the upload index
+// replaced it.)
 export const REWRITTEN_FILES = [
-    'observations/filelist.json', // after every upload, whatever its dataType
     'road-forecast/latest.json',  // after every road-forecast upload
     'llm_forecasts/latest_ffion.json',    // after each llm_forecasts upload from that persona
     'llm_forecasts/latest_rhiannon.json',
 ];
 
-// Observations and metadata each arrive every 10 minutes, so half an hour with no accepted
-// upload of any kind is an outage, not jitter.
+// Observations arrive every 5 minutes, so half an hour with no accepted upload of any kind
+// is an outage, not jitter.
 export const UPLOAD_STALE_MINUTES = 30;
 
 // Both paths resolve against the working directory, as `import 'dotenv/config'` and the
@@ -50,7 +51,7 @@ function allowed(access, p, mode) {
 }
 
 // Creating or replacing a file needs search (X) and write permission on its directory; the
-// filelist rewrite after every upload and GET /api/filelist also list it (R).
+// upload index and GET /api/filelist also list it (R).
 const DIR_ACCESS = fs.constants.R_OK | fs.constants.W_OK | fs.constants.X_OK;
 
 function isRegularFile(p) {
@@ -145,18 +146,12 @@ export function noteAcceptedUpload(at = Date.now()) {
 }
 
 /**
- * Startup only: seed "last accepted upload" from the mtime of observations/filelist.json, which
- * the upload route rewrites after every upload, so a restart does not read as an outage. It is
- * read once: after startup only noteAcceptedUpload() moves the time, because that file is also
- * rewritten by uploads that go on to fail.
+ * Startup only: seed "last accepted upload" with the arrival time of the newest file on disk
+ * (the upload index knows it), so a restart does not read as an outage. After startup only
+ * noteAcceptedUpload() moves the time.
  */
-export function seedLastUploadFromDisk({ staticRoot = defaultStaticRoot(), stat = fs.statSync } = {}) {
-    try {
-        const info = stat(path.join(staticRoot, 'observations', 'filelist.json'));
-        seededAtMs = info.isFile() ? info.mtimeMs : null;
-    } catch {
-        seededAtMs = null;
-    }
+export function seedLastUpload(atMs) {
+    seededAtMs = Number.isFinite(atMs) ? atMs : null;
 }
 
 /** Minutes since the last fully successful upload of any dataType, or null if none is known. */
