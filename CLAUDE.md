@@ -102,11 +102,15 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
-  derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility. In
+  derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility
+  (brc-tools #76 adds both; visibility comes in statute miles). In
   `road-forecast`, `precip_1hr` is a running total since the model run began, not an hourly
   amount: use `precip_type` for "is it snowing", and difference the totals for a rate. In the
   HRRR surface layers, `snowfall_1h_mm` is also a running total, zeroed in some hours
   (`runningTotalForHour` in `public/js/hrrrFields.js`); its `rainfall_1h_mm` is truly hourly.
+  brc-tools #77 makes `precip_1hr` hourly and `snowfall_1h_mm` a clean total, and #78 rotates
+  HRRR u/v to north (they were grid-relative, ~7.5° off): re-read the payload once those are
+  live on notchpeak1.
 - **Derive in the browser only by a standard formula, from fields whose units the file
   states**, and say so on the page (`public/js/mapLayers.js`: wind chill, totals, extremes).
   Anything that needs a field we are not sent belongs at CHPC. JRL asks what a feature costs
