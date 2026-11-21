@@ -250,6 +250,30 @@ sudo -u deploy bash -lc '
 
 Swap back to `dev` with the same sequence. The pm2 app name auto-becomes `basinwx-<branch>`.
 
+### Pruning old uploads (#168)
+
+Nothing removes uploaded files by itself. `scripts/prune-static.js` lists what is past its keep
+window and, only with `--apply`, removes it:
+
+```bash
+node scripts/prune-static.js                 # dry run: one line per product, nothing removed
+node scripts/prune-static.js --days 14       # what if every window were 14 days? (dry run only)
+node scripts/prune-static.js --apply         # remove what the dry run lists
+```
+
+- **The windows are `RULES` in the script**, so the policy changes by pull request: 30 days for
+  observations, station metadata, road forecasts and the HRRR forecasts (cut R4, JRL
+  2026-11-20). Everything Clyfar sends, outlooks and `llm_outlooks` are kept for ever until a
+  window is chosen: the air-quality forecast page offers every Clyfar run on disk.
+- **Never removed:** the newest file of each product, a file with no time stamp in its name,
+  indexes and `latest*.json`, and any file git tracks. Age is the stamp in the name, not mtime.
+- **No cron is installed, and `--apply` has not been run on either box.** Measured dry on
+  2026-11-21: `.dev` would lose 107,518 of 128,249 files and get back 3.9 GB of 5.6 GB; `.com`
+  would lose about 186,500 files by name (its sizes cannot be seen from outside). Run as the
+  user that owns the files: `deploy` on dev, `root` on prod.
+- Run it from the box's own checkout; it finds `public/api/static` beside itself. A day's
+  uploads are about 40 MB, so monthly is often enough.
+
 ### Certificate renewal
 
 certbot installs a systemd timer that renews automatically. Verify:

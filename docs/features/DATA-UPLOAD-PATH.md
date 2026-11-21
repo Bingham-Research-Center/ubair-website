@@ -48,10 +48,14 @@ on the list is now refused before anything touches the disk.
 
 ## What happens to a good file
 
-1. It is saved under `public/api/static/<dataType>/` with the name the producer gave it.
+1. It is saved under `public/api/static/<dataType>/` with the name the producer gave it. It is
+   written under a temporary name first and renamed once it has passed every check, so a page
+   never reads half a file and a refused file never replaces a good one of the same name.
 2. Web pages read it from `/api/static/<dataType>/<filename>`.
-3. The attempt, accepted or refused, is noted in a short log that an operator can read at
-   `/api/monitoring/uploads` (with the key).
+3. The server notes it as the newest file of its kind (see "Finding the newest file" below).
+4. The attempt, accepted or refused, is noted in a log that an operator can read at
+   `/api/monitoring/uploads` (with the key). The log holds about two days, keeps refused
+   attempts in a list of their own, and survives a restart (1.7.9).
 
 Two dataTypes get extra care:
 
@@ -59,6 +63,39 @@ Two dataTypes get extra care:
   checks before keeping. A file that breaks the rules is refused with every reason listed.
   See [LLM-FORECAST-TEXT.md](LLM-FORECAST-TEXT.md).
 - **`road-forecast`** is also copied to `latest.json`, so pages need not hunt for the newest.
+
+## Finding the newest file
+
+Most pages want one file: the newest observations, the newest runway forecast. The server
+keeps a small table in memory, **the upload index**: for each kind of file ("product"), the
+name of the newest one and when it arrived. A page asks `/api/latest/<dataType>?prefix=map_obs_`
+and gets one name back.
+
+- A product is a family of files that differ only in their time stamp:
+  `map_obs_20261121_0755Z.json` is one of `map_obs_*.json`.
+- The folders are still the truth. The index is built from them when the app starts and again
+  when it is more than an hour old, so a file copied in by hand is found within the hour.
+  Nothing is written to disk for it.
+- `/api/monitoring/freshness` reads the same table, product by product, each on the schedule
+  the manifest gives it.
+
+### What it costs the box
+
+Before 1.7.9 each of these listed a whole folder. Measured on the dev box on 2026-11-21, old
+code and new against the same 60,800 observation files (`.com` holds 99,000):
+
+| | Before | After |
+|---|---|---|
+| `/api/monitoring/freshness` | 1.2 to 1.9 s, with every other request waiting (3.1 s on `.com`) | 0.004 s |
+| One observation upload | 0.08 to 0.10 s | 0.003 to 0.015 s |
+| 142 uploads one after another (a Clyfar run is 165) | 14.0 s | 3.5 s |
+| What another visitor waits while those arrive | 70 ms typical, 96 ms slow | 3 ms typical, 7 ms slow |
+| The app's memory afterwards | 292 MB | 132 MB |
+| "Which observation file is newest?", sent to the browser | 43 KB gzipped (255 KB on `.com`), twice per map | 88 bytes |
+| Starting the app | 0.7 s | 0.8 s, plus 0.35 s in the background to read the folders |
+
+The air-quality forecast page also fetched every clustering summary ever uploaded (341 files
+on `.com`) to show one; it now fetches the one for the run on screen.
 
 ## For developers
 
@@ -68,7 +105,10 @@ Two dataTypes get extra care:
 | The route | `server/routes/dataUpload.js` (`validateApiKey`, `validateOrigin`, `validateDataType`) |
 | The written contract with producers | `docs/WEBSITE-BRCTOOLS-CONTRACT.md`; file shapes in `DATA_MANIFEST.json` |
 | "Can this server accept uploads at all?" | `server/ingestReadiness.js`, shown at `GET /api/health` |
-| Tests | `server/__tests__/uploadPolicy.test.js`, `ingestReadiness.test.js` |
+| The upload index, `/api/latest`, `/api/filelist` | `server/uploadIndex.js`; the two routes are in `server/server.js` |
+| Freshness, product by product | `server/monitoring/dataMonitor.js`; schedules in `DATA_MANIFEST.json` |
+| The log of attempts | `server/monitoring/uploadAttempts.js`, kept in `logs/analytics/upload_attempts.log` |
+| Tests | `server/__tests__/uploadPolicy.test.js`, `ingestReadiness.test.js`, `uploadIndex.test.js`, `uploadRouteIndex.test.js`, `dataMonitorFreshness.test.js`, `uploadAttempts.test.js` |
 
 **Check a server from anywhere** (needs only Python 3):
 
@@ -84,8 +124,12 @@ they will tell you what else to update.
 
 - **`.dev` is a rehearsal, not a toy.** It receives the same files as the public site, so a new
   kind of file can be tried there first. A dataType can exist on `.dev` and not yet on `.com`.
-- **Fresh is not the same as right.** The monitoring page can say a dataType is "fresh" from an
-  index file alone. Trust the upload log over the freshness light.
+- **Fresh is not the same as right.** Freshness says a file of that kind arrived on time, not
+  that its contents are good. Until 1.7.9 it also judged a whole folder at once, so a dead
+  six-hourly job hid behind an hourly one; each product is now judged on its own schedule.
+- **Three words that are not "late":** `unscheduled` (nobody promised a time, such as a
+  written outlook), `dormant` (a winter-only product out of season) and `no_data` (this
+  server has never been sent one).
 - The server does not check most files against the manifest. Only `llm_forecasts` is checked.
 
 ## Related issues

@@ -1,5 +1,45 @@
 # Data Manifest Change Log
 
+## Version 2.4.0 (2026-11-21)
+
+### Type: Minor - Cadences corrected to the crontab, a schedule for every product; nothing a producer sends changes
+
+**Summary:** The declared schedules now say what the crontab on notchpeak1 does (read there on
+2026-11-21, brc-tools' reply to open ask A4), and each product in `forecasts` has its own, so
+that website 1.7.9 can judge freshness product by product. Answers A4 and A11.
+
+### Changes Made
+
+- **Changed:** `observations` to `*/5 * * * *` (was `*/10`; the cron has always been every 5).
+- **Changed:** `road-forecast` to `20 * * * *` (was `ad-hoc (proof-of-concept)`, which the
+  monitor read as hourly by accident). A11.
+- **Changed:** `forecasts.products.hrrr_surface_layers` to `45 0,6,12,18 * * *` (was
+  `0 * * * *`, which it never was).
+- **Changed:** `forecasts` and `llm_outlooks` to Clyfar's line, `15 3,9,15,21 * * *`
+  (`forecasts` said `30 3,9,15,21`; `llm_outlooks` said `ad-hoc`).
+- **Added:** a `schedule` on `possibility_heatmap`, `exceedance_probabilities` and
+  `percentile_scenarios`, which had none.
+- **Added:** `schedule.seasonal: true` on everything the Clyfar job sends (`images`,
+  `llm_outlooks`, the three Clyfar products). A seasonal product that has sent nothing for
+  7 days reads `dormant`, not `stale`.
+- **Added:** `monitoring.freshness`, which states the rules: twice the interval; `ad-hoc` is
+  never judged; products are judged one by one; the crontab runs in Mountain time.
+- **Changed:** `metadata` description (on change, at least every 6 hours, since brc-tools #76)
+  and the surface-layers `notes`: the snowfall total no longer drops to zero (#77) and the wind
+  components are relative to true north (#78), both checked against the files.
+
+### Why MINOR
+
+Nothing a producer sends changes. `seasonal` is a new optional key that only the website's
+freshness check reads. A schedule here is a description of the crontab, and the crontab is
+unchanged.
+
+### Still not declared
+
+Three families arrive in `forecasts` with no product entry: `forecast_gefs_weather_clyfar*`,
+`forecast_gefs_weather_percentiles_*` and `forecast_clustering_summary_*` (the last is read by
+the air-quality forecast page). `/api/monitoring/freshness` lists them under `undeclared`.
+
 ## Version 2.3.0 (2026-11-20)
 
 ### Type: Minor - One product documented, optional fields named; nothing a producer sends changes

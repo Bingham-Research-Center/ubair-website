@@ -38,14 +38,16 @@ what to do next) is in the newest `docs/*-HANDOFF-*.md`; read it before acting.
 ## Checking a box
 Start with **`scripts/probe.py`** (python3 only, runs from anywhere): DNS, cert days left,
 served version against the newest tag, commit and start time, whether `npm install` ran,
-per-dataType freshness and, with `DATA_UPLOAD_API_KEY` set, the last upload attempts.
+freshness per dataType and per product and, with `DATA_UPLOAD_API_KEY` set, the last upload
+attempts and the refused ones.
 
 | Endpoint | What it tells you |
 |---|---|
 | `GET /api/health` | `version`, `manifestVersion`, `commit`, `branch`, `startedAt`, `vendorAssets`, `ingest.ready` (key loaded, upload dirs writable). Always 200, because producers gate uploads on it |
 | `GET /api/health/ingest` | 503 when ingest is not ready or nothing was accepted for 30 min: the one for an uptime monitor |
-| `GET /api/monitoring/uploads` | with `x-api-key`: the last 200 attempts, rejected ones included, with source IP and `x-client-hostname` |
-| `GET /api/monitoring/freshness` | age of the newest file per dataType (can say fresh for a dataType never uploaded; cross-check `uploads`) |
+| `GET /api/monitoring/uploads` | with `x-api-key`: the last 2,000 attempts (about two days) with source IP and `x-client-hostname`, the refused ones also in `rejected`; kept across restarts, so compare `ts` with `startedAt` |
+| `GET /api/monitoring/freshness` | age of the newest file per dataType and, in `forecasts`, per product, each on the schedule the manifest declares. `unscheduled` (ad-hoc), `dormant` (Clyfar out of season) and `no_data` are not "late"; `undeclared` names files the manifest does not list |
+| `GET /api/latest/:dataType?prefix=map_obs_` | the newest file of one product, from the upload index (`server/uploadIndex.js`). Pages ask this, never the full `/api/filelist` |
 
 **Only pm2 may hold the app's port.** After any reboot check `ss -ltnp 'sport = :3000'` (3001
 on dev) and `ingest.ready`: on 2026-10-26 a leftover systemd unit took prod's port and every
@@ -236,7 +238,7 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,010 tests across 73 suites at 1.7.8-dev,
+- `npm test` — Jest. **The suite is green (1,089 tests across 76 suites at 1.7.9-dev,
   2026-11-21); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).

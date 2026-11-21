@@ -40,14 +40,13 @@ Data flows from CHPC (brc-tools Python repo) → Akamai (ubair-website Node.js r
 **Structure:** Standard markdown text for weather forecasts
 
 ### 4. File Listing
-**Files:** `filelist.json`
-**Structure:**
+There is no list file. `GET /api/latest/:dataType?prefix=map_obs_` names the newest file of a
+product, and `GET /api/filelist/:dataType` (with an optional `?prefix=`) lists a directory:
 ```json
-[
-  "map_obs_20250731_0228Z.json",
-  "map_obs_meta_20250731_0228Z.json"
-]
+{ "dataType": "observations", "prefix": "map_obs_", "filename": "map_obs_20250731_0228Z.json" }
 ```
+(`observations/filelist.json` was rewritten on every upload until website 1.7.9, which removes
+it at startup.)
 
 ## Variable Names
 - `air_temp` - Air temperature
@@ -60,7 +59,8 @@ Data flows from CHPC (brc-tools Python repo) → Akamai (ubair-website Node.js r
 ## API Endpoints
 - **Upload:** `POST /api/upload/:dataType` (CHPC only)
 - **Fetch data:** `GET /api/static/{filename}`
-- **File list:** `GET /api/filelist/:dataType` (dynamic listing of the per-data-type directory)
+- **Newest file:** `GET /api/latest/:dataType?prefix=<name up to the time stamp>` (1.7.9)
+- **File list:** `GET /api/filelist/:dataType` (dynamic listing of the per-data-type directory; `?prefix=` trims it)
 
 > The older `/api/filelist.json` route was removed in 2026-04 because it
 > served a static fossil that never updated and misled operators during
@@ -71,7 +71,7 @@ Data flows from CHPC (brc-tools Python repo) → Akamai (ubair-website Node.js r
 ### Local Testing (No CHPC)
 1. Start server: `npm run dev`
 2. Place test JSON files in `/public/api/static/`
-3. Update `filelist.json` with new filenames
+3. Restart the server, or wait an hour: files copied in by hand are found when the upload index is next rebuilt
 4. Check browser console for API errors
 5. Test map display at `localhost:3000/live_aq`
 

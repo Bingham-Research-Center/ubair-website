@@ -28,6 +28,7 @@ observation feed added P21–P24 for the air-quality stations (§9).
    |---|---|---|
    | `llm_forecasts` | `.com` (1.7.0, manifest 2.1.1) predates the dataType: it would store the file unchecked and never write `latest_<persona>.json` | `.com` reports manifest **2.2.0** or later |
    | `aircraft` | Same: the dataType is new in 1.7.3 | Same |
+   | `forecast_rrfs_surface_layers_*` (in `forecasts`) | A hand-run draft, not a product: one RRFS run (init 2026-11-21 00Z) sent on 21 Nov with `--server-url https://www.basinwx.dev`. Same schema as the HRRR surface layers with `"model": "rrfs"`. Nothing reads it, no cron sends it, the manifest does not list it | The manifest gains an RRFS product and a page draws it; until then nobody should schedule it |
 
    Pin with `BASINWX_API_URLS="https://www.basinwx.dev"` in that job's wrapper
    (`docs/DEPLOYMENT.md` §7a) and unpin in the PR after the promotion. Check first:
@@ -46,20 +47,21 @@ observation feed added P21–P24 for the air-quality stations (§9).
 
 ## 2. The asks, by repo
 
-Status as of 2026-11-21 04:15Z. "PR" means open and waiting for John's merge. A brc-tools fix
+Status as of 2026-11-21 06:30Z. "PR" means open and waiting for John's merge. A brc-tools fix
 is live only after the merge **and** a `git pull --ff-only` in `~/gits/brc-tools` on notchpeak1,
-which is the tree the crons run from.
+which is the tree the crons run from. **"Live" below means both happened**: brc-tools #76–#79,
+#83 and #75 are merged and the cron tree is at `460d5c6`.
 
 ### 2a. `brc-tools`: HRRR and observation crons
 
 | # | Ask | Status |
 |---|---|---|
-| **P8** | Wind gust and visibility in the observation feed | **PR #76.** 38 stations send gusts, 28 visibility |
-| **P9** | `road-forecast` `precip_1hr` was the run total | **PR #77.** Root cause and evidence in §4 |
-| **P10** | Surface-layers `snowfall_1h_mm` was a total with dropouts | **PR #77**, as a clean total. A true hourly field is a later rename (manifest MAJOR) |
-| **P15** | Four waypoint stations missing from the obs feed | **PR #76.** Three added, Duchesne re-paired to KU69 |
-| **P16 / R1** | Station metadata on change, not every 5 min | **PR #76** (every 6 h at most) |
-| **P17** | Are `wind_u/v` relative to north or the grid? | **The grid.** **PR #78** rotates them before they leave CHPC |
+| **P8** | Wind gust and visibility in the observation feed | **Live (#76).** 38 stations send gusts, 28 visibility |
+| **P9** | `road-forecast` `precip_1hr` was the run total | **Live (#77).** Root cause and evidence in §4 |
+| **P10** | Surface-layers `snowfall_1h_mm` was a total with dropouts | **Live (#77)**, as a clean total. A true hourly field is a later rename (manifest MAJOR) |
+| **P15** | Four waypoint stations missing from the obs feed | **Live (#76).** Three added, Duchesne re-paired to KU69 |
+| **P16 / R1** | Station metadata on change, not every 5 min | **Live (#76)** (every 6 h at most) |
+| **P17** | Are `wind_u/v` relative to north or the grid? | **The grid.** **Live (#78)**: rotated to east/north before they leave CHPC. #83 takes the angle from the grid each GRIB declares, so no other model can be given HRRR's |
 | **P11 / R2** | Surface layers **every hour**, newest run only, landing as soon after the run as `road-forecast` does (about 1 h 25 min) | Open, S: `--run-count 1` and an hourly cron in `run_hrrr_surface_push.sh` |
 | **P12** | More map fields in the surface layers, names and units pinned in manifest 2.3.0: `wind_gust_10m_ms`, `snow_depth_mm`, `cloud_cover_pct`, `rh_2m_pct` (drawn on arrival); reserved, each needing a website layer first: `precip_type`, `visibility_km`, `pbl_height_m`, `temperature_700hpa_c`, `terrain_m` (once) | Open, M |
 | **P5 / P13** | **One point product** in place of waypoints and `road-forecast` (they overlap at nine towns with different stations and heights): one station per place, the road fields at every place, **48 h on 00/06/12/18Z** | Open, M. P15's KU69 re-pairing removes one of the differences |
@@ -74,6 +76,23 @@ which is the tree the crons run from.
 `brc-tools` calls itself a method library, not an operations repo. John expects the cron
 wiring for these products to move to the ops repo in §2c in time. Until then, keep changes on
 branches and keep the operational tree clean.
+
+**Producer facts, read on notchpeak1 on 21 Nov** (detail: `brc-tools/docs/CHPC-REFERENCE.md`
+and `brc-tools/docs/BRC-DATA-OPS-HANDOFF.md`):
+
+- **The crontab runs in Mountain time.** It sets no `CRON_TZ`. The six lines: obs `*/5`; road
+  forecast `20 * * * *`; waypoints `50 * * * *`; KVEL crosswind `55 * * * *`; surface layers
+  `45 0,6,12,18`; Clyfar `15 3,9,15,21`. The two four-a-day jobs therefore land an hour
+  earlier in UTC in summer than in winter (surface bundles about 01:47, 07:47, 13:47 and
+  19:47 UTC now). This is the answer to open ask A4.
+- **Nothing RRFS is sent.** All four model jobs are HRRR. RRFS v1 is operational and
+  brc-tools can now fetch it (it needs Herbie 2026.10.0, in a new env `brc-tools-2026-11`).
+  Its CONUS grid is HRRR's grid exactly. Its hourly files exist only for the 00/03/…/21Z
+  runs (to 84 h at 00/06/12/18Z, 18 h otherwise); the other cycles publish 15-minute files
+  alone. That bears on P11 and P14 if RRFS is ever the source.
+- **NAM was retired on 3 Nov**; HRRR still publishes.
+- The surface-layers job runs on `brc-tools-2026-11` since 21 Nov as a pilot. Its payload was
+  identical to the old env's for the same run apart from the timestamp.
 
 ### 2b. `clyfar`: the winter ozone job (maintenance-frozen)
 
@@ -93,8 +112,9 @@ when the season ends. Backup: `~/crontab.bak.20261120`.
 
 John's decision on 20 Nov: the persona repos are the **brains** (prompts, bundles, validation,
 LLM calls, no cron, no uploads). A **third, new ops repo** quarterbacks the operations: cron
-jobs, schedules, pushes to both hosts. `clyfar` is not the home for new LLM work. Only the two
-persona repos have names so far; the ops repo's is not chosen.
+jobs, schedules, pushes to both hosts. `clyfar` is not the home for new LLM work. The ops repo
+is to be **`brc-data-ops`** (John, 20 Nov); on 21 Nov it is an empty folder on CHPC with no git
+history and no GitHub repo.
 
 | # | Ask | Repo | State |
 |---|---|---|---|
@@ -282,7 +302,7 @@ Each was measured on notchpeak1 against live data; the brc-tools PRs carry the f
   failure, so that run's observations were never sent. `~/logs/obs.log` shows this a few times
   a day, mostly DNS errors resolving `basinwx.com`. #76 sends each file on its own.
 
-## 5. Website follow-ups once the brc-tools PRs are live
+## 5. Website follow-ups now the brc-tools PRs are live
 
 None is needed for the fixes to work; these use them or tidy up after them.
 
@@ -364,7 +384,7 @@ percentiles. The Clyfar job should deliver `llm_outlooks` and the GEFS percentil
 
 | # | Cut | Status |
 |---|---|---|
-| **R1** | Station metadata on change, or every 6 h | PR #76 |
+| **R1** | Station metadata on change, or every 6 h | Live (#76) |
 | **R2** | Once surface layers come hourly (P11), send the newest run only, not three (4.4 MB every 6 h) | With P11 |
 | **R3** | Stop the meteogram PNGs once P4 flows and the page draws its own bands | Waits on P4 and a website page |
 | **R4** | Prune old files on both boxes: about 30 days of forecasts, road forecasts and observations (`.dev` holds 5.6 GB of uploads, 47% of its disk) | A website job, later PR; nothing deleted yet |
