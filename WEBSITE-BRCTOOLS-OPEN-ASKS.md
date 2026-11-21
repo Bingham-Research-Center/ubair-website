@@ -47,8 +47,8 @@ the file.
 | A7 | brc-tools | **OPEN** | Are single missed cycles detected upstream? |
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
-| P1–P10 | brc-tools, clyfar, new persona/ops repos, hub | **OPEN, part in PR** | The NWP dashboard asks, grouped by repo with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md) §2. 20 Nov: P8, P9, P10 in brc-tools PRs #76/#77; Clyfar resumed (P1's `llm_outlooks` half, P4 for the winter); P2/P3 go to new repos (`brc-ffion`, `brc-rhiannon`, an ops repo). P1 overlaps A5 |
-| P11–P20, R1–R4 | brc-tools | **OPEN, part in PR** | 20 Nov: P15, P16/R1 in brc-tools PR #76; P17 answered (HRRR u/v are grid-relative) and fixed in #78. Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
+| P1–P10 | brc-tools, clyfar, new persona/ops repos, hub | **OPEN, part in PR** | The NWP dashboard asks, grouped by repo with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md) §2. 21 Nov: P8, P9, P10 merged and live (brc-tools #76/#77); Clyfar resumed (P1's `llm_outlooks` half, P4 for the winter); P2/P3 go to new repos (`brc-ffion`, `brc-rhiannon`, and the ops repo `brc-data-ops`, not yet created). P1 overlaps A5 |
+| P11–P20, R1–R4 | brc-tools | **OPEN, part live** | 21 Nov: P15, P16/R1 merged and live (brc-tools #76); P17 answered (HRRR u/v are grid-relative) and fixed, live (#78, #83). Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
 
 ---
 
@@ -139,7 +139,27 @@ expression, so the two must agree. **brc-tools is the contract-holder** — move
 send us the correct expression and we will update the manifest.
 
 **Reply:**
-> _(brc-tools: answer here)_
+> **brc-tools, 2026-11-21 (read from `crontab -l` on notchpeak1).** The declared expression
+> is Clyfar's, off by 15 minutes, and neither is in UTC. The crontab sets no `CRON_TZ`, so
+> every line fires in **Mountain time**. Four jobs write to `forecasts`:
+>
+> | Job | Crontab line (Mountain time) | Lands, UTC, in MST | Lands, UTC, in MDT |
+> |---|---|---|---|
+> | HRRR surface layers (3 runs + index) | `45 0,6,12,18 * * *` | about 01:47, 07:47, 13:47, 19:47 | about 00:47, 06:47, 12:47, 18:47 |
+> | HRRR waypoints | `50 * * * *` | hourly, about :51 | same |
+> | HRRR KVEL crosswind | `55 * * * *` | hourly, about :57 | same |
+> | Clyfar (GEFS percentiles, ozone forecasts; winter only) | `15 3,9,15,21 * * *` | 10:15, 16:15, 22:15, 04:15 plus the Slurm run time | 09:15, 15:15, 21:15, 03:15 plus run time |
+>
+> Your August measurement (00:48, 06:48, …) was the surface job under MDT; it moved an hour
+> later in UTC on 1 Nov. Because waypoints and the crosswind arrive every hour, the
+> `forecasts` directory as a whole is never more than about an hour old; a staleness window
+> for the surface layers alone needs a 6 h interval, and for Clyfar's files a 6 h interval in
+> season. Whether the crons should move to UTC (`CRON_TZ=UTC`) is listed for the ops repo in
+> `brc-tools/docs/BRC-DATA-OPS-HANDOFF.md`; until that is decided, please treat the offsets
+> as seasonal. I have not edited the manifest: its `forecasts` frequency (`30 3,9,15,21`),
+> the surface-layers product's `0 * * * *` and the "hourly" wording in `expectedDataFlow`
+> are yours to change, with the version bump. Related: `observations` is declared `*/10`
+> and the cron is `*/5`.
 
 ---
 
@@ -226,6 +246,9 @@ counts, so any "do the hosts agree?" check must compare **recent filenames**, no
 silently falls back to **60 minutes**, which happens to match the observed `:22` hourly cadence
 — so the monitor is right by accident. It is a proof-of-concept no longer. Declare
 `22 * * * *` so the window is explicit rather than lucky.
+
+Producer fact (brc-tools, 2026-11-21): the crontab line is `20 * * * *`
+(`run_road_forecast_push.sh`); the file lands about two minutes later, hence `:22`.
 
 **Reply:**
 > _(website: answer here)_
