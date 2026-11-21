@@ -50,11 +50,12 @@ async function loadFullSnapshot() {
 async function loadAlertsOnly() {
     try {
         const r = await fetch('/api/fire-weather/alerts');
-        if (!r.ok) return;
-        const data = await r.json();
-        renderRedFlagBanner(data.alerts || []);
+        // A 503 carries alerts: null ("could not check"); any other failure means the same.
+        const data = r.ok ? await r.json() : { alerts: null };
+        renderRedFlagBanner(Array.isArray(data.alerts) ? data.alerts : null);
     } catch (err) {
         console.warn('Alerts refresh failed:', err);
+        renderRedFlagBanner(null);
     }
 }
 
@@ -72,7 +73,7 @@ async function loadRestrictions() {
 }
 
 function renderAll(data) {
-    renderRedFlagBanner(data.alerts || []);
+    renderRedFlagBanner(Array.isArray(data.alerts) ? data.alerts : null);
     renderHero(data.basin, data.stationMax, data.hotspots || []);
     renderCards(data.basin, data.stationMax);
     if (fireMap) {

@@ -129,7 +129,7 @@ export class UIManager {
                 box-sizing: border-box;
                 width: 100%;
                 height: 100%;
-                font-family: 'Roboto', sans-serif;
+                font-family: var(--font-sans);
             }
 
             .controls-container {

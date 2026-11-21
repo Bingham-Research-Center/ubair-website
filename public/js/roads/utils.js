@@ -147,11 +147,6 @@ function createRouteIncidentSummary(routeName, events) {
     `;
 }
 
-/**
- * Display route conditions in a container
- * @param {HTMLElement} container - Container element to render into
- * @param {Object} data - Route data object
- */
 function formatRoadReportTime(value) {
     if (value === null || value === undefined || value === '') return null;
     const time = new Date(value);
@@ -174,6 +169,11 @@ function averageReportedTemperature(stations) {
     return temperatures.length ? Math.round(temperatures.reduce((sum, value) => sum + value, 0) / temperatures.length) : '--';
 }
 
+/**
+ * Display route conditions in a container
+ * @param {HTMLElement} container - Container element to render into
+ * @param {Object} data - Route data object
+ */
 function displayRouteConditions(container, data) {
     const { routeName, stations, events, cities } = data;
 

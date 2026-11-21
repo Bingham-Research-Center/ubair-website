@@ -17,22 +17,20 @@ carries only what is still unanswered.
 
 ---
 
-## Measured state — 2026-08-26 18:50Z
+## Measured state — 2026-11-12 07:45Z
 
-Re-measure before trusting; this block is the only mutable thing in the file.
+Re-measure before trusting (`python3 scripts/probe.py`); this block is the only mutable thing in
+the file.
 
 | | `.com` | `.dev` |
 |---|---|---|
-| version / manifest | 1.5.2 / 2.0.0 | 1.5.3-dev / 2.0.0 |
-| observations, metadata | fresh (4 min) | fresh (4 min) |
-| forecasts | fresh | fresh — **recovered**, 22 run files + index |
-| road-forecast | fresh | fresh — hourly at `:22` |
-| outlooks | stale ~13 d | stale ~4 mo |
-| llm_outlooks, images | stale ~5 mo | **never uploaded** (no directory) |
-| timeseries | never uploaded | never uploaded |
-
-Latest forecast bundle observed on `.dev`: run files at 18:47:50 / 18:48:22 / 18:48:33Z, then
-the index at 18:49:14Z — **run files first, index last, ordering already correct.**
+| version / manifest | 1.5.5 / 2.1.1 (`v1.6.1` tagged on `ops`, deploy pending) | 1.6.2-dev / 2.1.1 |
+| observations, metadata | fresh (4–5 min) | fresh (4–5 min) |
+| forecasts (incl. KVEL crosswind, hourly) | fresh (42 min) | fresh (42 min) |
+| road-forecast | fresh (17 min) | fresh (17 min) |
+| images | fresh (~9 h, 6-hourly) | fresh (~9 h) — **now reaches `.dev`** |
+| outlooks | stale ~90 d | stale ~200 d |
+| llm_outlooks | stale ~227 d | **never uploaded** (no directory) |
 
 ---
 
@@ -47,10 +45,10 @@ the index at 18:49:14Z — **run files first, index last, ordering already corre
 | A5 | brc-tools | **OPEN** | `llm_outlooks` + `images` have never reached `.dev` — find the hardcoded `.com` path |
 | A6 | brc-tools | **OPEN** | Prove failure is loud: the regression test for the whole incident |
 | A7 | brc-tools | **OPEN** | Are single missed cycles detected upstream? |
-| A8 | JRL | **OPEN** | Install the `55 * * * *` KVEL cron on notchpeak1 |
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
-| A10 | website | **OPEN** | Decide whether `timeseries` stays in `DATA_MANIFEST.json` |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
+| P1–P10 | brc-tools, clyfar, new persona/ops repos, hub | **OPEN, part in PR** | The NWP dashboard asks, grouped by repo with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md) §2. 21 Nov: P8, P9, P10 merged and live (brc-tools #76/#77); Clyfar resumed (P1's `llm_outlooks` half, P4 for the winter); P2/P3 go to new repos (`brc-ffion`, `brc-rhiannon`, and the ops repo `brc-data-ops`, not yet created). P1 overlaps A5 |
+| P11–P20, R1–R4 | brc-tools | **OPEN, part live** | 21 Nov: P15, P16/R1 merged and live (brc-tools #76); P17 answered (HRRR u/v are grid-relative) and fixed, live (#78, #83). Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
 
 ---
 
@@ -141,7 +139,27 @@ expression, so the two must agree. **brc-tools is the contract-holder** — move
 send us the correct expression and we will update the manifest.
 
 **Reply:**
-> _(brc-tools: answer here)_
+> **brc-tools, 2026-11-21 (read from `crontab -l` on notchpeak1).** The declared expression
+> is Clyfar's, off by 15 minutes, and neither is in UTC. The crontab sets no `CRON_TZ`, so
+> every line fires in **Mountain time**. Four jobs write to `forecasts`:
+>
+> | Job | Crontab line (Mountain time) | Lands, UTC, in MST | Lands, UTC, in MDT |
+> |---|---|---|---|
+> | HRRR surface layers (3 runs + index) | `45 0,6,12,18 * * *` | about 01:47, 07:47, 13:47, 19:47 | about 00:47, 06:47, 12:47, 18:47 |
+> | HRRR waypoints | `50 * * * *` | hourly, about :51 | same |
+> | HRRR KVEL crosswind | `55 * * * *` | hourly, about :57 | same |
+> | Clyfar (GEFS percentiles, ozone forecasts; winter only) | `15 3,9,15,21 * * *` | 10:15, 16:15, 22:15, 04:15 plus the Slurm run time | 09:15, 15:15, 21:15, 03:15 plus run time |
+>
+> Your August measurement (00:48, 06:48, …) was the surface job under MDT; it moved an hour
+> later in UTC on 1 Nov. Because waypoints and the crosswind arrive every hour, the
+> `forecasts` directory as a whole is never more than about an hour old; a staleness window
+> for the surface layers alone needs a 6 h interval, and for Clyfar's files a 6 h interval in
+> season. Whether the crons should move to UTC (`CRON_TZ=UTC`) is listed for the ops repo in
+> `brc-tools/docs/BRC-DATA-OPS-HANDOFF.md`; until that is decided, please treat the offsets
+> as seasonal. I have not edited the manifest: its `forecasts` frequency (`30 3,9,15,21`),
+> the surface-layers product's `0 * * * *` and the "hourly" wording in `expectedDataFlow`
+> are yours to change, with the version bump. Related: `observations` is declared `*/10`
+> and the cron is `*/5`.
 
 ---
 
@@ -164,6 +182,16 @@ a one-off test or the start of a cadence that then stopped?
 
 This must be fixed **before ozone season (~Nov)** or `.dev` runs blind all winter and stops
 being a usable rehearsal mirror. Audit commands: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §3.
+
+**Re-measured 2026-11-12:** `images` arrive on both hosts again (newest ~9 h old on each, inside
+the 6-hourly window), so question (b) looks answered by a cadence. `llm_outlooks` is unchanged:
+no directory on `.dev`, newest on `.com` ~227 days old. Ozone season has started, so the
+fan-out gap is now live.
+
+**2026-11-20:** the code half is done: clyfar#21 (merged 2026-08-31) sends `llm_outlooks`
+and `images` through the shared fan-out. It was never exercised because the Clyfar cron
+was off; it was switched back on at 21:15 MST on 20 Nov after an upload-disabled smoke.
+Close A5 when the first cycle's `LLM-OUTLOOK-*` file is on `.dev` as well as `.com`.
 
 **Reply:**
 > _(brc-tools: answer here)_
@@ -200,18 +228,6 @@ only notice when the job errors?
 
 ---
 
-## A8 — KVEL cron on notchpeak1 · JRL · OPEN
-
-Zero `forecast_hrrr_kvel_crosswind_*` files have ever been uploaded to either host. The website
-side is merged and waiting (#210, manifest 2.0.0, `Rwy17`/`Rwy35` labels), so the aviation
-table cannot be verified visually until the first file lands. The `55 * * * *` cron is JRL's to
-install. Schema: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5c.
-
-**Reply:**
-> _(JRL: answer here)_
-
----
-
 ## A9 — Retention policy · JRL + brc-tools · OPEN
 
 `.com` carries 39,236 files under `forecasts` alone, with no pruning policy. Agree one before
@@ -223,22 +239,6 @@ counts, so any "do the hosts agree?" check must compare **recent filenames**, no
 
 ---
 
-## A10 — Should `timeseries` stay in the manifest? · website (JRL) · OPEN
-
-**Not a CHPC ask** — this was previously pointed at brc-tools in error. `timeseries` is declared
-with `"frequency": "0 * * * *"` and has never been uploaded to either host. It has **no
-consumer**: the only reader is `public/js/api.js` hitting `/api/synoptic/timeseries`, the live
-Synoptic proxy, which does not touch `/api/static/timeseries/*`.
-
-So the dataType is declared, unimplemented, unconsumed, and shows a permanent `missing` in
-monitoring. Options: drop it from `DATA_MANIFEST.json` (a manifest MAJOR bump), or keep it as a
-reserved slot and suppress it in monitoring. **JRL's call; no producer work either way.**
-
-**Reply:**
-> _(JRL: answer here)_
-
----
-
 ## A11 — Declare road-forecast's real cadence · website · OPEN
 
 `DATA_MANIFEST.json` declares `road-forecast` frequency as the literal string
@@ -246,6 +246,9 @@ reserved slot and suppress it in monitoring. **JRL's call; no producer work eith
 silently falls back to **60 minutes**, which happens to match the observed `:22` hourly cadence
 — so the monitor is right by accident. It is a proof-of-concept no longer. Declare
 `22 * * * *` so the window is explicit rather than lucky.
+
+Producer fact (brc-tools, 2026-11-21): the crontab line is `20 * * * *`
+(`run_road_forecast_push.sh`); the file lands about two minutes later, hence `:22`.
 
 **Reply:**
 > _(website: answer here)_
@@ -262,6 +265,8 @@ silently falls back to **60 minutes**, which happens to match the observed `:22`
 | `filelist` 500 → 404 for a missing dir | 2026-08-25 | #215 — "never uploaded" now distinguishable from "server broke" |
 | Cron interval parsing (360 min, not 60) | 2026-08-25 | #216 |
 | Oversized/malformed JSON → 413/400, not 500 | 2026-08-25 | #216 |
+| A10 — `timeseries` in the manifest | 2026-08-27 | Dropped: manifest 2.1.0 (#230); monitoring no longer lists it |
+| A8 — KVEL cron on notchpeak1 | 2026-11-12 | Hourly since 2026-08-27 21Z: 1,818 files on `.dev`, 1,796 on `.com` by the 2026-11-12 03Z run, schema as in contract §5c. Read by `/aviation` from 1.6.1 |
 | KVEL runway headings | 2026-08-13 | FAA chart: 17/35, true `[179, 359]`; brc-tools #59 / v0.1.1 |
 | road-forecast cadence: hourly or 3-hourly? | 2026-08-26 | Answered by observation — hourly at `:22`, inside the 3 h gate |
 | Prod on manifest 1.2.0, rejects the KVEL contract | 2026-08-26 | `.com` deployed v1.5.2 / manifest 2.0.0 |

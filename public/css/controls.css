@@ -9,7 +9,7 @@
     margin-top: 0.75rem;
     padding: 0.5rem;
     background: rgba(255, 255, 255, 0.9);
-    border-radius: 6px;
+    border-radius: var(--radius-md);
     font-size: 0.85rem;
     flex-wrap: wrap;
 }
@@ -23,14 +23,14 @@
 .auto-cycle-label {
     background: rgba(0, 38, 58, 0.08);
     padding: 0.4rem 0.8rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .kiosk-switch {
     width: 45px;
     height: 22px;
     background: #ccc;
-    border-radius: 22px;
+    border-radius: var(--radius-pill);
     position: relative;
     cursor: pointer;
     transition: background 0.3s ease;
@@ -50,11 +50,11 @@
     background: var(--usu-blue);
     color: white;
     padding: 0.5rem;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 0.8rem;
     white-space: nowrap;
     z-index: 1000;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-card-hover);
 }
 
 .switch-slider {
@@ -66,7 +66,7 @@
     top: 2px;
     left: 2px;
     transition: transform 0.3s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-card);
 }
 
 .kiosk-switch.active .switch-slider {
@@ -80,7 +80,7 @@
     gap: 8px;
     padding: 4px 8px;
     background: #f0f0f0;
-    border-radius: 20px;
+    border-radius: var(--radius-pill);
     cursor: pointer;
     transition: background 0.3s ease;
 }
@@ -101,7 +101,7 @@
     width: 20px;
     height: 12px;
     background: #ccc;
-    border-radius: 12px;
+    border-radius: var(--radius-pill);
     position: relative;
     transition: background 0.3s ease;
 }
@@ -120,7 +120,7 @@
     top: 1px;
     left: 1px;
     transition: transform 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    box-shadow: var(--shadow-card);
 }
 
 .temp-toggle.celsius .temp-slider::after {
