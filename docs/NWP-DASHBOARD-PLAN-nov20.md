@@ -19,7 +19,7 @@ fold what is left into issues, once 1.8.0 ships.
 > | The forecast map as **colour bands with a time slider**, and layers derived in the browser | `public/js/mapLayers.js` |
 > | **Forecast and measured** dots, **Across the Basin** (US-40 in profile), **Where rain turns to snow** | `townChart.js`, `basinProfile.js`, `snowLine.js` |
 > | Manifest 2.3.0: the waypoints entry, and the names of the map fields to come | `DATA_MANIFEST.json` |
-> | What arrives against what is read, four agreed cuts, asks **P11 to P20** with aviation | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
+> | What arrives against what is read, four agreed cuts, asks **P11 to P20** with aviation | `docs/NWP-PRODUCER-HANDOFF-nov20.md` §2 (by repo) and §7–§8 |
 >
 > Not chosen, and so not built: places on the map, town-by-hour stripes, floor-against-pass
 > lines, a temperature ladder, a drive-time forecast, a film strip, a sunshine meter, a
@@ -27,8 +27,8 @@ fold what is left into issues, once 1.8.0 ships.
 >
 > What this changes below: S4 #405 is on `dev` (dormant); S5 and S7 are wired in and need only
 > a real file (P2); the "next 3 days" light of S12 has its first step, in hours not days,
-> until the 48-hour point forecast (P13) flows. The order of producer work is now the
-> handoff's §8.
+> until the 48-hour point forecast (P13) flows. The producer work, grouped by repo, is now
+> the handoff's §2.
 >
 > ## Where this stood (20 Nov, evening)
 >

@@ -1,71 +1,119 @@
 # NWP Producer Handoff — Nov 20
 
-**Status:** temporary. Written 2026-11-20 for whoever builds the producer side of the NWP
-dashboard: John, or an AI agent working in `brc-tools` on CHPC or in `brc-adsb-buffer` on the
-hub. Delete this file once P1–P5 are flowing and their rows have moved into
-`WEBSITE-BRCTOOLS-OPEN-ASKS.md` or closed. The permanent rules are in
+**Status:** temporary. Written 2026-11-20, then regrouped by repo the same evening after a
+session on notchpeak1 answered four of the asks and fixed six. It is for whoever builds the
+producer side of the NWP dashboard: John, or an AI agent working in one of the repos named in
+§2. Delete this file once every row in §2 is done or has moved to
+`WEBSITE-BRCTOOLS-OPEN-ASKS.md`. The permanent rules are in
 [`WEBSITE-BRCTOOLS-CONTRACT.md`](WEBSITE-BRCTOOLS-CONTRACT.md) §2 and §5d–5e; this file is the
-to-do list and the worked example.
+to-do list, the worked example and the evidence.
 
-**The one-paragraph version.** The website is ready to receive tiered LLM forecast text and
-aircraft products. It will not generate any text itself. Seven things are asked of the
-producers (P1–P7 below, plus P8, P9 and P10 found on 20 Nov). The website's version 1.8.0 is held until
-P2 delivers live text, so P1 and P2 are the critical path. A later session the same day
-measured what arrives against what the site reads (§6), agreed four cuts (§7), and added the
-asks for the map, the point forecasts and aviation (P11 to P20, §8 and §9).
+**The short version.** The website is ready to receive tiered LLM forecast text (`llm_forecasts`)
+and aircraft products (`aircraft`); it never writes text itself. Its version 1.8.0 is held until
+the Ffion weather run (P2) delivers live text, so **P2 is the critical path**, and it now needs
+new repos (§2c). On 20 Nov: the brc-tools fixes for P8, P9, P10, P15, P16/R1 and P17 went up as
+PRs #76–#78, and the Clyfar winter job was switched back on (which closes the `llm_outlooks` half
+of P1 and delivers P4 for the winter once its first cycle checks out).
 
 ---
 
-## 1. What the website has ready
+## 1. Rules for every producer
 
-| Thing | Where | Since |
+1. **Send everything to both hosts, identically** (John, 20 Nov). `.com` and `.dev` get the same
+   files at the same time. A product goes to `.dev` only when this file or the manifest says so,
+   with the reason and the condition that ends it. Never pin by habit.
+
+   | Dev-only today | Why | Ends when |
+   |---|---|---|
+   | `llm_forecasts` | `.com` (1.7.0, manifest 2.1.1) predates the dataType: it would store the file unchecked and never write `latest_<persona>.json` | `.com` reports manifest **2.2.0** or later |
+   | `aircraft` | Same: the dataType is new in 1.7.3 | Same |
+
+   Pin with `BASINWX_API_URLS="https://www.basinwx.dev"` in that job's wrapper
+   (`docs/DEPLOYMENT.md` §7a) and unpin in the PR after the promotion. Check first:
+
+   ```bash
+   curl -fsS https://www.basinwx.com/api/health | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['version'], d['manifestVersion'])"
+   ```
+
+2. **Target `www.`**: `https://www.basinwx.com`, `https://www.basinwx.dev`. (The shared
+   `~/.config/ubair-website/website_urls` on notchpeak1 still reads the bare domains, which work
+   today; see §5.)
+3. **A new file family needs a manifest entry first**, in a website PR. A changed field or unit
+   is a manifest MAJOR and needs a producer release before the website promotes.
+4. **Check the payload, not the name.** Three fields in this file meant something other than
+   their names said (§4).
+
+## 2. The asks, by repo
+
+Status as of 2026-11-21 04:15Z. "PR" means open and waiting for John's merge. A brc-tools fix
+is live only after the merge **and** a `git pull --ff-only` in `~/gits/brc-tools` on notchpeak1,
+which is the tree the crons run from.
+
+### 2a. `brc-tools`: HRRR and observation crons
+
+| # | Ask | Status |
 |---|---|---|
-| dataType `llm_forecasts`, validated at upload | `.dev` | 1.7.3-dev |
-| dataType `aircraft` | `.dev` | 1.7.3-dev |
-| Host allowlist from `.env` (`UPLOAD_ALLOWED_HOSTS`) | `.dev` | 1.7.3-dev |
-| The `llm_forecast/1` contract as code | `public/js/llmForecast.js` | 1.7.3-dev |
-| JSON Schema and placement table | `DATA_MANIFEST.json` → `dataTypes.llm_forecasts` (manifest 2.2.0) | 1.7.3-dev |
-| Two sample files | `public/js/__tests__/fixtures/llm_forecasts/` | 1.7.3-dev |
+| **P8** | Wind gust and visibility in the observation feed | **PR #76.** 38 stations send gusts, 28 visibility |
+| **P9** | `road-forecast` `precip_1hr` was the run total | **PR #77.** Root cause and evidence in §4 |
+| **P10** | Surface-layers `snowfall_1h_mm` was a total with dropouts | **PR #77**, as a clean total. A true hourly field is a later rename (manifest MAJOR) |
+| **P15** | Four waypoint stations missing from the obs feed | **PR #76.** Three added, Duchesne re-paired to KU69 |
+| **P16 / R1** | Station metadata on change, not every 5 min | **PR #76** (every 6 h at most) |
+| **P17** | Are `wind_u/v` relative to north or the grid? | **The grid.** **PR #78** rotates them before they leave CHPC |
+| **P11 / R2** | Surface layers **every hour**, newest run only, landing as soon after the run as `road-forecast` does (about 1 h 25 min) | Open, S: `--run-count 1` and an hourly cron in `run_hrrr_surface_push.sh` |
+| **P12** | More map fields in the surface layers, names and units pinned in manifest 2.3.0: `wind_gust_10m_ms`, `snow_depth_mm`, `cloud_cover_pct`, `rh_2m_pct` (drawn on arrival); reserved, each needing a website layer first: `precip_type`, `visibility_km`, `pbl_height_m`, `temperature_700hpa_c`, `terrain_m` (once) | Open, M |
+| **P5 / P13** | **One point product** in place of waypoints and `road-forecast` (they overlap at nine towns with different stations and heights): one station per place, the road fields at every place, **48 h on 00/06/12/18Z** | Open, M. P15's KU69 re-pairing removes one of the differences |
+| **P14** | Fresher points: waypoints and the KVEL crosswind land about 2 h 55 min after the run; `road-forecast` manages 1 h 23 min | Open, S |
+| **P18** | Cold-pool fields: 700 hPa temperature and boundary-layer height on the grid (P12 names), and a model sounding at Vernal or Ouray | Open, M |
+| **P19** | Aviation, §7 | Open, S to M |
 
-**`.com` does not have these yet.** Check before you send:
+`brc-tools` calls itself a method library, not an operations repo. John expects the cron
+wiring for these products to move to the ops repo in §2c in time. Until then, keep changes on
+branches and keep the operational tree clean.
 
-```bash
-curl -fsS https://www.basinwx.com/api/health | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['version'], d['manifestVersion'])"
-```
+### 2b. `clyfar`: the winter ozone job (maintenance-frozen)
 
-Until `.com` reports manifest **2.2.0** or later, pin the new dataTypes to `.dev`
-(`BASINWX_API_URLS="https://www.basinwx.dev"` in that job's wrapper), as
-`docs/DEPLOYMENT.md` §7a describes. An older `.com` would store the files unchecked and
-without `latest_<persona>.json`.
+| # | Ask | Status |
+|---|---|---|
+| **P1** (half) | `llm_outlooks` to **both** hosts. `.dev` has never had one (open ask A5) | Fixed in code by clyfar#21 (31 Aug), never exercised because the job was off. **The job is back on from 20 Nov 21:15 MST**; the first cycle's outlook on `.dev` closes A5 |
+| **P4** (winter) | `forecast_gefs_weather_percentiles_*` to both hosts | Comes with the Clyfar job (the upload-disabled smoke on 20 Nov built it). Same file family and dataType (`forecasts`) as last winter |
+| **P4** (year-round) | The same file outside the ozone season | Open, M. The exporter needs Clyfar's per-member DataFrames, which only the full job builds; the plots-only job would need a loader from its saved GEFS parquet. Clyfar is frozen, so this is new work for the ops repo or a sanctioned clyfar change. Needed before the season ends (about March) |
+| **R3 / P20** | Retire the five meteogram PNGs per cycle | After P4 flows and the website draws its own GEFS bands |
 
-## 2. The asks
+**Cron, 20 Nov:** `submit_clyfar.sh` re-enabled at `15 3,9,15,21` (MST) after an upload-disabled
+smoke (Slurm 17347513, 20 Nov 12Z, 2 members). The plots-only `submit_gefs_plots.sh` is
+commented out for the winter, because the Clyfar job pushes the same meteograms; re-enable it
+when the season ends. Backup: `~/crontab.bak.20261120`.
 
-| # | Ask | Unlocks on the website | Size |
+### 2c. New repos: `brc-ffion`, `brc-rhiannon` and an ops repo (P2, P3)
+
+John's decision on 20 Nov: the persona repos are the **brains** (prompts, bundles, validation,
+LLM calls, no cron, no uploads). A **third, new ops repo** quarterbacks the operations: cron
+jobs, schedules, pushes to both hosts. `clyfar` is not the home for new LLM work. Only the two
+persona repos have names so far; the ops repo's is not chosen.
+
+| # | Ask | Repo | State |
 |---|---|---|---|
-| **P1** | Send `llm_outlooks` and the new `llm_forecasts` to **both** hosts. `.dev` has never received `llm_outlooks` (open ask A5) | Rehearsal on `.dev` | S |
-| **P2** | **Ffion weather run**, 4×/day on the GEFS cycles, writing one `llm_forecast/1` file (§3) | Homepage summary, weather discussion, outlook "Model guidance", Clyfar and aviation summaries | M + LLM cost |
-| **P3** | **Rhiannon run**, 8×/day (every 3 h), expert tiers only | Outlook "Observed trends", aviation expert tab | M |
-| **P4** | `forecast_gefs_weather_percentiles_*` **year-round**, to both hosts (it stopped on 30 Mar with the Clyfar season) | GEFS day 1–15 bands, the next-3-days light | S (already written) |
-| **P5** | HRRR waypoints (`forecast_hrrr_waypoints_us40_dense_*`) to **48 h** on the 00/06/12/18Z cycles | Town forecasts reach tomorrow evening | S |
-| **P6** | The hub pushes its best aircraft products to dataType `aircraft` (§5) | Expert page | M |
-| **P7** | Fused inversion product (HRRR + aircraft + pseudo-profile) | Inversion light | L; likely after 2.0.0 |
-| **P8** | Add **wind gust** (and visibility where a station reports it) to the observation feed. As of 20 Nov no station in `map_obs_*.json` carries either | Weather light from our own feed (it uses UDOT road-station gusts meanwhile) | S |
-| **P9** | In `road-forecast`, `precip_1hr` is a **running total since the model run began**, not an hourly amount: across the last five files on 20 Nov all 85 point series only ever rise (Daniels Summit 2.8 → 18.6 mm over 12 h, flat in the one hour typed `none`). Either send true hourly amounts, or rename the field and say so in the manifest | An amount on the homepage precip tile (it shows the type only, meanwhile); the roads page's "heavy precipitation" thresholds read this field as hourly today | S |
+| **P2** | **Ffion weather run**, 4×/day on the GEFS cycles, one `llm_forecast/1` file per run (§3) | Brain: `brc-ffion` (exists: Ffion's ozone-outlook tooling extracted from clyfar v1.0.7, `ffion-v1.1.4`). Ops repo runs it and uploads | Nothing yet. A weather bundle is new work |
+| **P3** | **Rhiannon run**, 8×/day (every 3 h), expert tiers only | Brain: `brc-rhiannon` (new) | Nothing exists. The name is only a persona in `brc-ffrwd/PERSONAE.md` (folded into the "analyst" bundle there). Needs a spec: inputs (observed trends), voice, the two placements it owns |
 
-Each new file family needs a manifest entry before the website reads it. For P4 and P5 the
-families already exist; say so in the PR if the shape changes.
+Before building P2, settle two things with John:
 
-**P10, found the same day.** In `forecast_hrrr_surface_layers_*`, `snowfall_1h_mm` is not an
-hourly amount either. At a snowy grid point it reads `0, 0.1, 0.3, 1.9, 10.0 … 91.9, 0, 98.4,
-98.6, 0`: a total since the run began (509 mm at one point within 18 h in the 21Z run on
-19 Nov) that drops to exactly zero in some hours, 1,615 times in one run, and then carries on.
-The weather page labelled it in/hr until 1.7.6; it now takes the largest value so far and shows
-a total. Please send either a true hourly snowfall or a clean total under a name that says so,
-and say whether it is snow depth or liquid. `rainfall_1h_mm` in the same file is truly hourly.
+- the LLM and its cost at 4 runs a day (the Clyfar LLM stage uses the `claude` CLI from
+  `~/.local/bin`);
+- which inputs the prompt reads. Those that exist are GEFS percentiles (in season, §2b), HRRR
+  waypoints and surface layers, and the obs feed.
+
+### 2d. `brc-adsb-buffer` (the hub)
+
+| # | Ask | State |
+|---|---|---|
+| **P6** | The hub pushes its best aircraft products to `aircraft` (§6) | Open, M |
+| **P7** | Fused inversion product (HRRR + aircraft + pseudo-profile) | Open, L; likely after 2.0.0 |
 
 ## 3. The `llm_forecast/1` file (P2, P3)
 
-One JSON file per run per persona, uploaded to `/api/upload/llm_forecasts`.
+One JSON file per run per persona, uploaded to `/api/upload/llm_forecasts` (dev-only until
+`.com` reports manifest 2.2.0, §1).
 
 ```json
 {
@@ -98,8 +146,9 @@ minute in UTC. The example above is `llm_forecast_ffion_20261203_1210Z.json`.
 | `outlook.model_guidance` | Under each ozone outlook | — | — | Ffion, ~150 w |
 | `outlook.observed_trends` | Under the current ozone outlook | — | — | **Rhiannon**, ~150 w |
 
-The machine-readable copy of this table is `dataTypes.llm_forecasts.placements` in the
-manifest; build prompts from that, not from this page.
+The machine-readable copy of this table is `dataTypes.llm_forecasts.placements` in
+`DATA_MANIFEST.json`; build prompts from that, not from this page. Two sample files are in
+`public/js/__tests__/fixtures/llm_forecasts/`; the rules as code are `public/js/llmForecast.js`.
 
 ### Rules the server enforces (a broken file gets `400` and is not stored)
 
@@ -162,8 +211,7 @@ The `400` body lists every reason at once (the first 25; `errorCount` is the tot
 ### Check your work
 
 ```bash
-# 1. Structure, offline, against the manifest's JSON Schema (jsonschema is already a
-#    chpc_uploader.py dependency):
+# 1. Structure, offline, against the manifest's JSON Schema:
 python3 - <<'EOF'
 import json, jsonschema
 manifest = json.load(open("DATA_MANIFEST.json"))
@@ -188,19 +236,73 @@ curl -fsS -H "x-api-key: $BASINWX_API_KEY" https://www.basinwx.dev/api/monitorin
 Nothing on `.dev` shows the text until the page that reads it is merged, so uploading real
 runs to `.dev` early is safe and is the rehearsal.
 
-## 4. Order of work
+## 4. Answers found on 20 Nov
 
-1. **P1** first: it is small, and it proves the `.dev` path for everything after it.
-2. **P2** next: the homepage summary and the weather discussion are the first two placements
-   the website will merge. `home.summary` and `weather.discussion` alone are enough to start;
-   add the other placements to the same file as they are ready.
-3. **P4** and **P5** are independent of the LLM work and small.
-4. **P3**, then **P6**. **P8** whenever the observation job is next touched.
+Each was measured on notchpeak1 against live data; the brc-tools PRs carry the full evidence.
 
-## 5. The hub and the `aircraft` dataType (P6)
+- **P9, `precip_1hr`.**
+  - `ROAD_FORECAST_QUERY_MAP` in `brc_tools/download/hrrr_config.py` asked for a bare
+    `APCP:surface`.
+  - From f02 on, HRRR carries two APCP messages: the run total (`0-N hour acc`) and the hourly
+    bucket (`N-1-N hour acc`). Herbie returned the total. On the 20 Nov 18Z run at f05 that was
+    6.72 mm against an hourly 1.31 mm.
+  - `lookups.toml` already had the anchored search; #77 uses it.
+- **P10, `snowfall_1h_mm`.**
+  - The field is HRRR `ASNOW`, whose only message is the run total. It is **snow depth, not
+    liquid**.
+  - The dropouts came from brc-tools multiplying that total by the hour's categorical-snow
+    flag. #77 removes the mask, so the field is a clean total, which is what
+    `runningTotalForHour` already expects.
+  - For an hourly amount, difference the total. For hourly liquid equivalent, HRRR has
+    `WEASD:surface:N-1-N hour acc`.
+- **P17, wind frame: grid-relative.**
+  - A live `wrfsfcf06` message reads `gridType lambert`, `LoV 262.5`,
+    `Latin1 = Latin2 = 38.5`, `uvRelativeToGrid 1`.
+  - The grid's y axis lies `sin 38.5° × (lon + 97.5°)` from true north: 7.48° west of it at
+    KVEL, 8.57° at Daniels Summit.
+  - Nothing rotated the winds, yet the KVEL and waypoint files labelled direction `deg_true`.
+    So every forecast direction read 7.5–8.6° too high, and runway components were off by up
+    to speed × sin 7.5° (about 2.6 kt in a 20 kt wind).
+  - #78 rotates the winds at fetch. The website draws arrows straight from u/v and needs no
+    change.
+- **P15, stations.**
+  - `COOPDSNU1` was already requested. It is a COOP station and sent nothing in 25 h.
+  - KU69 (Duchesne airport: 3 km NE, about 90 m higher, reports hourly) is also
+    `road-forecast`'s Duchesne station.
+  - LRFU1, SPMU1 and UTELP were simply not requested. All three report hourly.
+- **Obs cadence.** Observations and metadata go **every 5 minutes** (cron `*/5`), not every 10
+  as the manifest says (`*/10`). R1 was therefore 288 identical metadata files a day per host;
+  `.dev` held 59,955 by the evening.
+- **A failure the asks missed.** `get_map_obs.py` sent metadata first and raised on a primary
+  failure, so that run's observations were never sent. `~/logs/obs.log` shows this a few times
+  a day, mostly DNS errors resolving `basinwx.com`. #76 sends each file on its own.
+
+## 5. Website follow-ups once the brc-tools PRs are live
+
+None is needed for the fixes to work; these use them or tidy up after them.
+
+- **Precip amount (P9):** the homepage precip tile can show an amount, and the roads page's
+  "heavy precipitation" thresholds become right. Update the `precip_1hr` notes in `CLAUDE.md`
+  and `server/statusLights.js`.
+- **Snowfall (P10):** the dropout note in `public/js/hrrrFields.js` becomes history, and the
+  max-so-far logic stays harmless. Renaming the field to say "total" is a manifest MAJOR, for
+  later.
+- **Gusts and visibility (P8):**
+  - The Weather light can read gusts from the obs feed.
+  - A gust row can be hours older than the station's other rows, because stations report a
+    gust only while gusting. Read the row's own `date_time`.
+  - **Visibility arrives in statute miles**, not SI. Add that unit to `public/js/met.js`
+    before a page reads it.
+  - The map gains three stations.
+- **Manifest:** declare observations and metadata at their real `*/5`, together with A11
+  (which asks the same for `road-forecast`).
+- **`website_urls` on notchpeak1** lists `https://basinwx.com,https://basinwx.dev`, but the
+  contract says `www.`. It is a one-line change on CHPC, and John's call.
+
+## 6. The hub and the `aircraft` dataType (P6)
 
 - **Endpoint** `POST /api/upload/aircraft`, `.json` or `.png`, filenames
-  `aircraft_<product>_YYYYMMDD_HHMMZ.json`.
+  `aircraft_<product>_YYYYMMDD_HHMMZ.json`. Dev-only until `.com` reports manifest 2.2.0 (§1).
 - **Hostname.** The hub is not on CHPC, so its uploads need its name on each box's allowlist.
   Send a fixed, agreed `x-client-hostname` (not `socket.gethostname()`, which may be
   `localhost` on a Linode), and ask John to add it to `UPLOAD_ALLOWED_HOSTS` in each box's
@@ -212,91 +314,68 @@ runs to `.dev` early is safe and is the rehearsal.
 - **Schema.** None is pinned yet and no page reads the dataType. Propose each product's shape
   as a manifest entry in a website PR before relying on it being displayed.
 
-## 6. What arrives, and what the site does with it
+## 7. Aviation: what would be handy (P19)
+
+In order of value for the effort:
+
+1. **The crosswind file to 18 h, and sooner.** It covers 6 h and lands about 3 h after the run,
+   so a pilot sees 3 h ahead at best. If HRRR's sub-hourly output runs to 18 h (check), send
+   all of it; if not, hourly steps beyond hour 6 are still worth having.
+2. **Ceiling, visibility and flight category at KVEL** in that same file (`ceiling_ft_agl`,
+   `visibility_sm`, and `flight_category` as `VFR | MVFR | IFR | LIFR`). Winter cold-pool fog
+   is the Basin's main aviation hazard, but see the fog question in §8.
+3. **Roosevelt (`K74V`) and Duchesne (`KU69`)** as further airports, each with its own runway
+   headings, in one file per airport or one file with an `airports` list. The page is written
+   around one airport today and would need a picker.
+4. **Winds and temperature aloft over KVEL** at 9,000 and 12,000 ft MSL, and the freezing
+   level. Light surface wind under a strong wind aloft is the cold-pool signature, and it is
+   wind shear on the climb out. (Upper-level HRRR winds are grid-relative too: use #78's
+   helper.)
+5. **Surface pressure at KVEL** (or the altimeter setting) in the forecast, so that the
+   website can work out density altitude for summer afternoons.
+6. **The observed flight category.** In the observation feed KVEL already sends `ceiling` and
+   `altimeter`, and with #76 `visibility` too, so the "Now" card could show the observed
+   category beside the forecast one.
+
+## 8. What arrives, what the site reads, and the open questions
 
 Measured on `.dev` on 2026-11-20 over the newest 24 files of each family. "Lands" is the time
 from a model run's start to its file reaching the box.
 
 | Family | Lands | The site reads | Sent but unread, or under-used |
 |---|---|---|---|
-| `forecast_hrrr_surface_layers_*` (36 × 38 grid, 19 h) | Three runs together every 6 h, 2.8 to 4.8 h after each starts | All five fields. Since 1.7.7 the map also works out wind speed, wind chill, the coldest and warmest hour and a rain total from them | The two older runs of each batch are never compared with the newest |
+| `forecast_hrrr_surface_layers_*` (36 × 38 grid, 19 h) | Three runs together every 6 h, 2.8 to 4.8 h after each starts | All five fields; since 1.7.7 the map also derives wind speed, wind chill, the coldest and warmest hour and a rain total | The two older runs of each batch are never compared with the newest (R2) |
 | `forecast_hrrr_waypoints_us40_dense_*` (14 places, 19 h) | Hourly, 2 h 51 min | Temperature, wind, humidity, precipitation; `reference_stid` since 1.7.7 | `dewpoint_2m_c`, `mslp_hpa` |
-| `road-forecast` (17 points, 12 h) | Hourly, 1 h 23 min | `/roads`; precipitation type (homepage tile, snow line); gust, temperature, wind and snow depth (homepage forecast tile, 1.7.7) | `visibility`, `cloud_cover`, `rh_2m` are read only by `/roads` |
+| `road-forecast` (17 points, 12 h) | Hourly, 1 h 23 min | `/roads`; precipitation type (homepage tile, snow line); gust, temperature, wind and snow depth (homepage forecast tile) | `visibility`, `cloud_cover`, `rh_2m` are read only by `/roads` |
 | `forecast_hrrr_kvel_crosswind_*` (6 h at 15 min) | Hourly, 2 h 58 min | Aviation page | Three of its six hours are past when it lands |
-| `meteogram_UB-repr_*_GEFS.png` (5 variables) | Four times a day, 10.6 h after the cycle | Expert drawer, fire, air quality | Pictures: no numbers for the site to build on |
-| `map_obs_*` (52 stations) | Every 10 min | Temperature, wind, dew point, ozone, PM2.5, snow depth | `solar_radiation` (22 stations), `altimeter` (17) and `outgoing_radiation_sw` (1) are read by nothing; `soil_temp`, `ceiling` and `pressure` by one file each |
-| `map_obs_meta_*` | Every 10 min | Station names, positions, heights | See R1 |
+| `meteogram_UB-repr_*_GEFS.png` (5 variables) | Four times a day, 10.6 h after the cycle | Expert drawer, fire, air quality | Pictures: no numbers for the site to build on (R3) |
+| `map_obs_*` (53 stations; 56 with #76) | **Every 5 min** | Temperature, wind, dew point, ozone, PM2.5, snow depth | `solar_radiation` (22 stations), `altimeter` (17), `outgoing_radiation_sw` (1) are read by nothing; `soil_temp`, `ceiling`, `pressure` by one file each |
+| `map_obs_meta_*` | Every 5 min (#76: on change, or 6 h) | Station names, positions, heights | R1 |
 
-Never received on `.dev`: `llm_forecasts`, `llm_outlooks`, `aircraft`, GEFS percentiles.
+Never received on `.dev` by 20 Nov: `llm_forecasts`, `llm_outlooks`, `aircraft`, GEFS
+percentiles. The Clyfar job should deliver `llm_outlooks` and the GEFS percentiles.
 
-## 7. Agreed on 20 Nov: four cuts
+**Four cuts John agreed on 20 Nov:**
 
-John agreed these in the session that built 1.7.7. They are his to make on CHPC; the website
-needs no change for any of them.
-
-| # | Cut | Why |
+| # | Cut | Status |
 |---|---|---|
-| **R1** | Send station metadata when it changes, or every 6 h as the manifest already says, not every 10 min | The newest 1,000 files are byte for byte the same. `.dev` holds 59,705 of them (703 MB) |
-| **R2** | Once surface layers come hourly (P11), send the newest run only, not three | The page reads one. Three runs are 4.4 MB every 6 h |
-| **R3** | Stop the five GEFS meteogram PNGs per cycle once the percentiles JSON (P4) flows and the page draws its own bands | Until then they stay: the expert drawer has nothing else |
-| **R4** | Prune old files on both boxes (a website job, in a later PR; nothing is deleted yet) | `.dev` holds 5.6 GB of uploads, 47% of its disk. About 30 days of forecasts, road forecasts and observations is the proposal |
+| **R1** | Station metadata on change, or every 6 h | PR #76 |
+| **R2** | Once surface layers come hourly (P11), send the newest run only, not three (4.4 MB every 6 h) | With P11 |
+| **R3** | Stop the meteogram PNGs once P4 flows and the page draws its own bands | Waits on P4 and a website page |
+| **R4** | Prune old files on both boxes: about 30 days of forecasts, road forecasts and observations (`.dev` holds 5.6 GB of uploads, 47% of its disk) | A website job, later PR; nothing deleted yet |
 
-## 8. The next asks (P11 to P20)
+**Questions, not asks:**
 
-John expects to work through these in his CHPC sessions, in roughly this order. Names and
-units in **P12** are pinned in `DATA_MANIFEST.json` (manifest 2.3.0), so that the two sides
-agree before either writes code.
+- **HRRR visibility looks too foggy.** In `road-forecast`, visibility fell under one mile at a
+  floor point in 347 of the last 720 runs. 1,990 of those point-hours had no precipitation,
+  and 371 read exactly zero. With #76 the obs feed carries visibility at 28 stations, so this
+  can now be checked against measurements before the homepage tile or the aviation page use
+  it.
+- **Daniels Summit's snow depth rose 8.6 inches in 12 h** in the 05Z run on 20 Nov, with
+  18.6 mm of liquid (a run total, per P9). That is believable for a pass, and the homepage
+  forecast tile reads the rise in `snow_depth` as new snow. Keep `snow_depth` a depth: if it
+  ever became water equivalent, the tile's inch thresholds would be wrong.
 
-| # | Ask | Unlocks on the website | Size |
-|---|---|---|---|
-| **P11** | Surface layers **every hour**, the newest run only, landing as soon after the run as `road-forecast` does | A map that is one or two hours old, not three to nine | S |
-| **P12** | **More map fields** in the surface layers. Drawn on arrival, with no website release: `wind_gust_10m_ms` (m/s), `snow_depth_mm` (Millimeters), `cloud_cover_pct` (percent), `rh_2m_pct` (percent). Names reserved, each needing a layer on the website first: `precip_type`, `visibility_km`, `pbl_height_m`, `temperature_700hpa_c`, and `terrain_m` (the model's terrain, sent once: it gives a snow level and elevation bands from the grid itself) | Gusts and snow on the ground on the map; snow cover is the ozone ingredient | M |
-| **P13** | **One point product** in place of waypoints and `road-forecast`, which overlap at nine towns with different stations and heights (Vernal is `QV4` in one and `KVEL` in the other; Dinosaur is 4,800 ft in one and 6,001 ft in the other). One station per place; the road fields (gust, visibility, precipitation type, snow depth, cloud) at every place; **48 h on the 00/06/12/18Z cycles**. This takes in P5 | "Tomorrow" on the homepage forecast tile and the town views; one source for the town table and `/roads` | M |
-| **P14** | **Fresher points:** waypoints and the KVEL crosswind land almost 3 h after the run; `road-forecast` manages 1 h 23 min | Three more usable hours on the town views and the runway forecast | S |
-| **P15** | Four waypoint `reference_stid`s are **not in the observation feed**: `COOPDSNU1` (Duchesne), `LRFU1` (Little Red Fox), `UTELP` (East Lapoint), `SPMU1` (Split Mountain). Add them to the feed, or pair those points with stations that are in it | Measured dots on the forecast chart for all 14 places (10 today) | S |
-| **P16** | See **R1**: station metadata on change | Less disk, nothing else | S |
-| **P17** | Say whether `wind_u_10m_ms` and `wind_v_10m_ms` are relative to **north or to the model grid**. The grid is turned about 8° from north over the Basin (the website measured this to place the map), so the answer moves every arrow by that much | Wind arrows that can be trusted to the degree | S |
-| **P18** | **Cold-pool fields:** 700 hPa temperature and boundary-layer height on the grid (names in P12), and a model sounding at Vernal or Ouray | An inversion-strength map; a first input to the inversion light (P7) | M |
-| **P19** | **Aviation** (§9) | The aviation page beyond runway winds | S to M |
-| **P20** | See **R3**: retire the meteogram PNGs after P4 | — | S |
-
-Two things found while building 1.7.7 that are questions, not asks:
-
-- **HRRR visibility looks too foggy.** In `road-forecast`, visibility fell under one mile at
-  a floor point in 347 of the last 720 runs, 1,990 point-hours of it with no precipitation
-  and 371 at exactly zero. The observation feed has no visibility to hold it against (P8), so
-  the homepage forecast tile leaves fog out. Is the field what the model gives, or is
-  something lost in the reduction to points?
-- **Daniels Summit's snow depth rose 8.6 inches in 12 h** in the 05Z run on 20 Nov
-  (10.4 to 19.0 in) with 18.6 mm of liquid over the same hours. That is believable for a
-  pass, and the homepage forecast tile now reads the rise in `snow_depth` as new snow (on the
-  floor only). If `snow_depth` is ever changed to water equivalent, that tile's inch
-  thresholds become wrong: please keep it a depth, and say so in the file.
-
-## 9. Aviation: what would be handy (P19)
-
-John asked what else the aviation page could use. In order of value for the effort:
-
-1. **The crosswind file to 18 h, and sooner.** It covers 6 h and lands 3 h in, so a pilot
-   sees 3 h ahead at best and 2 h just before the next file. If HRRR's sub-hourly output runs
-   to 18 h (check), send all of it; if not, hourly steps beyond hour 6 are still worth having.
-2. **Ceiling, visibility and flight category at KVEL** in that same file (`ceiling_ft_agl`,
-   `visibility_sm`, and `flight_category` as `VFR | MVFR | IFR | LIFR`). This is where fog
-   belongs: winter cold-pool fog is the Basin's main aviation hazard, and a pilot reads it as
-   a category, with the caveat above about how foggy the model runs.
-3. **Roosevelt (`K74V`) and Duchesne (`KU69`)** as further airports, each with its own runway
-   headings, in one file per airport or one file with an `airports` list. The page is written
-   around one airport today and would need a picker.
-4. **Winds and temperature aloft over KVEL** at 9,000 and 12,000 ft MSL, and the freezing
-   level. Light surface wind under a strong wind aloft is the cold-pool signature, and it is
-   wind shear on the climb out.
-5. **Surface pressure at KVEL** (or the altimeter setting) in the forecast, so that the
-   website can work out density altitude for summer afternoons. The formula is standard and
-   the website can compute it; it needs the pressure.
-6. In the observation feed, KVEL already sends `ceiling` and `altimeter`, which no page
-   reads. With visibility added (P8) the "Now" card could show the observed flight category
-   beside the forecast one.
-
-<sub>Drafted with Claude Code on 2026-11-20 from `docs/NWP-DASHBOARD-PLAN-nov20.md` (branch
-`preview/nwp`) and John's answers that day. §6 to §9 were added the same day from the session
-that built 1.7.7.</sub>
+<sub>Drafted with Claude Code on 2026-11-20 from `docs/NWP-DASHBOARD-PLAN-nov20.md` and John's
+answers that day; regrouped by repo the same evening from the notchpeak1 session that opened
+brc-tools #76–#78 and resumed Clyfar.</sub>

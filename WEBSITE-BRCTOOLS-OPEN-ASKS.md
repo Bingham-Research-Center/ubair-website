@@ -47,8 +47,8 @@ the file.
 | A7 | brc-tools | **OPEN** | Are single missed cycles detected upstream? |
 | A9 | JRL + brc-tools | **OPEN** | Retention policy for `.com`'s 39 k+ files |
 | A11 | website | **OPEN** | Declare road-forecast's real cadence in the manifest |
-| P1–P10 | brc-tools + hub | **OPEN** | The NWP dashboard asks (LLM forecast text, GEFS percentiles year-round, 48 h waypoints, aircraft products, gusts in the obs feed, the road-forecast precipitation total, the map file's snowfall total): listed with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md). P1 overlaps A5 |
-| P11–P20, R1–R4 | brc-tools | **OPEN** | Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
+| P1–P10 | brc-tools, clyfar, new persona/ops repos, hub | **OPEN, part in PR** | The NWP dashboard asks, grouped by repo with a worked example in [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md) §2. 20 Nov: P8, P9, P10 in brc-tools PRs #76/#77; Clyfar resumed (P1's `llm_outlooks` half, P4 for the winter); P2/P3 go to new repos (`brc-ffion`, `brc-rhiannon`, an ops repo). P1 overlaps A5 |
+| P11–P20, R1–R4 | brc-tools | **OPEN, part in PR** | 20 Nov: P15, P16/R1 in brc-tools PR #76; P17 answered (HRRR u/v are grid-relative) and fixed in #78. Found and agreed on 2026-11-20 while building 1.7.7: hourly surface layers, more map fields (names pinned in manifest 2.3.0), one point product to 48 h, fresher points, four reference stations missing from the obs feed, wind component frame, cold-pool fields, aviation; and four cuts John agreed (station metadata on change, one surface run not three, retire the meteogram PNGs after the percentiles flow, prune old files on the boxes). `docs/NWP-PRODUCER-HANDOFF-nov20.md` §6 to §9 |
 
 ---
 
@@ -167,6 +167,11 @@ being a usable rehearsal mirror. Audit commands: `docs/WEBSITE-BRCTOOLS-CONTRACT
 the 6-hourly window), so question (b) looks answered by a cadence. `llm_outlooks` is unchanged:
 no directory on `.dev`, newest on `.com` ~227 days old. Ozone season has started, so the
 fan-out gap is now live.
+
+**2026-11-20:** the code half is done: clyfar#21 (merged 2026-08-31) sends `llm_outlooks`
+and `images` through the shared fan-out. It was never exercised because the Clyfar cron
+was off; it was switched back on at 21:15 MST on 20 Nov after an upload-disabled smoke.
+Close A5 when the first cycle's `LLM-OUTLOOK-*` file is on `.dev` as well as `.com`.
 
 **Reply:**
 > _(brc-tools: answer here)_
