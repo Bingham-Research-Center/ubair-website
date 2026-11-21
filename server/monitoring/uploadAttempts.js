@@ -7,8 +7,9 @@
  * "Log file not found" on both boxes.
  *
  * Until 1.7.9 this was 200 entries in memory and nothing else. Measured on 2026-11-21: one
- * Clyfar run is 144 uploads in 90 seconds, so the list on .com reached back 3.3 hours, and
- * .dev's had been emptied by a restart, which left 13 missed observation cycles that week
+ * Clyfar run is 165 uploads, nearly all inside a minute, so the list on .com reached back 3.3
+ * hours and had already lost the first 21 files of that run, and .dev's had been emptied by a
+ * restart, which left 13 missed observation cycles that week
  * with no record of whether the app had refused them or never been sent them. So now:
  *   - the list holds about two days (MAX_ATTEMPTS);
  *   - refused attempts are also kept in a list of their own, which a burst of accepted files

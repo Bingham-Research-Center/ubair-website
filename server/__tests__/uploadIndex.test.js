@@ -14,7 +14,7 @@ import {
 
 // The upload index: the newest file of each product, known without listing a directory.
 // Measured on 2026-11-21, the three things that listed one instead: freshness (3.1 s on .com,
-// the whole site waiting), every upload (about 100 ms on .dev, 142 times per Clyfar run), and
+// the whole site waiting), every upload (about 100 ms on .dev, 165 times per Clyfar run), and
 // every map load (the browser was sent 99,000 names to find one).
 
 const HOUR = 60 * 60 * 1000;

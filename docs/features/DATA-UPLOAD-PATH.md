@@ -88,9 +88,9 @@ code and new against the same 60,800 observation files (`.com` holds 99,000):
 |---|---|---|
 | `/api/monitoring/freshness` | 1.2 to 1.9 s, with every other request waiting (3.1 s on `.com`) | 0.004 s |
 | One observation upload | 0.08 to 0.10 s | 0.003 to 0.015 s |
-| A Clyfar run (142 files, one after another) | 14.0 s | 3.5 s |
-| What another visitor waits during that run | 70 ms typical, 96 ms slow | 3 ms typical, 7 ms slow |
-| The app's memory after that run | 292 MB | 132 MB |
+| 142 uploads one after another (a Clyfar run is 165) | 14.0 s | 3.5 s |
+| What another visitor waits while those arrive | 70 ms typical, 96 ms slow | 3 ms typical, 7 ms slow |
+| The app's memory afterwards | 292 MB | 132 MB |
 | "Which observation file is newest?", sent to the browser | 43 KB gzipped (255 KB on `.com`), twice per map | 88 bytes |
 | Starting the app | 0.7 s | 0.8 s, plus 0.35 s in the background to read the folders |
 

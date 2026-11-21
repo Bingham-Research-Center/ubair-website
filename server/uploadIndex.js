@@ -11,7 +11,7 @@
  *   - GET /api/monitoring/freshness stat-ed every file, synchronously: 3.1 s on .com, 1.4 s on
  *     .dev, with the whole site waiting.
  *   - every upload rebuilt observations/filelist.json: about 100 ms of the same waiting on
- *     .dev, 142 times in 90 seconds when a Clyfar run arrived.
+ *     .dev, 165 times in under a minute when a Clyfar run arrived.
  *   - every map load sent the browser the full list of names (255 KB gzipped on .com, twice)
  *     to find one file.
  *

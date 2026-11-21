@@ -54,7 +54,7 @@ const accepted = (i) => ({ ip: '155.101.26.78', hostname: 'notchpeak1.int.chpc.u
     filename: `forecast_possibility_heatmap_clyfar${String(i).padStart(3, '0')}_20261120_1800Z.json`, status: 200, detail: 'accepted' });
 const refused = (detail = 'wrong api key') => ({ ip: '203.0.113.9', hostname: null, dataType: 'observations', filename: null, status: 401, detail });
 
-test('holds two days of attempts, not three hours: a Clyfar run is 144 uploads', () => {
+test('holds two days of attempts, not three hours: a Clyfar run is 165 uploads', () => {
     expect(MAX_ATTEMPTS).toBeGreaterThanOrEqual(2000);
 });
 
