@@ -3075,7 +3075,7 @@ body[data-page-type="roads"] .leaflet-drag-target {
 
 /* Roads-only icon and label cleanup. The kiosk also uses this stylesheet. */
 body[data-page-type="roads"] .content .fas {
-    color: #4b5563 !important;
+    color: var(--color-text-muted) !important;
     font-size: 0.875rem !important;
 }
 
@@ -3085,7 +3085,7 @@ body[data-page-type="roads"] .content :is(button, a, .click-overlay) > .fas {
 
 body[data-page-type="roads"] .card-icon-small {
     background: none !important;
-    color: #4b5563;
+    color: var(--color-text-muted);
 }
 
 body[data-page-type="roads"] :is(.no-events, .no-alerts, .events-error) > .fas,
@@ -3133,16 +3133,16 @@ body[data-page-type="roads"] :is(
     .mountain-pass-marker > div > div:first-child,
     .rest-area-marker > div > div:first-child
 ) {
-    background: white !important;
-    border-color: var(--marker-status-color, #d1d5db) !important;
+    background: var(--color-surface) !important;
+    border-color: var(--marker-status-color, var(--color-border)) !important;
 }
 
 body[data-page-type="roads"] :is(.mountain-pass-marker, .rest-area-marker) > div > div + div {
     border: 0 !important;
     border-radius: 0 !important;
-    background: white !important;
+    background: var(--color-surface) !important;
     box-shadow: none !important;
-    color: #4b5563 !important;
+    color: var(--color-text-muted) !important;
 }
 
 body[data-page-type="roads"] .weather-station-marker {
