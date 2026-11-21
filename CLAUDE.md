@@ -43,7 +43,7 @@ attempts and the refused ones.
 
 | Endpoint | What it tells you |
 |---|---|
-| `GET /api/health` | `version`, `manifestVersion`, `commit`, `branch`, `startedAt`, `vendorAssets`, `ingest.ready` (key loaded, upload dirs writable). Always 200, because producers gate uploads on it |
+| `GET /api/health` | `version`, `manifestVersion`, `commit`, `branch`, `startedAt`, `vendorAssets`, `ingest.ready` (key loaded, upload dirs writable). Always 200: brc-tools requests it before every upload and skips the host only if the request itself fails |
 | `GET /api/health/ingest` | 503 when ingest is not ready or nothing was accepted for 30 min: the one for an uptime monitor |
 | `GET /api/monitoring/uploads` | with `x-api-key`: the last 2,000 attempts (about two days) with source IP and `x-client-hostname`, the refused ones also in `rejected`; kept across restarts, so compare `ts` with `startedAt` |
 | `GET /api/monitoring/freshness` | age of the newest file per dataType and, in `forecasts`, per product, each on the schedule the manifest declares. `unscheduled` (ad-hoc), `dormant` (Clyfar out of season) and `no_data` are not "late"; `undeclared` names files the manifest does not list |
@@ -99,8 +99,9 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   llm_forecasts | aircraft`. `llm_forecasts` (tiered LLM text) is the one dataType the server
   checks against its contract at upload (`public/js/llmForecast.js`).
 - `DATA_MANIFEST.json` pins the forecast schemas and is the canonical contract. brc-tools holds
-  it for new dataTypes; the server does not enforce it. Producers check `manifestVersion` at
-  `GET /api/health` before every upload.
+  it for new dataTypes; the server does not enforce it. Nothing at CHPC compares `manifestVersion`: brc-tools
+  (`push_data.py`) requests `/api/health` before each upload and logs only the status code, so a
+  manifest bump never blocks an upload (checked in the code, 21 Nov).
 - **Observations arrive as raw SI and stay that way:** °C, m/s, Pa. `processObservationData`
   in `public/js/api.js` deliberately does not convert (its commented-out `convertUnits` call is
   on purpose); each page converts at its display layer from the units the feed states. New code
@@ -238,7 +239,7 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,089 tests across 76 suites at 1.7.9-dev,
+- `npm test` — Jest. **The suite is green (1,108 tests across 77 suites at 1.7.9-dev,
   2026-11-21); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).

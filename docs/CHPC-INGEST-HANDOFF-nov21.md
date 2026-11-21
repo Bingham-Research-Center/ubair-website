@@ -1,7 +1,8 @@
 # CHPC Ingest Handoff — Nov 21
 
 **Status:** temporary. Written on the dev box on 2026-11-21, about 08:30Z, after a survey of
-what both websites were receiving. It is for whoever works the producer side next: John, or an
+what both websites were receiving; revised about 10:00Z, after reading the brc-tools and clyfar
+upload code and deploying website 1.7.9 on `.dev`. It is for whoever works the producer side next: John, or an
 agent on notchpeak1 in `brc-tools`. It adds to
 [`NWP-PRODUCER-HANDOFF-nov20.md`](NWP-PRODUCER-HANDOFF-nov20.md) and continues its numbering
 (P25 to P28). Delete it once §3 is done or has moved there.
@@ -11,7 +12,7 @@ and nothing was refused. The fixes in brc-tools #76 to #78 took effect at **04:4
 and four of the six can be seen in the files. The expensive part of ingest turned out to be the
 website, which is fixed in website PRs #427 and #428 and needs nothing from CHPC. What only
 CHPC can do is below: two existing asks that now have numbers (P11, P14), four new ones, and
-two questions.
+one log to read (§5). The two questions the first draft asked are answered from the code (§3).
 
 ---
 
@@ -63,6 +64,11 @@ From file names and arrival times on `.dev`'s disk, and `.com`'s file list.
   last one after #76 to #78 were live.
 - No refusal is on record for any of them, on either box. A file missing from both was never
   made or never sent; a file missing from one never reached that box's app.
+- **`.dev`'s 13 one-box misses never reached its app.** The app logs every upload attempt
+  (`Access attempt` in its pm2 log, which covers the whole week). In each of those 13 cycles there
+  is none, for the metadata file or the observations, and the app was not restarting at any of
+  them. So the send failed before the app: at CHPC, in DNS, on the network or in nginx. The
+  receipts on notchpeak1 say which (§5). `.com`'s logs need root.
 
 ## 3. The asks
 
@@ -77,18 +83,31 @@ From file names and arrival times on `.dev`'s disk, and `.com`'s file list.
 
 | # | Ask | Why | Size |
 |---|---|---|---|
-| **P25** | **Notice a failed send and try again.** For each file and each host: on a DNS or connection error, retry a few times inside the cycle; write one line per file per host saying sent or failed and why. For the hourly HRRR products, send the missed run on the next cycle if it is still inside its forecast window | The misses in §2. They come one box at a time as often as both together, which points at the send, and nothing on either side says so (open ask A7, from August). Observations lose about 1 cycle in 80 before they leave CHPC | S to M |
+| **P25** | **Try a failed send again.** Every attempt already leaves a receipt (`~/logs/basinwx/push_receipts.jsonl`, one line per file per host), so the record exists. What is missing is a second try: `_post_json_to_url` in `brc_tools/download/push_data.py` gives up on the first failed health request, connection error or timeout, and `FanoutSession` then skips that host for the rest of the bundle. Retry a connection error, timeout or 5xx two or three times inside the cycle, with a short pause (a 4xx is final). For the hourly HRRR products, send a missed run on the next cycle if it is still inside its forecast window | The misses in §2. They come one box at a time as often as both together, and `.dev`'s never reached its app, which points at the send or the path to the box (open ask A7, from August). Observations lose about 1 cycle in 80 | S |
 | **P26** | **Say in the file which frame the wind is in, and which code made the file.** In the surface layers, `variables.wind_u_10m_ms` and `wind_v_10m_ms` are still labelled "Wind U" and "Wind V"; label them as the eastward and northward components, or add a `frame` key. In every JSON product, add a top-level `producer` with the repo and the commit of the cron tree | The rotation had to be inferred from 162 pairs of forecasts; the snowfall fix could be read off one label. A commit in the file dates any later change from one `curl`. Both are additive: a manifest MINOR, in a website PR first (rule 3 of the producer handoff) | S |
 | **P27** | **Confirm the two fixes the weather has hidden**: that `precip_1hr` in `road-forecast` is the hourly bucket, and that the KVEL crosswind file is rotated. A run from the archive with precipitation and wind would do | §1. The website still treats `precip_1hr` as a total and shows no amount; it will switch once a wet run shows a series that falls as well as rises | S |
 | **P28** | **Manifest entries for three families that arrive without one**: `forecast_gefs_weather_clyfar<NN>_*` (31 per run), `forecast_gefs_weather_percentiles_*` and `forecast_clustering_summary_*`. Send the schema of each, or say which are not meant for the website | From 1.7.9 `/api/monitoring/freshness` lists them as `undeclared`. The air-quality forecast page already reads the clustering summary, and P4 depends on the percentiles | S |
 
-### Two questions
+### Answered from the code (no reply needed)
 
-1. **Does anything at CHPC read `https://www.basinwx.*/api/static/observations/filelist.json`?**
-   Website 1.7.9 stops writing it and removes it. `GET /api/latest/observations?prefix=map_obs_`
-   names the newest file; `GET /api/filelist/observations` still lists them all.
-2. **Does brc-tools compare `manifestVersion` exactly anywhere?** `.dev` will report 2.4.0 once
-   #427 is deployed (2.3.0 today; `.com` stays 2.1.1 until 1.8.0). Only schedules changed.
+The first draft asked these; brc-tools `767db30` and clyfar `main` (both public) answer them.
+
+1. **Nothing at CHPC reads `observations/filelist.json`.** No code in either repo names it, and
+   brc-tools' `WISHLIST-TASKS.md` already calls it a fossil awaiting a `.dev` deploy: that line
+   can be ticked, because `.dev` removed the file at 09:43Z. Clyfar's
+   `scripts/fetch_case_from_api.py` reads `/api/filelist/forecasts`, which 1.7.9 still answers
+   with the same list.
+2. **Nothing compares `manifestVersion`.** `push_data._post_json_to_url` requests `/api/health`
+   before each upload, logs the status code and uploads whatever the answer. A failed request
+   skips that host; the version is never read. So `.dev` at 2.4.0 cannot stop an upload, and the
+   first one after the deploy landed (§4).
+
+### On notchpeak1, not an ask
+
+- **brc-tools `main` has moved past the cron tree.** Website #426 recorded the cron tree at
+  `460d5c6`; `main` is `767db30`, with #84 (`--model` for the surface export, the RRFS draft)
+  and #85 (no f00 `precip_1hr` fetch, the env in the surface log). Neither changes a file the
+  website reads. Pull when convenient (§5).
 
 ### John's call, not an ask
 
@@ -101,8 +120,10 @@ From file names and arrival times on `.dev`'s disk, and `.com`'s file list.
 
 ## 4. What changes on the website (PR #427, website 1.7.9)
 
-Nothing a producer sends has to change. It is on `.dev` once merged and deployed, and on `.com`
-with 1.8.0.
+Nothing a producer sends has to change. **Live on `.dev` since 09:43Z on 21 Nov** (`fdb79a3`);
+on `.com` with 1.8.0. The first upload after the deploy, `map_obs_20261121_0945Z.json`, was
+accepted at 09:45:44Z, and `/api/monitoring/freshness` answers in 0.12 s from outside (1.2 to
+1.9 s on the box before).
 
 - **The manifest is 2.4.0**, with the schedules as your A4 reply gave them: observations
   `*/5`, `road-forecast` `20 * * * *` (A11), surface layers `45 0,6,12,18`, Clyfar
@@ -126,6 +147,35 @@ with 1.8.0.
 # Both boxes: version, readiness, freshness per product, the last uploads and any refusals
 DATA_UPLOAD_API_KEY=... python3 scripts/probe.py
 
+# On notchpeak1: which commit the crons run, and what main has that they do not
+git -C ~/gits/brc-tools log -1 --format='%h %ci %s'
+git -C ~/gits/brc-tools fetch -q && git -C ~/gits/brc-tools log --oneline HEAD..origin/main
+
+# On notchpeak1: every failed or unverified send since 14 Nov, by host, kind and reason, then
+# the last 40 of them. Times are UTC
+python3 - <<'EOF'
+import collections, json, os
+fails, rows = collections.Counter(), []
+for line in open(os.path.expanduser('~/logs/basinwx/push_receipts.jsonl')):
+    try:
+        r = json.loads(line)
+    except ValueError:
+        continue
+    if r.get('ts', '') < '2026-11-14' or (r.get('ok') and r.get('verified') is not False):
+        continue
+    host = (r.get('url') or '?').split('//')[-1]
+    why = (r.get('error') or ('not visible afterwards' if r.get('ok') else f"HTTP {r.get('status')}"))[:70]
+    fails[host, r.get('data_type'), r.get('stage'), why] += 1
+    rows.append(f"{r['ts']} {host} {r.get('data_type')} {r.get('file')} {r.get('stage')} {why}")
+for key, n in fails.most_common(20):
+    print(n, *key)
+print(*rows[-40:], sep='\n')
+EOF
+
+# One miss in detail: .com's road forecast at 06:22Z on 21 Nov
+grep '"2026-11-21T06:2' ~/logs/basinwx/push_receipts.jsonl | grep road-forecast
+grep -n '2026-11-21T06:2' ~/logs/road_forecast.log | head
+
 # The newest file of a product (website 1.7.9; .dev first)
 curl -fsS 'https://www.basinwx.dev/api/latest/forecasts?prefix=forecast_hrrr_surface_layers_'
 
@@ -146,13 +196,18 @@ print(sys.argv[1], len(t), "files;", sum(round((b - a).seconds / 300) - 1 for a,
 done
 ```
 
-The last one downloads the whole list from `.com` (3 MB) until 1.8.0; run it by hand, not on a
-cron.
+The observations check downloads the whole list from `.com` (3 MB) until 1.8.0; run it by
+hand, not on a cron.
+
+**Reading the receipts.** For each miss in §2, a failed receipt names the reason (a DNS error, a
+timeout, a refused connection). No receipt at all for that host and cycle means the job stopped
+before reaching it. A receipt that says `ok` and `verified` for a file the box does not have would
+put the fault on the website side: say so in a website issue.
 
 ## 6. Not known
 
-- **Why `.dev` missed 13 observation cycles that `.com` received.** `.dev`'s upload log was in
-  memory and a restart at 04:55Z on 21 Nov emptied it. PR #427 keeps it on disk.
+- **Why `.dev` missed 13 observation cycles that `.com` received.** Not refused by the app and
+  not a restart (§2); the receipts on notchpeak1 hold the rest.
 - **Whether the 21 Nov fixes reduce the misses.** #76 sends each file on its own, which should
   help; three hours of clean observations since is too short to say, and `.com` missed a road
   forecast at 06:22Z in that time.
