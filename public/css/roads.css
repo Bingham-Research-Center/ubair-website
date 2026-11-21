@@ -3154,22 +3154,22 @@ body[data-page-type="roads"] .weather-station-marker {
 /* Corridor summary: scoped so kiosk maps and legacy cards keep their styles. */
 body[data-page-type="roads"] .hrrr-guidance-panel {
     margin-bottom: 1.25rem;
-    background: #fff;
-    border: 1px solid #d8dee5;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     box-shadow: none;
 }
 
 body[data-page-type="roads"] .hrrr-guidance-status {
-    color: #374151;
-    background: #f5f6f7;
-    border-color: #d8dee5;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border-color: var(--color-border);
 }
 
 body[data-page-type="roads"] .corridor-summary {
     margin-bottom: 2rem;
-    color: #27313d;
-    background: #fff;
-    border: 1px solid #d8dee5;
+    color: var(--color-text);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 12px;
     overflow: hidden;
 }
@@ -3180,7 +3180,7 @@ body[data-page-type="roads"] .corridor-summary {
 
 .corridor-summary-heading h2 {
     margin: 0 0 0.4rem;
-    color: #27313d;
+    color: var(--color-text);
     font-size: 1.25rem;
 }
 
@@ -3188,7 +3188,7 @@ body[data-page-type="roads"] .corridor-summary {
 .corridor-point-note,
 .corridor-incident-note {
     margin: 0;
-    color: #58616b;
+    color: var(--color-text-muted);
     font-size: 0.8rem;
     line-height: 1.5;
 }
@@ -3210,13 +3210,13 @@ body[data-page-type="roads"] .corridor-summary {
 .corridor-table th,
 .corridor-table td {
     padding: 0.95rem 0.8rem;
-    border-top: 1px solid #e2e5e9;
+    border-top: 1px solid var(--color-neutral-faint);
     vertical-align: middle;
 }
 
 .corridor-table thead th {
-    color: #58616b;
-    background: #f5f6f7;
+    color: var(--color-text-muted);
+    background: var(--color-bg);
     font-size: 0.75rem;
     font-weight: 600;
     white-space: nowrap;
@@ -3238,12 +3238,12 @@ body[data-page-type="roads"] .corridor-summary {
 
 .corridor-row > th,
 .corridor-row > td {
-    background: #fff;
+    background: var(--color-surface);
 }
 
 .corridor-row:hover > *,
 .corridor-row:focus-within > * {
-    background: #f5f6f7;
+    background: var(--color-bg);
 }
 
 .corridor-toggle {
@@ -3265,7 +3265,7 @@ body[data-page-type="roads"] .corridor-summary {
 
 .corridor-toggle:focus-visible,
 .corridor-table-scroll:focus-visible {
-    outline: 2px solid #334155;
+    outline: 2px solid var(--color-focus);
     outline-offset: -2px;
     border-radius: 3px;
 }
@@ -3285,7 +3285,7 @@ body[data-page-type="roads"] .corridor-summary {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
-    color: #27313d;
+    color: var(--color-text);
     white-space: nowrap;
     font-weight: 400;
 }
@@ -3296,12 +3296,12 @@ body[data-page-type="roads"] .corridor-summary {
     width: 7px;
     height: 7px;
     border-radius: 50%;
-    background: #8b929a;
+    background: var(--status-nodata);
 }
 
-.corridor-status-dot.is-clear { background: #249653; }
-.corridor-status-dot.is-caution { background: #e6b522; }
-.corridor-status-dot.is-danger { background: #cf3d3d; }
+.corridor-status-dot.is-clear { background: var(--status-good); }
+.corridor-status-dot.is-caution { background: var(--status-warning); }
+.corridor-status-dot.is-danger { background: var(--status-danger); }
 
 .corridor-sr-only {
     position: absolute;
@@ -3318,7 +3318,7 @@ body[data-page-type="roads"] .corridor-summary {
 
 .corridor-detail-row > td {
     padding: 0;
-    background: #f7f8f9;
+    background: var(--color-bg);
 }
 
 .corridor-detail {
@@ -3327,7 +3327,7 @@ body[data-page-type="roads"] .corridor-summary {
 
 .corridor-detail h3 {
     margin: 0 0 0.85rem;
-    color: #27313d;
+    color: var(--color-text);
     font-size: 1rem;
 }
 
@@ -3338,19 +3338,19 @@ body[data-page-type="roads"] .corridor-summary {
 }
 
 .corridor-summary .hrrr-period-card {
-    background: #fff;
-    border: 1px solid #d8dee5;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
     border-radius: 6px;
     box-shadow: none;
 }
 
 .corridor-summary .hrrr-period-hazard,
 .corridor-summary .hrrr-period-time strong {
-    color: #27313d;
+    color: var(--color-text);
 }
 
 .corridor-summary .hrrr-period-metric dt {
-    color: #58616b;
+    color: var(--color-text-muted);
 }
 
 .corridor-point-note {
@@ -3363,12 +3363,12 @@ body[data-page-type="roads"] .corridor-summary {
     gap: 1rem;
     margin: 1rem 0 0;
     padding: 1rem 0 0;
-    border-top: 1px solid #d8dee5;
+    border-top: 1px solid var(--color-border);
 }
 
 .corridor-current-details dt {
     font-size: 0.75rem;
-    color: #58616b;
+    color: var(--color-text-muted);
 }
 
 .corridor-current-details dd {
@@ -3383,8 +3383,8 @@ body[data-page-type="roads"] .corridor-summary {
 .corridor-forecast-note {
     margin: 0;
     padding: 0.9rem 1.25rem;
-    border-top: 1px solid #e2e5e9;
-    color: #58616b;
+    border-top: 1px solid var(--color-neutral-faint);
+    color: var(--color-text-muted);
     font-size: 0.75rem;
     line-height: 1.6;
 }
