@@ -329,9 +329,63 @@ describe('the real manifest', () => {
         expect(claims('forecast_possibility_heatmap_clyfar028_20261120_1800Z.json')).toEqual(['possibility_heatmap']);
         expect(claims('forecast_percentile_scenarios_clyfar000_20261120_1800Z.json')).toEqual(['percentile_scenarios']);
         expect(claims('forecast_exceedance_probabilities_20261120_1800Z.json')).toEqual(['exceedance_probabilities']);
-        // The hand-run RRFS draft on .dev (2026-11-21) and Clyfar's undeclared families.
+        // Clyfar's three families, declared in 2.5.0 (P28). The member pattern must not claim
+        // the percentiles file: forecast_gefs_weather_{member}_ would have.
+        expect(claims('forecast_clustering_summary_20261120_1800Z.json')).toEqual(['clustering_summary']);
+        expect(claims('forecast_gefs_weather_percentiles_20261120_1800Z.json')).toEqual(['gefs_weather_percentiles']);
+        expect(claims('forecast_gefs_weather_clyfar000_20261120_1800Z.json')).toEqual(['gefs_weather_members']);
+        expect(claims('forecast_gefs_weather_clyfar030_20261120_1800Z.json')).toEqual(['gefs_weather_members']);
+        // The hand-run RRFS draft on .dev (2026-11-21) is not a product.
         expect(claims('forecast_rrfs_surface_layers_20261121_0000Z.json')).toEqual([]);
-        expect(claims('forecast_clustering_summary_20261120_1800Z.json')).toEqual([]);
+    });
+
+    test('a whole Clyfar run is claimed: nothing but the RRFS draft is undeclared', async () => {
+        monitor = await makeMonitor(real.dataTypes);
+        const MIN = 60 * 1000;
+        const members = Array.from({ length: 31 }, (_, i) => `clyfar${String(i).padStart(3, '0')}`);
+        const names = [
+            ...members.flatMap((m) => [
+                `forecast_possibility_heatmap_${m}_20261121_0000Z.json`,
+                `forecast_percentile_scenarios_${m}_20261121_0000Z.json`,
+                `forecast_gefs_weather_${m}_20261121_0000Z.json`,
+            ]),
+            'forecast_exceedance_probabilities_20261121_0000Z.json',
+            'forecast_gefs_weather_percentiles_20261121_0000Z.json',
+            'forecast_clustering_summary_20261121_0000Z.json',
+            'forecast_rrfs_surface_layers_20261121_0000Z.json',
+        ];
+        expect(names).toHaveLength(real.dataTypes.forecasts.validation.totalFilesPerRun + 1);
+        for (const name of names) writeFile(monitor, 'forecasts', name, 60 * MIN);
+
+        const { forecasts } = await monitor.checkDataFreshness();
+
+        expect(forecasts.undeclared).toEqual(['forecast_rrfs_surface_layers_*.json']);
+        for (const product of ['clustering_summary', 'gefs_weather_percentiles', 'gefs_weather_members']) {
+            expect([product, forecasts.products[product].status]).toEqual([product, 'fresh']);
+        }
+        expect(forecasts.products.gefs_weather_members.totalFiles).toBe(31);
+    });
+
+    test('P26: the wind frame and the producer stamp are declared, and the example obeys its own patterns', () => {
+        const winds = real.dataTypes.forecasts.products.hrrr_surface_layers.schema.properties.variables.properties;
+        expect(winds.wind_u_10m_ms.properties.frame.enum).toEqual(['earth']);
+        expect(winds.wind_v_10m_ms.properties.frame.enum).toEqual(['earth']);
+
+        const { schema, example, field } = real.provenance;
+        const stamp = example[field];
+        expect(stamp.commit).toMatch(new RegExp(schema.properties.commit.pattern));
+        expect(stamp.ops).toMatch(new RegExp(schema.properties.ops.pattern));
+        expect(schema.required.every((key) => key in stamp)).toBe(true);
+        // Observations and metadata are bare lists: a top-level key would be a MAJOR change.
+        expect(real.dataTypes.observations.schema.type).toBe('array');
+        expect(Object.keys(real.provenance.notIn)).toEqual(expect.arrayContaining(['observations', 'metadata']));
+    });
+
+    test('from 2.5.0 the surface layers are hourly (P11): a six-hour bundle goes stale between bundles', async () => {
+        const { judgeAge } = await import('../monitoring/dataMonitor.js');
+        const { schedule } = real.dataTypes.forecasts.products.hrrr_surface_layers;
+        expect(judgeAge(119, schedule).status).toBe('fresh');
+        expect(judgeAge(121, schedule).status).toBe('stale');
     });
 
     test('on a box fed as .dev was on 2026-11-21, nothing reads stale', async () => {

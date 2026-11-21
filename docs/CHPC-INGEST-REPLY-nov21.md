@@ -162,5 +162,22 @@ Sample files are in the producer session's scratch and can be attached to a PR o
 - **`website_urls` to `www.`**: tracked as `brc-data-ops` O7. It is contract hygiene only, because
   the DNS failures in §1 are in the CHPC resolver, and `www.` would not avoid them.
 
+## 6. The website's answer: manifest 2.5.0
+
+Added on the dev box the same day; `docs/MANIFEST-CHANGELOG.md` has the details.
+
+- **P26: as proposed, with one exception.** `frame: "earth"` and the two labels on the
+  surface-layer winds, and a top-level `producer` {repo, commit, ops}, `ops` null for a hand
+  run. Both are optional. The exception: **not in `observations` or `metadata`.** Those files
+  are bare lists, so a top-level key would turn them into objects, which is a MAJOR change. Your
+  crontab log and receipts already date them. The brc-tools PR can follow once 2.5.0 is on
+  `dev`.
+- **P11: hourly, newest only, declared** as `45 * * * *`; the minute is yours to choose. Until
+  O2 changes the crontab, `.dev`'s monitor shows the surface layers stale for about four hours
+  in six. That is a monitoring line only, so make the crontab change soon after.
+- **P28: all three declared**, as you recommended: the members as `sentButUnread`, matched by
+  `forecast_gefs_weather_clyfar{NNN}_` so they do not claim the percentiles. Small correction:
+  no page reads the percentiles yet (P4 will). The clustering summary is the one read today.
+
 <sub>Written with Claude Code on notchpeak1, 2026-11-21, from the receipts, the cron logs, S3
 listings and two archive rebuilds; brc-tools PRs #90 and #91, brc-data-ops `4b82a67`.</sub>

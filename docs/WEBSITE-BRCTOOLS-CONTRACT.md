@@ -364,13 +364,14 @@ the manifest, but do not leave them disagreeing. Since website 1.7.9 and manifes
   `unscheduled`. It used to be read as hourly, so `outlooks` warned nearly all the time.
 - **`schedule.seasonal: true`** (everything the Clyfar job sends) reads `dormant`, not stale,
   once nothing has arrived for 7 days. Within those 7 days a missed run is stale as usual.
-- **Files that match no listed product** are named under `undeclared`. On 2026-11-21 that is
-  `forecast_clustering_summary_*`, `forecast_gefs_weather_*` and the hand-run RRFS draft.
+- **Files that match no listed product** are named under `undeclared`. Since manifest 2.5.0
+  that is only the hand-run RRFS draft; Clyfar's clustering summary, GEFS weather percentiles
+  and members are declared (the members as `sentButUnread`).
 - The crontab on notchpeak1 runs in Mountain time (no `CRON_TZ`). Only the interval between
   fires is used, so the offset does not matter here.
 
 **`latestFile` is arrival-ordered, not init-time-ordered.** When a bundle uploads three runs
-newest-first, the freshness readout names the *oldest* init time in that bundle. Cosmetic, but
+newest-first (until P11's one run an hour, declared in manifest 2.5.0, reaches the crontab), the freshness readout names the *oldest* init time in that bundle. Cosmetic, but
 do not read it as "the newest run we have"; `GET /api/latest/forecasts?prefix=<name>_` is that.
 
 ---

@@ -104,11 +104,12 @@ describe('scheduleIntervalMinutes: no schedule is not "hourly"', () => {
         const unreadable = schedules.filter(([, frequency]) => scheduleIntervalMinutes(frequency) === null
             && !String(frequency).startsWith('ad-hoc'));
         expect(unreadable).toEqual([]);
-        // The cadences the crontab on notchpeak1 runs at (brc-tools, 2026-11-21).
+        // The cadences the crontab on notchpeak1 runs at (brc-tools, 2026-11-21), except the
+        // surface layers: 2.5.0 declares them hourly ahead of the crontab change (P11, O2).
         expect(Object.fromEntries(schedules)).toMatchObject({
             observations: '*/5 * * * *',
             'road-forecast': '20 * * * *',
-            'forecasts.hrrr_surface_layers': '45 0,6,12,18 * * *',
+            'forecasts.hrrr_surface_layers': '45 * * * *',
             'forecasts.hrrr_waypoints': '50 * * * *',
             'forecasts.hrrr_kvel_crosswind': '55 * * * *',
         });

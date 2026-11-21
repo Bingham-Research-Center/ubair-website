@@ -1,5 +1,59 @@
 # Data Manifest Change Log
 
+## Version 2.5.0 (2026-11-21)
+
+### Type: Minor - The wind frame and a producer stamp may be sent; the surface layers are hourly; Clyfar's three undeclared families are declared
+
+**Summary:** Answers the three asks in `docs/CHPC-INGEST-REPLY-nov21.md` (website #430): P26,
+P11 and P28. Every key added is optional, and no file the producers send today is refused or
+read differently.
+
+### Changes Made
+
+- **Added (P26):** `forecasts.products.hrrr_surface_layers.schema.properties.variables` now
+  describes its entries. `wind_u_10m_ms` and `wind_v_10m_ms` may carry `"frame": "earth"`, with
+  the labels CHPC proposed, "Eastward wind (10 m, earth-relative)" and "Northward wind (10 m,
+  earth-relative)". The map reads only `units`, which stays `m/s`. A file without `frame` was
+  made before this and says nothing.
+- **Added (P26):** a top-level `provenance` block. A JSON product whose file is an object may
+  carry `"producer": {"repo", "commit", "ops"}`; `ops` is `"brc-data-ops@<sha>"` for a crontab
+  run and `null` for a hand run. **Not in `observations` or `metadata`:** their files are bare
+  lists, and giving them a top-level key would be a MAJOR change. The crontab log and
+  `push_receipts.jsonl` already date those uploads.
+- **Changed (P11):** `hrrr_surface_layers` to `45 * * * *`, one run an hour, the newest only,
+  with its index (`filesPerProduct` 4 → 2). The minute is the producer's to choose; only the
+  interval is judged.
+- **Added (P28):** three products in `forecasts`, on Clyfar's schedule and `seasonal`:
+  `clustering_summary` (read by the air-quality forecast page; `fieldsRead` lists what it
+  uses), `gefs_weather_percentiles` (read by nothing yet; P4 will) and `gefs_weather_members`
+  (`sentButUnread: true`). The members are matched by `forecast_gefs_weather_clyfar{NNN}_`, so
+  that they never claim the percentiles file. `totalFilesPerRun` 64 → 96, as counted on `.dev`.
+  Checked against the 20 Nov 18Z and 21 Nov 00Z files on `.dev`: no file breaks its schema.
+
+### Why MINOR
+
+Every new key is optional, and nothing reads `frame` or `producer` yet. The new products
+describe files that already arrive. The schedule change makes nothing a producer sends today
+invalid.
+
+### Order of the change, and what it costs
+
+- **Before the crontab moves:** until brc-data-ops changes its surface line (O2), bundles still
+  come every six hours. A box running 2.5.0 (`.dev`) then reads `hrrr_surface_layers` stale for
+  about four hours in every six. That is a monitoring line only: no page or status light reads
+  it. It ends with the crontab change.
+- **Disk and traffic:** one run is 1.47 MB (mean of 84 runs since 14 Nov). An hour's run instead
+  of three every six hours is 24 a day against 12: about 34 MB a day per box instead of 17, or
+  1 GB a month. `scripts/prune-static.js` keeps 30 days of `forecast_hrrr_*` once its `--apply`
+  is scheduled (#168). It means 48 uploads a day against 16, and an upload is milliseconds since
+  website 1.7.9.
+- **The page:** the index lists one run, and the weather page's run selector offers that one.
+
+### Still not declared
+
+`forecast_rrfs_surface_layers_*`, the hand-run RRFS draft on `.dev`: a product entry comes with
+the page that draws it.
+
 ## Version 2.4.0 (2026-11-21)
 
 ### Type: Minor - Cadences corrected to the crontab, a schedule for every product; nothing a producer sends changes
