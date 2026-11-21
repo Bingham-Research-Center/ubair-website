@@ -1,0 +1,60 @@
+/* Shared roads.css also serves the kiosk; keep the combined list local to /roads. */
+body[data-page-type="roads"] #travel-advisories {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+}
+
+body[data-page-type="roads"] #travel-advisories h2 { color: #374151; }
+body[data-page-type="roads"] #travel-advisories .traffic-events-container {
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    box-shadow: none;
+    overflow: visible;
+}
+body[data-page-type="roads"] #travel-advisories .events-content { min-height: 0; }
+body[data-page-type="roads"] #travel-advisories .events-tabs {
+    flex-direction: row;
+    background: none;
+    border-color: #d9dde3;
+}
+body[data-page-type="roads"] #travel-advisories .tab-btn { color: #4b5563; }
+body[data-page-type="roads"] #travel-advisories .tab-btn:is(:hover, :focus-visible, .active) { background: white; }
+body[data-page-type="roads"] #travel-advisories .tab-btn.active::after { background: #4b5563; }
+body[data-page-type="roads"] #travel-advisories .tab-content { padding: 1rem 0 0; }
+body[data-page-type="roads"] #travel-advisories .advisories-list {
+    display: grid;
+    gap: 1rem;
+    max-height: none;
+    overflow: visible;
+}
+body[data-page-type="roads"] #travel-advisories :is(.event-card, .alert-card) {
+    min-width: 0;
+    margin: 0 !important;
+    padding: 1rem;
+    border: 1px solid #d9dde3;
+    border-radius: 6px;
+    background: white;
+    box-shadow: none !important;
+    transform: none;
+    transition: none;
+    overflow-wrap: anywhere;
+}
+body[data-page-type="roads"] #travel-advisories .event-card { border-radius: 6px !important; }
+body[data-page-type="roads"] #travel-advisories .alert-info {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+body[data-page-type="roads"] #travel-advisories .alert-source { color: #374151; font-weight: 600; }
+body[data-page-type="roads"] #travel-advisories .alert-times { flex-wrap: wrap; color: #626872; }
+body[data-page-type="roads"] #travel-advisories .advisories-status {
+    margin: 0;
+    color: #626872;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}

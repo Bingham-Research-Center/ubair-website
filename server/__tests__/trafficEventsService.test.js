@@ -42,7 +42,7 @@ describe('TrafficEventsService rate-limit fallbacks', () => {
 
     test('traffic alerts use an available stale cache while rate limited', async () => {
         const service = new TrafficEventsService();
-        const staleAlerts = [{ id: 'cached-alert' }];
+        const staleAlerts = [{ id: 'cached-alert', regions: ['Uintah County'] }];
         service.lastApiCalls.set('alerts', Date.now());
         jest.spyOn(service, 'loadFromDiskCache')
             .mockResolvedValueOnce(null)
