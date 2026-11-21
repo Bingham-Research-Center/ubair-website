@@ -505,11 +505,6 @@ main.content {
     color: var(--usu-blue);
 }
 
-/* Compact Map Legend - Starts Visible, Collapsible */
-.map-legend-compact {
-    margin-top: 0.75rem;
-    text-align: center;
-}
 
 .legend-toggle {
     background: rgba(0, 38, 58, 0.1);
@@ -533,25 +528,8 @@ main.content {
     background: rgba(0, 38, 58, 0.15);
 }
 
-.legend-dropdown {
-    display: none;
-    margin-top: 0.75rem;
-    padding: 0.75rem;
-    background: white;
-    border: 1px solid rgba(0, 38, 58, 0.2);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-overlay);
-}
 
-.legend-dropdown.active {
-    display: block;
-}
 
-.legend-items-compact {
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
 
 .legend-row {
     display: flex;
@@ -570,12 +548,6 @@ main.content {
     background: var(--marker-status-color);
 }
 
-.legend-note {
-    margin: 0.25rem 0 0;
-    font-size: 0.7rem;
-    color: var(--color-text-muted);
-    text-align: left;
-}
 
 .legend-row span {
     flex: 1;
@@ -584,25 +556,8 @@ main.content {
     font-weight: 500;
 }
 
-.legend-section-header {
-    font-size: 0.85rem;
-    font-weight: 600;
-    font-style: italic;
-    color: var(--usu-blue);
-    text-align: center;
-    margin: 0.5rem 0 0.3rem 0;
-    padding-bottom: 0.2rem;
-    border-bottom: 1px solid var(--color-border);
-}
 
-.legend-section-header:first-child {
-    margin-top: 0;
-}
 
-.legend-diamond {
-    transform: rotate(45deg);
-    border-radius: 0 !important;
-}
 
 /* Dashboard Section Spacing */
 .dashboard-section {

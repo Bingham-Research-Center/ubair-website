@@ -129,36 +129,8 @@
                     </div>
                 </div>
                 
-                <!-- Compact Legend - Starts Visible -->
-                <div class="map-legend-compact">
-                    <button class="legend-toggle" id="legend-toggle" title="Click to show/hide marker color legend" aria-expanded="true">
-                        <span class="legend-toggle-text">Legend</span>
-                    </button>
-                    <div class="legend-dropdown active" id="legend-dropdown">
-                        <div class="legend-items-compact">
-                            <div class="legend-section-header">Air quality stations (&#9679;), ozone</div>
-                            <!-- Filled by index_map.js from the bands in mapUtils.js -->
-                            <div id="aq-legend-rows"></div>
-                            <div class="legend-section-header">Road weather stations (&#9670;)</div>
-                            <div class="legend-row">
-                                <span class="legend-color legend-diamond aq-status" data-status="road-clear"></span>
-                                <span>All clear</span>
-                            </div>
-                            <div class="legend-row">
-                                <span class="legend-color legend-diamond aq-status" data-status="road-caution"></span>
-                                <span>Caution</span>
-                            </div>
-                            <div class="legend-row">
-                                <span class="legend-color legend-diamond aq-status" data-status="road-hazardous"></span>
-                                <span>Hazardous</span>
-                            </div>
-                            <div class="legend-row">
-                                <span class="legend-color legend-diamond aq-status" data-status="nodata"></span>
-                                <span>No data</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- The same legend as Live AQ, drawn by index_map.js (legendMarkup in mapUtils.js). -->
+                <div class="home-map-legend" id="aq-legend"></div>
             </div>
 
             <!-- Right column: the LLM forecast summary, when there is one, above the outlook. -->
@@ -198,7 +170,6 @@
 <!-- Load JavaScript Modules -->
 <script type="module" src="/public/js/loadSidebar.js"></script>
 <script type="module" src="/public/js/loadFooter.js"></script>
-<script type="module" src="/public/js/config.js"></script>
 <script type="module" src="/public/js/index_map.js"></script>
 <script type="module" src="/public/js/homepage-current.js"></script>
 <script type="module" src="/public/js/homepage-lights.js"></script>
@@ -216,28 +187,12 @@
     const CURRENT_FOR_DAYS = 2;
 
     document.addEventListener("DOMContentLoaded", async function() {
-        // Initialize legend toggle
-        initLegendToggle();
-        
         // Initialize forecast collapse toggle
         initForecastCollapse();
 
         // Load initial content
         loadAirQualityForecast();
     });
-
-    function initLegendToggle() {
-        const toggle = document.getElementById('legend-toggle');
-        const dropdown = document.getElementById('legend-dropdown');
-        
-        if (toggle && dropdown) {
-            toggle.addEventListener('click', () => {
-                dropdown.classList.toggle('active');
-                const isOpen = dropdown.classList.contains('active');
-                toggle.setAttribute('aria-expanded', String(isOpen));
-            });
-        }
-    }
 
     async function loadAirQualityForecast() {
         const outlookSummary = document.getElementById("outlook-summary");

@@ -3,8 +3,10 @@ import { getCardinalDirection } from './mapUtils.js';
 import { relativeHumidityFromDewPoint } from './met.js';
 
 // All cards read from one pinned station so the numbers are mutually consistent.
-// Observation keys are friendly display names (see mapStationName in mapShared.js).
-const STATION = 'Vernal';
+// Observations are keyed by Synoptic station ID (processObservationData in api.js). Until
+// 21 Nov 2026 this read "Vernal", a merge of the airport, the DEQ monitor and a once-a-day co-op.
+const STATION = 'KVEL';
+const STATION_NAME = 'Vernal airport (KVEL)';
 
 // The observation feed is raw SI — Celsius, m/s, Pascals. processObservationData()
 // in api.js deliberately does NOT convert (see the commented-out convertUnits call
@@ -279,8 +281,8 @@ function renderDashboard() {
     const stampEl = document.getElementById('observationTimestamp');
     if (stampEl) {
         stampEl.textContent = stamp
-            ? `${STATION} — observed ${new Date(stamp).toLocaleString()}`
-            : `${STATION} — no recent observation`;
+            ? `${STATION_NAME} — observed ${new Date(stamp).toLocaleString()}`
+            : `${STATION_NAME} — no recent observation`;
     }
 }
 
