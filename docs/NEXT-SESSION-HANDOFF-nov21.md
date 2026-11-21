@@ -8,7 +8,7 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
 
 | | Version | Commit | Notes |
 |---|---|---|---|
-| `dev` → www.basinwx.dev | **1.7.8-dev** | `a0433e3` (#423), `863fa00` (#424, docs), then this docs PR | Code deployed and probed 21 Nov 04:23Z; the docs PRs need no deploy |
+| `dev` → www.basinwx.dev | **1.7.9-dev** | `fdb79a3` (#427), after `b7343b9` (#426, docs) and `0b0e05a` (#428, a script nothing runs); then this docs PR | Deployed and probed 21 Nov 09:43Z; the first CHPC upload after it was accepted at 09:45:44Z. The docs PRs need no deploy |
 | `ops` → www.basinwx.com | **v1.7.0** | `5a845d5` | Prod serves it. Lacks every fix since 1.7.0 |
 | `main` | v1.7.0 | | Follows `ops` after each prod deploy |
 
@@ -17,6 +17,11 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
   steps are in `CLAUDE.md` ("Versioning & release train"); each merge needs his own OK.
 - **Open PRs:** #337, #338, #339, the roads batches B–D, parked for 1.9.0 (Michael's fixes sit
   on `codex/roads-{b,c,d}-review-fixes`); #401, Quinten's draft, to rebase after the NWP work.
+  Merged later on 21 Nov, each on John's OK: #426 (producer status, written on CHPC), #428 (the
+  pruning script for #168: `--apply` has not been run anywhere), #427 (the upload index,
+  1.7.9-dev, deployed on `.dev`) and this docs PR, which adds
+  [`CHPC-INGEST-HANDOFF-nov21.md`](CHPC-INGEST-HANDOFF-nov21.md): what CHPC can do next and
+  the receipts to read on notchpeak1.
 - **On the dev box:** worktree `/srv/ubair-website-preview-roads` (the parked roads stack, its
   preview on :3002 not running). The spare preview slot `theme.basinwx.dev` (:3003) is free.
   Local-only branches kept on purpose: `preview/theme` (the look switcher, #355) and
@@ -46,9 +51,9 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
 
 **On CHPC** (brc-tools), in order. Full text and checks in
 [`NWP-PRODUCER-HANDOFF-nov20.md`](NWP-PRODUCER-HANDOFF-nov20.md), grouped by repo since #424:
-0. **John: merge brc-tools #76, #77, #78**, then `git pull --ff-only` in `~/gits/brc-tools` on
-   notchpeak1 (the crons run from that tree). They add gusts and visibility to the obs feed, fix
-   the precipitation totals and rotate HRRR winds to north; then re-read the payload.
+0. **Done 21 Nov:** brc-tools #76 to #78 and #83 are live (cron tree `460d5c6`); what the files
+   show of them is in [`CHPC-INGEST-HANDOFF-nov21.md`](CHPC-INGEST-HANDOFF-nov21.md) §1. Next
+   there: read the upload receipts for the missed cycles and pull `main` (§5), then P25 to P28.
 1. **P1, P2: the LLM forecast text.** The critical path: 1.8.0 waits on it. The website
    renders a file within minutes of upload; nothing to change on this side.
 2. **P21: add Fruitland (`QFL`)** to the observation request. Five minutes, and it appears on

@@ -10,7 +10,7 @@ what to do next) is in the newest `docs/*-HANDOFF-*.md`; read it before acting.
 | Where the session runs | What it can do | Read first |
 |---|---|---|
 | **Dev box**: `/srv/ubair-website` as `deploy` | worktrees, PRs, deploy `.dev`, previews; no sudo, no route to prod | `docs/NEXT-SESSION-HANDOFF-nov21.md` |
-| **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
+| **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/CHPC-INGEST-HANDOFF-nov21.md` (what arrived on 21 Nov, measured; asks P25–P28), then `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
 | Prod box (root) | JRL only: prod deploys | "Deploying" below |
 | Any laptop or VM copy | read and draft; never the source of truth | this file |
 
@@ -43,7 +43,7 @@ attempts and the refused ones.
 
 | Endpoint | What it tells you |
 |---|---|
-| `GET /api/health` | `version`, `manifestVersion`, `commit`, `branch`, `startedAt`, `vendorAssets`, `ingest.ready` (key loaded, upload dirs writable). Always 200, because producers gate uploads on it |
+| `GET /api/health` | `version`, `manifestVersion`, `commit`, `branch`, `startedAt`, `vendorAssets`, `ingest.ready` (key loaded, upload dirs writable). Always 200: brc-tools requests it before every upload and skips the host only if the request itself fails |
 | `GET /api/health/ingest` | 503 when ingest is not ready or nothing was accepted for 30 min: the one for an uptime monitor |
 | `GET /api/monitoring/uploads` | with `x-api-key`: the last 2,000 attempts (about two days) with source IP and `x-client-hostname`, the refused ones also in `rejected`; kept across restarts, so compare `ts` with `startedAt` |
 | `GET /api/monitoring/freshness` | age of the newest file per dataType and, in `forecasts`, per product, each on the schedule the manifest declares. `unscheduled` (ad-hoc), `dormant` (Clyfar out of season) and `no_data` are not "late"; `undeclared` names files the manifest does not list |
@@ -99,8 +99,9 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   llm_forecasts | aircraft`. `llm_forecasts` (tiered LLM text) is the one dataType the server
   checks against its contract at upload (`public/js/llmForecast.js`).
 - `DATA_MANIFEST.json` pins the forecast schemas and is the canonical contract. brc-tools holds
-  it for new dataTypes; the server does not enforce it. Producers check `manifestVersion` at
-  `GET /api/health` before every upload.
+  it for new dataTypes; the server does not enforce it. Nothing at CHPC compares `manifestVersion`: brc-tools
+  (`push_data.py`) requests `/api/health` before each upload and logs only the status code, so a
+  manifest bump never blocks an upload (checked in the code, 21 Nov).
 - **Observations arrive as raw SI and stay that way:** °C, m/s, Pa. `processObservationData`
   in `public/js/api.js` deliberately does not convert (its commented-out `convertUnits` call is
   on purpose); each page converts at its display layer from the units the feed states. New code
@@ -120,15 +121,20 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   api.weather.gov and aviationweather.gov, IEM, ACIS); none is wired yet. See the handoff.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
-  derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility
-  (brc-tools #76 adds both; visibility comes in statute miles). In
-  `road-forecast`, `precip_1hr` is a running total since the model run began, not an hourly
-  amount: use `precip_type` for "is it snowing", and difference the totals for a rate. In the
-  HRRR surface layers, `snowfall_1h_mm` is also a running total, zeroed in some hours
-  (`runningTotalForHour` in `public/js/hrrrFields.js`); its `rainfall_1h_mm` is truly hourly.
-  brc-tools #77 makes `precip_1hr` hourly and `snowfall_1h_mm` a clean total, and #78 rotates
-  HRRR u/v to north (they were grid-relative, ~7.5° off): re-read the payload once those are
-  live on notchpeak1.
+  derive it with `met.js` meanwhile. brc-tools #76–#78 took effect at 04:46Z on 21 Nov 2026,
+  and what follows was checked against the files (`docs/CHPC-INGEST-HANDOFF-nov21.md` §1):
+  - 38 stations send `wind_gust` and 28 send `visibility`, **in statute miles**, the one
+    variable not in SI. A gust row can be hours older than the station's other rows (a gust
+    is reported only while gusting): read the row's own `date_time`.
+  - HRRR `wind_u/v` and the waypoint directions are relative to true north. Runs made before
+    then are relative to the model grid, about 7.5° off, and no file says which it is.
+  - In the surface layers, `snowfall_1h_mm` is a running total of snow depth since the run
+    began, no longer zeroed in some hours (`runningTotalForHour` in `public/js/hrrrFields.js`
+    still guards the older runs); `rainfall_1h_mm` is truly hourly.
+  - **Not confirmed yet:** in `road-forecast`, `precip_1hr` was a running total since the run
+    began, and #77 makes it hourly, but every run since has been dry. Until a wet run shows a
+    series that falls as well as rises, use `precip_type` for "is it snowing" and show no
+    amount. The KVEL crosswind rotation is unconfirmed too (calm).
 - **Derive in the browser only by a standard formula, from fields whose units the file
   states**, and say so on the page (`public/js/mapLayers.js`: wind chill, totals, extremes).
   Anything that needs a field we are not sent belongs at CHPC. JRL asks what a feature costs
@@ -233,7 +239,7 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,089 tests across 76 suites at 1.7.9-dev,
+- `npm test` — Jest. **The suite is green (1,108 tests across 77 suites at 1.7.9-dev,
   2026-11-21); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).
