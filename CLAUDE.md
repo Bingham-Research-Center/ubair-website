@@ -3,6 +3,17 @@
 Live air-quality observations and forecasts for the Uintah Basin. Node/Express +
 Leaflet/Plotly, vanilla JS frontend.
 
+## Start here
+This file holds the rules that last. **Where things stand** (versions, open PRs, parked work,
+what to do next) is in the newest `docs/*-HANDOFF-*.md`; read it before acting.
+
+| Where the session runs | What it can do | Read first |
+|---|---|---|
+| **Dev box**: `/srv/ubair-website` as `deploy` | worktrees, PRs, deploy `.dev`, previews; no sudo, no route to prod | `docs/NEXT-SESSION-HANDOFF-nov21.md` |
+| **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
+| Prod box (root) | JRL only: prod deploys | "Deploying" below |
+| Any laptop or VM copy | read and draft; never the source of truth | this file |
+
 ## The two boxes
 | Role | Branch | Domain | pm2 app | Repo path | User |
 |---|---|---|---|---|---|
@@ -18,14 +29,9 @@ Leaflet/Plotly, vanilla JS frontend.
   A `git checkout` or `git pull` in a live repo changes what traffic sees at once, and a new
   route 404s until the restart. Never check out a branch there (use `git worktree add`), and
   pull only as a whole deploy (below). To read `dev`, use `git show origin/dev:<path>`.
-- **Know where the session runs.** `/srv/ubair-website` as `deploy` is **the dev box**: it can
-  deploy dev and run previews when JRL asks, but has no sudo and no route to prod. From
-  notchpeak1 (CHPC) neither box is reachable: verify from outside and hand over the one-liner.
-  Any other laptop or VM copy is never the source of truth.
 - **Ingest is public HTTPS from notchpeak1 on both boxes** (no SSH tunnel): if uploads stop,
-  DNS, cert, nginx body limit and the app are the whole path. Producers target `www.`; bare
-  `basinwx.com` also resolves to a Namecheap forwarder with no HTTPS. Prod logs
-  `::ffff:127.0.0.1` because its nginx does not pass `X-Forwarded-For`.
+  DNS, cert, nginx body limit and the app are the whole path. Producers target `www.`. Both
+  boxes' nginx pass `X-Forwarded-For` (prod since 2026-10-27), so upload logs show notchpeak1.
 - **Before provisioning anything, read `docs/DEPLOYMENT.md`** (firewall default-Drop, certbot
   `--manual` trap, `.dev` SNI filtering, pm2 systemd unit).
 
@@ -42,9 +48,8 @@ per-dataType freshness and, with `DATA_UPLOAD_API_KEY` set, the last upload atte
 | `GET /api/monitoring/freshness` | age of the newest file per dataType (can say fresh for a dataType never uploaded; cross-check `uploads`) |
 
 **Only pm2 may hold the app's port.** After any reboot check `ss -ltnp 'sport = :3000'` (3001
-on dev) and `ingest.ready`. On 2026-10-26 a leftover systemd unit took prod's port first and
-every upload 500ed for a day while `/api/health` stayed green (`docs/DEPLOYMENT.md` §8).
-Since 1.5.5 a copy that cannot read `.env` exits before binding.
+on dev) and `ingest.ready`: on 2026-10-26 a leftover systemd unit took prod's port and every
+upload 500ed for a day while `/api/health` stayed green (`docs/DEPLOYMENT.md` §8).
 
 ## Deploying
 **`npm install` is part of every deploy:** `package-lock.json` is gitignored and the roads page
@@ -75,8 +80,8 @@ One branch, its own worktree, a spare port, served at `<name>.basinwx.dev`.
 - **`theme.basinwx.dev` → `127.0.0.1:3003` is provisioned and kept as a spare slot:** start any
   branch on port 3003 and it is live with no root work (502 while idle). The recipe is README
   "Branch previews"; tear it down when the PR merges so the slot is free again.
-- Ports: 3000 prod, 3001 dev, 3002 the parked roads stack (#336–#339, local only, no vhost),
-  3003 the spare slot.
+- Ports: 3000 prod, 3001 dev, 3002 kept for the parked roads stack (#337–#339; worktree
+  `/srv/ubair-website-preview-roads`, not running, no vhost), 3003 the spare slot.
 - Any other name needs root: DNS is a wildcard but the certificate is not
   (`certbot certonly --nginx -d <name>.basinwx.dev`, then an nginx vhost).
 - `PREVIEW_MODE=true` in the preview's `.env` keeps background jobs off (no double-burned
@@ -100,6 +105,17 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   uses `public/js/met.js` (pure converters that return null for a unit they do not know, plus RH
   from dew point); older pages still carry their own copies. A page that misses this prints
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
+- **Observations are keyed by station ID, never by display name.** Name-keyed merging once
+  showed a 14-hour-old co-op temperature as Vernal's current reading and lent the DEQ monitor's
+  ozone to the airport marker. `public/js/config.js` names and places the stations the AQ maps
+  show by hand (homepage set, co-located `companions`, monitors `notReportingSince`); a reading
+  older than 3 h is not shown, except co-op snow depth (30 h), as `mapShared.js` sets.
+- **The maps read only the newest `map_obs_*` file.** A second observations producer (such as
+  a server sending the UB-AIR monitors from storage) must merge into CHPC's file or agree its
+  own prefix first, or the two take turns on the map (producer ask P24).
+- **The site's Synoptic token sees Utah only.** Colorado and Wyoming requests, Rangely
+  included, are refused. Keyless public sources exist for the edges (Rangely AWOS `K4V0` on
+  api.weather.gov and aviationweather.gov, IEM, ACIS); none is wired yet. See the handoff.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
   derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility
@@ -136,10 +152,9 @@ now, Precip next 6 h): `docs/features/HOMEPAGE-STATUS-LIGHTS.md`.
   disagree. Snow covering a major Basin route (US-40, US-191, SR-87) is red on both, and a UDOT
   report of a closure, ice or snow cover is not averaged down by the forecast blend.
 - **The forecast tile is titled by the clock** ("Tonight", "Tomorrow morning": JRL dislikes
-  "next 12 h") and reads the HRRR road points: gusts 40/58 mph, new snow on the floor 1/4 in
-  (from the rise in `snow_depth`), wind chill 0/-20 °F. Fog is left out on purpose: the model's
-  visibility cries wolf, and no observation checks it.
-- The thresholds are JRL's (20 Nov 2026). Change one only with him, in the constant and its test.
+  "next 12 h"). Fog is left out on purpose: the model's visibility cries wolf.
+- The thresholds (in the feature page) are JRL's, 20 Nov 2026. Change one only with him, in the
+  constant and its test.
 
 ## Styling
 Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
@@ -148,12 +163,11 @@ Read `docs/STYLE-TOKEN-GUIDE.md` before touching CSS.
   restyles itself by setting knobs such as `--page-accent`, not by adding rules.
 - `styleRatchet.test.js` holds a per-file ceiling of raw values that may fall but not rise
   (new stylesheets start at zero); lower it with `node scripts/style-scan.mjs --tighten`.
-- The look is **Ink + Teal** (v1.6.0): IBM Plex Sans from `public/fonts/` (no font CDN), flat
-  surfaces, a greyed basemap (`--basemap-filter`), hover that changes colour and never moves.
-  Since v1.6.2: hard edges (radius tokens 0); cards are `.pane` (square, hairline, short accent
-  tab on the top edge; other pages still move over one at a time); the UI is scaled to 85% by
-  `--root-font-size`, so write lengths in `rem`, never CSS `zoom` (it breaks Leaflet and Plotly
-  pointers). Dark mode is a draft in the tokens (`html[data-mode="dark"]`), not switched on.
+- The look is **Ink + Teal**: IBM Plex Sans from `public/fonts/` (no font CDN), flat square
+  surfaces (radius tokens 0), cards as `.pane`, a greyed basemap (`--basemap-filter`), hover
+  that changes colour and never moves. The UI is scaled to 85% by `--root-font-size`: write
+  lengths in `rem`, never CSS `zoom` (it breaks Leaflet and Plotly pointers). Dark mode is a
+  draft in the tokens (`html[data-mode="dark"]`), not switched on.
 - **A colour that carries meaning never rides on a page's decorative palette.** Status, AQI,
   confidence and fire-restriction colours have their own tokens (`--status-*`, `--epa-*`,
   `--confidence-*`, `--restriction-*`); borrowing `--fire-accent` once turned Stage 1 fire
@@ -207,17 +221,23 @@ handoff docs append `-mmmDD` (`WEBSITE-BRCTOOLS-HANDOFF-apr27.md`) so their expi
 Markdown only; code files follow their language's convention.
 
 ## Reference (read on demand)
-- `docs/AGENT-INDEX.md` — map of everything in `docs/`; start there
+- The newest `docs/*-HANDOFF-*.md` — state of play and next steps (see "Start here")
+- `docs/AGENT-INDEX.md` — map of everything in `docs/`
 - `docs/DEPLOYMENT.md` — bring-up runbook and chronic gotchas
 - `DATA_MANIFEST.json` — forecast schemas
 - Issue #253 (pinned) — ops follow-ups that need a box, an account or a decision
-- Outstanding work: GitHub Issues on milestones `v1.6.0 Beta relaunch` and `v2.0.0 Ozone season
-  open`; unmilestoned ideas go in Discussions #342, not new issues
+- Outstanding work: GitHub Issues on an open release milestone (now `v2.0.0 Ozone season open`);
+  unmilestoned ideas go in Discussions #342, not new issues
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (466/466 across 37 suites as of 2026-11-12); any
-  failure is new breakage.** Never tolerate a red suite.
+- `npm test` — Jest. **The suite is green (1,010 tests across 73 suites at 1.7.8-dev,
+  2026-11-21); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).
+- **On the dev box** (2 GB, one CPU): one heavy job at a time, Jest with `--runInBand`. In a
+  worktree, borrow the live packages without creating anything:
+  `NODE_OPTIONS=--experimental-vm-modules node /srv/ubair-website/node_modules/jest/bin/jest.js --modulePaths=/srv/ubair-website/node_modules --runInBand`.
+  Only `iconNames.test.js` then fails; it needs a temporary `node_modules` symlink, removed
+  after (never `git add -A` with it present).
 - `npm run dev` — nodemon server. `npm run test-api` — loopback POST against the upload route.

@@ -9,6 +9,15 @@ researchers, and policymakers.
 > products are experimental; do not use them for critical decisions. Feedback to
 > [john.lawson@usu.edu](mailto:john.lawson@usu.edu).
 
+## Picking the work up
+- **On the dev box** (`/srv/ubair-website`, user `deploy`), or for the state of play anywhere:
+  [`docs/NEXT-SESSION-HANDOFF-nov21.md`](docs/NEXT-SESSION-HANDOFF-nov21.md): versions, open
+  PRs, what is parked, what comes next.
+- **On CHPC** (producer work in `brc-tools`):
+  [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md): the asks P1–P24,
+  in order, and how to check an upload landed.
+- Rules for AI agents: `CLAUDE.md`. Newer handoffs replace these; the date is in the name.
+
 ## What's here
 - **Real-time observations** — live weather + air-quality, year-round
 - **Ozone Alert outlooks** — human-written wintertime ozone forecasts
@@ -24,8 +33,9 @@ ozone season. Each row below is one feature. Its page opens in plain language (w
 how to read it) and ends with where the code and tests are. Words you do not know are in the
 [glossary](docs/features/PLAIN-WORDS-GLOSSARY.md).
 
-| Feature | In one line | Where it stands (20 Nov 2026) | Read more | Issues |
+| Feature | In one line | Where it stands (21 Nov 2026) | Read more | Issues |
 |---|---|---|---|---|
+| **Air-quality maps** | Homepage and Live AQ maps show each station's own readings (never a neighbour's), grey when nothing recent, under one short ozone legend | On `.dev` (1.7.8-dev) | `public/js/config.js` (the station list) | #423 |
 | **Homepage status lights** | Five tiles: weather alerts, what is forecast for the next part of the day, ozone risk, road trouble, and rain or snow by elevation | On `.dev` | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
 | **Weather forecast page** | Alerts; a forecast for your town hour by hour, checked against its weather station; the Basin in profile; where rain turns to snow; then a map in colour bands with a time slider | On `.dev` | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
 | **NWS weather alerts** | One honest source of official alerts for every page: a failed check never reads as "no alerts" | On `.dev` | [NWS-WEATHER-ALERTS](docs/features/NWS-WEATHER-ALERTS.md) | #404 |
@@ -127,6 +137,7 @@ git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-the
 | Audience | Start here |
 |---|---|
 | **New to the project** | The table under "New here?" above, then [`docs/features/PLAIN-WORDS-GLOSSARY.md`](docs/features/PLAIN-WORDS-GLOSSARY.md) |
+| **Picking up the last session** | "Picking the work up" at the top |
 | **Human devs** | [Project wiki](https://github.com/Bingham-Research-Center/ubair-website/wiki) — one page: what to work on and how a change gets merged |
 | **AI agents** | `CLAUDE.md` (root, auto-loaded) → `docs/AGENT-INDEX.md` |
 | **Operators** | `docs/DEPLOYMENT.md` (bring-up, certs, firewall, gotchas) |
@@ -136,7 +147,7 @@ git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-the
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
 Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
-on two milestones (`v1.6.0 Beta relaunch`, `v2.0.0 Ozone season open`), not in docs files.
+on the open milestone (`v2.0.0 Ozone season open`; `v1.6.0 Beta relaunch` closed 21 Nov), not in docs files.
 Unscheduled ideas live in one thread, [Ideas parking lot](https://github.com/Bingham-Research-Center/ubair-website/discussions/342).
 
 ## Contributing
@@ -167,7 +178,7 @@ triage in `docs/DEPLOYMENT.md`.
 
 ## Data sources
 - **Synoptic** — real-time meteorological observations (EPA, DAQ, Union Pacific, etc.)
-- **UBAIR sensors** — research-grade monitoring maintained by Trevor O'Neil and Seth Lyman at the Bingham Research Center
+- **UBAIR sensors** — research-grade monitoring maintained by Trevor O'Neil and Seth Lyman at the Bingham Research Center (no data on Synoptic since late 2025; the maps show them as "not reporting since")
 - **NOAA models** — federal data freely available at the [NCEP product portal](https://www.nco.ncep.noaa.gov/pmb/products/gens/)
 - **UDoT** — road conditions under fair-use limits (advisory only)
 

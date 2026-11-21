@@ -509,13 +509,10 @@ quotas — see §9.
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
 - **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
 
-- **The bare `basinwx.com` resolves to two addresses.** Besides the Linode box, Namecheap's
-  URL-forwarding host `192.64.119.30` is in the A record set, and it does not answer HTTPS at
-  all (observed 2026-09-23 from notchpeak1; `www.basinwx.com` has the one correct record).
-  brc-tools targets the bare domain. `requests` falls through to the next address on a refused
-  connection, which is why no upload has failed on it yet, but a slow refusal would burn the
-  30 s upload timeout. Either point producers at `https://www.basinwx.com` or remove the stray
-  record at Namecheap. `scripts/probe.py` warns while it is present.
+- **The bare `basinwx.com` once resolved to two addresses** (Namecheap's URL forwarder
+  `192.64.119.30` beside the Linode box, observed 2026-09-23). Fixed: on 2026-11-21 it resolves
+  to `172.234.249.49` only and answers HTTPS 200. Producers still target `www.`.
+  `scripts/probe.py` warns if the stray record ever comes back.
 
 ## 9. Per-user branch previews
 

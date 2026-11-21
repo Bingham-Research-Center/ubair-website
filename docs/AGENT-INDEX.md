@@ -1,6 +1,6 @@
 # Agent Index — ubair-website
 
-Entry point for AI agents working in this repo. **Last refreshed:** 2026-11-12.
+Entry point for AI agents working in this repo. **Last refreshed:** 2026-11-21.
 
 This file lists what's in `docs/` so you can pick the right reference without grepping the
 whole tree. Read on demand; do not auto-load. Humans start at the
@@ -13,7 +13,7 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 ## Read first when…
 | Goal | File |
 |---|---|
-| **Pick up outstanding work** | `gh issue list --label student-ready` (sized, verifiable) or `gh issue list --label copilot-ok` (chores with tests). Every open issue sits on one of two milestones: `v1.6.0 Beta relaunch` (15 Nov 2026), `v2.0.0 Ozone season open` (1 Dec 2026) |
+| **Pick up outstanding work** | `gh issue list --label student-ready` (sized, verifiable) or `gh issue list --label copilot-ok` (chores with tests). Every open issue sits on an open release milestone: now `v2.0.0 Ozone season open` (1 Dec 2026) |
 | Deploy a fresh box / chase a cert problem | `docs/DEPLOYMENT.md` |
 | **Check both live boxes from outside, no shell needed** | `scripts/probe.py` (python3 only; see `docs/DEPLOYMENT.md` §6 step 0) |
 | Change the site icon (favicon) or the BasinWx wordmark | `docs/FAVICON-INSTALL-STEPS.md` + `scripts/make_favicon.py`, `scripts/make_wordmark.py` |
@@ -22,7 +22,8 @@ whole tree. Read on demand; do not auto-load. Humans start at the
 | Author a new ozone outlook | `docs/SOP-outlook-upload.md` |
 | Add a per-user preview branch | `docs/howto/preview-a-branch.md` |
 | Onboard a new RA | Wiki [Home](https://github.com/Bingham-Research-Center/ubair-website/wiki/Home) (the wiki's only page); then `docs/howto/preview-a-branch.md` |
-| **Build the producer side of the NWP dashboard** (LLM forecast text, aircraft products) | `docs/NWP-PRODUCER-HANDOFF-nov20.md` — asks P1–P20 grouped by repo (brc-tools, clyfar, the new brc-ffion/brc-rhiannon/ops repos, the hub), the dev-only exceptions, the `llm_forecast/1` file with a worked example, how to check an upload. Rules as code: `public/js/llmForecast.js`; permanent contract: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5d–5e |
+| **Pick up where the last session stopped** | `docs/NEXT-SESSION-HANDOFF-nov21.md`: versions, open PRs, parked work, next steps on the dev box and on CHPC |
+| **Build the producer side of the NWP dashboard** (LLM forecast text, aircraft products) | `docs/NWP-PRODUCER-HANDOFF-nov20.md` — asks P1–P24 grouped by repo (brc-tools, clyfar, the new brc-ffion/brc-rhiannon/ops repos, the hub; §9: air-quality stations, found 21 Nov), the dev-only exceptions, the `llm_forecast/1` file with a worked example, how to check an upload. Rules as code: `public/js/llmForecast.js`; permanent contract: `docs/WEBSITE-BRCTOOLS-CONTRACT.md` §5d–5e |
 | **Explain a feature to someone new** (or find its code map) | `docs/features/`: one page per feature, plain language first. Index table in `README.md` ("New here?"); terms in `docs/features/PLAIN-WORDS-GLOSSARY.md` |
 | **Understand or change the homepage status lights** (colours, thresholds, a new light) | `docs/features/HOMEPAGE-STATUS-LIGHTS.md` — plain-language rules first, then the code map. Rules: `server/statusLights.js`; road rule shared with the roads page: `server/roadConditionRules.js` |
 | Show National Weather Service alerts anywhere on the site | `server/nwsAlerts.js` (`getNwsAlertsService().getBasinAlerts()`, the Basin zone list, floor vs nearby) and `GET /api/weather-alerts`. It answers `ok` with a list or `unavailable` with `alerts: null`; never treat a failure as an empty list |

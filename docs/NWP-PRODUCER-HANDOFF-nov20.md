@@ -13,7 +13,8 @@ and aircraft products (`aircraft`); it never writes text itself. Its version 1.8
 the Ffion weather run (P2) delivers live text, so **P2 is the critical path**, and it now needs
 new repos (§2c). On 20 Nov: the brc-tools fixes for P8, P9, P10, P15, P16/R1 and P17 went up as
 PRs #76–#78, and the Clyfar winter job was switched back on (which closes the `llm_outlooks` half
-of P1 and delivers P4 for the winter once its first cycle checks out).
+of P1 and delivers P4 for the winter once its first cycle checks out). On 21 Nov an audit of the
+observation feed added P21–P24 for the air-quality stations (§9).
 
 ---
 
@@ -65,6 +66,10 @@ which is the tree the crons run from.
 | **P14** | Fresher points: waypoints and the KVEL crosswind land about 2 h 55 min after the run; `road-forecast` manages 1 h 23 min | Open, S |
 | **P18** | Cold-pool fields: 700 hPa temperature and boundary-layer height on the grid (P12 names), and a model sounding at Vernal or Ouray | Open, M |
 | **P19** | Aviation, §7 | Open, S to M |
+| **P21** | Add Fruitland (`QFL`, DEQ ozone) to the observation request (§9) | Open, S |
+| **P22** | Send NO and NO2 where reported, not only NOx (§9) | Open, S |
+| **P23** | Drop never-reporting stations from the metadata file (§9) | Open, S |
+| **P24** | UB-AIR monitors back into the feed, never as a second `map_obs_*` producer (§9) | Open, S to M; waits on UB-AIR reaching Synoptic |
 
 `brc-tools` calls itself a method library, not an operations repo. John expects the cron
 wiring for these products to move to the ops repo in §2c in time. Until then, keep changes on
@@ -376,6 +381,30 @@ percentiles. The Clyfar job should deliver `llm_outlooks` and the GEFS percentil
   forecast tile reads the rise in `snow_depth` as new snow. Keep `snow_depth` a depth: if it
   ever became water equivalent, the tile's inch thresholds would be wrong.
 
+## 9. Air-quality stations (P21 to P24), found 21 Nov
+
+An audit of the observation feed against Synoptic's own metadata on 21 Nov. The feed has
+carried the same 11 ozone monitors every day since April. Since #423 the website keys every
+reading by station ID, so a station added to the request appears on the Live AQ map with no
+website change. All four asks belong to `brc-tools` (the observation cron).
+
+| # | Ask | Unlocks on the website | Size |
+|---|---|---|---|
+| **P21** | Add **`QFL` (Fruitland, Utah DEQ: ozone, NO, NO2, CO)** to the observation request. It is active on Synoptic and the only working Basin monitor the feed lacks | Western Basin ozone on both maps; it is already listed for the homepage and appears there once it arrives | S |
+| **P22** | Send **`NO_concentration` and `NO2_concentration`** wherever they are reported: `A1386`, `A1388`, `A1622`, `A1633`, `QRS`, `QV4` (and `QFL`). Today only `NOx` comes, and only from the four Ute sites | NO and NO2 rows in the station popups (already wired) | S |
+| **P23** | **Drop stations that never report** from the metadata file: `UFD04`, `UFD05`, `UFD06` (Dec 2011 downslope-event sites), `COOPROSU1` (inactive since Feb 2025), `COOPFTDU1` (inactive since May 2025), `K40U` (no data since 22 Aug 2026) | Fewer permanent grey dots on Live AQ | S |
+| **P24** | The **UB-AIR monitors** (`UBHSP` Horsepool, `UBCSP` Castle Peak, `UB7ST` Seven Sisters; network 209) have had no data on Synoptic since Sep, Nov and Dec 2025. When they are back, add them to the request. If instead a third server sends them from storage, it must not upload its own `map_obs_*` file: the website shows only the newest observations file, so two producers would take turns. Merge into CHPC's file, or agree a separate prefix first | The three grey "not reporting since" markers turn into readings with no website change | S to M |
+
+Not asks, but worth knowing:
+
+- **The website's Synoptic token is Utah-only.** Every request for Colorado or Wyoming (Rangely,
+  the Dinosaur CO side, south-west Wyoming) answers "your account does not have access". John
+  is asking Synoptic for the edge states. Check whether the CHPC token has the same limit, and
+  whether a restricted network would hide the UB-AIR sites even once they report. Keyless
+  stand-ins (Rangely AWOS `K4V0` and others) are in `NEXT-SESSION-HANDOFF-nov21.md` §4.
+- **Co-op snow depth is once a day.** The maps show it up to 30 h old (every other reading,
+  3 h). The feed drops a co-op row after about a day, which suits that.
+
 <sub>Drafted with Claude Code on 2026-11-20 from `docs/NWP-DASHBOARD-PLAN-nov20.md` and John's
 answers that day; regrouped by repo the same evening from the notchpeak1 session that opened
-brc-tools #76–#78 and resumed Clyfar.</sub>
+brc-tools #76–#78 and resumed Clyfar. §9 added on 21 Nov from the air-quality map audit (#423).</sub>
