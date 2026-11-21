@@ -113,8 +113,9 @@ when the season ends. Backup: `~/crontab.bak.20261120`.
 John's decision on 20 Nov: the persona repos are the **brains** (prompts, bundles, validation,
 LLM calls, no cron, no uploads). A **third, new ops repo** quarterbacks the operations: cron
 jobs, schedules, pushes to both hosts. `clyfar` is not the home for new LLM work. The ops repo
-is to be **`brc-data-ops`** (John, 20 Nov); on 21 Nov it is an empty folder on CHPC with no git
-history and no GitHub repo.
+is **`brc-data-ops`** (John, 20 Nov). It was created on 21 Nov as a private repo
+(`Bingham-Research-Center/brc-data-ops`); since 10:31Z that day it runs the four HRRR crons, and
+its `docs/OPS-BACKLOG.md` lists the open ops asks ([`CHPC-INGEST-REPLY-nov21.md`](CHPC-INGEST-REPLY-nov21.md) §4).
 
 | # | Ask | Repo | State |
 |---|---|---|---|
