@@ -1,7 +1,7 @@
-import { createStationIcon, createStationPopup, getMarkerStatus } from './mapUtils.js';
+import { createStationIcon, createStationPopup } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
-import { stations as configStations } from './config.js';
-import { buildStationMeasurements, mapStationName } from './mapShared.js';
+import { HOME_STATIONS } from './config.js';
+import { describeStation, liveAqStationIds, markerLayer } from './mapShared.js';
 
 // Initialize the map centered on Uintah Basin
 const map = L.map('map').setView([40.3033, -109.7], 9.5);
@@ -22,11 +22,9 @@ let markers = [];
 let cycleMarkers = [];
 let useCelsius = false; // Default to Fahrenheit (matches homepage default)
 let lastUnits = {}; // Cache units for popup rebuilds
-let lastTimestamps = {}; // Each station's latest report time, for the popups
 const AUTO_CYCLE_PAN_OFFSET_PX = { x: 130, y: 20 };
 const AUTO_CYCLE_PAN_DURATION_S = 0.8;
 const AUTO_CYCLE_MOVEEND_FALLBACK_MS = Math.round((AUTO_CYCLE_PAN_DURATION_S * 1000) + 160);
-const BASIN_STATION_NAMES = new Set(Object.keys(configStations));
 
 // Setup UI elements after DOM loads
 document.addEventListener('DOMContentLoaded', function() {
@@ -114,9 +112,8 @@ function setupUnitToggle() {
             // Rebuild all popups with new units
             map.closePopup();
             markers.forEach(marker => {
-                const opts = marker.options;
-                if (opts.stationName && opts.measurements) {
-                    marker.bindPopup(popupFor(opts.stationName, opts.measurements), getPopupOptions());
+                if (marker.options.station) {
+                    marker.bindPopup(popupFor(marker.options.station), getPopupOptions());
                 }
             });
         });
@@ -345,85 +342,61 @@ function stopKioskMode() {
 
 async function updateMap() {
   try {
-    // Updating map with station data...
-
-    // Destructure observations and metadata from the API
     const { observations, metadata } = await fetchLiveObservations();
-
-    // Processing observations and metadata for map update
-
-    // Extract units from observations data
-    const units = observations._units || {};
-    lastUnits = units;
-    lastTimestamps = observations._timestamps || {};
+    lastUnits = observations._units || {};
+    const now = new Date();
 
     // Clear existing markers
     markers.forEach(m => map.removeLayer(m));
     markers = [];
     cycleMarkers = [];
 
-    const cycleMarkerByStationName = new Map();
-    let validStations = 0;
-    let skippedStations = 0;
-    for (const [stid, info] of Object.entries(metadata || {})) {
-      const stationLat = info?.lat;
-      const stationLng = info?.lng;
-      if (!Number.isFinite(stationLat) || !Number.isFinite(stationLng)) {
-        skippedStations++;
-        continue;
-      }
-
-      const stationName = mapStationName(stid, info?.name);
-      const stationInfo = { lat: stationLat, lng: stationLng };
-      const measurements = buildStationMeasurements(observations, stationName);
-      const marker = createStationMarker(stationName, stationInfo, measurements);
-      if (marker) {
-        markers.push(marker);
-        validStations++;
-        if (BASIN_STATION_NAMES.has(stationName) && !cycleMarkerByStationName.has(stationName)) {
-          cycleMarkerByStationName.set(stationName, marker);
-        }
-      } else {
-        skippedStations++;
-      }
+    // One marker per station ID: every station in the feed, plus the monitors known to have
+    // stopped reporting (drawn grey with the date). Stations on the same spot share a marker.
+    const byId = new Map();
+    for (const stid of liveAqStationIds(metadata)) {
+      const station = describeStation(stid, { observations, metadata, now });
+      if (!station) continue;
+      const marker = createStationMarker(station);
+      if (!marker) continue;
+      markers.push(marker);
+      byId.set(stid, marker);
     }
 
-    cycleMarkers = Object.keys(configStations)
-      .map(stationName => cycleMarkerByStationName.get(stationName))
-      .filter(Boolean);
-
-    if (window.location.hostname === 'localhost') {
-      console.log(
-        `Live AQ markers: rendered ${validStations}, skipped ${skippedStations}, ` +
-        `metadata stations ${Object.keys(metadata || {}).length}, cycle stations ${cycleMarkers.length}`
-      );
-    }
+    // Auto-cycle visits the homepage's Basin stations, in the same order.
+    cycleMarkers = HOME_STATIONS.map(stid => byId.get(stid)).filter(Boolean);
   } catch (error) {
     console.error('Failed to update map:', error);
   }
 }
 
-function popupFor(stationName, measurements) {
-    return createStationPopup(stationName, measurements, {
-        units: lastUnits, observedAt: lastTimestamps[stationName] ?? null, imperial: !useCelsius
+function popupFor(station) {
+    return createStationPopup(station.name, station.measurements, {
+        units: lastUnits,
+        observedAt: station.observedAt,
+        shownAt: station.shownAt,
+        lastReportAt: station.lastReportAt,
+        notReportingSince: station.notReportingSince,
+        companions: station.companions,
+        isRoadStation: station.road,
+        imperial: !useCelsius
     });
 }
 
 // Same marker and popup as the homepage map (mapUtils.js).
-function createStationMarker(stationName, stationInfo, measurements) {
+function createStationMarker(station) {
     try {
-        const marker = L.marker([stationInfo.lat, stationInfo.lng], {
-            icon: createStationIcon(getMarkerStatus(measurements)),
-            stationName: stationName,
-            measurements: measurements
+        const marker = L.marker([station.lat, station.lng], {
+            icon: createStationIcon(station.status),
+            zIndexOffset: markerLayer(station.status),
+            title: station.name,
+            station
         });
-        marker.bindPopup(popupFor(stationName, measurements), getPopupOptions());
+        marker.bindPopup(popupFor(station), getPopupOptions());
         marker.addTo(map);
         return marker;
     } catch (error) {
-        console.error(`Error creating marker for ${stationName}:`, error);
+        console.error(`Error creating marker for ${station.name}:`, error);
         return null;
     }
 }
-
-// window.mapInstance = map;

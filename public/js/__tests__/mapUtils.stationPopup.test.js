@@ -76,11 +76,60 @@ describe('createStationPopup', () => {
     });
 });
 
+describe('createStationPopup for a quiet station', () => {
+    it('gives the day a monitor stopped reporting', () => {
+        const html = createStationPopup('Horsepool', {}, { notReportingSince: '2025-09-03', now: NOW });
+        expect(html).toContain('Not reporting since Sep 3, 2025');
+        expect(html).toContain('is-stale');
+        expect(rows(html)).toEqual([]);
+    });
+
+    it('gives the time of the last report when a station has gone quiet', () => {
+        const html = createStationPopup('Neola', {}, { lastReportAt: '2026-11-11T22:00:00Z', now: NOW });
+        expect(html).toContain('Last report Nov 11, 3:00 pm MT · 13 h ago');
+        expect(html).toContain('No recent observations from this station.');
+    });
+
+    it('prefers a newer last report to the day the registry says it stopped', () => {
+        const html = createStationPopup('Horsepool', {}, {
+            notReportingSince: '2025-09-03', lastReportAt: '2026-11-11T22:00:00Z', now: NOW
+        });
+        expect(html).toContain('Last report Nov 11');
+        expect(html).not.toContain('Not reporting since');
+    });
+
+    it('lists a station on the same spot under its own name and time', () => {
+        const html = createStationPopup('Dinosaur NM', { Ozone: 34 }, {
+            units: UNITS, observedAt: '2026-11-12T10:00:00Z', now: NOW,
+            companions: [{
+                name: 'Dinosaur NM co-op', measurements: { 'Snow Depth': 0 },
+                observedAt: '2026-11-11T22:00:00Z', shownAt: { 'Snow Depth': '2026-11-11T22:00:00Z' }
+            }]
+        });
+        expect(html).toContain('<h4 class="station-popup-sub">Dinosaur NM co-op</h4>');
+        expect(rows(html)).toEqual(['Ozone: 34 ppb Good', 'Snow depth: 0 in']);
+        expect(html).toContain('Snow depth is a once-a-day report.');
+    });
+
+    it('does not call a fresh snow depth a daily report', () => {
+        const html = createStationPopup('Altamont', { 'Snow Depth': 101.6 }, {
+            units: UNITS, observedAt: '2026-11-12T10:00:00Z', shownAt: { 'Snow Depth': '2026-11-12T10:00:00Z' }, now: NOW
+        });
+        expect(rows(html)).toEqual(['Snow depth: 4.0 in']);
+        expect(html).not.toContain('once-a-day');
+    });
+});
+
 describe('describeObservedTime', () => {
     it('gives Mountain time and age', () => {
         expect(describeObservedTime('2026-11-12T10:30:00Z', NOW)).toEqual({
             text: 'Observed 3:30 am MT · 12 min ago', stale: false
         });
+    });
+
+    it('is not stale inside three hours', () => {
+        expect(describeObservedTime('2026-11-12T08:00:00Z', NOW).stale).toBe(false);
+        expect(describeObservedTime('2026-11-12T07:40:00Z', NOW).stale).toBe(true);
     });
 
     it('adds the date when the reading is from another day, and flags it stale', () => {
