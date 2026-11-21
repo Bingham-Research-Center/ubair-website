@@ -11,6 +11,8 @@
 class UnitsSystem {
     constructor() {
         this.isMetric = localStorage.getItem('unitsSystem') === 'metric';
+        // Keep the kiosk's existing precision; the roads page uses whole degrees.
+        this.temperatureDigits = document.body?.dataset.pageType === 'roads' ? 0 : 1;
     }
 
     /**
@@ -25,9 +27,9 @@ class UnitsSystem {
 
         if (this.isMetric) {
             const celsius = (temp - 32) * 5/9;
-            return `${celsius.toFixed(1)}°C`;
+            return `${celsius.toFixed(this.temperatureDigits)}°C`;
         }
-        return `${temp.toFixed(1)}°F`;
+        return `${temp.toFixed(this.temperatureDigits)}°F`;
     }
 
     /**
@@ -41,10 +43,10 @@ class UnitsSystem {
         if (isNaN(temp)) return '--';
 
         if (this.isMetric) {
-            return `${temp.toFixed(1)}°C`;
+            return `${temp.toFixed(this.temperatureDigits)}°C`;
         }
         const fahrenheit = temp * 9/5 + 32;
-        return `${fahrenheit.toFixed(1)}°F`;
+        return `${fahrenheit.toFixed(this.temperatureDigits)}°F`;
     }
 
     /**

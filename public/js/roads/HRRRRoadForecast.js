@@ -180,6 +180,7 @@ export class HRRRRoadForecastController {
     renderLoading() {
         this.panel.dataset.state = 'loading';
         this.statusElement.className = 'hrrr-guidance-status is-loading';
+        this.statusElement.hidden = false;
         this.statusElement.textContent = 'Checking the latest model run…';
         this.metaElement.textContent = 'Forecast initialization and coverage will appear here.';
     }
@@ -193,9 +194,8 @@ export class HRRRRoadForecastController {
 
         this.panel.dataset.state = freshness.level;
         this.statusElement.className = `hrrr-guidance-status is-${freshness.level}`;
-        this.statusElement.textContent = freshness.level === 'fresh'
-            ? 'Current model run available'
-            : freshness.label;
+        this.statusElement.hidden = freshness.level === 'fresh';
+        this.statusElement.textContent = freshness.level === 'fresh' ? '' : freshness.label;
 
         this.metaElement.replaceChildren(
             createMetaItem('fas fa-clock', `${model} initialized ${formatMountainTime(this.forecast.init_time)}`),
@@ -211,6 +211,7 @@ export class HRRRRoadForecastController {
     renderUnavailable(message, retainingPreviousRun = false) {
         this.panel.dataset.state = 'unavailable';
         this.statusElement.className = 'hrrr-guidance-status is-unavailable';
+        this.statusElement.hidden = false;
         this.statusElement.textContent = retainingPreviousRun
             ? 'Latest update delayed'
             : 'HRRR guidance unavailable';
@@ -312,7 +313,7 @@ export class HRRRRoadForecastController {
     setCurrentMapChromeVisible(visible) {
         [
             document.querySelector('.conditions-overlay'),
-            document.querySelector('.road-legend-collapsible')
+            document.querySelector('.road-legend-current') || document.querySelector('.road-legend-collapsible')
         ].filter(Boolean).forEach(element => {
             element.hidden = !visible;
             element.setAttribute('aria-hidden', String(!visible));
