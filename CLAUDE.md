@@ -239,7 +239,7 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,108 tests across 77 suites at 1.7.9-dev,
+- `npm test` — Jest. **The suite is green (1,111 tests across 77 suites at 1.7.9-dev,
   2026-11-21); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).

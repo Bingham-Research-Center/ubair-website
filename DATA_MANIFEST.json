@@ -1,5 +1,5 @@
 {
-  "version": "2.4.0",
+  "version": "2.5.0",
   "description": "BasinWx Data Pipeline Manifest - Defines all data types, formats, validation rules, and transfer schedules",
   "lastUpdated": "2026-11-21",
   "dataTypes": {
@@ -478,8 +478,8 @@
         "hrrr_surface_layers": {
           "description": "Reduced HRRR surface-layer Basin subset for weather-map rendering",
           "schedule": {
-            "frequency": "45 0,6,12,18 * * *",
-            "description": "The three newest runs and their index, every six hours (crontab on notchpeak1, Mountain time; the files land about :47). Declared hourly until 2.4.0, which it never was. One run an hour, the newest only, is producer ask P11.",
+            "frequency": "45 * * * *",
+            "description": "One run an hour, the newest only, and its index (producer ask P11, declared in 2.5.0). The minute is the producer's: only the interval is judged. Until the crontab line in brc-data-ops changes (O2), runs still arrive three at a time every six hours (`45 0,6,12,18`, Mountain time), so for those hours this product reads stale on a box that runs 2.5.0.",
             "timezone": "America/Denver"
           },
           "filename": {
@@ -570,7 +570,36 @@
                 "maxItems": 3
               },
               "variables": {
-                "type": "object"
+                "type": "object",
+                "description": "One entry per field. The map reads `units` and nothing else; `label` is for people (the page names its own layers). From 2.5.0 the two wind entries may also say which frame they are in (P26).",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["units"],
+                  "properties": {
+                    "units": { "type": "string" },
+                    "label": { "type": "string" }
+                  }
+                },
+                "properties": {
+                  "wind_u_10m_ms": {
+                    "type": "object",
+                    "required": ["units"],
+                    "properties": {
+                      "units": { "type": "string", "enum": ["m/s"] },
+                      "label": { "type": "string", "example": "Eastward wind (10 m, earth-relative)" },
+                      "frame": { "type": "string", "enum": ["earth"], "description": "earth: the component toward true east. A file without `frame` was made before 2.5.0 and says nothing either way (runs before brc-tools #78, live 2026-11-21 04:46Z, are relative to the model grid)" }
+                    }
+                  },
+                  "wind_v_10m_ms": {
+                    "type": "object",
+                    "required": ["units"],
+                    "properties": {
+                      "units": { "type": "string", "enum": ["m/s"] },
+                      "label": { "type": "string", "example": "Northward wind (10 m, earth-relative)" },
+                      "frame": { "type": "string", "enum": ["earth"], "description": "earth: the component toward true north" }
+                    }
+                  }
+                }
               },
               "fields": {
                 "type": "object",
@@ -615,8 +644,8 @@
           "notes": [
             "`snowfall_1h_mm` is a running total of snow depth since the run began (HRRR ASNOW), not an hourly amount. Since brc-tools #77 (live 2026-11-21 04:46Z) it no longer drops to zero in hours without snow; runs made before that do. The website shows it as a total and never as a rate.",
             "`rainfall_1h_mm` is a true hourly amount.",
-            "Runs reach the site three at a time every six hours, each 2.8 to 4.8 h after it starts (measured 2026-11-20 and 21). Agreed for the producer's next change (P11): one run an hour, the newest only.",
-            "`wind_u_10m_ms` and `wind_v_10m_ms` are the east and north components, relative to true north, since brc-tools #78 (live 2026-11-21 04:46Z). Checked from the files: waypoint directions stepped -7.8 degrees at that run, and the two products agree within 0.5 degrees. Earlier runs are relative to the model grid, about 8 degrees off. The file itself does not say which frame it is in."
+            "Until brc-data-ops O2, runs reach the site three at a time every six hours, each 2.8 to 4.8 h after it starts (measured 2026-11-20 and 21). From then (P11, declared in 2.5.0): one run an hour, the newest only, about 165 min after it starts, and about 105 min once P14 picks the newest run S3 has complete. The index then lists one run, and the page's run selector offers that one.",
+            "`wind_u_10m_ms` and `wind_v_10m_ms` are the east and north components, relative to true north, since brc-tools #78 (live 2026-11-21 04:46Z). Checked from the files: waypoint directions stepped -7.8 degrees at that run, and the two products agree within 0.5 degrees. Earlier runs are relative to the model grid, about 8 degrees off. From 2.5.0 the file may say so itself: `variables.wind_u_10m_ms.frame` and `wind_v_10m_ms.frame` are `earth` (P26)."
           ]
         },
         "hrrr_waypoints": {
@@ -770,18 +799,150 @@
               }
             }
           }
+        },
+        "clustering_summary": {
+          "description": "Clyfar's scenario clusters for one run: the 31 members grouped by their ozone outlook, each cluster with a representative member. Read by public/js/forecast_air_quality.js (the scenario buttons on /forecast_air_quality, which list it through /api/filelist/forecasts?prefix=forecast_clustering_summary_). Built by Clyfar's utils/scenario_clustering.build_clustering_summary. Arrived from 2026-02 with no entry here until 2.5.0 (P28).",
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season (Mountain time).",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
+          "filename": {
+            "pattern": "forecast_clustering_summary_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_clustering_summary_20261120_1800Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["schema_version", "init", "n_members", "n_clusters", "clusters"],
+            "properties": {
+              "schema_version": { "type": "string", "description": "\"1.3\" on 2026-11-20" },
+              "init": { "type": "string", "pattern": "^\\d{8}_\\d{4}Z$" },
+              "n_members": { "type": "integer", "minimum": 1 },
+              "n_clusters": { "type": "integer", "minimum": 1 },
+              "clusters": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["id", "members", "fraction", "medoid"],
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "kind": { "type": "string" },
+                    "members": { "type": "array", "items": { "type": "string", "pattern": "^(clyfarcontrol|clyfar\\d{3})$" } },
+                    "fraction": { "type": "number", "minimum": 0, "maximum": 1 },
+                    "medoid": { "type": "string", "description": "The member the page draws for this cluster" },
+                    "clyfar_ozone": { "type": "object", "description": "dominant_category and risk_level" },
+                    "risk_profile": { "type": "object" },
+                    "gefs_weather": { "type": "object", "description": "Words, not numbers: snow_tendency, wind_tendency, pattern" },
+                    "evidence": { "type": "object" },
+                    "display": { "type": "object" }
+                  }
+                }
+              },
+              "method": { "type": "object" },
+              "representative_members": { "type": "array", "items": { "type": "string" } },
+              "member_assignment": { "type": "object" },
+              "linkage_note": { "type": "string" },
+              "spread_summary": { "type": "string" },
+              "quality_flags": { "type": "object" }
+            }
+          },
+          "fieldsRead": ["clusters[].id", "clusters[].members", "clusters[].fraction", "clusters[].medoid", "clusters[].clyfar_ozone"]
+        },
+        "gefs_weather_percentiles": {
+          "description": "The 10th, 50th and 90th percentiles across Clyfar's 31 members of its Basin-representative GEFS weather (snow depth, sea-level pressure, wind speed, solar radiation, temperature), one file per run. No page reads it yet: it is what producer ask P4 (interactive meteograms in place of the PNGs) will draw. No entry here until 2.5.0 (P28).",
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season (Mountain time).",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
+          "filename": {
+            "pattern": "forecast_gefs_weather_percentiles_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_gefs_weather_percentiles_20261120_1800Z.json"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["metadata", "forecast_times", "weather_percentiles"],
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "required": ["init_datetime", "product_type", "variables"],
+                "properties": {
+                  "init_datetime": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+                  "product_type": { "type": "string", "enum": ["gefs_weather_percentiles"] },
+                  "num_members": { "type": "integer" },
+                  "num_timesteps": { "type": "integer" },
+                  "percentiles": { "type": "array", "items": { "type": "integer" }, "description": "[10, 50, 90]" },
+                  "data_source": { "type": "string" },
+                  "variables": { "type": "object", "description": "Each of snow, mslp, wind, solar, temp: { units, description }. Read the unit from here." }
+                }
+              },
+              "forecast_times": { "type": "array", "items": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" } },
+              "weather_percentiles": {
+                "type": "object",
+                "description": "For each variable, { p10, p50, p90 }: arrays index-aligned with forecast_times",
+                "additionalProperties": {
+                  "type": "object",
+                  "required": ["p10", "p50", "p90"],
+                  "additionalProperties": { "type": "array", "items": { "type": ["number", "null"] } }
+                }
+              }
+            }
+          },
+          "notes": [
+            "3-hourly to +240 h, then 6-hourly to +384 h: index by forecast_times, never by a fixed step.",
+            "The first value of every series (the init time) is null.",
+            "`snow` is a depth on the ground in millimetres, not liquid water. `wind` is a speed with no direction.",
+            "Values are Clyfar's Basin-representative reductions of GEFS (\"UB-repr\"), not a grid point."
+          ]
+        },
+        "gefs_weather_members": {
+          "description": "The same GEFS weather series for each of Clyfar's 31 members, one file each (about 10 KB). Sent but not read: no page draws a single member's weather, and the percentiles file carries what P4 needs. Declared in 2.5.0 (P28) so that freshness stops listing them as undeclared. Stopping them would take a Clyfar change, and Clyfar is frozen: John's call.",
+          "sentButUnread": true,
+          "schedule": {
+            "frequency": "15 3,9,15,21 * * *",
+            "description": "With each Clyfar run, in ozone season (Mountain time).",
+            "timezone": "America/Denver",
+            "seasonal": true
+          },
+          "filename": {
+            "pattern": "forecast_gefs_weather_clyfar{NNN}_YYYYMMDD_HHMMZ.json",
+            "example": "forecast_gefs_weather_clyfar000_20261120_1800Z.json",
+            "note": "Not forecast_gefs_weather_{member}_: that would also claim the percentiles file"
+          },
+          "schema": {
+            "type": "object",
+            "required": ["metadata", "forecast_times", "weather"],
+            "properties": {
+              "metadata": {
+                "type": "object",
+                "properties": {
+                  "init_datetime": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$" },
+                  "member": { "type": "string", "pattern": "^clyfar\\d{3}$" },
+                  "product_type": { "type": "string", "enum": ["gefs_weather"] },
+                  "variables": { "type": "object" }
+                }
+              },
+              "forecast_times": { "type": "array", "items": { "type": "string" } },
+              "weather": { "type": "object", "description": "snow, mslp, wind, solar, temp: one array each, index-aligned with forecast_times" }
+            }
+          }
         }
       },
       "validation": {
         "maxFileSize": "10MB",
-        "totalFilesPerRun": 64,
+        "totalFilesPerRun": 96,
         "filesPerProduct": {
           "possibility_heatmap": 31,
           "exceedance_probabilities": 1,
           "percentile_scenarios": 31,
-          "hrrr_surface_layers": 4,
+          "hrrr_surface_layers": 2,
           "hrrr_waypoints": 1,
-          "hrrr_kvel_crosswind": 1
+          "hrrr_kvel_crosswind": 1,
+          "clustering_summary": 1,
+          "gefs_weather_percentiles": 1,
+          "gefs_weather_members": 31
         }
       },
       "ozoneCategories": {
@@ -809,8 +970,8 @@
       "notes": [
         "Forecast products are generated 4× daily after GEFS runs (00Z, 06Z, 12Z, 18Z)",
         "GEFS data has ~3 hour latency, so Clyfar runs at +3.5hr to ensure data availability",
-        "Each run produces 63 JSON files (31 possibility + 1 exceedance + 31 percentiles)",
-        "HRRR surface layers provide the latest three runs as reduced-precision Basin subsets for /forecast_weather",
+        "Each Clyfar run sends 96 JSON files: 31 possibility heatmaps, 31 percentile scenarios, 1 exceedance, 31 GEFS weather members, 1 GEFS weather percentiles and 1 clustering summary (counted on .dev, 20 Nov 18Z), plus 67 PNGs in images and 2 outlook files",
+        "HRRR surface layers provide the newest run as a reduced-precision Basin subset for /forecast_weather (the newest three until brc-data-ops O2; P11)",
         "Ozone categories use fuzzy inference (Mamdani) with Dubois-Prade possibility theory",
         "Daily maximum values are used (local timezone: America/Denver)",
         "Forecast horizon: ~15-17 days depending on GEFS availability"
@@ -1310,6 +1471,26 @@
       ]
     }
   },
+  "provenance": {
+    "description": "From 2.5.0, a JSON product whose file is an object may carry a top-level `producer` saying which code made it (producer ask P26). Optional: the website reads nothing from it and refuses no file for lacking it. It dates any later change in a file from one request.",
+    "field": "producer",
+    "schema": {
+      "type": "object",
+      "required": ["repo", "commit"],
+      "properties": {
+        "repo": { "type": "string", "example": "brc-tools" },
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$", "description": "Short or full SHA of the tree that built the file" },
+        "ops": { "type": ["string", "null"], "pattern": "^[A-Za-z0-9._-]+@[0-9a-f]{7,40}$", "description": "\"brc-data-ops@<sha>\" for a crontab run, null for a hand run" }
+      }
+    },
+    "example": { "producer": { "repo": "brc-tools", "commit": "6573fad", "ops": "brc-data-ops@4b82a67" } },
+    "appliesTo": "Every JSON product whose top level is an object: road-forecast, the HRRR products and their indexes, the Clyfar products, llm_forecasts and aircraft",
+    "notIn": {
+      "observations": "The file is a bare list of rows (schema type array). A top-level key would make it an object, which is a MAJOR change; the crontab log and push_receipts.jsonl at CHPC already date each upload",
+      "metadata": "A bare list, as observations",
+      "outlooks, llm_outlooks, images": "Markdown, PDF and PNG"
+    }
+  },
   "globalValidation": {
     "authentication": {
       "method": "API_KEY",
@@ -1338,7 +1519,7 @@
       "metadata": "When the station list changes, at least every 6 hours (automatic)",
       "outlooks": "Ad-hoc/manual - once daily maximum, may be less frequent (max 10 days between)",
       "images": "Every 6 hours (automatic; one batch of GEFS meteograms per cycle, ~9.5 h after 00/06/12/18Z)",
-      "forecasts": "Per product, see dataTypes.forecasts.products.*.schedule: HRRR town and runway points hourly, HRRR surface layers every six hours, Clyfar every six hours in ozone season",
+      "forecasts": "Per product, see dataTypes.forecasts.products.*.schedule: HRRR town and runway points hourly, HRRR surface layers hourly from P11 (every six hours until then), Clyfar every six hours in ozone season",
       "road-forecast": "Hourly (automatic)",
       "llm_outlooks": "With each Clyfar run, in ozone season",
       "llm_forecasts": "Ffion every 6 hours, Rhiannon every 3 hours (automatic, once the producer runs exist)",
