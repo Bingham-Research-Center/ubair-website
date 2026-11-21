@@ -1,4 +1,4 @@
-import { feelsLikeColdF, windChillF } from '../met.js';
+import { feelsLikeColdF, toKilometres, toMiles, windChillF } from '../met.js';
 import { mountainHour } from '../mountainTime.js';
 
 // Wind chill for the homepage forecast tile and the weather map. The numbers are the National
@@ -37,5 +37,27 @@ describe('mountainHour', () => {
         expect(mountainHour(Date.parse('2026-11-20T07:00:00Z'))).toBe(0);  // MST
         expect(mountainHour(Date.parse('2026-11-20T06:59:00Z'))).toBe(23);
         expect(mountainHour(Date.parse('2026-07-01T18:00:00Z'))).toBe(12); // MDT
+    });
+});
+
+// Visibility joined the observation feed on 2026-11-21 (brc-tools #76) in statute miles, the
+// one variable not sent in SI. The road forecast states kilometres.
+describe('toMiles and toKilometres', () => {
+    test('the feed\'s own unit passes through', () => {
+        expect(toMiles(10, 'Statute miles')).toBe(10);
+        expect(toKilometres(10, 'Statute miles')).toBeCloseTo(16.09, 2);
+    });
+
+    test('kilometres and metres convert', () => {
+        expect(toMiles(16.09344, 'km')).toBeCloseTo(10, 6);
+        expect(toMiles(1609.344, 'Meters')).toBeCloseTo(1, 6);
+        expect(toKilometres(14.3, 'km')).toBeCloseTo(14.3, 6);
+    });
+
+    test('a unit it does not know, or no number, is null rather than a guess', () => {
+        expect(toMiles(10, 'nautical miles')).toBeNull();
+        expect(toMiles(10, undefined)).toBeNull();
+        expect(toMiles(null, 'Statute miles')).toBeNull();
+        expect(toKilometres(NaN, 'km')).toBeNull();
     });
 });
