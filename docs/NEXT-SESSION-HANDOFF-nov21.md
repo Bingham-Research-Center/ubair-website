@@ -17,6 +17,11 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
   steps are in `CLAUDE.md` ("Versioning & release train"); each merge needs his own OK.
 - **Open PRs:** #337, #338, #339, the roads batches B–D, parked for 1.9.0 (Michael's fixes sit
   on `codex/roads-{b,c,d}-review-fixes`); #401, Quinten's draft, to rebase after the NWP work.
+  Added later on 21 Nov, all waiting for John: #426 (producer status, written on CHPC), #427
+  (the upload index, 1.7.9-dev: deploy `.dev` with a restart once merged), #428 (the pruning
+  script for #168: `--apply` has not been run anywhere) and the docs PR that adds
+  [`CHPC-INGEST-HANDOFF-nov21.md`](CHPC-INGEST-HANDOFF-nov21.md). Worktrees
+  `/srv/ubair-website-ingest`, `-prune` and `-handoff` hold their branches.
 - **On the dev box:** worktree `/srv/ubair-website-preview-roads` (the parked roads stack, its
   preview on :3002 not running). The spare preview slot `theme.basinwx.dev` (:3003) is free.
   Local-only branches kept on purpose: `preview/theme` (the look switcher, #355) and

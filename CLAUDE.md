@@ -10,7 +10,7 @@ what to do next) is in the newest `docs/*-HANDOFF-*.md`; read it before acting.
 | Where the session runs | What it can do | Read first |
 |---|---|---|
 | **Dev box**: `/srv/ubair-website` as `deploy` | worktrees, PRs, deploy `.dev`, previews; no sudo, no route to prod | `docs/NEXT-SESSION-HANDOFF-nov21.md` |
-| **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
+| **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/CHPC-INGEST-HANDOFF-nov21.md` (what arrived on 21 Nov, measured; asks P25–P28), then `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
 | Prod box (root) | JRL only: prod deploys | "Deploying" below |
 | Any laptop or VM copy | read and draft; never the source of truth | this file |
 
@@ -118,15 +118,20 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   api.weather.gov and aviationweather.gov, IEM, ACIS); none is wired yet. See the handoff.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
-  derive it with `met.js` meanwhile. No station in the obs feed has gusts or visibility
-  (brc-tools #76 adds both; visibility comes in statute miles). In
-  `road-forecast`, `precip_1hr` is a running total since the model run began, not an hourly
-  amount: use `precip_type` for "is it snowing", and difference the totals for a rate. In the
-  HRRR surface layers, `snowfall_1h_mm` is also a running total, zeroed in some hours
-  (`runningTotalForHour` in `public/js/hrrrFields.js`); its `rainfall_1h_mm` is truly hourly.
-  brc-tools #77 makes `precip_1hr` hourly and `snowfall_1h_mm` a clean total, and #78 rotates
-  HRRR u/v to north (they were grid-relative, ~7.5° off): re-read the payload once those are
-  live on notchpeak1.
+  derive it with `met.js` meanwhile. brc-tools #76–#78 took effect at 04:46Z on 21 Nov 2026,
+  and what follows was checked against the files (`docs/CHPC-INGEST-HANDOFF-nov21.md` §1):
+  - 38 stations send `wind_gust` and 28 send `visibility`, **in statute miles**, the one
+    variable not in SI. A gust row can be hours older than the station's other rows (a gust
+    is reported only while gusting): read the row's own `date_time`.
+  - HRRR `wind_u/v` and the waypoint directions are relative to true north. Runs made before
+    then are relative to the model grid, about 7.5° off, and no file says which it is.
+  - In the surface layers, `snowfall_1h_mm` is a running total of snow depth since the run
+    began, no longer zeroed in some hours (`runningTotalForHour` in `public/js/hrrrFields.js`
+    still guards the older runs); `rainfall_1h_mm` is truly hourly.
+  - **Not confirmed yet:** in `road-forecast`, `precip_1hr` was a running total since the run
+    began, and #77 makes it hourly, but every run since has been dry. Until a wet run shows a
+    series that falls as well as rises, use `precip_type` for "is it snowing" and show no
+    amount. The KVEL crosswind rotation is unconfirmed too (calm).
 - **Derive in the browser only by a standard formula, from fields whose units the file
   states**, and say so on the page (`public/js/mapLayers.js`: wind chill, totals, extremes).
   Anything that needs a field we are not sent belongs at CHPC. JRL asks what a feature costs
