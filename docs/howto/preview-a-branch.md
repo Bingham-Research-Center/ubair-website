@@ -2,44 +2,37 @@
 
 **Who this is for:** any dev (RA, student, visiting collaborator) who has pushed a branch to the repo and wants to see it running live against real CHPC data — **without taking over `www.basinwx.dev`** for everyone else.
 
-**The 30-second version:** you get your own subdomain like `sports.basinwx.dev` that runs *your* branch. The main dev site keeps running on `dev`. Nobody steps on anyone.
+**The 30-second version:** you get your own subdomain like `<name>.basinwx.dev` that runs *your* branch. The main dev site keeps running on `dev`. Nobody steps on anyone.
 
 ---
 
 ## Before you start
 
 You'll need:
-- A branch pushed to `origin` (e.g. `feature/braxton-sports`).
+- A branch pushed to `origin` (e.g. `feature/<you>-<topic>`).
 - SSH access to the dev box as the `deploy` user. Ask John.
-- Your username registered in `/srv/ubair-website/preview-apps.json` with a port and subdomain. Example entry:
+- For your own subdomain only: your username registered in `preview-apps.json` with a free port
+  and a subdomain (3000 prod, 3001 dev, 3002 the parked roads stack, 3003 the spare slot are
+  taken). Example entry:
   ```json
-  { "user": "quinten", "branch": "feature/braxton-sports", "port": 3002, "subdomain": "sports" }
+  { "user": "<you>", "branch": "feature/<you>-<topic>", "port": 3004, "subdomain": "<you>" }
   ```
-  If yours isn't there, open a tiny PR adding one line.
+  Open a tiny PR adding it; the subdomain then needs a certificate and vhost from root.
 
 ---
 
-## The two ways to preview a branch (pick one)
+## Two ways to preview a branch
 
-### Mode A — "swap the whole dev site to my branch"
+**Never `git checkout` your branch in `/srv/ubair-website`.** That working tree *is*
+`www.basinwx.dev`: the site serves its files directly, so a checkout changes what everyone sees at
+once (and a new route 404s until a restart). Both ways below run your branch beside it instead.
 
-Quick and dirty. Fine when you're alone; **rude when anyone else is using `www.basinwx.dev`**, because it replaces what they see.
+### Quickest: the spare slot (no root, one branch at a time)
 
-```bash
-ssh deploy@www.basinwx.dev
-cd /srv/ubair-website
-git fetch origin
-git checkout <your-branch>
-pm2 restart ecosystem.config.cjs --update-env
-```
+`theme.basinwx.dev` → port 3003 already has its certificate and nginx vhost. Follow README
+"Branch previews" to put any branch there; take it down when you're done so the slot is free.
 
-Now `https://www.basinwx.dev/` is serving your branch. When you're done, `git checkout dev && pm2 restart ecosystem.config.cjs --update-env` to put it back.
-
-**Rule of thumb:** don't use Mode A unless you've told the team in Slack/email first.
-
----
-
-### Mode B — "my own subdomain, nobody else affected" (recommended)
+### Your own subdomain (root once, then yours)
 
 Runs your branch *in parallel* on a separate port + subdomain. `www.basinwx.dev` keeps running `dev`. Everyone's happy.
 
@@ -55,8 +48,9 @@ That script does the heavy lifting:
 - Creates a `git worktree` — a second checkout of your branch at `/srv/ubair-website-preview-<user>/`.
 - Symlinks the live CHPC data directory so your preview sees the same real observations as production.
 - Copies `.env`, overrides `PORT` and sets `PREVIEW_MODE=true`.
-- Runs `npm install` and `pm2 start` with a derived app name like `basinwx-feature-braxton-sports`.
-- Runs `pm2 save` so the preview survives a reboot.
+- Runs `npm install` and `pm2 start` with a derived app name like `basinwx-feature-<you>-<topic>`,
+  from an empty environment so nothing from your shell leaks into the app.
+- Does **not** run `pm2 save`: previews stay out of the reboot set. After a reboot, run `up` again.
 
 At the end it prints nginx + certbot instructions. Run them once:
 

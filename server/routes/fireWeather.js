@@ -25,8 +25,19 @@ router.get('/fire-weather', async (req, res) => {
 router.get('/fire-weather/alerts', async (req, res) => {
     try {
         const alerts = await fireWeatherService.fetchRedFlagAlerts();
+        // null: the NWS could not be asked. That is not the same answer as "no alerts".
+        if (alerts === null) {
+            return res.status(503).json({
+                success: false,
+                status: 'unavailable',
+                timestamp: new Date().toISOString(),
+                alerts: null,
+                error: 'National Weather Service alerts are unavailable right now'
+            });
+        }
         res.json({
             success: true,
+            status: 'ok',
             timestamp: new Date().toISOString(),
             totalAlerts: alerts.length,
             alerts

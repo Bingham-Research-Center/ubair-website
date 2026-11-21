@@ -1,5 +1,170 @@
 # Data Manifest Change Log
 
+## Version 2.5.0 (2026-11-21)
+
+### Type: Minor - The wind frame and a producer stamp may be sent; the surface layers are hourly; Clyfar's three undeclared families are declared
+
+**Summary:** Answers the three asks in `docs/CHPC-INGEST-REPLY-nov21.md` (website #430): P26,
+P11 and P28. Every key added is optional, and no file the producers send today is refused or
+read differently.
+
+### Changes Made
+
+- **Added (P26):** `forecasts.products.hrrr_surface_layers.schema.properties.variables` now
+  describes its entries. `wind_u_10m_ms` and `wind_v_10m_ms` may carry `"frame": "earth"`, with
+  the labels CHPC proposed, "Eastward wind (10 m, earth-relative)" and "Northward wind (10 m,
+  earth-relative)". The map reads only `units`, which stays `m/s`. A file without `frame` was
+  made before this and says nothing.
+- **Added (P26):** a top-level `provenance` block. A JSON product whose file is an object may
+  carry `"producer": {"repo", "commit", "ops"}`; `ops` is `"brc-data-ops@<sha>"` for a crontab
+  run and `null` for a hand run. **Not in `observations` or `metadata`:** their files are bare
+  lists, and giving them a top-level key would be a MAJOR change. The crontab log and
+  `push_receipts.jsonl` already date those uploads.
+- **Changed (P11):** `hrrr_surface_layers` to `45 * * * *`, one run an hour, the newest only,
+  with its index (`filesPerProduct` 4 → 2). The minute is the producer's to choose; only the
+  interval is judged.
+- **Added (P28):** three products in `forecasts`, on Clyfar's schedule and `seasonal`:
+  `clustering_summary` (read by the air-quality forecast page; `fieldsRead` lists what it
+  uses), `gefs_weather_percentiles` (read by nothing yet; P4 will) and `gefs_weather_members`
+  (`sentButUnread: true`). The members are matched by `forecast_gefs_weather_clyfar{NNN}_`, so
+  that they never claim the percentiles file. `totalFilesPerRun` 64 → 96, as counted on `.dev`.
+  Checked against the 20 Nov 18Z and 21 Nov 00Z files on `.dev`: no file breaks its schema.
+
+### Why MINOR
+
+Every new key is optional, and nothing reads `frame` or `producer` yet. The new products
+describe files that already arrive. The schedule change makes nothing a producer sends today
+invalid.
+
+### Order of the change, and what it costs
+
+- **Before the crontab moves:** until brc-data-ops changes its surface line (O2), bundles still
+  come every six hours. A box running 2.5.0 (`.dev`) then reads `hrrr_surface_layers` stale for
+  about four hours in every six. That is a monitoring line only: no page or status light reads
+  it. It ends with the crontab change.
+- **Disk and traffic:** one run is 1.47 MB (mean of 84 runs since 14 Nov). An hour's run instead
+  of three every six hours is 24 a day against 12: about 34 MB a day per box instead of 17, or
+  1 GB a month. `scripts/prune-static.js` keeps 30 days of `forecast_hrrr_*` once its `--apply`
+  is scheduled (#168). It means 48 uploads a day against 16, and an upload is milliseconds since
+  website 1.7.9.
+- **The page:** the index lists one run, and the weather page's run selector offers that one.
+
+### Still not declared
+
+`forecast_rrfs_surface_layers_*`, the hand-run RRFS draft on `.dev`: a product entry comes with
+the page that draws it.
+
+## Version 2.4.0 (2026-11-21)
+
+### Type: Minor - Cadences corrected to the crontab, a schedule for every product; nothing a producer sends changes
+
+**Summary:** The declared schedules now say what the crontab on notchpeak1 does (read there on
+2026-11-21, brc-tools' reply to open ask A4), and each product in `forecasts` has its own, so
+that website 1.7.9 can judge freshness product by product. Answers A4 and A11.
+
+### Changes Made
+
+- **Changed:** `observations` to `*/5 * * * *` (was `*/10`; the cron has always been every 5).
+- **Changed:** `road-forecast` to `20 * * * *` (was `ad-hoc (proof-of-concept)`, which the
+  monitor read as hourly by accident). A11.
+- **Changed:** `forecasts.products.hrrr_surface_layers` to `45 0,6,12,18 * * *` (was
+  `0 * * * *`, which it never was).
+- **Changed:** `forecasts` and `llm_outlooks` to Clyfar's line, `15 3,9,15,21 * * *`
+  (`forecasts` said `30 3,9,15,21`; `llm_outlooks` said `ad-hoc`).
+- **Added:** a `schedule` on `possibility_heatmap`, `exceedance_probabilities` and
+  `percentile_scenarios`, which had none.
+- **Added:** `schedule.seasonal: true` on everything the Clyfar job sends (`images`,
+  `llm_outlooks`, the three Clyfar products). A seasonal product that has sent nothing for
+  7 days reads `dormant`, not `stale`.
+- **Added:** `monitoring.freshness`, which states the rules: twice the interval; `ad-hoc` is
+  never judged; products are judged one by one; the crontab runs in Mountain time.
+- **Changed:** `metadata` description (on change, at least every 6 hours, since brc-tools #76)
+  and the surface-layers `notes`: the snowfall total no longer drops to zero (#77) and the wind
+  components are relative to true north (#78), both checked against the files.
+
+### Why MINOR
+
+Nothing a producer sends changes. `seasonal` is a new optional key that only the website's
+freshness check reads. A schedule here is a description of the crontab, and the crontab is
+unchanged.
+
+### Still not declared
+
+Three families arrive in `forecasts` with no product entry: `forecast_gefs_weather_clyfar*`,
+`forecast_gefs_weather_percentiles_*` and `forecast_clustering_summary_*` (the last is read by
+the air-quality forecast page). `/api/monitoring/freshness` lists them under `undeclared`.
+
+## Version 2.3.0 (2026-11-20)
+
+### Type: Minor - One product documented, optional fields named; nothing a producer sends changes
+
+**Summary:** Gives the HRRR waypoints product the entry it never had, and names the fields the
+weather map will draw when the surface layers carry them. Website 1.7.7 is the first version
+that reads them.
+
+### Changes Made
+
+- **Added:** `forecasts.products.hrrr_waypoints`. The town table has read
+  `forecast_hrrr_waypoints_us40_dense_*` since website 1.7.6 with no entry here. The schema is
+  what the website reads; `variablesRead` gives each variable's unit, and
+  `variablesSentButUnread` lists the two it ignores.
+- **Added:** `forecasts.products.hrrr_surface_layers.optionalFields`: `wind_gust_10m_ms`,
+  `snow_depth_mm`, `cloud_cover_pct` and `rh_2m_pct`, each with its unit. The map draws one as
+  soon as a run carries it (`public/js/mapLayers.js`). `namesReserved` holds five more names
+  agreed for later.
+- **Added:** `notes` on the surface layers: the snowfall field is a running total (P10), the
+  runs arrive three at a time every six hours rather than hourly, and the direction the wind
+  components are measured from is not stated (P17).
+
+### Why MINOR
+
+Additive. No existing field, unit, filename or schedule changes, and CHPC needs no change to
+keep uploading. The new fields are optional: a run without them validates as before.
+
+### Declared cadence is still wrong for two products
+
+The surface layers' schedule says hourly and the waypoints entry gives the measured time, but
+`/api/monitoring/freshness` reads only the dataType's own schedule (`forecasts`, four times a
+day), so neither affects the monitor. The surface-layers schedule is left as declared until
+the producer moves it to hourly (handoff ask P11); the note says what happens today.
+
+## Version 2.2.0 (2026-11-20)
+
+### Type: Minor - Two new dataTypes, no change to an existing one
+
+**Summary:** Adds `llm_forecasts` (tiered LLM forecast text, schema `llm_forecast/1`) and
+`aircraft` (products from the ADS-B hub), and rewrites `globalValidation.originValidation` to
+describe a host allowlist instead of a hard-coded CHPC suffix. Website 1.7.3 is the first
+version that accepts and checks them (issue #402).
+
+### Changes Made
+
+- **Added:** `dataTypes.llm_forecasts`: a JSON Schema, the placement table (which persona
+  writes which tier, and to what word budget), the personas' cadence and stale times, and the
+  filename rule. `public/js/llmForecast.js` holds the same rules as code, and
+  `public/js/__tests__/llmForecast.test.js` fails if the two disagree.
+- **Added:** `dataTypes.aircraft`, with no schema yet. No page reads it; each product gets a
+  schema here before one does.
+- **Changed:** `globalValidation.originValidation` now describes `UPLOAD_ALLOWED_HOSTS`
+  (`.chpc.utah.edu` by default) and says plainly that the hostname is a filter and the API
+  key is the authentication.
+- **Added:** `monitoring.expectedDataFlow` lines for both.
+- **Server:** the upload route now answers 400 for a dataType that is not in the manifest's
+  list. It used to store anything under the name it was given (noted under 2.1.0 below).
+
+### Why MINOR
+
+Additive: no existing dataType, field, unit or filename changes, and CHPC needs no change to
+keep uploading. `/api/monitoring/freshness` will list both new dataTypes as `missing` until
+their producers start, which is true.
+
+### Server-side validation is new, and only for `llm_forecasts`
+
+The manifest has never been enforced by the server (`CLAUDE.md`). `llm_forecasts` is the
+exception: it is prose shown to the public on both boxes, so a file that breaks the contract
+is refused with every reason listed. Three of those rules cannot be written in JSON Schema
+and are listed in the entry's `notes`.
+
 ## Version 2.1.1 (2026-09-28)
 
 ### Type: Patch - Monitoring cadence correction, no schema change

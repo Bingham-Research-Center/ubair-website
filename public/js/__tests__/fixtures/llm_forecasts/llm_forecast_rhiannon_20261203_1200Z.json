@@ -1,0 +1,26 @@
+{
+  "schema": "llm_forecast/1",
+  "persona": "rhiannon",
+  "issued": "2026-12-03T12:00:00Z",
+  "valid_until": "2026-12-03T18:00:00Z",
+  "describes": {
+    "obs_through": "2026-12-03T11:50Z",
+    "aircraft_through": "2026-12-03T11:40Z"
+  },
+  "generator": {
+    "prompt_version": "fixture 1.0.0",
+    "model": "fixture (no model was run)"
+  },
+  "placements": {
+    "outlook.observed_trends": {
+      "expert": "SAMPLE TEXT, NOT A FORECAST. Floor stations have cooled about 2 C each night since Tuesday while the benches warmed, so the inversion is strengthening. Ozone at the floor sites has risen 5 to 8 ppb per day and peaked near 62 ppb on Wednesday afternoon. Winds stay below 2 m/s. Aircraft descents into Vernal show the inversion top near 1,950 m."
+    },
+    "aviation.summary": {
+      "expert": "SAMPLE TEXT, NOT A FORECAST. KVEL reports calm winds and a 300 ft ceiling in freezing fog this morning. Recent descents show a sharp inversion top near 1,950 m with clear air above. Expect the fog to thin after 18Z and return after 03Z. Crosswind on runway 17/35 stays below 5 kt through the afternoon."
+    }
+  },
+  "sources": [
+    "Synoptic observations to 11:50Z (fixture)",
+    "ADS-B descents into KVEL to 11:40Z (fixture)"
+  ]
+}

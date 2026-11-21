@@ -8,44 +8,25 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GENERATED_INDEX_FILES, getUploadIndex, isGeneratedIndex } from '../uploadIndex.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-/**
- * Index files the *server* regenerates, not files a producer uploads.
- *
- * `filelist.json` is rewritten by `updateFileList()` on every observations/metadata
- * upload; `outlooks_list.json` is rewritten by `generateOutlooksList`. Their mtime is
- * therefore always ~now, which makes freshness report a dataType as "fresh" even when no
- * producer has ever uploaded to it — exactly what `outlooks` did on linode-dev (status
- * "fresh", ageMinutes 0, on a directory holding nothing but 2026-04 sample files).
- *
- * Freshness must be judged on producer-written files only.
- */
-export const GENERATED_INDEX_FILES = new Set([
-    'filelist.json',
-    'outlooks_list.json',
-]);
+// What counts as an index rather than a producer's payload is decided in uploadIndex.js, which
+// builds the list of files this monitor judges. Re-exported for callers that imported it here.
+export { GENERATED_INDEX_FILES, isGeneratedIndex };
 
-/**
- * Producers upload indexes too, and they trap freshness the same way.
- *
- * An exact-name Set was not enough. brc-tools uploads its forecast bundle as many ~1.5 MB
- * run files *plus* a small `<product>_index.json` listing them. On linode-dev the run files
- * were being rejected by nginx (413, `client_max_body_size` unset -> 1 MB default) while the
- * 3 KB index sailed through, so the index's mtime was refreshed hourly on a directory whose
- * newest *data* file was four months old. Freshness reported `forecasts` as "stale by 164
- * minutes" instead of "stale by four months", which is the difference between a blip and a
- * dead pipeline — and nobody looked.
- *
- * So: treat any `*_index.json` / `*_list.json` as an index regardless of who wrote it.
- * Producers name run/observation payloads with a timestamp, never with these suffixes.
- */
-export function isGeneratedIndex(filename) {
-    return GENERATED_INDEX_FILES.has(filename)
-        || /_(index|list)\.json$/.test(filename);
-}
+// A product is stale once it is this many of its own intervals old: one missed cycle.
+export const STALE_AFTER_INTERVALS = 2;
+// A seasonal product (schedule.seasonal in the manifest: Clyfar and what it draws) that has
+// sent nothing for this long is switched off for the season, not late. It reads "dormant".
+export const DORMANT_AFTER_MINUTES = 7 * 24 * 60;
+// The upload index is rebuilt from the directories when a check finds it older than this, so
+// files copied in or removed by hand are seen within the hour.
+const INDEX_MAX_AGE_MS = 60 * 60 * 1000;
+// What freshness has always counted: .pdf and .txt arrive beside an .md or not at all.
+const COUNTED_EXTENSIONS = ['.json', '.md', '.png'];
 
 /**
  * Expand one cron field into the sorted list of values it fires on.
@@ -109,7 +90,19 @@ function expandCronField(field, min, max) {
  * that can make staleness fire early, never late.
  */
 export function parseCronIntervalMinutes(cronExpression) {
-    const DEFAULT_MINUTES = 60;
+    return scheduleIntervalMinutes(cronExpression) ?? 60;
+}
+
+/**
+ * The same, but null when the frequency is not a cron expression ('ad-hoc', 'manual', nothing).
+ *
+ * Freshness uses this one. Reading 'ad-hoc' as "hourly" made `outlooks`, which a person writes
+ * when there is something to say, and `llm_outlooks` warn "stale" on both boxes nearly all the
+ * time: a warning that is always on is not read. A product with no schedule is "unscheduled":
+ * its age is reported and never judged.
+ */
+export function scheduleIntervalMinutes(cronExpression) {
+    const DEFAULT_MINUTES = null;
     if (!cronExpression || typeof cronExpression !== 'string') return DEFAULT_MINUTES;
 
     const fields = cronExpression.trim().split(/\s+/);
@@ -136,10 +129,39 @@ export function parseCronIntervalMinutes(cronExpression) {
     return smallest > 0 ? smallest : DEFAULT_MINUTES;
 }
 
+/**
+ * A manifest filename pattern (`forecast_possibility_heatmap_{member}_YYYYMMDD_HHMMZ.json`) as
+ * a test for the upload index's product names (`forecast_possibility_heatmap_clyfar028_*.json`).
+ */
+export function productPatternToRegExp(pattern) {
+    const source = String(pattern)
+        .split(/(YYYYMMDD[_-]HHMMZ?|\{[^}]+\})/)
+        .map((part, i) => {
+            if (i % 2 === 0) return part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            return part.startsWith('{') ? '[^*]+' : '\\*';
+        })
+        .join('');
+    return new RegExp(`^${source}$`);
+}
+
+/** fresh, stale, dormant or unscheduled for something `ageMinutes` old on this schedule. */
+export function judgeAge(ageMinutes, schedule) {
+    const interval = scheduleIntervalMinutes(schedule?.frequency);
+    if (interval === null) return { status: 'unscheduled', expectedFreqMinutes: null };
+    if (ageMinutes <= interval * STALE_AFTER_INTERVALS) return { status: 'fresh', expectedFreqMinutes: interval };
+    if (schedule?.seasonal === true && ageMinutes > DORMANT_AFTER_MINUTES) {
+        return { status: 'dormant', expectedFreqMinutes: interval };
+    }
+    return { status: 'stale', expectedFreqMinutes: interval };
+}
+
 class DataMonitor {
     constructor() {
         this.manifestPath = path.join(__dirname, '../../DATA_MANIFEST.json');
-        this.staticDir = path.join(__dirname, '../../public/api/static');
+        // Null means "where the upload route writes": public/api/static under the working
+        // directory, resolved at each check. Until 1.7.9 this was fixed relative to this file,
+        // the same place on a box but not the place a test's scratch box uploads to.
+        this.staticDir = null;
         this.manifest = this.loadManifest();
         this.stats = {
             uploads: {},
@@ -159,81 +181,125 @@ class DataMonitor {
     }
 
     /**
-     * Check data freshness for all data types
+     * Check data freshness for all data types.
+     *
+     * Read from the upload index, never from the directories: until 1.7.9 this stat-ed every
+     * uploaded file on every call, synchronously (3.1 s on .com with 275,000 files).
+     *
+     * A dataType whose manifest entry lists `products` is judged product by product, each on
+     * its own schedule, and is as stale as its stalest one. Judged as one directory,
+     * `forecasts` could not go stale: the hourly HRRR point files kept it "fresh" whether or
+     * not the six-hourly surface layers or the Clyfar run had arrived.
      */
-    checkDataFreshness() {
+    async checkDataFreshness() {
         if (!this.manifest) return { error: 'Manifest not loaded' };
+
+        const index = getUploadIndex(this.staticDir ?? undefined);
+        await index.ready();
+        index.refreshOlderThan(INDEX_MAX_AGE_MS);
 
         const results = {};
         const now = Date.now();
 
         for (const [dataType, spec] of Object.entries(this.manifest.dataTypes || {})) {
             const subDir = spec.endpoint.split('/').pop();
-            const dataDir = path.join(this.staticDir, subDir);
-
-            if (!fs.existsSync(dataDir)) {
-                // Report the public-relative path — these results are served over
-                // /api/monitoring/*, so don't leak the server's absolute filesystem layout.
-                results[dataType] = {
-                    status: 'missing',
-                    message: `No uploads received yet (public/api/static/${subDir} does not exist)`
-                };
-                continue;
+            try {
+                // A manifest may name a directory the upload route does not: read it on demand.
+                if (!index.has(subDir)) await index.scan(subDir);
+                results[dataType] = this.freshnessOf(index.overview(subDir), subDir, spec, now);
+            } catch (error) {
+                results[dataType] = { status: 'error', message: error.message };
             }
 
-            try {
-                const files = fs.readdirSync(dataDir)
-                    .filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png'))
-                    // Indexes (server-regenerated or producer-uploaded) would otherwise pin
-                    // ageMinutes to ~0 forever and mask a dead producer. See isGeneratedIndex.
-                    .filter(f => !isGeneratedIndex(f))
-                    .map(f => ({
-                        name: f,
-                        path: path.join(dataDir, f),
-                        mtime: fs.statSync(path.join(dataDir, f)).mtime.getTime()
-                    }))
-                    .sort((a, b) => b.mtime - a.mtime);
-
-                if (files.length === 0) {
-                    results[dataType] = {
-                        status: 'no_data',
-                        message: 'No data files found (directory holds only index files)'
-                    };
-                    continue;
-                }
-
-                const latestFile = files[0];
-                const ageMinutes = Math.floor((now - latestFile.mtime) / 60000);
-                const expectedFreq = this.parseFrequency(spec.schedule?.frequency);
-
-                const isStale = ageMinutes > expectedFreq * 2;
-
-                results[dataType] = {
-                    status: isStale ? 'stale' : 'fresh',
-                    latestFile: latestFile.name,
-                    ageMinutes,
-                    expectedFreqMinutes: expectedFreq,
-                    totalFiles: files.length,
-                    lastUpdate: new Date(latestFile.mtime).toISOString()
-                };
-
-                if (isStale) {
-                    this.addAlert(
-                        'warning',
-                        `${dataType} data is stale (${ageMinutes} minutes old, expected every ${expectedFreq} minutes)`
-                    );
-                }
-
-            } catch (error) {
-                results[dataType] = {
-                    status: 'error',
-                    message: error.message
-                };
+            const result = results[dataType];
+            if (result.status === 'stale') {
+                const which = result.staleProducts?.length ? `: ${result.staleProducts.join(', ')}` : '';
+                this.addAlert(
+                    'warning',
+                    `${dataType} data is stale${which} (${result.ageMinutes} minutes old, expected every ${result.expectedFreqMinutes} minutes)`
+                );
             }
         }
 
         this.stats.lastCheck = new Date().toISOString();
         return results;
+    }
+
+    /** One dataType's entry in the freshness answer, from the upload index's view of it. */
+    freshnessOf(view, subDir, spec, now) {
+        if (!view.exists) {
+            // Report the public-relative path: these results are served over
+            // /api/monitoring/*, so don't leak the server's absolute filesystem layout.
+            return {
+                status: 'missing',
+                message: `No uploads received yet (public/api/static/${subDir} does not exist)`
+            };
+        }
+        if (view.error) return { status: 'error', message: view.error };
+
+        const products = view.products.filter((entry) => entry.receivedAtMs != null
+            && COUNTED_EXTENSIONS.some((ext) => entry.product.toLowerCase().endsWith(ext)));
+        if (products.length === 0) {
+            return {
+                status: 'no_data',
+                message: 'No data files found (directory holds only index files)'
+            };
+        }
+
+        const describe = (group, schedule) => {
+            const newest = group.reduce((a, b) => (b.receivedAtMs > a.receivedAtMs ? b : a));
+            const ageMinutes = Math.floor((now - newest.receivedAtMs) / 60000);
+            const { status, expectedFreqMinutes } = judgeAge(ageMinutes, schedule);
+            return {
+                status,
+                latestFile: newest.receivedName,
+                ageMinutes,
+                expectedFreqMinutes,
+                totalFiles: group.reduce((sum, entry) => sum + entry.count, 0),
+                lastUpdate: new Date(newest.receivedAtMs).toISOString()
+            };
+        };
+
+        const result = describe(products, spec.schedule);
+
+        const declared = Object.entries(spec.products || {})
+            .filter(([, product]) => typeof product?.filename?.pattern === 'string');
+        if (declared.length === 0) return result;
+
+        const claimed = new Set();
+        result.products = {};
+        for (const [name, product] of declared) {
+            const pattern = productPatternToRegExp(product.filename.pattern);
+            const group = products.filter((entry) => pattern.test(entry.product));
+            group.forEach((entry) => claimed.add(entry.product));
+            result.products[name] = group.length > 0
+                ? describe(group, product.schedule ?? spec.schedule)
+                : { status: 'no_data', message: 'No file of this product on this box' };
+        }
+
+        // The directory is as stale as its stalest product, and as fresh as its freshest only
+        // if none is late.
+        const judged = Object.entries(result.products);
+        const stale = judged.filter(([, entry]) => entry.status === 'stale').map(([name]) => name);
+        const intervals = judged.map(([, entry]) => entry.expectedFreqMinutes).filter(Number.isFinite);
+        if (stale.length > 0) {
+            result.status = 'stale';
+            result.staleProducts = stale;
+        } else if (judged.some(([, entry]) => entry.status === 'fresh')) {
+            result.status = 'fresh';
+        } else if (judged.some(([, entry]) => entry.status === 'dormant')) {
+            result.status = 'dormant';
+        }
+        if (intervals.length > 0) result.expectedFreqMinutes = Math.min(...intervals);
+
+        // Files arriving that the manifest does not list: the contract is behind the feed.
+        // Member and run numbers are folded so 31 ensemble members read as one line.
+        const undeclared = [...new Set(products
+            .filter((entry) => !claimed.has(entry.product))
+            .map((entry) => entry.product.replace(/\d{2,}/g, '#')))].sort();
+        if (undeclared.length > 0) result.undeclared = undeclared.slice(0, 20);
+
+        return result;
     }
 
     /**
@@ -315,8 +381,8 @@ class DataMonitor {
     /**
      * Get comprehensive status report
      */
-    getStatusReport() {
-        const freshness = this.checkDataFreshness();
+    async getStatusReport() {
+        const freshness = await this.checkDataFreshness();
         const uploadStats = this.getUploadStats();
 
         return {
@@ -345,7 +411,8 @@ class DataMonitor {
             if (!status) continue;
 
             if (status.status === 'stale') {
-                issues.push(`${dataType} data is stale`);
+                const which = status.staleProducts?.length ? ` (${status.staleProducts.join(', ')})` : '';
+                issues.push(`${dataType} data is stale${which}`);
             } else if (status.status === 'missing' || status.status === 'no_data') {
                 issues.push(`${dataType} data missing`);
             }

@@ -1,0 +1,1180 @@
+{
+ "model": "hrrr",
+ "init_time": "2026-11-20T04:00:00Z",
+ "generated_at": "2026-11-20T05:22:32Z",
+ "points": [
+  {
+   "route_id": "us40",
+   "name": "Daniels Summit",
+   "lat": 40.3,
+   "lon": -111.26,
+   "elevation_m": 2438,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.9
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.7
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.6
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.7
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.0
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.3
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.4
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 12.9
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 15.5
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 17.0
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 17.7
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Strawberry",
+   "lat": 40.17,
+   "lon": -111.14,
+   "elevation_m": 2316,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.4
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.5
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.6
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 4.2
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.5
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.8
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 9.8
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 9.9
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.2
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.5
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Fruitland",
+   "lat": 40.21,
+   "lon": -110.85,
+   "elevation_m": 2042,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.1
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.3
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.5
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.5
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.9
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.1
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.6
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.6
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.7
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 7.3
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 7.9
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Starvation",
+   "lat": 40.19,
+   "lon": -110.45,
+   "elevation_m": 1783,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.5
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.0
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.4
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.8
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.2
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Duchesne",
+   "lat": 40.16,
+   "lon": -110.4,
+   "elevation_m": 1752,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.0
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.4
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.5
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 4.4
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 7.9
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.0
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.0
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.0
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.0
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Myton",
+   "lat": 40.2,
+   "lon": -110.06,
+   "elevation_m": 1585,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.2
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.8
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.4
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.7
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 3.0
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.1
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.9
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.9
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.9
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.9
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Roosevelt",
+   "lat": 40.3,
+   "lon": -109.99,
+   "elevation_m": 1588,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.2
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.3
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.9
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.7
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Vernal (Asphalt Ridge)",
+   "lat": 40.48,
+   "lon": -109.56,
+   "elevation_m": 1609,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.7
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 4.4
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 4.5
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 4.7
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 4.9
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.7
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.8
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.8
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.8
+    }
+   ]
+  },
+  {
+   "route_id": "us40",
+   "name": "Dinosaur",
+   "lat": 40.24,
+   "lon": -109.01,
+   "elevation_m": 1829,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.4
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.5
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.5
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.5
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.5
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.5
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.6
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.6
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.6
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.6
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.6
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.6
+    }
+   ]
+  },
+  {
+   "route_id": "us191",
+   "name": "Vernal",
+   "lat": 40.46,
+   "lon": -109.53,
+   "elevation_m": 1609,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.7
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 4.4
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 4.4
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 4.6
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 4.7
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.4
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.4
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.4
+    }
+   ]
+  },
+  {
+   "route_id": "us191",
+   "name": "Maeser",
+   "lat": 40.5,
+   "lon": -109.58,
+   "elevation_m": 1600,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.8
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.1
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.5
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.8
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.1
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.0
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.1
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.1
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.1
+    }
+   ]
+  },
+  {
+   "route_id": "us191",
+   "name": "Ouray",
+   "lat": 40.09,
+   "lon": -109.68,
+   "elevation_m": 1463,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 0.4
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 1.0
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 1.0
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 1.0
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 1.0
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 1.1
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 1.1
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "rain",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 1.6
+    }
+   ]
+  },
+  {
+   "route_id": "us191",
+   "name": "Indian Canyon Summit",
+   "lat": 39.9,
+   "lon": -110.4,
+   "elevation_m": 2772,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.1
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.9
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.4
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 4.8
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.2
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 7.0
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 10.8
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 10.8
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 10.8
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 10.8
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 10.8
+    }
+   ]
+  },
+  {
+   "route_id": "basin_roads",
+   "name": "Roosevelt",
+   "lat": 40.3,
+   "lon": -109.99,
+   "elevation_m": 1588,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.2
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 1.6
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.3
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 2.9
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "mixed",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.7
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 6.3
+    }
+   ]
+  },
+  {
+   "route_id": "basin_roads",
+   "name": "Altamont",
+   "lat": 40.36,
+   "lon": -110.29,
+   "elevation_m": 1612,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.1
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.9
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.3
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 4.4
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 7.7
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.4
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.6
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 11.6
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 11.6
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 11.6
+    }
+   ]
+  },
+  {
+   "route_id": "basin_roads",
+   "name": "Bluebell",
+   "lat": 40.37,
+   "lon": -110.17,
+   "elevation_m": 1612,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 0.9
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.9
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.2
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.1
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 5.5
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 9.5
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 9.7
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 9.7
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 9.7
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 9.7
+    }
+   ]
+  },
+  {
+   "route_id": "basin_roads",
+   "name": "Starvation Dam",
+   "lat": 40.19,
+   "lon": -110.45,
+   "elevation_m": 1783,
+   "forecasts": [
+    {
+     "valid_time": "2026-11-20T05:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T06:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 0.0
+    },
+    {
+     "valid_time": "2026-11-20T07:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 1.5
+    },
+    {
+     "valid_time": "2026-11-20T08:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.0
+    },
+    {
+     "valid_time": "2026-11-20T09:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 2.4
+    },
+    {
+     "valid_time": "2026-11-20T10:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 3.8
+    },
+    {
+     "valid_time": "2026-11-20T11:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 6.2
+    },
+    {
+     "valid_time": "2026-11-20T12:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T13:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T14:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T15:00:00Z",
+     "precip_type": "none",
+     "precip_1hr": 8.9
+    },
+    {
+     "valid_time": "2026-11-20T16:00:00Z",
+     "precip_type": "snow",
+     "precip_1hr": 8.9
+    }
+   ]
+  }
+ ]
+}

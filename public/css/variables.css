@@ -1,9 +1,13 @@
-/* CSS Variables and Root Configurations */
+/*
+ * Legacy names. Values live in theme/tokens.css; these aliases keep the ~200 existing
+ * var(--usu-*) references working. Use the --color-* tokens in new CSS. This file goes away
+ * when the last --usu-* reference does (the style ratchet test counts them).
+ */
 :root {
-    --usu-blue: #00263A;
-    --usu-light-blue: #627C8B;
-    --usu-accent: #8B9299;
-    --usu-gray: #A7A9AC;
-    --usu-light-gray: #E6E7E8;
-    --usu-red: #C8102E;
+    --usu-blue: var(--color-brand);
+    --usu-light-blue: var(--color-brand-soft);
+    --usu-accent: var(--color-neutral);
+    --usu-gray: var(--color-neutral-soft);
+    --usu-light-gray: var(--color-neutral-faint);
+    --usu-red: var(--color-accent);
 }

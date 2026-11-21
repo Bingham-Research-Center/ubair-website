@@ -1,16 +1,17 @@
 :root {
-    --fire-primary: #b22222;      /* Firebrick red */
-    --fire-secondary: #ff4500;    /* Orange red */
-    --fire-accent: #ff8c00;       /* Dark orange */
-    --fire-warning: #ff0000;      /* Bright red alerts */
-    --fire-ember: #ffa07a;        /* Ember glow */
-    --fire-smoke: #696969;        /* Smoke gray */
-    --fire-ash: #d3d3d3;          /* Ash light gray */
+    /* Page palette: names kept for the rules below, values come from theme/tokens.css */
+    --fire-primary: var(--color-brand);
+    --fire-secondary: var(--color-brand);
+    --fire-accent: var(--color-accent);
+    --fire-warning: var(--status-danger);
+    --fire-ember: var(--status-warning);
+    --fire-smoke: var(--color-text-muted);
+    --fire-ash: var(--color-border);
 }
 
 /* Header override for fire theme */
 body[data-page-type="fire"] h1 {
-    background: linear-gradient(135deg, var(--fire-primary), var(--fire-secondary));
+    background: var(--fire-primary);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -25,9 +26,14 @@ body[data-page-type="fire"] h1::after {
     transform: translateX(-50%);
     width: 80px;
     height: 3px;
-    background: linear-gradient(90deg, var(--fire-primary), var(--fire-accent));
-    border-radius: 2px;
+    background: var(--fire-primary);
+    border-radius: var(--radius-sm);
 }
+
+/* Cards and single-content sections on this page are panes (theme/panes.css): square,
+   hairline, accent tab on the top edge. A section that holds cards (restrictions, detected
+   fires, resources) is a plain region with a heading, so the reader sees one level of boxes.
+   Rules here set padding and spacing; colour on a tab only where it means something. */
 
 /* Weather Summary Grid */
 .weather-summary {
@@ -42,63 +48,34 @@ body[data-page-type="fire"] h1::after {
 }
 
 .condition-card {
-    background: white;
-    border-radius: 12px;
     padding: 1.5rem;
-    box-shadow: 0 4px 20px rgba(178, 34, 34, 0.1);
-    border-left: 4px solid var(--fire-primary);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.condition-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, var(--fire-accent), transparent);
-    border-radius: 0 12px 0 100%;
-    opacity: 0.1;
-}
-
-.condition-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 30px rgba(178, 34, 34, 0.15);
-    border-left-color: var(--fire-accent);
+    --pane-tab-inset: 1.5rem;
 }
 
 .card-icon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--fire-primary), var(--fire-secondary));
-    border-radius: 50%;
-    margin-bottom: 1rem;
-    color: white;
-    font-size: 1.2rem;
+    margin-bottom: 0.75rem;
+    color: var(--page-accent);
+    font-size: 1.4rem;
 }
 
 .card-content h3 {
-    color: var(--fire-primary);
-    font-weight: 600;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
+    color: var(--color-text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.03rem;
+    margin-bottom: 0.25rem;
+    font-size: 0.8rem;
 }
 
 .current-value {
     font-size: 1.8rem;
-    font-weight: 700;
-    color: var(--fire-secondary);
+    font-weight: 600;
+    color: var(--color-text);
     margin: 0.5rem 0;
 }
 
 .trend {
-    color: #666;
+    color: var(--color-text-muted);
     font-size: 0.9rem;
     margin: 0;
 }
@@ -111,28 +88,9 @@ body[data-page-type="fire"] h1::after {
 }
 
 .forecast-section {
-    background: white;
-    border-radius: 16px;
     padding: 2rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border: 1px solid rgba(178, 34, 34, 0.1);
-    position: relative;
-}
-
-.forecast-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(
-        90deg,
-        var(--fire-primary),
-        var(--fire-accent),
-        var(--fire-secondary)
-    );
-    border-radius: 16px 16px 0 0;
+    --pane-tab-inset: 2rem;
+    margin-bottom: 2rem;
 }
 
 .forecast-section h2 {
@@ -159,8 +117,8 @@ body[data-page-type="fire"] h1::after {
 .placeholder-content {
     text-align: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    border-radius: 12px;
+    background: #f8f9fa;
+    border-radius: var(--radius-lg);
     border: 2px dashed var(--fire-accent);
     margin-top: 1rem;
 }
@@ -173,7 +131,7 @@ body[data-page-type="fire"] h1::after {
     margin-top: 1.5rem;
     padding: 2rem;
     background: white;
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
     box-shadow: inset 0 2px 8px rgba(178, 34, 34, 0.05);
 }
 
@@ -191,9 +149,9 @@ body[data-page-type="fire"] h1::after {
 /* Alerts Section */
 .alerts-section {
     background: white;
-    border-radius: 16px;
+    border-radius: var(--radius-lg);
     padding: 2rem;
-    box-shadow: 0 6px 25px rgba(255, 0, 0, 0.1);
+    box-shadow: var(--shadow-card);
     border-left: 5px solid var(--fire-warning);
     margin-bottom: 2rem;
 }
@@ -210,53 +168,11 @@ body[data-page-type="fire"] h1::after {
 
 .alert-placeholder {
     padding: 2rem;
-    background: linear-gradient(135deg, #fff0f0, #ffe5e5);
-    border-radius: 12px;
+    background: #fff0f0;
+    border-radius: var(--radius-lg);
     border: 2px dashed var(--fire-warning);
     text-align: center;
     color: var(--fire-smoke);
-}
-
-/* Specific condition card themes */
-.condition-card:nth-child(1) .card-icon {
-    background: linear-gradient(135deg, var(--fire-primary), #e63900);
-}
-
-.condition-card:nth-child(2) .card-icon {
-    background: linear-gradient(135deg, var(--fire-ember), var(--fire-accent));
-}
-
-.condition-card:nth-child(3) .card-icon {
-    background: linear-gradient(135deg, var(--fire-accent), var(--fire-secondary));
-}
-
-.condition-card:nth-child(4) .card-icon {
-    background: linear-gradient(135deg, var(--fire-smoke), var(--fire-ash));
-}
-
-/* Forecast-section theming */
-.forecast-section:nth-child(1) {
-    border-left: 4px solid var(--fire-ash);
-}
-
-.forecast-section:nth-child(1)::before {
-    background: linear-gradient(90deg, var(--fire-ash), var(--fire-accent));
-}
-
-.forecast-section:nth-child(2) {
-    border-left: 4px solid var(--fire-secondary);
-}
-
-.forecast-section:nth-child(2)::before {
-    background: linear-gradient(90deg, var(--fire-secondary), var(--fire-ember));
-}
-
-.forecast-section:nth-child(3) {
-    border-left: 4px solid var(--fire-smoke);
-}
-
-.forecast-section:nth-child(3)::before {
-    background: linear-gradient(90deg, var(--fire-smoke), var(--fire-secondary));
 }
 
 /* Responsive Design */
@@ -267,9 +183,11 @@ body[data-page-type="fire"] h1::after {
     }
     .condition-card {
         padding: 1rem;
+        --pane-tab-inset: 1rem;
     }
     .forecast-section {
         padding: 1.5rem;
+        --pane-tab-inset: 1.5rem;
         margin: 1rem 0;
     }
     .chart-placeholder {
@@ -292,13 +210,6 @@ body[data-page-type="fire"] h1::after {
     color: var(--fire-accent);
 }
 
-/* Hover effects */
-.forecast-section:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 35px rgba(178, 34, 34, 0.12);
-    transition: all 0.3s ease;
-}
-
 /* Focus states */
 .condition-card:focus-within,
 .forecast-section:focus-within {
@@ -317,13 +228,19 @@ body[data-page-type="fire"] h1::after {
     background: linear-gradient(135deg, #7d0000, var(--fire-warning));
     color: white;
     padding: 1rem 1.25rem;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     margin-bottom: 1.5rem;
-    box-shadow: 0 6px 20px rgba(125, 0, 0, 0.3);
+    box-shadow: var(--shadow-card);
     animation: pulse-red-strong 2s ease-in-out infinite;
 }
 .red-flag-banner.is-hidden,
 .red-flag-banner[hidden] { display: none; }
+/* The NWS could not be asked: a quiet note, not an alarm. */
+.red-flag-banner.is-unavailable {
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    animation: none;
+}
 .red-flag-card { background: rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; }
 .red-flag-card:last-child { margin-bottom: 0; }
 .red-flag-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
@@ -345,11 +262,8 @@ body[data-page-type="fire"] h1::after {
     justify-content: space-between;
     gap: 1.5rem;
     padding: 1.5rem 2rem;
-    background: linear-gradient(135deg, white, #fff8f0);
-    border-radius: 16px;
+    --pane-tab-inset: 2rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border-left: 6px solid var(--fire-primary);
 }
 .hero-hdw { display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
 .hdw-label { font-size: 0.8rem; text-transform: uppercase; color: var(--fire-smoke); letter-spacing: 0.05em; }
@@ -358,7 +272,7 @@ body[data-page-type="fire"] h1::after {
     align-items: baseline;
     gap: 0.75rem;
     padding: 0.5rem 1.1rem;
-    border-radius: 10px;
+    border-radius: var(--radius-lg);
     font-weight: 700;
     color: white;
     background: var(--fire-smoke);
@@ -380,7 +294,7 @@ body[data-page-type="fire"] h1::after {
     align-items: center;
     gap: 0.4rem;
     padding: 0.35rem 0.8rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: #fff0e0;
     color: var(--fire-primary);
     border: 1px solid var(--fire-accent);
@@ -393,12 +307,9 @@ body[data-page-type="fire"] h1::after {
 
 /* Map section */
 .map-section {
-    background: white;
-    border-radius: 16px;
     padding: 1.5rem;
+    --pane-tab-inset: 1.5rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border: 1px solid rgba(178, 34, 34, 0.1);
 }
 .map-section h2 {
     color: var(--fire-primary);
@@ -413,8 +324,6 @@ body[data-page-type="fire"] h1::after {
 .station-map {
     width: 100%;
     height: 480px;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(178, 34, 34, 0.12);
 }
 .map-legend-text {
     font-size: 0.85rem;
@@ -428,7 +337,7 @@ body[data-page-type="fire"] h1::after {
     width: 34px; height: 34px;
     border-radius: 50%;
     border: 2px solid white;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--shadow-card);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -446,8 +355,8 @@ body[data-page-type="fire"] h1::after {
 .fire-map-legend {
     background: rgba(255, 255, 255, 0.95);
     padding: 0.6rem 0.75rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-overlay);
     font-size: 0.8rem;
     line-height: 1.4;
     color: #333;
@@ -482,7 +391,7 @@ body[data-page-type="fire"] h1::after {
 .popup-badge {
     display: inline-block;
     padding: 1px 8px;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     color: white;
     font-size: 0.75rem;
     margin-left: 0.4rem;
@@ -494,13 +403,11 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 0.75rem;
 }
+/* Forecast periods are cells inside the forecast pane, not boxes: a hairline above each. */
 .forecast-day-card {
-    background: linear-gradient(135deg, white, #fff8f0);
     padding: 1rem 0.75rem;
-    border-radius: 10px;
     text-align: center;
-    border-top: 3px solid var(--fire-accent);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border-top: 1px solid var(--color-border);
 }
 .forecast-day-card h3 {
     font-size: 0.95rem;
@@ -515,7 +422,7 @@ body[data-page-type="fire"] h1::after {
 }
 .forecast-wind, .forecast-short {
     font-size: 0.82rem;
-    color: #555;
+    color: var(--color-text-muted);
     margin: 0.2rem 0;
 }
 
@@ -524,18 +431,15 @@ body[data-page-type="fire"] h1::after {
     width: 100%;
     height: 420px;
     background: #fff8f0;
-    border-radius: 12px;
+    border-radius: var(--radius-lg);
     overflow: hidden;
 }
 
 /* Preparedness */
 .preparedness-section {
-    background: white;
-    border-radius: 16px;
     padding: 2rem;
+    --pane-tab-inset: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border-left: 4px solid var(--fire-accent);
 }
 .preparedness-section h2 {
     color: var(--fire-primary);
@@ -553,12 +457,11 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 1rem;
 }
+/* Tips are asides inside the pane: a plain left rule, no box of their own. */
 .preparedness-grid li {
-    background: #fff8f0;
-    padding: 1rem 1.1rem;
-    border-radius: 10px;
-    border-left: 3px solid var(--fire-secondary);
-    color: #333;
+    padding: 0.25rem 0 0.25rem 1rem;
+    border-left: 3px solid var(--color-border);
+    color: var(--color-text);
     line-height: 1.5;
 }
 .preparedness-grid li strong { color: var(--fire-primary); }
@@ -580,23 +483,14 @@ body[data-page-type="fire"] h1::after {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: 1rem;
 }
+/* Resource cards are link panes: a.pane in theme/panes.css changes colour on hover. */
 .resource-card {
     display: block;
-    background: white;
     padding: 1.25rem;
-    border-radius: 12px;
-    text-decoration: none;
-    color: inherit;
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-.resource-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
+    --pane-tab-inset: 1.25rem;
 }
 .resource-card h3 { color: var(--fire-primary); margin: 0 0 0.3rem; font-size: 1.05rem; }
-.resource-card p { color: #555; font-size: 0.9rem; margin: 0; }
+.resource-card p { color: var(--color-text-muted); font-size: 0.9rem; margin: 0; }
 
 /* Loading spinner */
 .loading-spinner {
@@ -610,27 +504,11 @@ body[data-page-type="fire"] h1::after {
 }
 .loading-spinner i { color: var(--fire-secondary); font-size: 1.2rem; }
 
-/* Active Fire Restrictions */
+/* Active Fire Restrictions: a plain region; each order is a pane whose tab is its stage. */
 .restrictions-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border-left: 4px solid var(--fire-primary);
-    position: relative;
+    margin-bottom: 2rem;
 }
 .restrictions-section[hidden] { display: none; }
-.restrictions-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--fire-primary), var(--fire-secondary), var(--fire-accent));
-    border-radius: 16px 16px 0 0;
-}
 .restrictions-section h2 {
     color: var(--fire-primary);
     font-size: 1.3rem;
@@ -653,20 +531,17 @@ body[data-page-type="fire"] h1::after {
     gap: 1rem;
 }
 .restriction-card {
-    background: linear-gradient(135deg, white, #fff8f0);
     padding: 1.1rem 1.2rem;
-    border-radius: 12px;
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    --pane-tab-inset: 1.2rem;
     display: flex;
     flex-direction: column;
     gap: 0.45rem;
 }
-.restriction-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
-}
+/* Severity colours, not page decoration: the tab matches the stage pill. */
+.restriction-card[data-type^="stage-1"]    { --pane-accent: var(--restriction-stage-1); }
+.restriction-card[data-type^="stage-2"]    { --pane-accent: var(--restriction-stage-2); }
+.restriction-card[data-type^="stage-3"]    { --pane-accent: var(--restriction-stage-3); }
+.restriction-card[data-type^="prevention"] { --pane-accent: var(--restriction-prevention); }
 .restriction-card-head {
     display: flex;
     justify-content: space-between;
@@ -684,7 +559,7 @@ body[data-page-type="fire"] h1::after {
 .restriction-type-pill {
     display: inline-block;
     padding: 0.2rem 0.65rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.72rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -693,15 +568,16 @@ body[data-page-type="fire"] h1::after {
     background: var(--fire-smoke);
     white-space: nowrap;
 }
-.restriction-type-pill[data-type^="stage-1"] { background: var(--fire-accent); }
-.restriction-type-pill[data-type^="stage-2"] { background: var(--fire-secondary); }
-.restriction-type-pill[data-type^="stage-3"] { background: var(--fire-warning); }
-.restriction-type-pill[data-type^="prevention"]  { background: var(--fire-primary); }
+/* Severity colours, not page decoration: they must not change with the theme. */
+.restriction-type-pill[data-type^="stage-1"] { background: var(--restriction-stage-1); color: var(--color-on-warm); }
+.restriction-type-pill[data-type^="stage-2"] { background: var(--restriction-stage-2); color: var(--color-on-warm); }
+.restriction-type-pill[data-type^="stage-3"] { background: var(--restriction-stage-3); }
+.restriction-type-pill[data-type^="prevention"]  { background: var(--restriction-prevention); }
 .restriction-type-pill[data-type^="special"]     { background: var(--fire-smoke); }
 .restriction-type-pill[data-type^="ordinance"]   { background: var(--fire-smoke); }
 .restriction-area {
     margin: 0;
-    color: #333;
+    color: var(--color-text);
     font-size: 0.95rem;
     line-height: 1.45;
     font-weight: 500;
@@ -776,14 +652,13 @@ body[data-page-type="fire"] h1::after {
     text-decoration: none;
     font-weight: 600;
     font-size: 0.85rem;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(178, 34, 34, 0.2);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
     transition: background 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 .restriction-link:hover {
     background: var(--fire-secondary);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(255, 69, 0, 0.3);
+    box-shadow: var(--shadow-card-hover);
 }
 .restriction-no-link {
     font-size: 0.8rem;
@@ -791,27 +666,11 @@ body[data-page-type="fire"] h1::after {
     font-style: italic;
 }
 
-/* Detected Fires (auto-clustered FIRMS) */
+/* Detected Fires (auto-clustered FIRMS): a plain region; each fire is a pane. */
 .fire-list-section {
-    background: white;
-    border-radius: 16px;
-    padding: 2rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 6px 25px rgba(178, 34, 34, 0.08);
-    border-left: 4px solid var(--fire-primary);
-    position: relative;
+    margin-bottom: 2rem;
 }
 .fire-list-section[hidden] { display: none; }
-.fire-list-section::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--fire-primary), var(--fire-warning), var(--fire-accent));
-    border-radius: 16px 16px 0 0;
-}
 .fire-list-section h2 {
     color: var(--fire-primary);
     font-size: 1.3rem;
@@ -849,7 +708,7 @@ body[data-page-type="fire"] h1::after {
     justify-content: center;
     min-width: 1.6em;
     padding: 0.1rem 0.5rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     background: rgba(178, 34, 34, 0.08);
     color: var(--fire-primary);
     font-size: 0.75rem;
@@ -862,20 +721,14 @@ body[data-page-type="fire"] h1::after {
     gap: 1rem;
 }
 .fire-card {
-    background: linear-gradient(135deg, white, #fff8f0);
     padding: 1.1rem 1.2rem;
-    border-radius: 12px;
-    border-left: 4px solid var(--fire-primary);
-    box-shadow: 0 4px 14px rgba(178, 34, 34, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    --pane-tab-inset: 1.2rem;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
-.fire-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 22px rgba(178, 34, 34, 0.16);
-}
+/* An active fire's tab is the danger colour, matching its status pill. */
+.fire-card[data-status="active"] { --pane-accent: var(--status-danger); }
 .fire-card-head {
     display: flex;
     justify-content: space-between;
@@ -893,7 +746,7 @@ body[data-page-type="fire"] h1::after {
 .fire-status-pill {
     display: inline-block;
     padding: 0.15rem 0.6rem;
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
     font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -974,10 +827,10 @@ body[data-page-type="fire"] h1::after {
     .hero-snapshot { text-align: left; }
     .station-map { height: 360px; }
     .meteogram-chart { height: 340px; }
-    .restrictions-section { padding: 1.5rem 1.25rem; }
+
     .restrictions-list { grid-template-columns: 1fr; }
     .restriction-foot { flex-direction: column-reverse; align-items: stretch; }
     .restriction-link { justify-content: center; }
-    .fire-list-section { padding: 1.5rem 1.25rem; }
+
     .fire-list-grid { grid-template-columns: 1fr; }
 }
