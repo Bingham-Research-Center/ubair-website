@@ -8,15 +8,20 @@
  * 6 and raised a warning on every check.
  */
 
-import { parseCronIntervalMinutes } from '../monitoring/dataMonitor.js';
+import { parseCronIntervalMinutes, scheduleIntervalMinutes } from '../monitoring/dataMonitor.js';
 
 describe('parseCronIntervalMinutes — every frequency DATA_MANIFEST.json actually uses', () => {
     test.each([
-        ['*/10 * * * *',        10,   'observations'],
-        ['0 */6 * * *',         360,  'metadata'],
-        ['0 * * * *',           60,   'forecasts.hrrr_surface_layers'],
-        ['*/30 * * * *',        30,   'images'],
-        ['30 3,9,15,21 * * *',  360,  'forecasts — the one the old parser got wrong'],
+        ['*/5 * * * *',         5,    'observations (declared */10 until manifest 2.4.0)'],
+        ['*/10 * * * *',        10,   'observations before 2.4.0'],
+        ['0 */6 * * *',         360,  'metadata, images'],
+        ['0 * * * *',           60,   'forecasts.hrrr_surface_layers before 2.4.0'],
+        ['45 0,6,12,18 * * *',  360,  'forecasts.hrrr_surface_layers'],
+        ['50 * * * *',          60,   'forecasts.hrrr_waypoints'],
+        ['20 * * * *',          60,   'road-forecast'],
+        ['*/30 * * * *',        30,   'images, once'],
+        ['30 3,9,15,21 * * *',  360,  'forecasts before 2.4.0: the one the old parser got wrong'],
+        ['15 3,9,15,21 * * *',  360,  'Clyfar: forecasts, llm_outlooks'],
     ])('%s -> %i minutes (%s)', (expr, expected) => {
         expect(parseCronIntervalMinutes(expr)).toBe(expected);
     });
@@ -69,5 +74,44 @@ describe('parseCronIntervalMinutes — bad input never throws', () => {
     ])('%p -> 60', (input) => {
         expect(() => parseCronIntervalMinutes(input)).not.toThrow();
         expect(parseCronIntervalMinutes(input)).toBe(60);
+    });
+});
+
+describe('scheduleIntervalMinutes: no schedule is not "hourly"', () => {
+    // Freshness read 'ad-hoc' as every 60 minutes, so outlooks (written by a person when there
+    // is something to say) warned "stale" on both boxes nearly all the time.
+    test.each([['ad-hoc'], ['ad-hoc (proof-of-concept)'], ['manual'], [''], [undefined], [null], ['99 * * * *']])(
+        '%p -> null', (input) => {
+            expect(scheduleIntervalMinutes(input)).toBeNull();
+        });
+
+    test('a cron expression gives the same interval as parseCronIntervalMinutes', () => {
+        for (const expr of ['*/5 * * * *', '45 0,6,12,18 * * *', '20 * * * *', '30 4 * * *']) {
+            expect(scheduleIntervalMinutes(expr)).toBe(parseCronIntervalMinutes(expr));
+        }
+    });
+
+    test('every schedule in the real manifest is a cron expression or says ad-hoc', async () => {
+        const fs = await import('fs');
+        const manifest = JSON.parse(fs.readFileSync(new URL('../../DATA_MANIFEST.json', import.meta.url), 'utf8'));
+        const schedules = [];
+        for (const [name, spec] of Object.entries(manifest.dataTypes)) {
+            schedules.push([name, spec.schedule?.frequency]);
+            for (const [product, productSpec] of Object.entries(spec.products || {})) {
+                if (productSpec.schedule) schedules.push([`${name}.${product}`, productSpec.schedule.frequency]);
+            }
+        }
+        const unreadable = schedules.filter(([, frequency]) => scheduleIntervalMinutes(frequency) === null
+            && !String(frequency).startsWith('ad-hoc'));
+        expect(unreadable).toEqual([]);
+        // The cadences the crontab on notchpeak1 runs at (brc-tools, 2026-11-21), except the
+        // surface layers: 2.5.0 declares them hourly ahead of the crontab change (P11, O2).
+        expect(Object.fromEntries(schedules)).toMatchObject({
+            observations: '*/5 * * * *',
+            'road-forecast': '20 * * * *',
+            'forecasts.hrrr_surface_layers': '45 * * * *',
+            'forecasts.hrrr_waypoints': '50 * * * *',
+            'forecasts.hrrr_kvel_crosswind': '55 * * * *',
+        });
     });
 });

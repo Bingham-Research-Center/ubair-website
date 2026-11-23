@@ -99,3 +99,8 @@
         gap: 8px;
     }
 }
+
+/* The homepage map's legend sits under the map, always shown (it is four short lines). */
+.home-map-legend {
+    margin-top: 0.75rem;
+}

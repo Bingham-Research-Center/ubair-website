@@ -23,14 +23,11 @@ window.highlightRiskWords = function(html) {
         .replace(/<strong>(MODERATE|MEDIUM)<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-moderate">$1</span>')
         .replace(/<strong>HIGH<\/strong>(?!\s*RISK)/gi, '<span class="risk-indicator risk-high">HIGH</span>')
 
-        // Confidence indicators (semantic: HIGH=good/green, LOW=bad/red)
+        // Confidence indicators (semantic: HIGH=good/green, LOW=bad/red). The colours are the
+        // status tokens, set in outlooks.css.
         .replace(/\b(HIGH|MODERATE|MEDIUM|LOW) CONFIDENCE\b/gi, (match, level) => {
-            const colors = {
-                'HIGH': '#22c55e',
-                'MODERATE': '#f59e0b',
-                'MEDIUM': '#f59e0b',
-                'LOW': '#dc2626'
-            };
-            return `<span style="color: ${colors[level.toUpperCase()]}; font-weight: 700;">${match.toUpperCase()}</span>`;
+            const word = level.toUpperCase();
+            const name = word === 'HIGH' ? 'high' : word === 'LOW' ? 'low' : 'medium';
+            return `<span class="outlook-confidence outlook-confidence-${name}">${match.toUpperCase()}</span>`;
         });
 };

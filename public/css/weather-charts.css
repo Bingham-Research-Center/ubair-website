@@ -1,0 +1,399 @@
+/* The drawn views on /forecast_weather: forecast and measured for a town, the Basin in profile
+   along US-40, and where rain turns to snow.
+
+   They are plain SVG and one table, coloured here from the theme tokens. Ink (text, axes,
+   gridlines) is the page's text colours; a mark's colour is a data token: --color-accent for
+   the forecast line, as on the aviation page; --scale-* for a temperature band; --precip-* for
+   a kind of precipitation. Nothing here is a colour of its own.
+
+   Tokens only: this file's style-ratchet ceiling is zero. */
+
+.basin-profile,
+.snow-hillside {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    --pane-tab-inset: 1.5rem;
+}
+
+.basin-profile .section-header,
+.snow-hillside .section-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.basin-profile h2,
+.snow-hillside h2 {
+    margin: 0;
+    color: var(--color-text);
+    font-size: 1.35rem;
+    font-weight: 600;
+}
+
+/* The panes above the map keep their height while they load, so the map is not on screen at
+   load and its 1.5 MB run is not fetched before it is wanted (weather-panes.css does the same
+   for the two panes above these). */
+.basin-profile {
+    min-height: 32rem;
+}
+
+.snow-hillside {
+    min-height: 34rem;
+}
+
+.chart-lede {
+    margin: 0 0 0.75rem;
+    max-width: 60rem;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.chart-title {
+    margin: 0 0 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.03rem;
+    text-transform: uppercase;
+}
+
+.chart-readout {
+    min-height: 1.4rem;
+    margin: 0.5rem 0 0;
+    color: var(--color-text);
+    font-size: 0.95rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.chart-verdict {
+    margin: 0.5rem 0 0;
+    max-width: 60rem;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+/* ── Shared by the two SVG charts ────────────────────────────────────────────────────── */
+
+.town-chart svg,
+.profile-chart svg {
+    display: block;
+    max-width: 100%;
+    overflow: visible;
+}
+
+.chart-grid {
+    stroke: var(--color-border);
+    stroke-width: 1;
+}
+
+.chart-axis {
+    stroke: var(--color-neutral-soft);
+    stroke-width: 1;
+}
+
+.chart-tick {
+    fill: var(--color-text-muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* An unseen target, larger than the mark, for a pointer or a finger. */
+.chart-hit {
+    fill: transparent;
+    pointer-events: all;
+}
+
+.chart-now {
+    stroke: var(--color-text-muted);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.chart-cursor {
+    stroke: var(--color-text);
+    stroke-width: 1;
+    pointer-events: none;
+}
+
+.chart-freezing {
+    stroke: var(--scale-cold-3);
+    stroke-width: 1;
+    stroke-dasharray: 2 4;
+}
+
+/* ── Forecast and measured ───────────────────────────────────────────────────────────── */
+
+.town-chart-figure {
+    margin: 1.25rem 0 1.5rem;
+}
+
+/* Holds its height while the run loads, so the table below does not jump. */
+.town-chart {
+    min-height: 15rem;
+}
+
+.town-chart-line {
+    fill: none;
+    stroke: var(--color-accent);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+}
+
+/* A reading: an ink dot with a ring of the surface, so dots that touch stay separate. */
+.town-chart-dot {
+    fill: var(--color-text);
+    stroke: var(--color-surface);
+    stroke-width: 2;
+}
+
+.chart-legend,
+.profile-legend,
+.hillside-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 1.25rem;
+    margin: 0 0 0.5rem;
+    padding: 0;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+    list-style: none;
+}
+
+.chart-legend[hidden],
+.chart-legend li[hidden],
+.hillside-legend[hidden] {
+    display: none;
+}
+
+.chart-legend li,
+.profile-legend li,
+.hillside-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.chart-key-line {
+    width: 1.5rem;
+    height: 0;
+    border-top: 2px solid var(--color-accent);
+}
+
+.chart-key-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: var(--color-text);
+}
+
+.chart-table {
+    margin-top: 0.75rem;
+}
+
+.chart-table .town-table-wrap {
+    margin-top: 0.5rem;
+}
+
+/* ── Across the Basin ────────────────────────────────────────────────────────────────── */
+
+.profile-controls {
+    display: flex;
+    flex: 1 1 22rem;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    max-width: 44rem;
+}
+
+.profile-chart {
+    min-height: 16rem;
+}
+
+.profile-ground {
+    fill: var(--color-neutral-faint);
+    stroke: var(--color-neutral-soft);
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+/* The dot's fill is its temperature band, set by basinProfile.js; the ink outline keeps the
+   pale bands near freezing visible against the ground. */
+.profile-dot {
+    fill: var(--color-surface);
+    stroke: var(--color-text);
+    stroke-width: 1;
+}
+
+.profile-point {
+    cursor: pointer;
+    outline: none;
+}
+
+.profile-point:hover .profile-dot,
+.profile-point:focus-visible .profile-dot {
+    stroke-width: 3;
+}
+
+.profile-precip {
+    stroke: var(--color-neutral);
+    stroke-width: 1.25;
+    stroke-linecap: round;
+}
+
+/* A halo of the surface colour keeps a number readable where it crosses the ground line or
+   sits close to another place's dot. */
+.profile-temp {
+    fill: var(--color-text);
+    stroke: var(--color-surface);
+    stroke-width: 3px;
+    paint-order: stroke;
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+.profile-name {
+    fill: var(--color-text-muted);
+    font-size: 0.78rem;
+    pointer-events: none;
+}
+
+.profile-legend {
+    margin: 0.5rem 0 0;
+}
+
+.profile-legend-swatch {
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 1px solid var(--color-text);
+    border-radius: 50%;
+}
+
+.profile-legend-wet {
+    font-weight: 600;
+    letter-spacing: 0.1rem;
+}
+
+/* ── Where rain turns to snow ────────────────────────────────────────────────────────── */
+
+.hillside-wrap {
+    margin-top: 0.75rem;
+}
+
+.hillside {
+    border-collapse: collapse;
+    color: var(--color-text);
+    font-size: 0.9rem;
+}
+
+.hillside th,
+.hillside td {
+    padding: 0.2rem 0.55rem;
+    border-bottom: 1px solid var(--color-border);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.hillside thead th {
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.hillside thead .hillside-corner,
+.hillside .hillside-place {
+    padding-left: 0;
+    text-align: left;
+}
+
+.hillside .hillside-place {
+    font-weight: 500;
+}
+
+/* The step of the hillside: a block that reaches further right the higher the point is, so
+   the left edge of the table is the slope in profile. --slope is 0 at the lowest point and 1
+   at the highest, set by snowLine.js. */
+.hillside-step {
+    display: inline-block;
+    width: calc(0.75rem + var(--slope, 0) * 7rem);
+    height: 1.35rem;
+    margin-right: 0.6rem;
+    border-right: 2px solid var(--color-neutral-soft);
+    background: var(--color-neutral-faint);
+    vertical-align: middle;
+}
+
+.hillside-elevation {
+    margin-left: 0.5rem;
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+/* The kinds of precipitation, each with its icon and, read aloud, its word. */
+.hillside-cell[data-type="snow"] i {
+    color: var(--precip-snow);
+}
+
+.hillside-cell[data-type="rain"] i {
+    color: var(--precip-rain);
+}
+
+.hillside-cell[data-type="mix"] i {
+    color: var(--precip-mix);
+}
+
+.hillside-dry {
+    color: var(--color-text-muted);
+}
+
+/* The heights between which rain turns to snow in that hour. */
+.hillside td[data-range="true"],
+.hillside-range-swatch {
+    background: var(--color-neutral-faint);
+    outline: 1px solid var(--color-neutral-soft);
+    outline-offset: -1px;
+}
+
+.hillside-range-swatch {
+    display: inline-block;
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+.hillside-legend {
+    margin: 0.75rem 0 0;
+}
+
+.snow-hillside .visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+@media screen and (max-width: 480px) {
+    .basin-profile,
+    .snow-hillside {
+        padding: 1rem;
+        --pane-tab-inset: 1rem;
+    }
+
+    .hillside-step {
+        width: calc(0.4rem + var(--slope, 0) * 3rem);
+        margin-right: 0.4rem;
+    }
+
+    .hillside th,
+    .hillside td {
+        padding: 0.2rem 0.4rem;
+    }
+}

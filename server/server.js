@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import compression from 'compression';
 import path from 'path';
 import { promises as fs } from 'fs';
 import { fileURLToPath } from 'url';
@@ -12,6 +13,10 @@ import trafficEventsRoutes, { setTrafficEventsService } from './routes/trafficEv
 import synopticAPIRoutes from './routes/synopticAPI.js';
 import fireWeatherRoutes from './routes/fireWeather.js';
 import fireRestrictionsRoutes from './routes/fireRestrictions.js';
+import weatherAlertsRoutes from './routes/weatherAlerts.js';
+import statusLightsRoutes, { setStatusLightServices } from './routes/statusLights.js';
+import llmForecastRoutes from './routes/llmForecasts.js';
+import weatherForecastRoutes from './routes/weatherForecast.js';
 import monitoringRoutes from './routes/monitoring.js';
 import BackgroundRefreshService from './backgroundRefresh.js';
 import analyticsMiddleware, {
@@ -20,7 +25,10 @@ import analyticsMiddleware, {
 import { getPipelineStats } from './middleware/pipelineAnalytics.js';
 import { getMonitor } from './monitoring/dataMonitor.js';
 import ReportEmailService from './reportEmailService.js';
-import { envFileProblem, getIngestReadiness, processUser, seedLastUploadFromDisk } from './ingestReadiness.js';
+import { envFileProblem, getIngestReadiness, processUser, seedLastUpload } from './ingestReadiness.js';
+import { isKnownDataType } from './uploadPolicy.js';
+import { getUploadIndex, removeLegacyFilelist } from './uploadIndex.js';
+import { enableAttemptLog } from './monitoring/uploadAttempts.js';
 import { generateOutlooksList } from './generateOutlooksList.js';
 import {
     getPreviewSkipLog,
@@ -54,6 +62,15 @@ const reportEmailService = new ReportEmailService({
 // shared cache and rate limiter, rather than creating their own.
 setRoadWeatherService(backgroundRefresh.roadWeatherService);
 setTrafficEventsService(backgroundRefresh.trafficEventsService);
+setStatusLightServices({
+    roadWeather: backgroundRefresh.roadWeatherService,
+    trafficEvents: backgroundRefresh.trafficEventsService
+});
+
+// gzip for anything compressible over 1 kB, when the browser accepts it. nginx in front
+// compresses HTML only, so until 1.7.6 every JSON file went out whole: a 1.5 MB HRRR map run,
+// or the 1.7 MB list of observation files, to each visitor. They shrink to about a tenth.
+app.use(compression({ threshold: 1024 }));
 
 // Only parse JSON for application/json content-type (skip multipart/form-data uploads).
 //
@@ -74,6 +91,10 @@ app.use('/api', trafficEventsRoutes);
 app.use('/api', synopticAPIRoutes);
 app.use('/api', fireWeatherRoutes);
 app.use('/api', fireRestrictionsRoutes);
+app.use('/api', weatherAlertsRoutes);
+app.use('/api', statusLightsRoutes);
+app.use('/api', weatherForecastRoutes);
+app.use('/api', llmForecastRoutes);
 // Pipeline freshness/health for CHPC operators verifying their cron jobs.
 app.use('/api', monitoringRoutes);
 app.use('/api/static', express.static(path.join(__dirname, '../public/api/static')));
@@ -188,13 +209,31 @@ app.get('/about/faq', (req, res) => res.redirect(302, '/about'));
 // nothing ever regenerated, so it pinned operators to stale snapshots
 // during diagnostics. Use /api/filelist/:dataType below (dynamic
 // fs.readdir on the per-type directory) instead.
+//
+// A page that wants one file should not ask for this list: on .com the observations list is
+// 99,000 names. GET /api/latest/:dataType?prefix= (below) names the newest file of a product,
+// and ?prefix= here trims the list to one family of files before it is sent.
+
+// A prefix is the start of a file name, nothing else.
+const FILE_PREFIX_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,79}$/;
 
 app.get('/api/filelist/:dataType', async (req, res) => {
     const { dataType } = req.params;
+    // The name becomes part of a path, and Express decodes %2F inside it: "..%2F.." listed
+    // public/ until 1.7.9. Only an upload directory is ever listed.
+    if (!isKnownDataType(dataType)) {
+        return res.status(404).json({ error: `No such dataType: ${String(dataType).slice(0, 40)}`, reason: 'unknown-dataType' });
+    }
+    const prefix = req.query.prefix === undefined ? '' : String(req.query.prefix);
+    if (prefix !== '' && !FILE_PREFIX_RE.test(prefix)) {
+        return res.status(400).json({ error: 'prefix must be the start of a file name' });
+    }
     try {
-        const dataDir = path.join(__dirname, '../public/api/static', dataType);
+        // Where the upload route writes: public/api/static under the working directory.
+        const dataDir = path.join(getUploadIndex().staticRoot, dataType);
         const files = await fs.readdir(dataDir);
-        const allowedFiles = files.filter(f => f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf'));
+        const allowedFiles = files.filter(f => f.startsWith(prefix) && !f.startsWith('.')
+            && (f.endsWith('.json') || f.endsWith('.md') || f.endsWith('.png') || f.endsWith('.pdf')));
         res.json(allowedFiles);
     } catch (error) {
         // A directory that was never created means "this producer has never uploaded here",
@@ -213,31 +252,38 @@ app.get('/api/filelist/:dataType', async (req, res) => {
     }
 });
 
+// The newest file of one product, by the time stamp in its name: the answer every map and
+// current-conditions panel needs before it can fetch anything. Answered from the upload index
+// (server/uploadIndex.js), so it costs nothing however many files the directory holds.
+// "No such file yet" is an ordinary answer (filename: null), not a 404 in a visitor's console.
+app.get('/api/latest/:dataType', async (req, res) => {
+    const { dataType } = req.params;
+    if (!isKnownDataType(dataType)) {
+        return res.status(404).json({ error: `No such dataType: ${String(dataType).slice(0, 40)}`, reason: 'unknown-dataType' });
+    }
+    const prefix = String(req.query.prefix ?? '');
+    if (!FILE_PREFIX_RE.test(prefix)) {
+        return res.status(400).json({ error: 'prefix is required: the file name up to its time stamp, e.g. map_obs_' });
+    }
+    const index = getUploadIndex();
+    await index.ready();
+    const newest = index.latest(dataType, prefix);
+    res.set('Cache-Control', 'no-store').json({ dataType, prefix, filename: newest?.filename ?? null });
+});
+
 app.get('/api/live-observations', async (req, res) => {
     try {
-        // Get the latest observation file from the observations subdirectory
-        const staticDir = path.join(__dirname, '../public/api/static');
-        const observationsDir = path.join(staticDir, 'observations');
-        const fileListPath = path.join(observationsDir, 'filelist.json');
-
-        if (!await fs.access(fileListPath).then(() => true).catch(() => false)) {
-            return res.status(404).json({ error: 'No data files available' });
-        }
-
-        const fileList = JSON.parse(await fs.readFile(fileListPath, 'utf8'));
-        const obsFiles = fileList.filter(f => f.includes('map_obs_') && !f.includes('meta'));
-
-        if (obsFiles.length === 0) {
+        const index = getUploadIndex();
+        await index.ready();
+        const newest = index.latest('observations', 'map_obs_');
+        if (!newest) {
             return res.status(404).json({ error: 'No observation files found' });
         }
 
-        // Get the latest file (assuming filename contains timestamp)
-        const latestFile = obsFiles.sort().reverse()[0];
-        const latestFilePath = path.join(observationsDir, latestFile);
-        
-        const data = await fs.readFile(latestFilePath, 'utf8');
+        const latestFile = newest.filename;
+        const data = await fs.readFile(path.join(index.staticRoot, 'observations', latestFile), 'utf8');
         const parsedData = JSON.parse(data);
-        
+
         // Add metadata about the file
         res.json({
             timestamp: new Date().toISOString(),
@@ -245,7 +291,7 @@ app.get('/api/live-observations', async (req, res) => {
             totalObservations: parsedData.length,
             data: parsedData
         });
-        
+
     } catch (error) {
         console.error('Live observations error:', error);
         res.status(500).json({ error: 'Failed to fetch live observations' });
@@ -268,7 +314,16 @@ if (!isTestEnvironment) {
         process.exit(1);
     }
 
-    seedLastUploadFromDisk();
+    // Nothing writes observations/filelist.json any more; a stale one must not be served.
+    removeLegacyFilelist();
+    // Read the upload directories once, in the background, and take "last upload" from the
+    // newest file found so that a restart does not read as an outage.
+    const uploadIndex = getUploadIndex();
+    uploadIndex.ready().then(() => seedLastUpload(uploadIndex.newestReceivedAtMs()));
+    // Upload attempts survive a restart: read back the last process's, append from now on.
+    enableAttemptLog().then(({ loaded }) => {
+        if (loaded > 0) console.log(`Upload attempts on record from before this start: ${loaded}`);
+    });
     const ingest = getIngestReadiness();
     if (!ingest.ready && !previewMode) {
         console.error(`⚠️  Ingest not ready (running as ${processUser()}): ` +

@@ -103,7 +103,8 @@ function initializeTooltips() {
 let dailymaxHeatmaps = [];
 let currentInitTime = null;
 let heatmapsByInitTime = {};
-let clusteringByInit = {}; // heatmap init time → clustering data
+let clusteringByInit = {}; // heatmap init time → clustering data, once that run has been asked for
+let clusterFileByInit = {}; // heatmap init time → the clustering file that holds it
 let memberMode = false; // false = cluster view, true = member dropdown
 let shortcutsInitialized = false;
 
@@ -124,25 +125,35 @@ function findHeatmapForMember(memberId) {
     return dailymaxHeatmaps.find(f => f.includes(memberId));
 }
 
+// Which runs have a clustering summary. Only the names are fetched here: until 1.7.9 this
+// fetched every summary ever uploaded on each page view (341 files on .com on 2026-11-21) to
+// show one. The summary itself is fetched when its run is shown (loadClustering).
 async function fetchClusteringData() {
     try {
-        const res = await fetch('/api/filelist/forecasts');
+        const res = await fetch('/api/filelist/forecasts?prefix=forecast_clustering_summary_');
         if (!res.ok) return;
         const files = await res.json();
-        const clusterFiles = (Array.isArray(files) ? files : [])
-            .filter(f => f.startsWith('forecast_clustering_summary_') && f.endsWith('.json'));
-        // Fetch all clustering files in parallel, index by init time
-        const results = await Promise.all(clusterFiles.map(async (f) => {
-            const initTime = clusterFilenameToInit(f);
-            if (!initTime) return null;
-            try {
-                const r = await fetch(`${API_FORECASTS}/${f}`);
-                if (!r.ok) return null;
-                return { initTime, data: await r.json() };
-            } catch { return null; }
-        }));
-        results.forEach(r => { if (r) clusteringByInit[r.initTime] = r.data; });
+        (Array.isArray(files) ? files : [])
+            .filter(f => f.startsWith('forecast_clustering_summary_') && f.endsWith('.json'))
+            .forEach((f) => {
+                const initTime = clusterFilenameToInit(f);
+                if (initTime) clusterFileByInit[initTime] = f;
+            });
     } catch { /* clustering unavailable */ }
+}
+
+// Fetch one run's clustering summary, once. A run with none, or one that cannot be read, is
+// shown member by member, as before.
+async function loadClustering(initTime) {
+    if (initTime in clusteringByInit) return;
+    const file = clusterFileByInit[initTime];
+    if (!file) return;
+    try {
+        const r = await fetch(`${API_FORECASTS}/${file}`);
+        clusteringByInit[initTime] = r.ok ? await r.json() : null;
+    } catch {
+        clusteringByInit[initTime] = null;
+    }
 }
 
 async function initializeClyfar() {
@@ -163,6 +174,7 @@ async function initializeClyfar() {
             if (initTimes.length > 0) {
                 currentInitTime = initTimes[0];
                 dailymaxHeatmaps = heatmapsByInitTime[currentInitTime];
+                await loadClustering(currentInitTime);
 
                 showRunStatus(currentInitTime);
                 createDropdowns(initTimes);
@@ -320,9 +332,13 @@ function createDropdowns(initTimes) {
     updateMemberDropdown();
 
     // Event: init time changed
-    initTimeDropdown.addEventListener('change', (e) => {
-        currentInitTime = e.target.value;
+    initTimeDropdown.addEventListener('change', async (e) => {
+        const chosen = e.target.value;
+        currentInitTime = chosen;
         dailymaxHeatmaps = heatmapsByInitTime[currentInitTime];
+        await loadClustering(chosen);
+        // Another run was picked while this one's clusters were on their way.
+        if (currentInitTime !== chosen) return;
 
         const newClustering = getClusteringForInit(currentInitTime);
         const toggle = document.getElementById('member-mode-toggle');

@@ -1,18 +1,8 @@
-import { legendEntries, LEGEND_NOTE } from './mapUtils.js';
+import { legendMarkup } from './mapUtils.js';
 
-// The same rows and colours as the homepage legend, from the bands the markers use.
+// The same legend as the homepage map, from the bands the markers use.
 export function buildLegendMarkup() {
-    const rows = legendEntries().map(({ status, label }) => `
-        <div class="live-aq-legend-row">
-            <span class="live-aq-legend-swatch aq-status" data-status="${status}" aria-hidden="true"></span>
-            <span>${label}</span>
-        </div>`).join('');
-
-    return `
-        <div class="live-aq-legend-section-title">Ozone (ppb)</div>
-        ${rows}
-        <p class="live-aq-legend-note">${LEGEND_NOTE}</p>
-    `;
+    return legendMarkup();
 }
 
 if (typeof document !== 'undefined') {

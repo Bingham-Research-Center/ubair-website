@@ -7,7 +7,13 @@
 import express from 'express';
 import { getMonitor } from '../monitoring/dataMonitor.js';
 import { validateApiKey } from './dataUpload.js';
-import { getRecentUploadAttempts, countUploadAttempts } from '../monitoring/uploadAttempts.js';
+import {
+    countRejectedAttempts,
+    countUploadAttempts,
+    getRecentRejectedAttempts,
+    getRecentUploadAttempts
+} from '../monitoring/uploadAttempts.js';
+import { getBuildInfo } from '../buildInfo.js';
 
 const router = express.Router();
 
@@ -15,10 +21,10 @@ const router = express.Router();
  * GET /api/monitoring/status
  * Comprehensive status report
  */
-router.get('/monitoring/status', (req, res) => {
+router.get('/monitoring/status', async (req, res) => {
     try {
         const monitor = getMonitor();
-        const report = monitor.getStatusReport();
+        const report = await monitor.getStatusReport();
         res.json(report);
     } catch (error) {
         res.status(500).json({
@@ -32,10 +38,10 @@ router.get('/monitoring/status', (req, res) => {
  * GET /api/monitoring/freshness
  * Check data freshness only
  */
-router.get('/monitoring/freshness', (req, res) => {
+router.get('/monitoring/freshness', async (req, res) => {
     try {
         const monitor = getMonitor();
-        const freshness = monitor.checkDataFreshness();
+        const freshness = await monitor.checkDataFreshness();
         res.json({
             timestamp: new Date().toISOString(),
             freshness
@@ -53,17 +59,25 @@ router.get('/monitoring/freshness', (req, res) => {
  * The most recent upload attempts (newest first), accepted and rejected alike, as the app
  * saw them: source IP, x-client-hostname, dataType, filename, status, one-phrase reason.
  *
+ * `rejected` is the refused attempts alone, so a burst of accepted files cannot hide them.
+ * `startedAt` is when this process came up: older entries were recorded by the one before
+ * and read back from logs/analytics/upload_attempts.log.
+ *
  * API-key gated (same key the producer uploads with): it names CHPC hosts and addresses.
- * In-memory only — see server/monitoring/uploadAttempts.js. Replaces a parser of
- * /tmp/basinwx_upload.log, a file nothing wrote, which answered "Log file not found" on
- * both boxes from 2025 until 2026-09.
+ * See server/monitoring/uploadAttempts.js. Replaces a parser of /tmp/basinwx_upload.log, a
+ * file nothing wrote, which answered "Log file not found" on both boxes from 2025 until
+ * 2026-09.
  */
 router.get('/monitoring/uploads', validateApiKey, (req, res) => {
-    const limit = Number.parseInt(req.query.limit, 10);
+    const asked = Number.parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(asked) && asked > 0 ? asked : 50;
     res.json({
         timestamp: new Date().toISOString(),
+        startedAt: getBuildInfo().startedAt,
         buffered: countUploadAttempts(),
-        recent: getRecentUploadAttempts(Number.isFinite(limit) && limit > 0 ? limit : 50)
+        rejectedCount: countRejectedAttempts(),
+        recent: getRecentUploadAttempts(limit),
+        rejected: getRecentRejectedAttempts(limit)
     });
 });
 
