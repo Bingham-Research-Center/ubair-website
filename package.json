@@ -6,18 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node server/server.js",
-    "dev": "nodemon server/server.js --ignore public/data/outlooks/outlooks_list.json --ignore public/api/static/",
+    "dev": "nodemon server/server.js",
     "test-api": "NODE_OPTIONS='-r dotenv/config' node scripts/test-api.js",
     "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:snow": "NODE_OPTIONS='--experimental-vm-modules' jest snowDetection.test.js",
-    "test:confidence": "NODE_OPTIONS='--experimental-vm-modules' jest confidenceThresholds.test.js",
-    "ml:setup": "cd ml && chmod +x setup.sh && ./setup.sh",
-    "ml:collect": "node ml/collectCameraImages.js",
-    "ml:collect:continuous": "node ml/collectCameraImages.js --count=1000 --continuous=true --interval=600",
-    "ml:annotate": "echo 'Open http://localhost:3000/ml/annotateImages.html in your browser' && npm run dev",
-    "ml:preprocess": "cd ml && source venv/bin/activate && python preprocess.py",
-    "ml:train": "cd ml && source venv/bin/activate && python train.py",
-    "ml:help": "cat ml/GETTING_STARTED.md"
+    "test:confidence": "NODE_OPTIONS='--experimental-vm-modules' jest confidenceThresholds.test.js"
   },
   "dependencies": {
     "@fortawesome/fontawesome-free": "6.0.0",
