@@ -25,6 +25,17 @@ describe('pages parked off dev', () => {
         }
     });
 
+    // Leftovers found by the Sept 2026 audit (#307): a prototype page nothing routed, two scripts
+    // nothing loaded, and npm scripts for an ml/ directory that was never in the repo.
+    test('the dead prototype files and their npm scripts are gone', () => {
+        for (const file of ['views/vis.html', 'public/css/vis.css', 'public/js/data_processor.js', 'public/js/stationMapping.js']) {
+            expect(fs.existsSync(path.join(repoRoot, file))).toBe(false);
+        }
+        const { scripts } = JSON.parse(read('package.json'));
+        expect(Object.keys(scripts).filter((name) => name.startsWith('ml:'))).toEqual([]);
+        expect(JSON.stringify(scripts) + read('nodemon.json')).not.toMatch(/public\/data\//);
+    });
+
     // The Clyfar and weather pages carried summary panes that no upload ever filled: one said
     // "will be available soon", the other "Loading..." for good.
     test('no page waits on a summary that nothing produces', () => {
