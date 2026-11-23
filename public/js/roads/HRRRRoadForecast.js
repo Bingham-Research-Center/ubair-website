@@ -6,6 +6,7 @@ import {
     selectForecastDisplayIndices
 } from './HRRRForecastModel.js';
 import { CorridorTable } from './CorridorTable.js';
+import { toFahrenheit, toMph } from '../met.js';
 
 const HRRR_ENDPOINT = '/api/road-weather/forecast';
 const REFRESH_INTERVAL_MS = 5 * 60 * 1000;
@@ -43,12 +44,12 @@ function isMetricMode() {
 
 function formatTemperatureFromCelsius(value) {
     if (!Number.isFinite(value)) return '--';
-    return isMetricMode() ? `${value.toFixed(0)}°C` : `${(value * 9 / 5 + 32).toFixed(0)}°F`;
+    return isMetricMode() ? `${value.toFixed(0)}°C` : `${toFahrenheit(value, 'Celsius').toFixed(0)}°F`;
 }
 
 function formatWindFromMetersPerSecond(value) {
     if (!Number.isFinite(value)) return '--';
-    return isMetricMode() ? `${(value * 3.6).toFixed(0)} km/h` : `${(value * 2.23694).toFixed(0)} mph`;
+    return isMetricMode() ? `${(value * 3.6).toFixed(0)} km/h` : `${toMph(value, 'm/s').toFixed(0)} mph`;
 }
 
 function formatVisibilityFromKm(value) {
