@@ -223,9 +223,9 @@ Check cleanliness by the *exit code* of `git merge-tree --write-tree HEAD origin
 conflict markers, so never grep for them), pairwise when several PRs are open.
 
 ## Secrets
-Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`,
-`SYNOPTIC_API_TOKEN`. Never commit, never echo values to logs or chat. Share via password
-manager.
+Loaded from `.env` (gitignored). Required: `DATA_UPLOAD_API_KEY`, `UDOT_API_KEY`. The app no
+longer reads `SYNOPTIC_API_TOKEN` (its unused proxy routes went in 1.8.1); CHPC's token is the one
+that feeds the site. Never commit, never echo values to logs or chat. Share via password manager.
 
 ## Doc naming (LLM-produced markdown)
 ALL-CAPS, 3–4 hyphen-separated words (`DEPLOYMENT-RUNBOOK.md`), never a sentence. Temporary or

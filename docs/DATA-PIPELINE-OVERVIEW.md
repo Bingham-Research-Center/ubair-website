@@ -424,7 +424,6 @@ SYNOPTIC_API_TOKEN      # Synoptic Weather API token
 DATA_UPLOAD_API_KEY     # API key (matches BASINWX_API_KEY)
 PORT                    # Server port (default: 3000)
 UDOT_API_KEY           # UDoT traffic API key
-SYNOPTIC_API_TOKEN     # Synoptic Weather API token
 ```
 
 ## Appendix: Manifest Version History
