@@ -38,6 +38,16 @@ export const STATIONS = {
     UINU1: { name: 'Fort Duchesne', home: true, companions: ['COOPFTDU1'] },
     UCC34: { name: 'Bluebell', home: true },
 
+    // The Colorado end of the Basin. CHPC's request already names these three (brc-tools
+    // `obs_map_stids`), and all three report to the National Weather Service today; Synoptic
+    // refuses them until the token covers Colorado (asked in Nov 2026). Like Fruitland, each
+    // appears by itself once the feed carries it, placed by the feed's own metadata. Rangely is
+    // left off the homepage map for now: it lies 50 km east of the next station, and fitting it
+    // in zooms that map out a level (rehearsed 23 Nov 2026). `home: true` puts it there.
+    K4V0: { name: 'Rangely' },
+    DNOC2: { name: 'Dinosaur, Colorado' },
+    SURC2: { name: 'Dinosaur NM (Success)' },
+
     // Co-op observers report once a day; on the map they show snow depth (MAX_AGE_MINUTES).
     COOPALMU1: { name: 'Altamont', home: true },
     COOPNELU1: { name: 'Neola', home: true },

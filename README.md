@@ -10,13 +10,13 @@ researchers, and policymakers.
 > [john.lawson@usu.edu](mailto:john.lawson@usu.edu).
 
 ## Picking the work up
-- **On the dev box** (`/srv/ubair-website`, user `deploy`), or for the state of play anywhere:
-  [`docs/NEXT-SESSION-HANDOFF-nov21.md`](docs/NEXT-SESSION-HANDOFF-nov21.md): versions, open
-  PRs, what is parked, what comes next.
+- **State of play** (versions, open PRs, what is parked, what comes next): the newest
+  `docs/NEXT-SESSION-HANDOFF-*.md`. The date is in the name; each one replaces the last.
 - **On CHPC** (producer work in `brc-tools`):
-  [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md): the asks P1–P24,
-  in order, and how to check an upload landed.
-- Rules for AI agents: `CLAUDE.md`. Newer handoffs replace these; the date is in the name.
+  [`docs/CHPC-INGEST-HANDOFF-nov21.md`](docs/CHPC-INGEST-HANDOFF-nov21.md), then
+  [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md): the asks, in
+  order, and how to check an upload landed.
+- Rules for AI agents: `CLAUDE.md`.
 
 ## What's here
 - **Real-time observations** — live weather + air-quality, year-round
@@ -33,32 +33,27 @@ ozone season. Each row below is one feature. Its page opens in plain language (w
 how to read it) and ends with where the code and tests are. Words you do not know are in the
 [glossary](docs/features/PLAIN-WORDS-GLOSSARY.md).
 
-| Feature | In one line | Where it stands (21 Nov 2026) | Read more | Issues |
+| Feature | In one line | Where it stands (24 Nov 2026) | Read more | Issues |
 |---|---|---|---|---|
-| **Air-quality maps** | Homepage and Live AQ maps show each station's own readings (never a neighbour's), grey when nothing recent, under one short ozone legend | On `.dev` (1.7.8-dev) | `public/js/config.js` (the station list) | #423 |
-| **Homepage status lights** | Five tiles: weather alerts, what is forecast for the next part of the day, ozone risk, road trouble, and rain or snow by elevation | On `.dev` | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
-| **Weather forecast page** | Alerts; a forecast for your town hour by hour, checked against its weather station; the Basin in profile; where rain turns to snow; then a map in colour bands with a time slider | On `.dev` | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
-| **NWS weather alerts** | One honest source of official alerts for every page: a failed check never reads as "no alerts" | On `.dev` | [NWS-WEATHER-ALERTS](docs/features/NWS-WEATHER-ALERTS.md) | #404 |
-| **Data upload path** | Who may send data to the site, what they may send, and what is refused | On `.dev` | [DATA-UPLOAD-PATH](docs/features/DATA-UPLOAD-PATH.md) | #402 |
-| **Road weather page** | It no longer invents roads when UDOT is down, and snow covering a main route is red | On `.dev`; three more batches parked | [ROAD-WEATHER-PAGE](docs/features/ROAD-WEATHER-PAGE.md) | #336, #337–#339 |
-| **LLM forecast text** | Forecast text in three versions (Public, Industry, Expert), written by a language model and labelled as such | Rules and the drawing code live on `.dev`; **no text yet**, it waits on the producers | [LLM-FORECAST-TEXT](docs/features/LLM-FORECAST-TEXT.md) | #405, #406, #408, #410, #411 |
+| **Air-quality maps** | Homepage and Live AQ maps show each station's own readings (never a neighbour's), grey when nothing recent, under one short ozone legend. Rangely and Dinosaur, Colorado, appear by themselves once Synoptic opens Colorado | Live | `public/js/config.js` (the station list) | #423 |
+| **Homepage status lights** | Five tiles: weather alerts, what is forecast for the next part of the day, ozone risk, road trouble, and rain or snow by elevation | Live | [HOMEPAGE-STATUS-LIGHTS](docs/features/HOMEPAGE-STATUS-LIGHTS.md) | #403 |
+| **Weather forecast page** | Alerts; a forecast for your town hour by hour, checked against its weather station; the Basin in profile; where rain turns to snow; then a map in colour bands with a time slider | Live | [WEATHER-FORECAST-PAGE](docs/features/WEATHER-FORECAST-PAGE.md) | #407, #101 |
+| **NWS weather alerts** | One honest source of official alerts for every page: a failed check never reads as "no alerts" | Live | [NWS-WEATHER-ALERTS](docs/features/NWS-WEATHER-ALERTS.md) | #404 |
+| **Data upload path** | Who may send data to the site, what they may send, and what is refused | Live | [DATA-UPLOAD-PATH](docs/features/DATA-UPLOAD-PATH.md) | #402 |
+| **Road weather page** | It no longer invents roads when UDOT is down, and snow covering a main route is red; a flatter layout, a corridor table and one list of alerts and advisories | Live; known gaps in #419 | [ROAD-WEATHER-PAGE](docs/features/ROAD-WEATHER-PAGE.md) | #336–#339, #419 |
+| **LLM forecast text** | Forecast text in three versions (Public, Industry, Expert), written by a language model and labelled as such | The rules and the drawing code are live; **no text yet**, it waits on the producers | [LLM-FORECAST-TEXT](docs/features/LLM-FORECAST-TEXT.md) | #405, #406, #408, #410, #411 |
 | GEFS bands on the weather page | Days 1 to 15 as a likely range instead of 31 tangled lines | Waits on producer data | | #409 |
 | Expert page | Aircraft and other research products, labelled experimental | Waits on producer data | | #412 |
 | Next-3-days and inversion lights | Two more homepage tiles | Wait on producer data | | #413 |
 
-- **"On `.dev`"** means it is live at [www.basinwx.dev](https://www.basinwx.dev), the rehearsal
-  copy, and reaches [www.basinwx.com](https://www.basinwx.com) with the next release. To see
-  what each site runs right now: `python3 scripts/probe.py`.
+- **"Live"** means on [www.basinwx.com](https://www.basinwx.com) since v1.8.0 (23 Nov). The
+  rehearsal copy, [www.basinwx.dev](https://www.basinwx.dev), runs a step ahead. To see what
+  each site runs right now: `python3 scripts/probe.py`.
 - **"Waits on the producers"** means the website side is ready or planned, and the computers
   that make the data have work to do first. Their list:
   [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md).
 - The whole plan, with its reasons: [`docs/NWP-DASHBOARD-PLAN-nov20.md`](docs/NWP-DASHBOARD-PLAN-nov20.md).
 - This table is a snapshot. Delete it, or fold it into "What's here", once v2.0.0 is out.
-
-## Human-to-human warnings
-This codebase moves fast. Repo bloat is a known problem.
-- Low verbosity preferred; prune outdated content; merge overlapping files
-- AI-assisted development is welcome and **must** be transparent — co-author every `git commit`
 
 ## Architecture (one paragraph)
 CHPC compute (`brc-tools`, Python) fetches Synoptic + HRRR data, processes via polars/pandas,
@@ -85,7 +80,7 @@ changing the site's look is an edit to that one file.
 | Check you kept to it | `npm test`: `styleRatchet` fails if a file gains raw values, `themeContrast` fails if text drops below WCAG AA |
 
 House rules for new work: flat surfaces separated by a hairline rather than a drop shadow;
-corners of 4, 6 or 8 px; hover and keyboard focus change colour or border and never move the
+square corners (the radius tokens are 0); hover and keyboard focus change colour or border and never move the
 element; icons come from the one vendored Font Awesome (`/vendor/fontawesome`), not emoji or a
 CDN. Tiers, the ratchet and how to add a token: `docs/STYLE-TOKEN-GUIDE.md`.
 
@@ -147,17 +142,18 @@ git -C /srv/ubair-website worktree remove --force /srv/ubair-website-preview-the
 | **Per-feature SOPs** | `docs/SOP-*.md`, `docs/howto/*.md` |
 
 Outstanding work is tracked in [GitHub Issues](https://github.com/Bingham-Research-Center/ubair-website/issues)
-on the open milestone (`v2.0.0 Ozone season open`; `v1.6.0 Beta relaunch` closed 21 Nov), not in docs files.
+on the open milestone (`v2.0.0 Ozone season open`), not in docs files.
 Unscheduled ideas live in one thread, [Ideas parking lot](https://github.com/Bingham-Research-Center/ubair-website/discussions/342).
 
 ## Contributing
 Three audiences: human devs (architecture, setup, workflow), end users (plain-language guides),
-and AI agents (`CLAUDE.md`, schemas, system context). Keep docs terse, current, and
-audience-appropriate. PRs go into `dev`.
+and AI agents (`CLAUDE.md`, schemas, system context). This codebase moves fast and repo bloat
+is a known problem: keep docs terse, current and audience-appropriate, prune outdated content,
+merge overlapping files. PRs go into `dev`.
 
-- **Style:** low verbosity; prune bloat
 - **Tests:** TDD where practical (`npm test`)
-- **AI authorship:** every commit involving AI assistance must list the agent as a co-author
+- **AI authorship:** AI-assisted work is welcome and **must** be transparent: every commit
+  involving an AI agent lists it as a co-author
 - **Branches:** never push directly to `dev`/`ops`/`main` — see `CLAUDE.md` and the wiki
 
 ## Quick health checks
