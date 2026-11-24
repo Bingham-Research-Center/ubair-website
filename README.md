@@ -11,7 +11,7 @@ researchers, and policymakers.
 
 ## Picking the work up
 - **On the dev box** (`/srv/ubair-website`, user `deploy`), or for the state of play anywhere:
-  [`docs/NEXT-SESSION-HANDOFF-nov21.md`](docs/NEXT-SESSION-HANDOFF-nov21.md): versions, open
+  [`docs/NEXT-SESSION-HANDOFF-nov23.md`](docs/NEXT-SESSION-HANDOFF-nov23.md): versions, open
   PRs, what is parked, what comes next.
 - **On CHPC** (producer work in `brc-tools`):
   [`docs/NWP-PRODUCER-HANDOFF-nov20.md`](docs/NWP-PRODUCER-HANDOFF-nov20.md): the asks P1–P24,

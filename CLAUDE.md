@@ -9,7 +9,7 @@ what to do next) is in the newest `docs/*-HANDOFF-*.md`; read it before acting.
 
 | Where the session runs | What it can do | Read first |
 |---|---|---|
-| **Dev box**: `/srv/ubair-website` as `deploy` | worktrees, PRs, deploy `.dev`, previews; no sudo, no route to prod | `docs/NEXT-SESSION-HANDOFF-nov21.md` |
+| **Dev box**: `/srv/ubair-website` as `deploy` | worktrees, PRs, deploy `.dev`, previews; no sudo, no route to prod | `docs/NEXT-SESSION-HANDOFF-nov23.md` |
 | **CHPC** (notchpeak1, `brc-tools`) | build and upload producer files; no shell on either box, so verify from outside (`probe.py`) and hand over the one-liner | `docs/CHPC-INGEST-HANDOFF-nov21.md` (what arrived on 21 Nov, measured; asks P25–P28), then `docs/NWP-PRODUCER-HANDOFF-nov20.md`: asks P1–P24 |
 | Prod box (root) | JRL only: prod deploys | "Deploying" below |
 | Any laptop or VM copy | read and draft; never the source of truth | this file |
@@ -82,8 +82,8 @@ One branch, its own worktree, a spare port, served at `<name>.basinwx.dev`.
 - **`theme.basinwx.dev` → `127.0.0.1:3003` is provisioned and kept as a spare slot:** start any
   branch on port 3003 and it is live with no root work (502 while idle). The recipe is README
   "Branch previews"; tear it down when the PR merges so the slot is free again.
-- Ports: 3000 prod, 3001 dev, 3002 kept for the parked roads stack (#337–#339; worktree
-  `/srv/ubair-website-preview-roads`, not running, no vhost), 3003 the spare slot.
+- Ports: 3000 prod, 3001 dev, 3002 for a second preview (no vhost: reach it from the box),
+  3003 the spare slot.
 - Any other name needs root: DNS is a wildcard but the certificate is not
   (`certbot certonly --nginx -d <name>.basinwx.dev`, then an nginx vhost).
 - `PREVIEW_MODE=true` in the preview's `.env` keeps background jobs off (no double-burned
@@ -106,7 +106,8 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   in `public/js/api.js` deliberately does not convert (its commented-out `convertUnits` call is
   on purpose); each page converts at its display layer from the units the feed states. New code
   uses `public/js/met.js` (pure converters that return null for a unit they do not know, plus RH
-  from dew point); older pages still carry their own copies. A page that misses this prints
+  from dew point); only the roads unit switch (`roads/UnitsSystem.js`) still has its own, and
+  `met.test.js` fails if another script grows one. A page that misses this prints
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
 - **Observations are keyed by station ID, never by display name.** Name-keyed merging once
   showed a 14-hour-old co-op temperature as Vernal's current reading and lent the DEQ monitor's
@@ -116,9 +117,12 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
 - **The maps read only the newest `map_obs_*` file.** A second observations producer (such as
   a server sending the UB-AIR monitors from storage) must merge into CHPC's file or agree its
   own prefix first, or the two take turns on the map (producer ask P24).
-- **The site's Synoptic token sees Utah only.** Colorado and Wyoming requests, Rangely
-  included, are refused. Keyless public sources exist for the edges (Rangely AWOS `K4V0` on
-  api.weather.gov and aviationweather.gov, IEM, ACIS); none is wired yet. See the handoff.
+- **Neither Synoptic token sees outside Utah.** The site's is refused Colorado and Wyoming, and
+  CHPC's request already names Rangely `K4V0` and the Colorado Dinosaur stations `DNOC2` and
+  `SURC2` and gets none of them. No page uses the site's token: everything shown comes from
+  CHPC's files. The three are named in `config.js` and appear by themselves once the feed
+  carries them (1.8.1-dev); Wyoming is not in CHPC's request. Keyless sources for the edges
+  are listed in the handoff; none is wired, by JRL's choice.
 - **Check the payload, not the manifest, before relying on a variable.** The manifest declares
   `relative_humidity`, yet no production observation file contains it (a producer-side gap);
   derive it with `met.js` meanwhile. brc-tools #76–#78 took effect at 04:46Z on 21 Nov 2026,
@@ -239,8 +243,8 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,111 tests across 77 suites at 1.7.9-dev,
-  2026-11-21); any failure is new breakage.** Never tolerate a red suite.
+- `npm test` — Jest. **The suite is green (1,234 tests across 83 suites at 1.8.1-dev,
+  2026-11-24); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).
 - **On the dev box** (2 GB, one CPU): one heavy job at a time, Jest with `--runInBand`. In a
