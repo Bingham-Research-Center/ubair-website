@@ -2,7 +2,7 @@ import fs from 'fs';
 import { describe, it, expect } from '@jest/globals';
 import { processObservationData } from '../api.js';
 import { HOME_STATIONS, STATIONS } from '../config.js';
-import { describeStation, homeStationIds, liveAqStationIds, stationReading } from '../mapShared.js';
+import { describeStation, homeStationIds, liveAqStationIds, mapStationName, stationReading } from '../mapShared.js';
 
 // The real feed as it stood at 03:36Z on 21 Nov 2026, replayed through the maps' own code.
 // Each test pins a fault that file showed on .dev that day.
@@ -91,6 +91,45 @@ describe('the homepage map', () => {
 
     it('places every station it draws', () => {
         for (const stid of homeStationIds(observations, metadata)) expect(station(stid)).not.toBeNull();
+    });
+});
+
+// Rangely and the two Dinosaur stations are in CHPC's request but refused by Synoptic until the
+// token covers Colorado. Nothing is drawn for them before their data arrives, and nothing has
+// to change here when it does.
+describe('the Colorado stations, before and after the feed carries them', () => {
+    it('draws none of them while the feed has none', () => {
+        for (const stid of ['K4V0', 'DNOC2', 'SURC2']) {
+            expect(metadata[stid]).toBeUndefined();
+            expect(station(stid)).toBeNull(); // no position is kept here to draw one from
+            expect(liveAqStationIds(metadata)).not.toContain(stid);
+        }
+        expect(homeStationIds(observations, metadata)).not.toContain('K4V0');
+    });
+
+    it('draws Rangely on Live AQ, by its own readings, once it arrives', () => {
+        const withRangely = { ...metadata, K4V0: { name: 'RANGELY AIRPORT', lat: 40.09397, lng: -108.76306 } };
+        const arrived = {
+            ...observations,
+            Temperature: { ...observations.Temperature, K4V0: 5 },
+            _times: { ...observations._times, K4V0: { Temperature: '2026-11-21T03:35:00.000Z' } },
+            _timestamps: { ...observations._timestamps, K4V0: '2026-11-21T03:35:00.000Z' },
+        };
+        expect(liveAqStationIds(withRangely)).toContain('K4V0');
+        // The homepage map stays on the stations it has until JRL adds Rangely to it: fitting
+        // Rangely in zooms that map out a level.
+        expect(homeStationIds(arrived, withRangely)).not.toContain('K4V0');
+
+        const rangely = describeStation('K4V0', { observations: arrived, metadata: withRangely, now });
+        expect(rangely).toMatchObject({ name: 'Rangely', lat: 40.09397, lng: -108.76306, status: 'weather', notReportingSince: null });
+        expect(rangely.measurements).toEqual({ Temperature: 5 });
+    });
+
+    it('names the two Dinosaur stations so neither reads as the Monument\'s ozone monitor', () => {
+        expect(mapStationName('DNOC2', 'DINOSAUR 2 E')).toBe('Dinosaur, Colorado');
+        expect(mapStationName('SURC2', 'DINOSAUR NM SUCCESS')).toBe('Dinosaur NM (Success)');
+        expect(mapStationName('A3822', 'Dinosaur National Monument')).toBe('Dinosaur NM');
+        for (const stid of ['K4V0', 'DNOC2', 'SURC2']) expect(HOME_STATIONS).not.toContain(stid);
     });
 });
 
