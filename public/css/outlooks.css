@@ -403,9 +403,11 @@
         gap: 1.5rem;
     }
 
+    /* width: 100% plus the pane's padding ran 44px past a phone screen */
     #current-outlook {
         margin-right: 0;
         width: 100%;
+        box-sizing: border-box;
     }
 
     #outlook-archive {
