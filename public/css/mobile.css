@@ -254,15 +254,6 @@
         font-size: 0.9rem;
     }
 
-    /* Legend dropdown stays inline on mobile, not as centered overlay */
-    .legend-dropdown {
-        margin-top: 0.75rem;
-        padding: 0.75rem;
-        /* Ensure it doesn't overlay content when active */
-        position: relative;
-        max-width: 100%;
-    }
-    
     .legend-toggle {
         width: 100%;
         justify-content: center;

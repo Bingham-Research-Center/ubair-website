@@ -102,7 +102,7 @@ python chpc_uploader.py --health-check
 
 **Validation layers:**
 1. **Authentication:** API key via `x-api-key` header
-2. **Origin:** Hostname must be `*.chpc.utah.edu`
+2. **Origin:** Hostname must be on the host allowlist (`.chpc.utah.edu` unless `UPLOAD_ALLOWED_HOSTS` is set)
 3. **File type:** JSON, MD, TXT, PNG, JPG only
 4. **File size:** 10MB limit (configurable per data type)
 5. **JSON structure:** Validates against manifest schema
@@ -192,9 +192,11 @@ python chpc_uploader.py --health-check
 - **Generation:** Use `scripts/generate-api-key.js`
 
 ### Origin Validation
-- **Method 1:** Check `x-client-hostname` header for `*.chpc.utah.edu`
-- **Method 2:** Reverse DNS lookup of client IP
-- **Purpose:** Ensure data only comes from authorized CHPC servers
+- **Method 1:** Check the `x-client-hostname` header against the host allowlist
+  (`.chpc.utah.edu` by default; `UPLOAD_ALLOWED_HOSTS` in `.env` replaces it)
+- **Method 2:** Reverse DNS lookup of client IP, against the same list
+- **Purpose:** Keep out a producer that is not expected. It is a filter, not authentication:
+  the header is the client's own word, and the API key is what keeps strangers out
 
 ### File Validation
 - **Type checking:** Only JSON, MD, TXT, PNG, JPG allowed

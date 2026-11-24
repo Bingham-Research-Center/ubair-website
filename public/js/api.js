@@ -1,5 +1,4 @@
 // Real API implementation for fetching live obs and time series data
-import { mapStationName } from './mapShared.js';
 
 /**
  * Fetch time series data from Synoptic API via server proxy
@@ -77,8 +76,26 @@ export async function fetchAvailableStations() {
   }
 }
 
+/**
+ * The newest file named `<prefix><YYYYMMDD_HHMMZ>.json` in a dataType.
+ *
+ * The server is asked for the one name (GET /api/latest, website 1.7.9). Until then every map
+ * and current-conditions panel downloaded the whole directory listing and sorted it here: on
+ * .com that was 99,000 names, 255 KB gzipped, twice per map load.
+ */
 export async function getLatestFilename(prefix, dataType) {
-  const res = await fetch(`/api/filelist/${dataType}`);
+  const query = `prefix=${encodeURIComponent(prefix)}`;
+  const asked = await fetch(`/api/latest/${dataType}?${query}`, { cache: 'no-store' }).catch(() => null);
+  if (asked?.ok) {
+    const { filename } = await asked.json();
+    if (!filename) throw new Error(`No files found for prefix \`${prefix}\` in ${dataType}`);
+    return filename;
+  }
+
+  // The route is not there between a deploy's `git pull` (this file changes at once) and its
+  // restart (routes load then), so the list is still the fallback. `?prefix=` trims it on a
+  // server that knows the parameter and is ignored by one that does not.
+  const res = await fetch(`/api/filelist/${dataType}?${query}`);
   if (!res.ok) throw new Error(`Unable to list files: ${res.status}`);
   const files = await res.json();
   const regex = new RegExp(`^${prefix}(\\d{8}_\\d{4}Z)\\.json$`);
@@ -110,7 +127,7 @@ export async function fetchLiveObservations() {
     const rawMeta = await metaRes.json();
 
     const metadata = processMetadata(rawMeta);
-    const observations = processObservationData(rawData, metadata);
+    const observations = processObservationData(rawData);
 
     return { observations, metadata };
   } catch (err) {
@@ -145,80 +162,36 @@ function processMetadata(rawMeta) {
 }
 
 /**
- * Process raw observation data from pandas export format
- * Transforms [{stid, variable, value, units}...] to {variable: {station: value}}
- * Also preserves units information in a separate _units object
+ * Process raw observation data from pandas export format.
+ * Transforms [{stid, variable, value, date_time, units}...] to {variable: {stid: value}}, keyed by
+ * Synoptic station ID. Stations are never merged by name: until 21 Nov 2026 every station called
+ * "Vernal" was folded into one, and a co-op reading 14 h old was shown as current.
+ *
+ * Alongside the values: _times[stid][variable] (when each reading was taken), _timestamps[stid]
+ * (the station's newest reading) and _units[variable] (the feed's unit name; values stay raw SI).
+ * Where a station sends one variable twice, the newer reading wins.
  */
-export function processObservationData(rawData, metadata = {}) {
+export function processObservationData(rawData) {
     if (!Array.isArray(rawData)) {
         throw new Error('Expected array of observations');
     }
 
-    // Group by station first
-    const stationData = {};
-    const stationTimestamps = {}; // Store timestamps for each station
-    const variableUnits = {}; // Store units for each variable
+    const result = { _timestamps: {}, _times: {}, _units: {} };
 
-    rawData.forEach(obs => {
+    rawData.forEach((obs) => {
         const { stid, variable, value, date_time, units } = obs;
-
         if (!stid || value === null || value === undefined) return;
 
-        if (!stationData[stid]) {
-            stationData[stid] = {};
-        }
+        const name = mapVariableName(variable);
+        const times = (result._times[stid] ??= {});
+        const previous = times[name];
+        if (previous !== undefined && (!date_time || date_time <= previous)) return;
 
-        // Store the timestamp for this station (will be the same for all variables from same observation)
-        if (date_time) {
-            stationTimestamps[stid] = date_time;
-        }
-
-        const mappedVar = mapVariableName(variable);
-
-        // Store units for this variable (will be consistent across stations)
-        if (units && !variableUnits[mappedVar]) {
-            variableUnits[mappedVar] = units;
-        }
-
-        // const convertedValue = convertUnits(value, units, mappedVar);
-        // stationData[stid][mappedVar] = convertedValue;
-        stationData[stid][mappedVar] = value;
+        (result[name] ??= {})[stid] = value;
+        times[name] = date_time ?? null;
+        if (units && !result._units[name]) result._units[name] = units;
+        if (date_time && !(result._timestamps[stid] >= date_time)) result._timestamps[stid] = date_time;
     });
-
-    // Convert to map format: {variable: {stationName: value}}
-    const result = {};
-    const timestamps = {}; // Store timestamps by station name
-    const allVariables = new Set();
-
-    // Collect all unique variables
-    Object.values(stationData).forEach(station => {
-        Object.keys(station).forEach(variable => allVariables.add(variable));
-    });
-
-    // Reorganize by variable and create timestamp mapping
-    allVariables.forEach(variable => {
-        result[variable] = {};
-        Object.entries(stationData).forEach(([stid, data]) => {
-            const metadataName = metadata[stid]?.name;
-            const stationName = mapStationName(stid, metadataName);
-            if (stationName && data[variable] !== undefined) {
-                // Only set if not already set (merge alt station IDs, don't overwrite)
-                if (result[variable][stationName] === undefined) {
-                    result[variable][stationName] = data[variable];
-                }
-                // Store timestamp for this station (use most recent if multiple)
-                if (stationTimestamps[stid]) {
-                    if (timestamps[stationName] === undefined || stationTimestamps[stid] > timestamps[stationName]) {
-                        timestamps[stationName] = stationTimestamps[stid];
-                    }
-                }
-            }
-        });
-    });
-
-    // Add timestamps and units to the result
-    result._timestamps = timestamps;
-    result._units = variableUnits;
 
     return result;
 }

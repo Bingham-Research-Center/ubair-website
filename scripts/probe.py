@@ -12,8 +12,9 @@ Per host it reports:
   health   version, manifest, commit, branch, startedAt, vendorAssets (the last four need >= 1.5.5)
   ingest   whether this process can accept an upload at all: key loaded, dirs writable (>= 1.5.5)
   vendor   HEAD of a file served out of node_modules -- tells you whether `npm install` ran
-  fresh    /api/monitoring/freshness, one line per dataType (FAIL if observations are missing or > 60 min old)
-  uploads  /api/monitoring/uploads, last 5 attempts (only with the key)
+  fresh    /api/monitoring/freshness, one line per dataType and, from 1.7.9, per product
+           (FAIL if observations are missing or > 60 min old)
+  uploads  /api/monitoring/uploads, last 5 attempts and the refused ones (only with the key)
   release  the newest v* tag in this checkout, if run inside the repo, against the version served
 
 This is the outside view only. It cannot see pm2, nginx or logs; for those you need a shell
@@ -149,18 +150,34 @@ def probe(host, tag):
 
     status, body = fetch(f"{base}/api/monitoring/freshness")
     if status == 200:
+        # Not late: on time, on no schedule (ad-hoc), or switched off for the season (1.7.9).
+        quiet = ("fresh", "unscheduled", "dormant")
+
+        def detail_of(f):
+            age = f.get("ageMinutes")
+            if age is None:
+                return f.get("message", "")
+            every = f.get("expectedFreqMinutes")
+            return f"{age} min old, " + (f"expected every {every}" if every is not None else "no schedule")
+
         for name, f in (json.loads(body).get("freshness") or {}).items():
             st = f.get("status")
             age = f.get("ageMinutes")
-            lvl = "ok" if st == "fresh" else "WARN"
+            lvl = "ok" if st in quiet else "WARN"
             # Most dataTypes are seasonal or six-hourly, so stale alone only warns. Observations
-            # flow every 10 minutes all year: an hour without them means ingest is down, and on
+            # flow every 5 minutes all year: an hour without them means ingest is down, and on
             # 2026-10-27 this script said "RESULT: ok" a full day into exactly that. No usable
             # age at all (missing, no_data, error) is no better.
             if name == "observations" and (age is None or age > OBS_DEAD_MINUTES):
                 lvl = "FAIL"
-            detail = f"{age} min old, expected every {f.get('expectedFreqMinutes')}" if age is not None else f.get("message", "")
-            say(lvl, f"fresh    {name:<14} {st:<8} {detail}")
+            say(lvl, f"fresh    {name:<14} {st:<11} {detail_of(f)}")
+            # From 1.7.9 a dataType that holds several products is judged one by one, so a dead
+            # six-hourly job no longer hides behind an hourly one in the same directory.
+            for pname, pf in (f.get("products") or {}).items():
+                pst = pf.get("status")
+                say("ok" if pst in quiet else "WARN", f"fresh      {pname:<26} {pst:<11} {detail_of(pf)}")
+            if f.get("undeclared"):
+                say("ok", f"fresh      not in the manifest: {', '.join(f['undeclared'])}")
     else:
         say("WARN", f"fresh    {status} {body[:100]}")
 
@@ -169,11 +186,30 @@ def probe(host, tag):
         status, body = fetch(f"{base}/api/monitoring/uploads?limit=5", headers={"x-api-key": key})
         if status == 200 and "recent" in body:
             data = json.loads(body)
-            say("ok", f"uploads  {data.get('buffered', 0)} attempts since start; newest first:")
-            for a in data.get("recent", []):
+
+            def show(a):
                 flag = "ok " if a.get("ok") else "REJ"
                 print(f"           {a.get('ts')} {flag} {a.get('status')} {a.get('dataType')} "
                       f"{a.get('filename') or '-'} from {a.get('hostname') or a.get('ip')} ({a.get('detail')})")
+
+            # Before 1.7.9 the list was emptied by a restart; now it is read back from disk.
+            scope = "on record" if "rejected" in data else "since start"
+            say("ok", f"uploads  {data.get('buffered', 0)} attempts {scope}; newest first:")
+            for a in data.get("recent", []):
+                show(a)
+            # A refusal stays on record for a long time (200 are kept), so only a recent one warns.
+            refused = data.get("rejected") or []
+            if refused:
+                try:
+                    newest = datetime.fromisoformat(str(refused[0].get("ts")).replace("Z", "+00:00"))
+                    hours = (datetime.now(timezone.utc) - newest).total_seconds() / 3600
+                except ValueError:
+                    hours = 0
+                say("WARN" if hours < 24 else "ok",
+                    f"uploads  {data.get('rejectedCount', len(refused))} refused attempts on record, "
+                    f"the newest {hours:.0f} h ago; newest first:")
+                for a in refused:
+                    show(a)
         elif status == 200 and "Log file not found" in body:
             say("WARN", "uploads  this server does not list attempts yet (added in 1.5.5)")
         else:

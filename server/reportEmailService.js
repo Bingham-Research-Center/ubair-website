@@ -114,9 +114,10 @@ class ReportEmailService {
         }
 
         const transporter = await this.getTransporter();
-        const report = this.safeCall(this.getStatusReport, {});
-        const backgroundStats = this.safeCall(this.getBackgroundStats, null);
-        const cameraStats = this.safeCall(this.getCameraStats, null);
+        // The status report is async since 1.7.9 (it reads the upload index); the others are not.
+        const report = await this.safeCall(this.getStatusReport, {});
+        const backgroundStats = await this.safeCall(this.getBackgroundStats, null);
+        const cameraStats = await this.safeCall(this.getCameraStats, null);
 
         const generatedAt = new Date();
         const subjectDate = generatedAt.toISOString().slice(0, 10);
@@ -162,9 +163,9 @@ class ReportEmailService {
         return this.sendLifecycleNotification('shutdown', details);
     }
 
-    safeCall(fn, fallback) {
+    async safeCall(fn, fallback) {
         try {
-            return fn();
+            return await fn();
         } catch (error) {
             console.warn(`⚠️  Report email data source failed: ${error.message}`);
             return fallback;

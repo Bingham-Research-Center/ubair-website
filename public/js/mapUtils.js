@@ -30,46 +30,34 @@ export function getOzoneBand(ppb) {
 
 const hasValue = (value) => value !== null && value !== undefined && !Number.isNaN(value);
 
+// Pollutants in the order a popup lists them. Ozone is a whole number, as the monitors report it.
+const POLLUTANTS = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2'];
+
+// What a popup can show. A station reporting only something else (solar radiation, say)
+// is grey, so a blue marker never opens on "No recent observations".
+const SHOWN_VARIABLES = [...POLLUTANTS, 'Temperature', 'Wind Speed', 'Snow Depth'];
+
 /**
  * What an air-quality station's marker shows: an EPA band key when it reports ozone,
- * 'weather' when it reports something else, 'nodata' when it reports nothing.
+ * 'weather' when it reports something else the popup shows, 'nodata' otherwise.
  * CSS colours each one (`.aq-status[data-status=…]` in map.css).
  */
 export function getMarkerStatus(measurements = {}) {
-    if (!Object.values(measurements).some(hasValue)) return 'nodata';
+    if (!SHOWN_VARIABLES.some((name) => hasValue(measurements[name]))) return 'nodata';
     const band = getOzoneBand(measurements.Ozone);
     return band ? band.key : 'weather';
 }
 
 /**
- * Road weather stations (mountain passes) are judged on driving conditions instead.
- * Inputs are the feed's raw SI: °C, m/s and mm of snow.
+ * The marker both maps use: a disc coloured by status, smaller for a station without ozone.
+ * Sizes are px because Leaflet anchors the icon by them.
  */
-export function getRoadCautionLevel(measurements = {}) {
-    const temp = measurements['Temperature'];
-    const wind = measurements['Wind Speed'];
-    const snow = measurements['Snow Depth'];
-
-    if (!hasValue(temp)) return 'nodata';
-    if (temp < 0 && ((hasValue(wind) && wind > 15) || (hasValue(snow) && snow > 50))) return 'road-hazardous';
-    if (temp <= 2 || (hasValue(wind) && wind >= 10) || (hasValue(snow) && snow > 0)) return 'road-caution';
-    return 'road-clear';
-}
-
-export function isRoadWeatherStation(stationType) {
-    return stationType === 'road';
-}
-
-/**
- * The marker both maps use: a disc coloured by status, smaller for a station without ozone,
- * a diamond for a road weather station. Sizes are px because Leaflet anchors the icon by them.
- */
-export function createStationIcon(status, { road = false } = {}) {
-    const small = !road && !OZONE_BANDS.some((band) => band.key === status);
+export function createStationIcon(status) {
+    const small = !OZONE_BANDS.some((band) => band.key === status);
     const size = small ? 16 : 22;
     return L.divIcon({
         className: 'station-marker-icon',
-        html: `<span class="station-marker aq-status${road ? ' station-marker--road' : ''}" data-status="${status}"></span>`,
+        html: `<span class="station-marker aq-status" data-status="${status}"></span>`,
         iconSize: [size, size],
         popupAnchor: [0, -size / 2]
     });
@@ -93,8 +81,6 @@ function formatNumber(value) {
     return Math.abs(value) < 10 ? value.toFixed(1) : String(Math.round(value));
 }
 
-// Pollutants in the order a popup lists them. Ozone is a whole number, as the monitors report it.
-const POLLUTANTS = ['Ozone', 'PM2.5', 'PM10', 'NOx', 'NO', 'NO2'];
 const POLLUTANT_UNITS = { 'ppb': 'ppb', 'ppm': 'ppm', 'ug/m3': 'µg/m³', 'µg/m³': 'µg/m³' };
 
 function pollutantRow(name, value, unit) {
@@ -142,9 +128,10 @@ const mountainDay = new Intl.DateTimeFormat('en-US', { timeZone: TIME_ZONE, day:
 
 /**
  * "Observed 3:30 am MT · 12 min ago", with the date added when it is not today in Utah.
- * `stale` is true past two hours, when a reading should not pass for current conditions.
+ * `stale` is true past three hours (MAX_AGE_MINUTES in mapShared.js), when a reading should
+ * not pass for current conditions.
  */
-export function describeObservedTime(observedAt, now = new Date()) {
+export function describeObservedTime(observedAt, now = new Date(), prefix = 'Observed') {
     const when = new Date(observedAt);
     if (!observedAt || Number.isNaN(when.getTime())) return null;
 
@@ -157,42 +144,87 @@ export function describeObservedTime(observedAt, now = new Date()) {
     else age = `${Math.round(minutes / 1440)} days ago`;
 
     return {
-        text: `Observed ${sameDay ? '' : `${mountainDay.format(when)}, `}${clock} MT · ${age}`,
-        stale: minutes > 120
+        text: `${prefix} ${sameDay ? '' : `${mountainDay.format(when)}, `}${clock} MT · ${age}`,
+        stale: minutes > 180
     };
 }
 
+const longDay = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', day: 'numeric', month: 'short', year: 'numeric' });
+
+// Snow depth older than this came from a once-a-day report, and the popup says so.
+const DAILY_AFTER_MINUTES = 180;
+
 /**
  * The popup both maps show for a station: its name and observation time, then pollutants
- * (ozone with its EPA category), then weather. A value that is missing, or in a unit met.js
- * does not know, gets no row.
+ * (ozone with its EPA category), then weather, then any station on the same spot. Only
+ * readings recent enough to show are passed in (stationReading in mapShared.js); a value in
+ * a unit met.js does not know gets no row.
  *
  * @param {object} options
  * @param {object} options.units      the feed's unit name per variable (observations._units)
- * @param {string} options.observedAt ISO time of the station's latest report
+ * @param {string} options.observedAt time of the newest reading shown
+ * @param {object} options.shownAt    time of each reading shown, by variable
+ * @param {string} options.lastReportAt the station's newest report of any age
+ * @param {string} options.notReportingSince last day Synoptic held data (config.js)
+ * @param {Array}  options.companions stations on the same spot: { name, measurements, observedAt, shownAt }
  * @param {boolean} options.imperial  °F, mph and inches (default) or °C, m/s and cm
  * @param {boolean} options.isRoadStation adds a link to the road weather page
  */
 export function createStationPopup(stationName, measurements = {}, {
-    units = {}, observedAt = null, imperial = true, isRoadStation = false, now = new Date()
+    units = {}, observedAt = null, shownAt = {}, lastReportAt = null, notReportingSince = null,
+    companions = [], imperial = true, isRoadStation = false, now = new Date()
 } = {}) {
-    const pollution = POLLUTANTS
-        .filter((name) => hasValue(measurements[name]))
-        .map((name) => pollutantRow(name, measurements[name], units[name]));
-    const weather = weatherRows(measurements, units, imperial);
-
     const group = (rows) => rows.length === 0 ? '' : `
         <dl class="station-popup-group">${rows.map(([label, value]) => `
             <dt>${label}</dt><dd>${value}</dd>`).join('')}
         </dl>`;
 
-    const time = describeObservedTime(observedAt, now);
-    const timeHtml = time
-        ? `<p class="station-popup-time${time.stale ? ' is-stale' : ''}">${time.text}</p>`
-        : '';
-    const body = pollution.length || weather.length
-        ? `${group(pollution)}${group(weather)}`
-        : '<p class="station-popup-empty">No recent observations from this station.</p>';
+    const sections = (values, times) => {
+        const pollution = POLLUTANTS
+            .filter((name) => hasValue(values[name]))
+            .map((name) => pollutantRow(name, values[name], units[name]));
+        const weather = weatherRows(values, units, imperial);
+        const snowAt = times?.['Snow Depth'];
+        const daily = snowAt && hasValue(values['Snow Depth'])
+            && (now - new Date(snowAt)) / 60000 > DAILY_AFTER_MINUTES;
+        return {
+            html: `${group(pollution)}${group(weather)}`,
+            any: pollution.length + weather.length > 0,
+            daily
+        };
+    };
+
+    const own = sections(measurements, shownAt);
+    let timeHtml = '';
+    let body = own.html;
+    if (own.any) {
+        const time = describeObservedTime(observedAt, now);
+        if (time) timeHtml = `<p class="station-popup-time">${time.text}</p>`;
+    } else if (notReportingSince && !(lastReportAt && new Date(lastReportAt) > new Date(notReportingSince))) {
+        const since = longDay.format(new Date(`${notReportingSince}T00:00:00Z`));
+        timeHtml = `<p class="station-popup-time is-stale">Not reporting since ${since}</p>`;
+        body = '<p class="station-popup-empty">This monitor has sent no data to Synoptic since then.</p>';
+    } else {
+        const last = describeObservedTime(lastReportAt, now, 'Last report');
+        if (last) timeHtml = `<p class="station-popup-time is-stale">${last.text}</p>`;
+        body = '<p class="station-popup-empty">No recent observations from this station.</p>';
+    }
+
+    let daily = own.daily;
+    const companionHtml = companions.map((companion) => {
+        const part = sections(companion.measurements ?? {}, companion.shownAt);
+        if (!part.any) return '';
+        daily = daily || part.daily;
+        const time = describeObservedTime(companion.observedAt, now);
+        return `
+            <h4 class="station-popup-sub">${escapeHtml(companion.name)}</h4>
+            ${time ? `<p class="station-popup-time">${time.text}</p>` : ''}
+            ${part.html}`;
+    }).join('');
+    // A quiet station whose companion reports: say nothing about the quiet one but its name.
+    if (!own.any && companionHtml) body = '';
+
+    const dailyNote = daily ? '<p class="station-popup-note">Snow depth is a once-a-day report.</p>' : '';
     const roadLink = isRoadStation
         ? '<a class="station-popup-link" href="/roads">Road weather &rarr;</a>'
         : '';
@@ -202,6 +234,8 @@ export function createStationPopup(stationName, measurements = {}, {
             <h3 class="station-popup-name">${escapeHtml(stationName)}</h3>
             ${timeHtml}
             ${body}
+            ${companionHtml}
+            ${dailyNote}
             ${roadLink}
         </div>`;
 }
@@ -213,9 +247,34 @@ export function legendEntries() {
             status: band.key,
             label: `${band.label} (${Number.isFinite(band.max) ? `${band.min}–${band.max}` : `${band.min}+`} ppb)`
         })),
-        { status: 'weather', label: 'Weather only, no ozone' },
+        { status: 'weather', label: 'Weather only' },
         { status: 'nodata', label: 'No recent data' }
     ];
 }
 
 export const LEGEND_NOTE = 'Colours use the EPA’s 8-hour ozone bands, applied to the latest hourly reading.';
+
+/**
+ * The legend both maps show: one strip of the six EPA colours with each band's lower edge
+ * under it, then the two other kinds of marker. Hovering a band names it; a screen reader
+ * hears the whole scale.
+ */
+export function legendMarkup() {
+    const entries = legendEntries();
+    const bands = entries.slice(0, OZONE_BANDS.length);
+    const others = entries.slice(OZONE_BANDS.length);
+    const scaleLabel = `Ozone scale: ${bands.map((b) => b.label).join(', ')}. ${LEGEND_NOTE}`;
+    return `
+        <div class="aq-legend">
+            <p class="aq-legend-title">Ozone (ppb)</p>
+            <div class="aq-legend-scale" role="img" aria-label="${escapeHtml(scaleLabel)}" title="${escapeHtml(LEGEND_NOTE)}">
+                ${bands.map((b) => `<span class="aq-legend-band aq-status" data-status="${b.status}" title="${escapeHtml(b.label)}"></span>`).join('')}
+            </div>
+            <div class="aq-legend-ticks" aria-hidden="true">
+                ${OZONE_BANDS.map((band) => `<span>${band.min}</span>`).join('')}
+            </div>
+            <p class="aq-legend-others">
+                ${others.map((o) => `<span class="aq-legend-other"><span class="aq-legend-dot aq-status" data-status="${o.status}" aria-hidden="true"></span>${o.label}</span>`).join('')}
+            </p>
+        </div>`;
+}

@@ -3,7 +3,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fetch from 'node-fetch';
 import NodeCache from 'node-cache';
-import { fetchNWSGridpointForecast, nwsFetch, NWS_USER_AGENT } from './nwsHelpers.js';
+import { fetchNWSGridpointForecast, NWS_USER_AGENT } from './nwsHelpers.js';
+import { fetchAlertFeatures } from './nwsAlerts.js';
 import { clusterDetections, categorizeAndConfirm } from './fireClustering.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -53,6 +54,8 @@ class FireWeatherService {
     constructor() {
         this.nwsUserAgent = NWS_USER_AGENT;
         this.firmsKey = process.env.FIRMS_MAP_KEY || null;
+        // Throws on any failure and never returns []; a test swaps it for a stub.
+        this.fetchAlertFeatures = fetchAlertFeatures;
     }
 
     // ── Hot-Dry-Windy Index ────────────────────────────────────────────
@@ -78,6 +81,10 @@ class FireWeatherService {
     }
 
     // ── NWS Red Flag Warnings + Fire Weather Watches ───────────────────
+    //
+    // Returns the Basin's alerts (an empty list when the NWS says there are none), or null when
+    // either request failed. A failed fetch used to become an empty list here, so an NWS outage
+    // read as "no Red Flag Warning". Null means "we could not check", and the page says so.
     async fetchRedFlagAlerts() {
         const cacheKey = 'nws_fire_alerts_ut';
         const cached = cache.get(cacheKey);
@@ -85,10 +92,10 @@ class FireWeatherService {
 
         try {
             const [redFlag, watch] = await Promise.all([
-                nwsFetch('https://api.weather.gov/alerts/active?event=Red+Flag+Warning&area=UT').catch(() => ({ features: [] })),
-                nwsFetch('https://api.weather.gov/alerts/active?event=Fire+Weather+Watch&area=UT').catch(() => ({ features: [] }))
+                this.fetchAlertFeatures('https://api.weather.gov/alerts/active?event=Red+Flag+Warning&area=UT'),
+                this.fetchAlertFeatures('https://api.weather.gov/alerts/active?event=Fire+Weather+Watch&area=UT')
             ]);
-            const features = [...(redFlag.features || []), ...(watch.features || [])];
+            const features = [...redFlag, ...watch];
             const basinKeywords = /(uinta|uintah|duchesne)/i;
             const alerts = features
                 .filter(f => basinKeywords.test(f.properties?.areaDesc || ''))
@@ -109,7 +116,7 @@ class FireWeatherService {
             return alerts;
         } catch (error) {
             console.error('Error fetching NWS fire alerts:', error.message);
-            return [];
+            return null;
         }
     }
 
@@ -316,7 +323,9 @@ class FireWeatherService {
             stationMax,
             hotspots,
             fires,
+            // null when the NWS could not be asked; the page then says so instead of showing nothing.
             alerts,
+            alertsAvailable: alerts !== null,
             forecast: forecast?.periods || [],
             hourly: openMeteo?.hourly || null
         };
@@ -360,6 +369,11 @@ function parseFIRMSCsv(text) {
         });
     }
     return rows;
+}
+
+/** Test hook: the alert and snapshot caches are module-wide. */
+export function _flushFireWeatherCacheForTests() {
+    cache.flushAll();
 }
 
 export default FireWeatherService;

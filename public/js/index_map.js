@@ -1,10 +1,9 @@
-import { stations } from './config.js';
-import {
-    createStationIcon, createStationPopup, getMarkerStatus, getRoadCautionLevel,
-    isRoadWeatherStation, legendEntries, LEGEND_NOTE
-} from './mapUtils.js';
+import { createStationIcon, createStationPopup, legendMarkup } from './mapUtils.js';
 import { fetchLiveObservations } from './api.js';
-import { buildStationMeasurements } from './mapShared.js';
+import { describeStation, homeStationIds, markerLayer } from './mapShared.js';
+
+// The Basin floor, used until the stations are drawn and whenever there are none to frame.
+const BASIN_VIEW = { center: [40.25, -109.9], zoom: 9 };
 
 // Initialize map with proper center and zoom for dashboard view
 const map = L.map('map', {
@@ -15,14 +14,13 @@ const map = L.map('map', {
     touchZoom: false,
     boxZoom: false,
     keyboard: false
-}).setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
+}).setView(BASIN_VIEW.center, BASIN_VIEW.zoom);
 
-// Add window resize handler to re-fit map
+// Re-fit on resize: the map cannot be dragged or zoomed, so it must always frame the stations.
 window.addEventListener('resize', function() {
     setTimeout(() => {
         map.invalidateSize();
-        // Re-center on Uintah Basin after resize
-        map.setView([40.45, -110.0], 8);
+        frameStations();
     }, 100);
 });
 
@@ -142,16 +140,12 @@ function startKioskMode() {
     clearInterval(kioskInterval);
     clearKioskPopupTimeout();
 
-    // Generate random order for cycling (preserved until page leave)
-    // Always start with Castle Peak
+    // A shuffled order, kept until the page is left. It opens on the first station that
+    // reports ozone, so the first popup shows what the map is for.
     if (kioskOrder.length !== markers.length) {
-        // Find Castle Peak index
-        const castlePeakIndex = markers.findIndex(m => m.options.stationName === 'Castle Peak');
+        const firstIndex = Math.max(0, markers.findIndex(m => !['weather', 'nodata'].includes(m.options.station.status)));
+        let otherIndices = [...Array(markers.length).keys()].filter(i => i !== firstIndex);
 
-        // Create array of all indices except Castle Peak
-        let otherIndices = [...Array(markers.length).keys()].filter(i => i !== castlePeakIndex);
-
-        // Shuffle the other indices
         const seed = Date.now() % 1000000;
         let rng = seed;
         for (let i = otherIndices.length - 1; i > 0; i--) {
@@ -160,13 +154,12 @@ function startKioskMode() {
             [otherIndices[i], otherIndices[j]] = [otherIndices[j], otherIndices[i]];
         }
 
-        // Put Castle Peak first, then shuffled others
-        kioskOrder = castlePeakIndex >= 0 ? [castlePeakIndex, ...otherIndices] : otherIndices;
+        kioskOrder = [firstIndex, ...otherIndices];
     }
 
     currentStationIndex = 0;
 
-    // Start immediately with Castle Peak
+    // Start immediately with the first station
     map.closePopup();
     focusMarkerForAutocycle(markers[kioskOrder[currentStationIndex]]);
     currentStationIndex = (currentStationIndex + 1) % kioskOrder.length;
@@ -204,73 +197,65 @@ function toggleTemperature() {
 
     // Update all marker popups
     markers.forEach(marker => {
-        const { stationName, measurements, dateTime, isRoadStation } = marker.options;
-        if (stationName && measurements) {
-            marker.bindPopup(popupFor(stationName, measurements, dateTime, isRoadStation), POPUP_OPTIONS);
+        if (marker.options.station) {
+            marker.bindPopup(popupFor(marker.options.station), POPUP_OPTIONS);
         }
     });
 }
 
-function popupFor(stationName, measurements, observedAt, isRoadStation) {
-    return createStationPopup(stationName, measurements, {
-        units: lastUnits, observedAt, imperial: !useCelsius, isRoadStation
+function popupFor(station) {
+    return createStationPopup(station.name, station.measurements, {
+        units: lastUnits,
+        observedAt: station.observedAt,
+        shownAt: station.shownAt,
+        lastReportAt: station.lastReportAt,
+        notReportingSince: station.notReportingSince,
+        companions: station.companions,
+        imperial: !useCelsius
     });
 }
 
-// The ozone rows of the legend come from the same bands the markers use (mapUtils.js).
+// The same legend as Live AQ, from the bands the markers use (mapUtils.js).
 function renderLegend() {
-    const rows = document.getElementById('aq-legend-rows');
-    if (!rows) return;
-    rows.innerHTML = legendEntries().map(({ status, label }) => `
-        <div class="legend-row">
-            <span class="legend-color aq-status" data-status="${status}"></span>
-            <span>${label}</span>
-        </div>`).join('') + `<p class="legend-note">${LEGEND_NOTE}</p>`;
+    const legend = document.getElementById('aq-legend');
+    if (legend) legend.innerHTML = legendMarkup();
+}
+
+function frameStations() {
+    if (markers.length === 0) {
+        map.setView(BASIN_VIEW.center, BASIN_VIEW.zoom);
+        return;
+    }
+    const bounds = L.latLngBounds(markers.map(m => m.getLatLng()));
+    map.fitBounds(bounds, { padding: [24, 24], maxZoom: 10 });
 }
 
 async function updateMiniMap() {
     try {
-        // Fetch live observations data
-        const result = await fetchLiveObservations();
-        
-        // Check if we got valid data
-        if (!result || !result.observations) {
-            console.error('No observation data available');
-            return;
-        }
-        
-        const data = result.observations;
-        lastUnits = data._units || {};
+        const { observations, metadata } = await fetchLiveObservations();
+        lastUnits = observations._units || {};
+        const now = new Date();
 
-        // Clear existing markers
         markers.forEach(marker => map.removeLayer(marker));
         markers = [];
 
-        // Add markers for each station
-        for (const [stationName, coordinates] of Object.entries(stations)) {
-            const measurements = buildStationMeasurements(data, stationName);
-            const stationTimestamp = data._timestamps?.[stationName] ?? null;
-            const isRoadStation = isRoadWeatherStation(coordinates.type);
-            const status = isRoadStation ? getRoadCautionLevel(measurements) : getMarkerStatus(measurements);
+        // The Basin floor stations (config.js), each with its own readings; a monitor known to
+        // have stopped reporting is drawn grey with the date.
+        for (const stid of homeStationIds(observations, metadata)) {
+            const station = describeStation(stid, { observations, metadata, now });
+            if (!station) continue;
 
-            const marker = L.marker([coordinates.lat, coordinates.lng], {
-                icon: createStationIcon(status, { road: isRoadStation }),
-                stationName: stationName,
-                measurements: measurements,
-                dateTime: stationTimestamp,
-                isRoadStation: isRoadStation
-            })
-                .bindPopup(popupFor(stationName, measurements, stationTimestamp, isRoadStation), POPUP_OPTIONS);
+            const marker = L.marker([station.lat, station.lng], {
+                icon: createStationIcon(station.status),
+                zIndexOffset: markerLayer(station.status),
+                title: station.name,
+                station
+            }).bindPopup(popupFor(station), POPUP_OPTIONS);
 
             marker.addTo(map);
             markers.push(marker);
         }
-
-        // Set map to balanced Uintah Basin view
-        if (markers.length > 0) {
-            map.setView([40.45, -110.0], 8); // Adjusted to show all stations including Manila
-        }
-
+        frameStations();
     } catch (error) {
         console.error('Error loading observation data:', error);
     }

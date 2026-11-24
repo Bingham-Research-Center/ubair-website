@@ -29,28 +29,12 @@ async function loadUS40Conditions() {
             throw new Error('Route data unavailable');
         }
 
-        const stationsData = data.stations;
-        const eventsData = data.events;
-
-        // Filter data for US-40 corridor
-        const us40Stations = stationsData.filter(station =>
-            station.name.toLowerCase().includes('roosevelt') ||
-            station.name.toLowerCase().includes('vernal') ||
-            (station.lat >= 40.2 && station.lat <= 40.5 &&
-             station.lng >= -110.2 && station.lng <= -109.3)
-        );
-
-        const us40Events = eventsData.events ? eventsData.events.filter(event =>
-            event.roadwayName && (
-                event.roadwayName.includes('US-40') ||
-                event.roadwayName.includes('US 40')
-            )
-        ) : [];
+        const { stations, events } = getCorridorConditions({ id: 'us40' }, data);
 
         displayRouteConditions(container, {
             routeName: 'US-40',
-            stations: us40Stations,
-            events: us40Events,
+            stations,
+            events,
             cities: ['Roosevelt', 'Vernal']
         });
 
@@ -73,27 +57,12 @@ async function loadUS191Conditions() {
             throw new Error('Route data unavailable');
         }
 
-        const stationsData = data.stations;
-        const eventsData = data.events;
-
-        // Filter data for US-191 corridor
-        const us191Stations = stationsData.filter(station =>
-            station.name.toLowerCase().includes('duchesne') ||
-            (station.lat >= 40.0 && station.lat <= 40.6 &&
-             station.lng >= -110.8 && station.lng <= -110.0)
-        );
-
-        const us191Events = eventsData.events ? eventsData.events.filter(event =>
-            event.roadwayName && (
-                event.roadwayName.includes('US-191') ||
-                event.roadwayName.includes('US 191')
-            )
-        ) : [];
+        const { stations, events } = getCorridorConditions({ id: 'us191' }, data);
 
         displayRouteConditions(container, {
             routeName: 'US-191',
-            stations: us191Stations,
-            events: us191Events,
+            stations,
+            events,
             cities: ['Vernal', 'Duchesne']
         });
 
@@ -112,50 +81,75 @@ const basinRoads = [
         shortName: 'SR-87',
         description: 'Connects Duchesne to Price via Nine Mile Canyon',
         keywords: ['sr-87', 'state route 87', 'nine mile', 'duchesne', 'price'],
-        coordinates: { lat: 40.1, lng: -110.4 },
-        icon: '🏔️'
+        coordinates: { lat: 40.1, lng: -110.4 }
     },
     {
         name: 'SR-121 (Randlett-Neola)',
         shortName: 'SR-121',
         description: 'Local connector through Randlett and Neola areas',
         keywords: ['sr-121', 'state route 121', 'randlett', 'neola'],
-        coordinates: { lat: 40.2, lng: -109.8 },
-        icon: '🛤️'
+        coordinates: { lat: 40.2, lng: -109.8 }
     },
     {
         name: 'US-45 (Dinosaur Access)',
         shortName: 'US-45',
         description: 'Access route to Dinosaur National Monument',
         keywords: ['us-45', 'dinosaur', 'monument'],
-        coordinates: { lat: 40.4, lng: -109.0 },
-        icon: '🦕'
+        coordinates: { lat: 40.4, lng: -109.0 }
     },
     {
         name: 'Naples-Jensen Road',
         shortName: 'Naples Rd',
         description: 'Local route connecting Naples to Jensen area',
         keywords: ['naples', 'jensen', 'local'],
-        coordinates: { lat: 40.4, lng: -109.4 },
-        icon: '🏘️'
+        coordinates: { lat: 40.4, lng: -109.4 }
     },
     {
         name: 'Red Canyon Road',
         shortName: 'Red Canyon',
         description: 'Scenic route through Red Canyon area',
         keywords: ['red canyon', 'scenic', 'local'],
-        coordinates: { lat: 40.3, lng: -109.6 },
-        icon: '🏞️'
+        coordinates: { lat: 40.3, lng: -109.6 }
     },
     {
         name: 'Strawberry Reservoir Access',
         shortName: 'Strawberry',
         description: 'Mountain access to Strawberry Reservoir',
         keywords: ['strawberry', 'reservoir', 'mountain'],
-        coordinates: { lat: 40.2, lng: -111.0 },
-        icon: '🎣'
+        coordinates: { lat: 40.2, lng: -111.0 }
     }
 ];
+
+/** The original corridor filters, shared by the legacy cards and summary table. */
+function getCorridorConditions(road, data) {
+    const stations = data?.stations || [];
+    const events = data?.events?.events || [];
+    if (road.id === 'us40') {
+        return {
+            stations: stations.filter(station =>
+                station.name.toLowerCase().includes('roosevelt') ||
+                station.name.toLowerCase().includes('vernal') ||
+                (station.lat >= 40.2 && station.lat <= 40.5 &&
+                 station.lng >= -110.2 && station.lng <= -109.3)),
+            events: events.filter(event => event.roadwayName && (
+                event.roadwayName.includes('US-40') || event.roadwayName.includes('US 40')))
+        };
+    }
+    if (road.id === 'us191') {
+        return {
+            stations: stations.filter(station =>
+                station.name.toLowerCase().includes('duchesne') ||
+                (station.lat >= 40.0 && station.lat <= 40.6 &&
+                 station.lng >= -110.8 && station.lng <= -110.0)),
+            events: events.filter(event => event.roadwayName && (
+                event.roadwayName.includes('US-191') || event.roadwayName.includes('US 191')))
+        };
+    }
+    return {
+        stations: filterStationsForRoad(stations, road),
+        events: filterEventsForRoad(events, road)
+    };
+}
 
 let currentRoadIndex = 0;
 let autoRotateTimer = null;
@@ -323,8 +317,7 @@ function displayRoadSlide(container, road, stations, events) {
  */
 function createRoadSlideContent(road, stations, events) {
     // Calculate metrics like the other route conditions
-    const avgTemp = stations.length > 0 ?
-        Math.round(stations.reduce((sum, s) => sum + (parseFloat(s.airTemperature) || 0), 0) / stations.length) : '--';
+    const avgTemp = averageReportedTemperature(stations);
     const surfaceCondition = determineSurfaceCondition(stations);
     const incidentCount = events.length;
     const travelStatus = determineTravelStatus(stations, events);
@@ -332,31 +325,23 @@ function createRoadSlideContent(road, stations, events) {
     return `
         <div class="route-summary">
             <div class="route-metric temperature">
-                <div class="metric-icon">🌡️</div>
                 <div class="metric-value">${avgTemp !== '--' ? unitsSystem.formatTemperature(avgTemp) : `--${unitsSystem.getTempUnit()}`}</div>
                 <div class="metric-label">Air Temperature</div>
-                <div class="metric-status ${getTemperatureStatus(avgTemp)}">${getTemperatureStatusText(avgTemp)}</div>
             </div>
 
             <div class="route-metric surface">
-                <div class="metric-icon">${road.icon}</div>
                 <div class="metric-value">${surfaceCondition.text}</div>
                 <div class="metric-label">Surface Condition</div>
-                <div class="metric-status ${surfaceCondition.status}">${surfaceCondition.statusText}</div>
             </div>
 
             <div class="route-metric incidents">
-                <div class="metric-icon">🚧</div>
                 <div class="metric-value">${incidentCount}</div>
                 <div class="metric-label">Active Incidents</div>
-                <div class="metric-status ${incidentCount === 0 ? 'good' : 'caution'}">${incidentCount === 0 ? 'Clear' : 'Active'}</div>
             </div>
 
             <div class="route-metric travel-time">
-                <div class="metric-icon">⏱️</div>
                 <div class="metric-value">${stations.length}</div>
                 <div class="metric-label">Nearby Stations</div>
-                <div class="metric-status ${stations.length > 0 ? 'good' : 'caution'}">${stations.length > 0 ? 'Monitored' : 'Limited Data'}</div>
             </div>
         </div>
 

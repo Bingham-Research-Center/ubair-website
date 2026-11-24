@@ -18,6 +18,9 @@ class RoadWeatherMap {
 
         this.map = null;
         this.roadLayers = new Map();
+        this.lastGoodRoadData = null;
+        this.roadFeedUnavailable = false;
+        this.roadDataCached = false;
         this.stationMarkers = new Map();
         this.cameraMarkers = new Map();
         this.cameraClusterGroup = null;
@@ -38,6 +41,7 @@ class RoadWeatherMap {
 
     init() {
         this.initMap();
+        this.setupMapControlCluster();
         this.setupCameraCycleControl();
         this.addLegend();
         this.loadRoadWeatherData();
@@ -105,105 +109,102 @@ class RoadWeatherMap {
         window.mapStateManager?.clearMapState();
         window.mapStateManager?.clearRestoreIntent();
         this.map.setView(this.options.center, this.options.zoom, { animate: true });
+        updateConditionCards({ resetSelection: true });
     }
 
     async loadRoadWeatherData() {
         try {
             const data = await roadWeatherDataCache.getData();
-            this.clearLayers();
-            this.renderRoadSegments(data.segments);
-            this.renderWeatherStations(data.stations);
-            this.renderTrafficCameras(data.cameras, data.cameraDetections);
-            window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
+            const available = data.sources?.roads?.status !== 'unavailable' &&
+                data.status !== 'unavailable' && Array.isArray(data.segments) && data.segments.length > 0;
 
+            if (available) {
+                this.lastGoodRoadData = {
+                    segments: data.segments,
+                    lastUpdated: data.sources?.roads?.lastUpdated || data.lastUpdated || null
+                };
+                this.roadFeedUnavailable = false;
+                this.roadDataCached = data.cached === true || data.status === 'cached';
+                this.clearRoadLayers();
+                this.renderRoadSegments(data.segments);
+                this.updateRoadFeedStatus();
+            } else {
+                this.showRoadFeedUnavailable();
+            }
+
+            // Each layer has its own lifecycle. A road outage must not clear the other feeds.
+            if (Array.isArray(data.stations)) {
+                this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+                this.stationMarkers.clear();
+                this.renderWeatherStations(data.stations);
+            }
+            if (Array.isArray(data.cameras)) {
+                this.clearCameraLayers();
+                this.renderTrafficCameras(data.cameras, data.cameraDetections);
+            }
         } catch (error) {
             console.error('Error loading road weather data:', error);
-            this.loadStaticRoadData();
+            this.showRoadFeedUnavailable();
         }
-    }
-
-    loadStaticRoadData() {
-        // Default road segments for Uintah Basin
-        const segments = [
-            {
-                id: 'us40',
-                name: 'US-40: Vernal to Roosevelt',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.4200, -109.7000],
-                    [40.3200, -109.9000],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            },
-            {
-                id: 'us191',
-                name: 'US-191: Vernal to Duchesne',
-                coordinates: [
-                    [40.4555, -109.5287],
-                    [40.3500, -109.8000],
-                    [40.2500, -110.2000],
-                    [40.1632, -110.4026]
-                ],
-                condition: 'yellow',
-                status: 'Use Caution'
-            },
-            {
-                id: 'sr87',
-                name: 'SR-87: Duchesne to Roosevelt',
-                coordinates: [
-                    [40.1632, -110.4026],
-                    [40.2500, -110.1500],
-                    [40.2999, -109.9890]
-                ],
-                condition: 'green',
-                status: 'Clear'
-            }
-        ];
-
-        this.clearLayers();
-        segments.forEach(segment => {
-            this.renderRoadSegment(segment);
-        });
-
-        // Add default weather stations
-        const stations = [
-            { name: 'Vernal', lat: 40.4555, lng: -109.5287, temp: 45, condition: 'good' },
-            { name: 'Roosevelt', lat: 40.2999, lng: -109.9890, temp: 42, condition: 'good' },
-            { name: 'Duchesne', lat: 40.1632, lng: -110.4026, temp: 40, condition: 'caution' }
-        ];
-
-        stations.forEach(station => {
-            this.renderWeatherStation(station);
-        });
-
         window.dispatchEvent(new CustomEvent('roads-map:layers-rendered'));
     }
 
-    renderRoadSegments(segments) {
-        if (!segments || segments.length === 0) {
-            this.loadStaticRoadData();
-            return;
-        }
+    showRoadFeedUnavailable() {
+        this.roadFeedUnavailable = true;
+        this.roadDataCached = true;
+        this.clearRoadLayers();
+        if (this.lastGoodRoadData) this.renderRoadSegments(this.lastGoodRoadData.segments);
+        this.updateRoadFeedStatus();
+    }
 
+    formatRoadDataAge(timestamp) {
+        const time = formatRoadReportTime(timestamp);
+        return time ? `last updated ${time}` : 'update time unavailable';
+    }
+
+    updateRoadFeedStatus() {
+        const age = this.formatRoadDataAge(this.lastGoodRoadData?.lastUpdated);
+        const text = this.roadFeedUnavailable
+            ? `Road conditions feed unavailable. ${this.lastGoodRoadData ? `Road conditions ${age}. Showing cached road conditions.` : 'No road conditions are available.'}`
+            : `Road conditions ${age}.${this.roadDataCached ? ' Cached road data.' : ''}`;
+        const notice = document.getElementById('road-feed-status');
+        if (notice) {
+            notice.dataset.state = this.roadFeedUnavailable ? 'unavailable' : 'available';
+            notice.textContent = text;
+        }
+        const legend = document.getElementById('road-legend-source');
+        if (legend) legend.textContent = `${text} See each road popup for its source and age.`;
+    }
+
+    getRoadSourceLabel(segment) {
+        const cached = this.roadDataCached || this.roadFeedUnavailable || segment.cached === true;
+        let source = 'Source unavailable';
+        if (segment.type === 'hrrr_estimated' || segment.source === 'HRRR') source = 'HRRR model estimate';
+        else if (segment.type === 'estimated') source = 'Estimated from regional weather';
+        else if (segment.type === 'camera_monitored') source = 'Camera analysis';
+        else if (segment.source === 'UDOT') source = 'UDOT road record';
+        else if (segment.source) source = String(segment.source);
+        const names = { udot: 'UDOT road report', hrrr: 'HRRR model estimate', camera: 'camera analysis', station: 'weather stations' };
+        const contributors = (segment.overallCondition?.sources || []).map(item => names[item.name] || item.name).filter(Boolean);
+        const evidence = contributors.length ? `Condition: ${contributors.join(', ')}` : 'Condition source unavailable';
+        const age = this.formatRoadDataAge(segment.lastUpdated || segment.detectionData?.timestamp);
+        return `${evidence}; ${cached ? 'Cached ' : ''}${source}; ${age}`;
+    }
+
+    renderRoadSegments(segments) {
+        if (!Array.isArray(segments)) return;
         segments.forEach(segment => {
             this.renderRoadSegment({
-                id: segment.id,
-                name: segment.name,
-                coordinates: segment.coordinates,
+                ...segment,
                 condition: segment.overallCondition?.condition || 'gray',
-                status: segment.overallCondition?.status || 'No Data',
-                type: segment.type,
-                detectionData: segment.detectionData,
-                temperatureInfo: segment.temperatureInfo
+                status: segment.overallCondition?.status || 'No Data'
             });
         });
     }
 
     renderRoadSegment(segment) {
         const color = this.getSegmentColor(segment.condition);
-        const isEstimated = segment.type === 'estimated';
+        const isEstimated = segment.type === 'estimated' || segment.type === 'hrrr_estimated';
         const isCameraMonitored = segment.type === 'camera_monitored';
 
         let lineStyle = {
@@ -214,18 +215,16 @@ class RoadWeatherMap {
             dashArray: null
         };
 
-        let dataSource = 'Real-time UDOT data';
+        const dataSource = this.getRoadSourceLabel(segment);
         let badgeClass = 'monitored-badge';
 
         // Adjust styling based on monitoring type
         if (isCameraMonitored) {
-            dataSource = '📹 Camera Analysis';
             badgeClass = 'camera-monitored-badge';
             lineStyle.weight = 8;
             lineStyle.opacity = 0.9;
             lineStyle.dashArray = '15, 8'; // Distinctive dash pattern for camera monitoring
         } else if (isEstimated) {
-            dataSource = 'Estimated from regional weather';
             badgeClass = 'estimated-badge';
             lineStyle.weight = 4;
             lineStyle.opacity = 0.6;
@@ -247,7 +246,7 @@ class RoadWeatherMap {
                     Status: ${safeStatus}
                 </div>
                 <div class="${safeBadgeClass}">
-                    ${isCameraMonitored ? '📹 Camera Monitored' : (isEstimated ? '📊 Estimated' : '🛰️ Monitored')}
+                    ${isCameraMonitored ? 'Camera Monitored' : (isEstimated ? 'Estimated' : (segment.source === 'UDOT' ? 'UDOT' : 'Source unavailable'))}
                 </div>`;
 
         // Add camera-specific information with confidence taxonomy
@@ -261,12 +260,11 @@ class RoadWeatherMap {
                 const safeLevelBadge = sanitizeClassToken(level.badge, 'unknown');
                 const safeLevelColor = sanitizeHexColor(level.color, '#6c757d');
                 const safeLevelName = escapeHtml(level.name || 'Confidence');
-                const safeLevelIcon = escapeHtml(level.icon || 'ℹ️');
                 const safeLevelDisplay = escapeHtml(level.displayText || 'Unknown');
                 confidenceBadge = `<span class="confidence-badge confidence-${safeLevelBadge}"
                                          style="background-color: ${safeLevelColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.85em;"
                                          title="${safeLevelName}: Based on camera analysis and temperature data">
-                                        ${safeLevelIcon} ${safeLevelDisplay}
+                                        ${safeLevelDisplay}
                                     </span>`;
             } else {
                 // Fallback to simple percentage display
@@ -295,9 +293,12 @@ class RoadWeatherMap {
         roadLayer.on('click', async function(e) {
             const locationData = {
                 name: segment.name,
-                condition: segment.status,
-                roadCondition: segment.roadCondition
+                sourceType: 'Road',
+                roadCondition: segment.roadCondition,
+                snowLevel: segment.detectionData?.snowLevel,
+                lastUpdated: segment.lastUpdated
             };
+            updateConditionCardsWithLocation(locationData);
 
             // Try to fetch weather data for the clicked point
             const clickLat = e.latlng.lat;
@@ -309,6 +310,7 @@ class RoadWeatherMap {
                     const weatherData = await weatherResponse.json();
                     if (weatherData && weatherData.current) {
                         locationData.windSpeed = weatherData.current.windSpeed;
+                        locationData.windSpeedUnit = 'km/h';
                         locationData.precipitation = weatherData.current.precipitation;
                         if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
                             locationData.visibility = weatherData.current.visibility;
@@ -321,7 +323,7 @@ class RoadWeatherMap {
                 console.error('Error fetching road weather:', error);
             }
 
-            updateConditionCardsWithLocation(locationData);
+            updateConditionCardsWithLocation(locationData, { refresh: true });
         });
 
         roadLayer.on('mouseover', function(e) {
@@ -351,7 +353,7 @@ class RoadWeatherMap {
         const color = this.getConditionColor(station.condition.condition);
         const marker = L.marker([station.lat, station.lng], {
             icon: L.divIcon({
-                html: '🌡️',
+                html: '<i class="fas fa-thermometer-half" aria-hidden="true"></i>',
                 className: 'weather-station-marker',
                 iconSize: [24, 24],
                 iconAnchor: [12, 12]
@@ -359,7 +361,7 @@ class RoadWeatherMap {
         });
 
         // Format temperature and wind values using units system
-        const airTemp = station.airTemperature ? unitsSystem.formatTemperature(station.airTemperature) : '--';
+        const airTemp = unitsSystem.formatTemperature(station.airTemperature);
         const surfaceTemp = station.surfaceTemp ? unitsSystem.formatTemperature(station.surfaceTemp) : '--';
         const humidityValue = Number.isFinite(Number(station.relativeHumidity)) ? Math.round(Number(station.relativeHumidity)) : null;
         const humidity = humidityValue !== null ? `${humidityValue}%` : '--';
@@ -376,7 +378,7 @@ class RoadWeatherMap {
 
         marker.bindPopup(`
             <div class="weather-station-popup">
-                <h4>🌡️ ${safeStationName}</h4>
+                <h4>${safeStationName}</h4>
                 <div class="station-status ${safeConditionClass}">
                     ${safeConditionStatus}
                 </div>
@@ -413,17 +415,19 @@ class RoadWeatherMap {
         });
 
         // Add click handler for weather station marker
-        marker.on('click', (e) => {
+        marker.on('popupopen', () => {
             const locationData = {
                 name: station.name,
+                sourceType: 'Station',
+                lastUpdated: station.lastUpdated,
                 roadTemp: station.surfaceTemp,
                 airTemp: station.airTemperature,
                 temperature: station.airTemperature,
                 windSpeed: station.windSpeedAvg,
                 windGust: station.windSpeedGust,
                 visibility: station.visibility,
-                precipitation: station.precipitation || station.surfaceStatus,
-                condition: station.condition.status,
+                precipitation: station.precipitation,
+                surfaceStatus: station.surfaceStatus,
                 lat: station.lat,
                 lng: station.lng
             };
@@ -515,7 +519,7 @@ class RoadWeatherMap {
                         justify-content: center;
                         box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                         font-size: 16px;
-                    ">📹</div>`,
+                    "><i class="fas fa-video" aria-hidden="true"></i></div>`,
                     className: 'camera-icon-with-condition',
                     iconSize: [36, 36],
                     iconAnchor: [18, 18]
@@ -544,7 +548,7 @@ class RoadWeatherMap {
                                 </div>
                             `}
                             <div class="click-overlay">
-                                🔍 Click to view full screen
+                                <i class="fas fa-expand" aria-hidden="true"></i> Click to view full screen
                             </div>
                         </div>
                         <p>${safeViewDescription}</p>
@@ -565,9 +569,9 @@ class RoadWeatherMap {
 
                 // RWIS station context line
                 const rwisLine = detection.rwisData
-                    ? (detection.rwisData.tooDistant
+                    ? (detection.rwisData.tooDistant || Number(detection.rwisData.distance) > 10
                         ? `<p class="rwis-info" style="font-size: 0.85em; color: #999; margin-top: 4px;">
-                               <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi) — too distant
+                               No RWIS within 10 mi
                            </p>`
                         : `<p class="rwis-info" style="font-size: 0.85em; color: #555; margin-top: 4px;">
                                <strong>Nearest RWIS:</strong> ${escapeHtml(detection.rwisData.stationName || '')} (${detection.rwisData.distance} mi)<br>
@@ -597,17 +601,21 @@ class RoadWeatherMap {
                     </div>`;
             }
 
-            // Add click event to update condition cards
-            marker.on('click', async () => {
+            // Popup opens include the camera tour, not just marker clicks.
+            marker.on('popupopen', async () => {
                 // Combine camera data with detection data
                 const locationData = {
                     name: camera.name,
+                    sourceType: 'Camera',
+                    lastUpdated: detection?.timestamp,
+                    // Detection distances are rounded; accept pavement only after the precise lookup.
+                    surfaceStatus: null,
                     temperature: detection?.temperature,
                     snowLevel: detection?.snowLevel,
                     confidence: detection?.confidence,
-                    temperatureOverride: detection?.temperatureOverride,
-                    condition: conditionText
+                    temperatureOverride: detection?.temperatureOverride
                 };
+                updateConditionCardsWithLocation(locationData);
 
                 // Try to fetch weather data for this location
                 try {
@@ -617,6 +625,7 @@ class RoadWeatherMap {
                         if (weatherData && weatherData.current) {
                             locationData.windSpeed = weatherData.current.windSpeed;
                             locationData.windGust = weatherData.current.windGust;
+                            locationData.windSpeedUnit = 'km/h';
                             locationData.precipitation = weatherData.current.precipitation;
                             if (weatherData.current.visibility !== null && weatherData.current.visibility !== undefined) {
                                 locationData.visibility = weatherData.current.visibility;
@@ -634,20 +643,22 @@ class RoadWeatherMap {
                         let nearestStation = null;
                         let minDistance = Infinity;
                         stations.forEach(station => {
-                            const distance = Math.sqrt(
-                                Math.pow(station.lat - camera.lat, 2) +
-                                Math.pow(station.lng - camera.lng, 2)
-                            );
+                            const distance = calculateDistance(camera.lat, camera.lng, station.lat, station.lng);
                             if (distance < minDistance) {
                                 minDistance = distance;
                                 nearestStation = station;
                             }
                         });
 
-                        if (nearestStation && minDistance < 0.5) { // Within ~30 miles
-                            locationData.roadTemp = nearestStation.roadTemp;
-                            locationData.airTemp = locationData.airTemp || nearestStation.airTemp;
-                            locationData.windSpeed = locationData.windSpeed || nearestStation.windSpeed;
+                        if (nearestStation && minDistance <= 10) {
+                            locationData.roadTemp = nearestStation.surfaceTemp;
+                            locationData.surfaceStatus = nearestStation.surfaceStatus;
+                            locationData.airTemp ??= nearestStation.airTemperature;
+                            if (locationData.windSpeed == null && locationData.windGust == null) {
+                                locationData.windSpeed = nearestStation.windSpeedAvg;
+                                locationData.windGust = nearestStation.windSpeedGust;
+                                locationData.windSpeedUnit = 'mph';
+                            }
                         }
                     }
                 } catch (error) {
@@ -655,7 +666,7 @@ class RoadWeatherMap {
                 }
 
                 // Update the condition cards
-                updateConditionCardsWithLocation(locationData);
+                updateConditionCardsWithLocation(locationData, { refresh: true });
             });
 
             // Minimal popup - just camera feed and analysis
@@ -666,16 +677,27 @@ class RoadWeatherMap {
                     ${analysisInfo}
                 </div>
             `, {
-                maxWidth: 260,
+                maxWidth: this.controlActions ? 320 : 260,
                 minWidth: 220,
                 className: 'camera-popup-marker',
                 closeButton: true,
-                autoPan: false,
+                autoPan: Boolean(this.controlActions),
                 keepInView: false
             });
 
             // Simple solution: wait for images to load then adjust position
             marker.on('popupopen', () => {
+                if (this.controlActions) {
+                    const popup = marker.getPopup();
+                    const top = document.getElementById('roads-map-controls').offsetHeight + 24;
+                    const strip = document.querySelector('.conditions-overlay');
+                    const bottom = strip && !strip.hidden ? strip.offsetHeight + 42 : 30;
+                    popup.options.autoPanPaddingTopLeft = [12, top];
+                    popup.options.autoPanPaddingBottomRight = [12, bottom];
+                    popup.options.maxHeight = Math.max(100, this.map.getSize().y - top - bottom - 52);
+                    popup.update();
+                    return;
+                }
                 setTimeout(() => {
                     // Pan map to ensure popup is visible after images load
                     this.map.panTo(marker.getLatLng(), {
@@ -710,7 +732,7 @@ class RoadWeatherMap {
         } else if (surfaceStatus.includes('snow') || (temp && temp <= 32)) {
             return 'caution';
         }
-        return 'good';
+        return surfaceStatus.includes('dry') ? 'good' : 'unknown';
     }
 
     getSegmentColor(condition) {
@@ -750,6 +772,18 @@ class RoadWeatherMap {
         return weatherCodes[code] || 'Unknown';
     }
 
+    setupMapControlCluster() {
+        const cluster = document.getElementById('roads-map-controls');
+        this.controlActions = document.getElementById('roads-map-actions');
+        if (!cluster || !this.controlActions) return;
+
+        L.DomEvent.disableClickPropagation(cluster);
+        L.DomEvent.disableScrollPropagation(cluster);
+        L.DomEvent.on(cluster, 'keydown', L.DomEvent.stopPropagation);
+        const zoom = this.map.zoomControl?.getContainer();
+        if (zoom) this.controlActions.append(zoom);
+    }
+
     setupCameraCycleControl() {
         const control = L.control({ position: 'topleft' });
 
@@ -771,7 +805,8 @@ class RoadWeatherMap {
             return div;
         };
 
-        control.addTo(this.map);
+        if (this.controlActions) this.controlActions.prepend(control.onAdd(this.map));
+        else control.addTo(this.map);
 
         const toggle = document.getElementById('camera-cycle-toggle');
         const timerFill = document.getElementById('camera-cycle-timer-fill');
@@ -830,8 +865,9 @@ class RoadWeatherMap {
                 </button>
                 <div class="legend-content" id="legend-content" aria-hidden="true" inert>
                     <div class="legend-items">
-                        <div class="legend-section">
+                        <div class="legend-section road-legend-current">
                             <h5>Road Conditions</h5>
+                            <p id="road-legend-source">See each road popup for its source and age.</p>
                             <div class="legend-item">
                                 <span class="color-box" style="background: #28a745;"></span>
                                 <span>Clear</span>
@@ -852,15 +888,15 @@ class RoadWeatherMap {
                         <div class="legend-section">
                             <h5>Map Icons</h5>
                             <div class="legend-item">
-                                <span class="icon-box">🌡️</span>
+                                <span class="icon-box"><i class="fas fa-thermometer-half" aria-hidden="true"></i></span>
                                 <span>Weather</span>
                             </div>
                             <div class="legend-item">
-                                <span class="icon-box">📹</span>
+                                <span class="icon-box"><i class="fas fa-video" aria-hidden="true"></i></span>
                                 <span>Camera</span>
                             </div>
                             <div class="legend-item">
-                                <span class="icon-box">🚧</span>
+                                <span class="icon-box"><i class="fas fa-hard-hat" aria-hidden="true"></i></span>
                                 <span>Construction</span>
                             </div>
                         </div>
@@ -868,12 +904,17 @@ class RoadWeatherMap {
                             <h5>Layer Toggles</h5>
                             <label class="legend-toggle-item">
                                 <input type="checkbox" id="toggle-weather-stations">
-                                <span>🌡️ Weather Stations</span>
+                                <span>Weather Stations</span>
                             </label>
                         </div>
                     </div>
                 </div>
             `;
+
+            const forecastLegend = document.getElementById('hrrr-map-legend');
+            if (this.controlActions && forecastLegend) {
+                div.querySelector('.legend-items').prepend(forecastLegend);
+            }
 
             // Add click event for toggle
             setTimeout(() => {
@@ -903,7 +944,11 @@ class RoadWeatherMap {
             return div;
         };
 
-        legend.addTo(this.map);
+        if (this.controlActions) {
+            this.controlActions.insertBefore(legend.onAdd(this.map), this.controlActions.querySelector('.map-reset-container'));
+        } else {
+            legend.addTo(this.map);
+        }
     }
 
     toggleWeatherStations(visible) {
@@ -917,19 +962,27 @@ class RoadWeatherMap {
         });
     }
 
-    clearLayers() {
+    clearRoadLayers() {
         this.roadLayers.forEach(layer => this.map.removeLayer(layer));
-        this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.roadLayers.clear();
+    }
+
+    clearCameraLayers() {
         if (this.cameraClusterGroup && this.map.hasLayer(this.cameraClusterGroup)) {
             this.map.removeLayer(this.cameraClusterGroup);
             this.cameraClusterGroup = null;
         } else {
             this.cameraMarkers.forEach(marker => this.map.removeLayer(marker));
         }
-        this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
-        this.roadLayers.clear();
-        this.stationMarkers.clear();
         this.cameraMarkers.clear();
+    }
+
+    clearLayers() {
+        this.clearRoadLayers();
+        this.clearCameraLayers();
+        this.stationMarkers.forEach(marker => this.map.removeLayer(marker));
+        this.stationMarkers.clear();
+        this.restAreaMarkers.forEach(marker => this.map.removeLayer(marker));
         this.restAreaMarkers.clear();
 
         // Note: Traffic event markers and closure overlays are intentionally NOT cleared here
@@ -1020,7 +1073,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
         events.forEach(event => {
             if (!event.latitude || !event.longitude) return;
             const safeDisplayColor = sanitizeHexColor(event.displayColor, '#6c757d');
-            const safeDisplayIcon = escapeHtml(event.displayIcon || '🚧');
+            const iconClass = getTrafficEventIconClass(event);
             const safeEventName = escapeHtml(event.name || 'Traffic Event');
             const safeRoadwayName = escapeHtml(event.roadwayName || 'Unknown roadway');
             const safeEventType = escapeHtml((event.eventType || 'Unknown').replace(/([A-Z])/g, ' $1').trim());
@@ -1031,6 +1084,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
             // Create custom icon based on event type
             const iconHtml = `
                 <div style="
+                    --marker-status-color: ${safeDisplayColor};
                     background-color: ${safeDisplayColor};
                     color: white;
                     border-radius: 50%;
@@ -1044,7 +1098,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
                     box-shadow: 0 2px 4px rgba(0,0,0,0.3);
                     font-weight: bold;
                 ">
-                    ${safeDisplayIcon}
+                    <i class="${iconClass}" aria-hidden="true"></i>
                 </div>
             `;
 
@@ -1061,8 +1115,9 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
             // Create popup content
             const popupContent = `
                 <div class="traffic-event-popup" style="max-width: 300px;">
+                    <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                     <h4 style="margin: 0 0 10px 0; color: ${safeDisplayColor};">
-                        ${safeDisplayIcon} ${safeEventName}
+                        ${safeEventName}
                     </h4>
                     <div style="margin-bottom: 8px;">
                         <strong>Road:</strong> ${safeRoadwayName}
@@ -1070,7 +1125,7 @@ RoadWeatherMap.prototype.addTrafficEventsToMap = function(events) {
                     <div style="margin-bottom: 8px;">
                         <strong>Type:</strong> ${safeEventType}
                     </div>
-                    ${event.isFullClosure ? '<div style="color: #dc2626; font-weight: bold; margin-bottom: 8px;">⚠️ FULL CLOSURE</div>' : ''}
+                    ${event.isFullClosure ? '<div style="color: #dc2626; font-weight: bold; margin-bottom: 8px;">FULL CLOSURE</div>' : ''}
                     <div style="margin-bottom: 8px;">
                         <strong>Description:</strong><br>
                         <div style="background: #f8f9fa; padding: 8px; border-radius: 4px; font-size: 14px; margin-top: 4px;">
@@ -1136,8 +1191,9 @@ RoadWeatherMap.prototype.addRoadClosureOverlays = function(events) {
                     // Add popup with closure information
                     const popupContent = `
                         <div class="closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(event))}</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
-                                🚫 Road Closure
+                                Road Closure
                             </h4>
                             <p style="margin: 0 0 4px 0;"><strong>${safeRoadwayName}</strong></p>
                             <p style="margin: 0 0 8px 0; font-size: 12px;">${safeLocation}</p>
@@ -1248,8 +1304,9 @@ RoadWeatherMap.prototype.addAlertBasedClosures = function(alerts) {
 
                     const popupContent = `
                         <div class="alert-closure-popup">
+                            <p class="data-source">${escapeHtml(formatUDOTReportAge(alert))}. Approximate closure location.</p>
                             <h4 style="margin: 0 0 8px 0; color: #dc2626;">
-                                🚨 UDOT Alert: Road Closure
+                                UDOT Alert: Road Closure
                             </h4>
                             <p style="margin: 0 0 8px 0; font-weight: bold;">${safeHighway}</p>
                             <p style="margin: 0 0 8px 0; font-size: 12px;">${safeMessage}</p>
@@ -1328,6 +1385,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
                 ${pulseAnimation}
             ">
                 <div style="
+                    --marker-status-color: ${iconColor};
                     width: ${iconSize}px;
                     height: ${iconSize}px;
                     background: ${iconColor};
@@ -1342,7 +1400,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
                     <div style="
                         transform: rotate(-${bearingAngle}deg);
                         font-size: ${iconSize * 0.5}px;
-                    ">🚜</div>
+                    "><i class="fas fa-snowplow" aria-hidden="true"></i></div>
                 </div>
                 ${plow.isActive ? `<div style="
                     position: absolute;
@@ -1383,11 +1441,11 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
         const popupContent = `
             <div class="snow-plow-popup" style="min-width: 250px;">
                 <h4 style="margin: 0 0 10px 0; color: ${iconColor};">
-                    🚜 Snow Plow ${safeFleetId}
+                    Snow Plow ${safeFleetId}
                 </h4>
                 <div style="margin-bottom: 8px;">
                     <strong>Status:</strong>
-                    <span style="
+                    <span class="map-condition-status" style="
                         padding: 2px 8px;
                         border-radius: 12px;
                         background: ${iconColor}20;
@@ -1423,7 +1481,7 @@ RoadWeatherMap.prototype.renderSnowPlows = function(plows) {
 
             routeLine.bindPopup(`
                 <div style="font-size: 12px;">
-                    <strong>🚜 Plow ${safeFleetId} Route</strong><br>
+                    <strong>Plow ${safeFleetId} Route</strong><br>
                     Recent path traveled
                 </div>
             `);
@@ -1464,41 +1522,41 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         const safeSurfaceStatus = escapeHtml(pass.surfaceStatus || 'Unknown');
         const safeWindDirection = escapeHtml(pass.windDirection || '');
         // Determine icon and color based on pass status
-        let iconColor, statusEmoji, statusText;
+        let iconColor, statusText;
+        const passRed = '#dc2626';
 
         switch(pass.status) {
             case 'closed':
-                iconColor = '#dc2626'; // Red
-                statusEmoji = '🚫';
+                iconColor = passRed;
                 statusText = 'CLOSED';
                 break;
             case 'hazardous':
-                iconColor = '#dc2626'; // Red
-                statusEmoji = '⚠️';
+                iconColor = passRed;
                 statusText = 'HAZARDOUS';
                 break;
             case 'caution':
                 iconColor = '#f59e0b'; // Yellow
-                statusEmoji = '⚠️';
                 statusText = 'CAUTION';
                 break;
             case 'windy':
                 iconColor = '#3b82f6'; // Blue
-                statusEmoji = '💨';
                 statusText = 'WINDY';
                 break;
-            default:
+            case 'open':
                 iconColor = '#10b981'; // Green
-                statusEmoji = '✅';
                 statusText = 'OPEN';
+                break;
+            default:
+                iconColor = '#6c757d';
+                statusText = 'NOT REPORTED';
         }
-        const safeStatusEmoji = escapeHtml(statusEmoji);
         const safeStatusText = escapeHtml(statusText);
 
         // Create mountain pass icon with elevation badge
         const iconHtml = `
             <div style="position: relative;">
                 <div style="
+                    --marker-status-color: ${iconColor};
                     width: 36px;
                     height: 36px;
                     background: ${iconColor};
@@ -1509,7 +1567,7 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
                     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
                     border: 2px solid white;
                     font-size: 20px;
-                ">⛰️</div>
+                "><i class="fas fa-mountain" aria-hidden="true"></i></div>
                 <div style="
                     position: absolute;
                     bottom: -5px;
@@ -1539,11 +1597,11 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
 
         // Build detailed popup content
         let weatherInfo = '';
-        if (pass.airTemperature || pass.windSpeed || pass.surfaceStatus !== 'Unknown') {
+        if (pass.airTemperature != null || pass.windSpeed || pass.surfaceStatus !== 'Unknown') {
             weatherInfo = `
                 <div style="margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 4px;">
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Current Conditions</h5>
-                    ${pass.airTemperature ? `<div><strong>Air Temp:</strong> ${unitsSystem.formatTemperature(pass.airTemperature)}</div>` : ''}
+                    ${pass.airTemperature != null ? `<div><strong>Air Temp:</strong> ${unitsSystem.formatTemperature(pass.airTemperature)}</div>` : ''}
                     ${pass.surfaceTemp ? `<div><strong>Surface:</strong> ${unitsSystem.formatTemperature(pass.surfaceTemp)}</div>` : ''}
                     ${safeSurfaceStatus !== 'Unknown' ? `<div><strong>Surface:</strong> ${safeSurfaceStatus}</div>` : ''}
                     ${pass.windSpeed ? `<div><strong>Wind:</strong> ${unitsSystem.formatWindSpeed(pass.windSpeed)} ${safeWindDirection}</div>` : ''}
@@ -1574,17 +1632,17 @@ RoadWeatherMap.prototype.renderMountainPasses = function(passes) {
         const popupContent = `
             <div class="mountain-pass-popup" style="min-width: 280px; max-width: 350px;">
                 <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                    ⛰️ ${safePassName}
+                    ${safePassName}
                 </h4>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <span style="
+                    <span class="map-condition-status" style="
                         padding: 4px 12px;
                         border-radius: 12px;
                         background: ${iconColor}20;
                         color: ${iconColor};
                         font-weight: bold;
                         font-size: 12px;
-                    ">${safeStatusEmoji} ${safeStatusText}</span>
+                    ">${safeStatusText}</span>
                     <span style="font-size: 12px; color: #666;">
                         Elev: ${safeElevation}
                     </span>
@@ -1638,9 +1696,9 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const safeLocation = escapeHtml(restArea.location || 'Unknown');
         const safeImageUrl = sanitizeHttpUrl(restArea.imageUrl || '');
         const safeNearestCommunities = escapeHtml(restArea.nearestCommunities || '');
-        const safeTotalStalls = Number.isFinite(Number(restArea.totalStalls)) ? Math.max(0, Math.round(Number(restArea.totalStalls))) : 0;
-        const safeCarStalls = Number.isFinite(Number(restArea.carStalls)) ? Math.max(0, Math.round(Number(restArea.carStalls))) : 0;
-        const safeTruckStalls = Number.isFinite(Number(restArea.truckStalls)) ? Math.max(0, Math.round(Number(restArea.truckStalls))) : 0;
+        const safeTotalStalls = Number.isFinite(restArea.totalStalls) ? Math.max(0, Math.round(restArea.totalStalls)) : null;
+        const safeCarStalls = Number.isFinite(restArea.carStalls) ? Math.max(0, Math.round(restArea.carStalls)) : null;
+        const safeTruckStalls = Number.isFinite(restArea.truckStalls) ? Math.max(0, Math.round(restArea.truckStalls)) : null;
         const safeYearBuilt = Number.isFinite(Number(restArea.yearBuilt)) ? Math.round(Number(restArea.yearBuilt)) : null;
         // Create rest area icon with stall count indicator
         const iconHtml = `
@@ -1656,7 +1714,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     box-shadow: 0 2px 8px rgba(0,0,0,0.3);
                     border: 2px solid white;
                     font-size: 18px;
-                ">🅿️</div>
+                "><i class="fas fa-parking" aria-hidden="true"></i></div>
                 ${safeTotalStalls > 0 ? `
                     <div style="
                         position: absolute;
@@ -1694,7 +1752,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
                     <h5 style="margin: 0 0 8px 0; font-size: 12px; color: #666;">Parking Facilities</h5>
                     ${safeCarStalls > 0 ? `<div><strong>Car Stalls:</strong> ${safeCarStalls}</div>` : ''}
                     ${safeTruckStalls > 0 ? `<div><strong>Truck Stalls:</strong> ${safeTruckStalls}</div>` : ''}
-                    <div><strong>Total:</strong> ${safeTotalStalls} stalls</div>
+                    <div><strong>Total:</strong> ${safeTotalStalls === null ? 'Not reported' : `${safeTotalStalls} stalls`}</div>
                 </div>
             `;
         }
@@ -1718,7 +1776,7 @@ RoadWeatherMap.prototype.renderRestAreas = function(restAreas) {
         const popupContent = `
             <div class="rest-area-popup" style="min-width: 250px; max-width: 300px;">
                 <h4 style="margin: 0 0 10px 0; display: flex; align-items: center; gap: 8px;">
-                    🅿️ ${safeRestAreaName}
+                    ${safeRestAreaName}
                 </h4>
                 <div style="margin-bottom: 8px;">
                     <strong>Location:</strong> ${safeLocation}

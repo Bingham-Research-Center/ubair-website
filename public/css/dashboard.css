@@ -62,6 +62,30 @@
     }
 }
 
+/* The right-hand column: the LLM forecast summary, when one is showing, stacked on the air
+   quality outlook. With the summary hidden the outlook fills the column as it always has.
+   order: 2 keeps the column after the map where mobile.css puts the map first. */
+.dashboard-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+    min-width: 0;
+    order: 2;
+}
+
+.dashboard-stack > .dashboard-panel {
+    flex: 1 1 auto;
+}
+
+.dashboard-stack > .llm-block {
+    margin-bottom: 0;
+}
+
+/* Two panes share the column's height, so the outlook gives up its tall minimum. */
+.dashboard-stack > .llm-block:not([hidden]) + .dashboard-panel {
+    min-height: 0;
+}
+
 /* Dashboard Panels */
 .dashboard-panel {
     padding: 1.5rem;

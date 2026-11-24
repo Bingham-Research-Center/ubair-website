@@ -61,7 +61,8 @@ public answered 401, i.e. it reached the app) already showed the public path car
 traffic.
 
 Both are accepted by the same rule: `server/routes/dataUpload.js` grants access when
-`x-client-hostname` ends in `chpc.utah.edu` (log line `Access granted via hostname header`).
+`x-client-hostname` is on the host allowlist, which is `.chpc.utah.edu` unless
+`UPLOAD_ALLOWED_HOSTS` in `.env` says otherwise (log line `Access granted via hostname header`).
 
 Consequences, the same on both boxes:
 
@@ -249,6 +250,30 @@ sudo -u deploy bash -lc '
 
 Swap back to `dev` with the same sequence. The pm2 app name auto-becomes `basinwx-<branch>`.
 
+### Pruning old uploads (#168)
+
+Nothing removes uploaded files by itself. `scripts/prune-static.js` lists what is past its keep
+window and, only with `--apply`, removes it:
+
+```bash
+node scripts/prune-static.js                 # dry run: one line per product, nothing removed
+node scripts/prune-static.js --days 14       # what if every window were 14 days? (dry run only)
+node scripts/prune-static.js --apply         # remove what the dry run lists
+```
+
+- **The windows are `RULES` in the script**, so the policy changes by pull request: 30 days for
+  observations, station metadata, road forecasts and the HRRR forecasts (cut R4, JRL
+  2026-11-20). Everything Clyfar sends, outlooks and `llm_outlooks` are kept for ever until a
+  window is chosen: the air-quality forecast page offers every Clyfar run on disk.
+- **Never removed:** the newest file of each product, a file with no time stamp in its name,
+  indexes and `latest*.json`, and any file git tracks. Age is the stamp in the name, not mtime.
+- **No cron is installed, and `--apply` has not been run on either box.** Measured dry on
+  2026-11-21: `.dev` would lose 107,518 of 128,249 files and get back 3.9 GB of 5.6 GB; `.com`
+  would lose about 186,500 files by name (its sizes cannot be seen from outside). Run as the
+  user that owns the files: `deploy` on dev, `root` on prod.
+- Run it from the box's own checkout; it finds `public/api/static` beside itself. A day's
+  uploads are about 40 MB, so monthly is often enough.
+
 ### Certificate renewal
 
 certbot installs a systemd timer that renews automatically. Verify:
@@ -416,11 +441,13 @@ brc-tools and this repo both agree on, bumped MINOR for additive dataTypes and
 MAJOR when a field or unit changes (which requires a matching brc-tools release
 *before* promotion).
 
-**A dataType can exist on `dev` and not on `ops`.** `server/routes/dataUpload.js`
+**A dataType can exist on `dev` and not on `ops`.** `server/uploadPolicy.js`
 lists accepted dataTypes per branch, so a producer pushing something `ops` has
 never heard of gets a 400 from `.com` while `.dev` accepts it happily. That is
 the intended behaviour, not a bug — it stops half-built features reaching
-production. The corresponding CHPC-side convention lives in
+production. (The 400 dates from 1.7.3. A box on an older version stores an unknown
+dataType unchecked, in a directory named as the request named it, which is one
+more reason to pin.) The corresponding CHPC-side convention lives in
 `brc-tools/docs/WEBSITE-INTEGRATION.md`: a cron wrapper pins
 `BASINWX_API_URLS="https://basinwx.dev"` **if and only if** its consumer is on
 `dev` but not yet on `ops`, and is unpinned in the brc-tools PR that follows the
@@ -506,13 +533,10 @@ quotas — see §9.
 - **Secrets in scripts.** The CHPC setup script must read `DATA_UPLOAD_API_KEY` from env, not carry it as a literal. If you rotate the key, rotate it in the server `.env` files and on CHPC at the same time.
 - **`BASINWX_API_KEY` ≠ `DATA_UPLOAD_API_KEY` in `.env` — on *both* boxes** (verified 2026-08-13: prod, then dev; on dev the two are not even the same length). On prod there is also a `.env` comment claiming they match — it is wrong; dev has no such comment, just a stale commented-out `DATA_UPLOAD_API_KEY` on line 5 that no longer matches the live one. **Ingest is unaffected** — the server only ever validates `DATA_UPLOAD_API_KEY`, and dev has been accepting CHPC uploads continuously with zero denials. But `scripts/chpc_uploader.py` reads `BASINWX_API_KEY`, so running the uploader *from a server* as a self-test returns **401 and looks exactly like an auth regression when nothing is broken**. Check this before debugging any 401. The only thing that must be true is that each box's `DATA_UPLOAD_API_KEY` equals the key CHPC fans out to it — on dev that is confirmed by live uploads landing, not by reading the file.
 
-- **The bare `basinwx.com` resolves to two addresses.** Besides the Linode box, Namecheap's
-  URL-forwarding host `192.64.119.30` is in the A record set, and it does not answer HTTPS at
-  all (observed 2026-09-23 from notchpeak1; `www.basinwx.com` has the one correct record).
-  brc-tools targets the bare domain. `requests` falls through to the next address on a refused
-  connection, which is why no upload has failed on it yet, but a slow refusal would burn the
-  30 s upload timeout. Either point producers at `https://www.basinwx.com` or remove the stray
-  record at Namecheap. `scripts/probe.py` warns while it is present.
+- **The bare `basinwx.com` once resolved to two addresses** (Namecheap's URL forwarder
+  `192.64.119.30` beside the Linode box, observed 2026-09-23). Fixed: on 2026-11-21 it resolves
+  to `172.234.249.49` only and answers HTTPS 200. Producers still target `www.`.
+  `scripts/probe.py` warns if the stray record ever comes back.
 
 ## 9. Per-user branch previews
 
