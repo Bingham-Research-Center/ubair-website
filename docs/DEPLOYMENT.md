@@ -159,7 +159,7 @@ sudo -u deploy npm install
 
 # 3.3 Environment
 sudo -u deploy cp .env.example .env
-sudo -u deploy $EDITOR .env           # fill in DATA_UPLOAD_API_KEY, UDOT_API_KEY, SYNOPTIC_API_TOKEN, etc.
+sudo -u deploy $EDITOR .env           # fill in DATA_UPLOAD_API_KEY, UDOT_API_KEY, etc.
 sudo chmod 600 /srv/ubair-website/.env
 sudo chown deploy:deploy /srv/ubair-website/.env
 
