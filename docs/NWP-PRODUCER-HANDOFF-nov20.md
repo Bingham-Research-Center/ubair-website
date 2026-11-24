@@ -424,7 +424,7 @@ Not asks, but worth knowing:
   already names `K4V0`, `DNOC2` and `SURC2`, and the feed carries none of them (checked
   23 Nov). Still to check: whether a restricted network would hide the UB-AIR sites even once
   they report. What happens when Synoptic says yes, the Wyoming ask (P29) and the keyless
-  stand-ins are in `NEXT-SESSION-HANDOFF-nov23.md` §3 and §4.
+  stand-ins are in `NEXT-SESSION-HANDOFF-nov24.md` §3 and §4.
 - **Co-op snow depth is once a day.** The maps show it up to 30 h old (every other reading,
   3 h). The feed drops a co-op row after about a day, which suits that.
 
