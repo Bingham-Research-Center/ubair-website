@@ -1,6 +1,7 @@
 # Next Session Handoff — Nov 23
 
-Where things stand at the end of 23 Nov 2026, and what comes next, for John and for an agent
+Where things stand after the v1.8.0 release of 23 Nov 2026 (brought up to date on 24 Nov, once
+#437 and #439 had merged), and what comes next, for John and for an agent
 starting cold. Rules that last are in `CLAUDE.md`; this file goes stale and is replaced by the
 next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` before acting.
 
@@ -8,7 +9,7 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
 
 | | Version | Commit | Notes |
 |---|---|---|---|
-| `dev` → www.basinwx.dev | **1.8.1-dev** | `14897f0` (#436) | Deployed and probed 23 Nov 23:15Z |
+| `dev` → www.basinwx.dev | **1.8.1-dev** | `94478e1` (#439), after `3688cd1` (#437); then this docs PR | Deployed and probed 24 Nov 05:13Z; the first upload after it was accepted at 05:15:56Z. The docs PR needs no restart |
 | `ops` | **v1.8.0** | `872c493` = tag `v1.8.0` | Promotion #434; GitHub release published |
 | www.basinwx.com | 1.7.0 when this was written | `5a845d5` | **Deploy pending** (root, §3). `probe.py` says so until it is done |
 | `main` | v1.7.0 | | Follows `ops` after the prod deploy: #435 is staged |
@@ -18,8 +19,7 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
   for nothing that fails until one is, and prod was still serving three faults `dev` had fixed
   (stations merged by name on both AQ maps, an upload `dataType` that could leave the upload
   directory, snowfall totals labelled in/hr).
-- **Open PRs:** #435 (`ops` into `main`: only after the prod deploy, on John's OK); #437 (the
-  Colorado stations, §4: John's OK); #401, Quinten's draft (16 files, conflicts, 311 commits
+- **Open PRs:** #435 (`ops` into `main`: only after the prod deploy, on John's OK); #401, Quinten's draft (16 files, conflicts, 311 commits
   behind `dev`: rebase onto `rebased/quinten-changes`, never his branch).
 - **On the dev box:** no extra worktree and no preview running; `theme.basinwx.dev` (:3003) is
   free. Local-only branches kept on purpose: `preview/theme` (the look switcher, #355) and
@@ -37,14 +37,18 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
   `dev`; every page on `.dev` loaded at 1366 px and 390 px with no console error and no failed
   request; `ops`'s merged tree was byte-identical to `dev`'s; prod already held the HRRR and
   road files the new pages read. The suite is 1,224 tests in 83 suites since #432 (a removed
-  view was counted by four per-file tests).
+  view was counted by four per-file tests), and 1,234 since #437 and #439.
 - **The roads stack B to D had merged on 21 Nov** (#337 to #339, 1.7.10 to 1.7.12-dev), after
   the last handoff was written. It shipped in 1.8.0, not 1.9.0.
 - **#311 is not done.** Adding `test` as a required check through the API failed: the ruleset
   comes back from GitHub with a second, empty `copilot_code_review` rule that the API will not
   take back (422), and the session was not allowed to send the list without it. The ruleset is
   unchanged. It is a two-minute job in the UI (§3).
-- **The Colorado stations are wired** (#437, §4).
+- **The Colorado stations are wired** (#437, merged 24 Nov; §4).
+- **Four more scripts use the shared unit converters** (#439, merged 24 Nov; part of #306):
+  `sports.js`, `roads/HRRRRoadForecast.js`, `roads/CorridorTable.js` and `forecast_weather.js`.
+  What each page prints was compared before and after and is the same. A test in `met.test.js`
+  now lets only `met.js` and `roads/UnitsSystem.js` hold conversion arithmetic.
 
 ## 3. Next steps
 
@@ -54,8 +58,8 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
    (fast-forwards to `872c493`; `npm install` adds `compression`). Then
    `ss -ltnp 'sport = :3000'` and `scripts/probe.py www.basinwx.com`: `release matches newest
    tag v1.8.0`. Then #435.
-2. **#437**: merge, and say whether Rangely goes on the homepage map (it zooms that map out a
-   level; `home: true` on `K4V0` in `public/js/config.js`).
+2. **Rangely on the homepage map, yes or no.** It is off: adding it zooms that map out a level
+   (`home: true` on `K4V0` in `public/js/config.js`).
 3. **#311** in the UI: Settings → Rules → Rulesets → "Protecting dev" → add "Require status
    checks to pass" → check `test` (GitHub Actions), "require branches to be up to date" off.
    A retargeted PR fires no CI, so close and reopen it. Admins still bypass.
@@ -72,8 +76,8 @@ next `*-HANDOFF-*.md`. Check every line against `scripts/probe.py` and `gh` befo
 1. After the prod deploy: probe, load every page on `.com` and list failed requests, check
    `/api/health/ingest` answers 200 within ten minutes, then merge #435 on John's OK.
 2. **When a real LLM file lands:** check the homepage and weather placements on `.dev`.
-3. Ready to pick up: #306 (`sports.js` keeps its own `toFahrenheit` and `toMph`; the roads
-   `UnitsSystem.js` and `HRRRRoadForecast.js` can go now the stack has merged); #291 (a link
+3. Ready to pick up: #306 (only the roads page's unit switch, `roads/UnitsSystem.js`, still
+   converts by itself; when it moves to `met.js`, take it off the list in `met.test.js`); #291 (a link
    and a line per provider on `/about`, the station networks by name); #419 (still true on
    23 Nov: a camera near Heber carries `temperatureOverride: true, temperature: 79` from a
    June reading; the page always says "Cached road data"; the "Basin summary" said "Snow"

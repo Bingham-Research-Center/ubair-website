@@ -106,7 +106,8 @@ rest = best-effort mirrors) → served at `/api/static/*` and `/api/filelist/:da
   in `public/js/api.js` deliberately does not convert (its commented-out `convertUnits` call is
   on purpose); each page converts at its display layer from the units the feed states. New code
   uses `public/js/met.js` (pure converters that return null for a unit they do not know, plus RH
-  from dew point); older pages still carry their own copies. A page that misses this prints
+  from dew point); only the roads unit switch (`roads/UnitsSystem.js`) still has its own, and
+  `met.test.js` fails if another script grows one. A page that misses this prints
   Celsius labelled °F, which is how the sports page showed a 19 °F wind chill on a 77 °F day.
 - **Observations are keyed by station ID, never by display name.** Name-keyed merging once
   showed a 14-hour-old co-op temperature as Vernal's current reading and lent the DEQ monitor's
@@ -242,8 +243,8 @@ Markdown only; code files follow their language's convention.
 - `git log --oneline -30` — recent merges; do not duplicate them here
 
 ## Testing
-- `npm test` — Jest. **The suite is green (1,224 tests across 83 suites at 1.8.0,
-  2026-11-23); any failure is new breakage.** Never tolerate a red suite.
+- `npm test` — Jest. **The suite is green (1,234 tests across 83 suites at 1.8.1-dev,
+  2026-11-24); any failure is new breakage.** Never tolerate a red suite.
 - **First rule out staleness:** run the same suite on `dev` before blaming a change (PR #128
   failed 4 tests that merging `origin/dev` cleared).
 - **On the dev box** (2 GB, one CPU): one heavy job at a time, Jest with `--runInBand`. In a
