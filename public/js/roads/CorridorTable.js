@@ -1,4 +1,5 @@
 import { buildRouteForecastSummary, HRRR_HAZARD_LEVELS } from './HRRRForecastModel.js';
+import { toMph } from '../met.js';
 
 const HOURS = [1, 3, 6, 12];
 const LEVELS = { unavailable: -1, clear: 0, caution: 1, danger: 2 };
@@ -49,7 +50,7 @@ export function forecastStatus(period) {
     if (/wind gust/i.test(reason)) {
         const gust = period.worstPoint?.forecast.wind_gust ?? period.metrics?.maxWindGust;
         text = Number.isFinite(gust)
-            ? `Gusts ${Math.round(gust * (unitsSystem.isMetric ? 3.6 : 2.23694))} ${unitsSystem.isMetric ? 'km/h' : 'mph'}`
+            ? `Gusts ${Math.round(unitsSystem.isMetric ? gust * 3.6 : toMph(gust, 'm/s'))} ${unitsSystem.isMetric ? 'km/h' : 'mph'}`
             : 'Strong gusts';
     } else if (/heavy snow/i.test(reason)) text = 'Heavy snow';
     else if (/freezing precipitation/i.test(reason)) text = 'Freezing precipitation';
