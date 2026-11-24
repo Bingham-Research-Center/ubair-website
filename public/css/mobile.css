@@ -164,6 +164,7 @@
     .footer-content {
         max-width: none !important;
         width: 100% !important;
+        box-sizing: border-box !important; /* its padding sat outside the 100% */
         padding: 0 5px !important;
         height: 100% !important;
         display: flex !important;
