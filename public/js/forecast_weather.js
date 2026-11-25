@@ -23,6 +23,7 @@ import {
     rasterise,
     valueAt,
 } from './mapLayers.js';
+import { toMph } from './met.js';
 import { bandRgb, cssRgb, tokenRgb } from './themeColours.js';
 import { firstHourFromNow, modelRunLabel, mountainTime } from './mountainTime.js';
 
@@ -34,7 +35,8 @@ const HRRR_RUN_PREFIX = 'forecast_hrrr_surface_layers_';
 
 // Unit conversion helpers for the notes under the map. The run stays in SI.
 const mmToIn = mm => mm / 25.4;
-const msToMph = ms => ms * 2.23694;
+// NaN, as before, for a speed that is not a number: the callers format what they are given.
+const msToMph = (ms) => toMph(ms, 'm/s') ?? NaN;
 
 // The picture of a field: this many pixels per grid step, at this opacity (0 to 255) so the
 // greyed basemap's roads and names show through it.

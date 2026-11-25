@@ -52,6 +52,11 @@ banded map, its slider and derived layers, and the three drawn views came in 1.7
   - Ten of the fourteen places have a station in our feed. The other four show the line and
     say there is nothing to hold it against. No dot is ever made up.
   - Vernal is held against Vernal Regional Airport, the station the homepage shows.
+  - Dinosaur's model point is in Colorado, 0.4 km from the climate station `DNOC2`. Our feed
+    does not carry that station yet (Synoptic refuses the token Colorado), so the town is held
+    against the monitor at the Monument's quarry, 35 km away and 1,250 ft lower. The page
+    changes over by itself in the first run `DNOC2` reports in (`PREFERRED_WHEN_REPORTING` in
+    `server/observedSeries.js`).
 
 ### Across the Basin
 

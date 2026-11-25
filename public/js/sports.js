@@ -1,6 +1,6 @@
 import { fetchLiveObservations } from './api.js';
 import { getCardinalDirection } from './mapUtils.js';
-import { relativeHumidityFromDewPoint } from './met.js';
+import { relativeHumidityFromDewPoint, toFahrenheit, toMph } from './met.js';
 
 // All cards read from one pinned station so the numbers are mutually consistent.
 // Observations are keyed by Synoptic station ID (processObservationData in api.js). Until
@@ -70,23 +70,8 @@ function unitOf(observations, variable) {
 
 // Convert only from units we recognise. An unrecognised unit returns null, so a
 // card shows "--" rather than a confidently wrong number — which is exactly the
-// failure mode this page shipped with.
-function toFahrenheit(value, unit) {
-    if (value === null) return null;
-    if (unit === 'Celsius') return value * 9 / 5 + 32;
-    if (unit === 'Fahrenheit') return value;
-    console.warn(`sports: unexpected temperature unit "${unit}" — not displaying`);
-    return null;
-}
-
-function toMph(value, unit) {
-    if (value === null) return null;
-    if (unit === 'm/s') return value * 2.23694;
-    if (unit === 'mph') return value;
-    console.warn(`sports: unexpected wind speed unit "${unit}" — not displaying`);
-    return null;
-}
-
+// failure mode this page shipped with. Temperature and wind come from met.js, the
+// converters every page shares; pressure is used here alone.
 function toPascals(value, unit) {
     if (value === null) return null;
     if (unit === 'Pascals') return value;

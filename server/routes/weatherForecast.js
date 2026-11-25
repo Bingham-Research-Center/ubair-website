@@ -1,7 +1,7 @@
 import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { observedByTown, pairedStations, wantedRows } from '../observedSeries.js';
+import { observedByTown, pairedStations, wantedRows, wantedStids } from '../observedSeries.js';
 import { precipByHour } from '../statusLights.js';
 
 // Data for the weather forecast page that the browser should not have to hunt for.
@@ -99,7 +99,7 @@ async function buildObserved(now) {
     }
 
     const pairs = pairedStations(forecast);
-    const stids = new Set(pairs.map((pair) => pair.stid));
+    const stids = wantedStids(pairs);
     const stidKey = [...stids].sort().join(',');
     const since = init - OBSERVED_LEAD_MS;
 

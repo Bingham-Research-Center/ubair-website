@@ -420,9 +420,11 @@ Not asks, but worth knowing:
 
 - **The website's Synoptic token is Utah-only.** Every request for Colorado or Wyoming (Rangely,
   the Dinosaur CO side, south-west Wyoming) answers "your account does not have access". John
-  is asking Synoptic for the edge states. Check whether the CHPC token has the same limit, and
-  whether a restricted network would hide the UB-AIR sites even once they report. Keyless
-  stand-ins (Rangely AWOS `K4V0` and others) are in `NEXT-SESSION-HANDOFF-nov21.md` §4.
+  is asking Synoptic for the edge states. The CHPC token has the same limit: `obs_map_stids`
+  already names `K4V0`, `DNOC2` and `SURC2`, and the feed carries none of them (checked
+  23 Nov). Still to check: whether a restricted network would hide the UB-AIR sites even once
+  they report. What happens when Synoptic says yes, the Wyoming ask (P29) and the keyless
+  stand-ins are in `NEXT-SESSION-HANDOFF-nov23.md` §3 and §4.
 - **Co-op snow depth is once a day.** The maps show it up to 30 h old (every other reading,
   3 h). The feed drops a co-op row after about a day, which suits that.
 

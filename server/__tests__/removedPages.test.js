@@ -36,6 +36,15 @@ describe('pages parked off dev', () => {
         expect(JSON.stringify(scripts) + read('nodemon.json')).not.toMatch(/public\/data\//);
     });
 
+    // A proxy to Synoptic that no page had called since the maps moved to CHPC's files. It spent
+    // the site's token for any caller who asked.
+    test('the unused Synoptic proxy is not served', async () => {
+        await request(app).get('/api/synoptic/timeseries?stations=KVEL').expect(404);
+        await request(app).get('/api/synoptic/stations').expect(404);
+        expect(fs.existsSync(path.join(repoRoot, 'server/routes/synopticAPI.js'))).toBe(false);
+        expect(read('public/js/api.js') + read('server/server.js')).not.toMatch(/synoptic(API|\/)/i);
+    });
+
     // The Clyfar and weather pages carried summary panes that no upload ever filled: one said
     // "will be available soon", the other "Loading..." for good.
     test('no page waits on a summary that nothing produces', () => {
