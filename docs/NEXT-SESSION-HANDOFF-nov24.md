@@ -11,12 +11,12 @@ before acting.
 |---|---|---|---|
 | `dev` → www.basinwx.dev | **1.8.1** until #446, then 1.8.2-dev | `0d92188` (strip #443) | Deployed 22:21Z 24 Nov with a clean pm2 restart (a route was removed); probe ok; the 88c1972 build accepted CHPC's 22:21:06Z upload |
 | `ops` | **v1.8.1** | `e181086` = tag `v1.8.1` | Promotion #444; tree identical to `dev`'s (`f243292`); GitHub release published |
-| www.basinwx.com | 1.8.0 when this was written | `872c493` | **Deploy pending** (root, §3). `probe.py` says so until it is done |
-| `main` | v1.8.0 | `6212a90` | Follows `ops` after the prod deploy: #445 is staged |
+| www.basinwx.com | **1.8.1** | `e181086` | Deployed by John, started 05:33:16Z 25 Nov; probe `release matches newest tag v1.8.1`; checks in §2 |
+| `main` | v1.8.0 | `6212a90` | Follows `ops`: #445 is staged and the deploy it waited on is done |
 
 - **The suite is 1,235 tests in 83 suites** at `88c1972` and after (one new test in #441).
-- **Open PRs:** #445 (`ops` into `main`: only after the prod deploy), #446 (reopen `dev` at
-  1.8.2-dev, squash), this docs PR, and #401, Quinten's draft (conflicts, far behind `dev`:
+- **Open PRs:** #445 (`ops` into `main`), #446 (reopen `dev` at 1.8.2-dev, squash; until it
+  merges both boxes report 1.8.1), this docs PR, and #401, Quinten's draft (conflicts, far behind `dev`:
   rebase onto `rebased/quinten-changes`, never his branch). Each merge on John's OK by number.
 - **On the dev box:** no preview running; `theme.basinwx.dev` (:3003) is free. Local-only
   branches kept on purpose: `preview/theme` (the look switcher, #355) and
@@ -42,15 +42,15 @@ before acting.
 - **Release 1.8.1:** strip #443, promotion #444, tag and release. Before the strip: suite
   green on `dev`; `.dev` deployed and probed; all 11 pages loaded at 1366 px and 390 px with
   no overflow, console error or failed request. Prod gains no package and no `.env` key.
+- **Prod deployed** (John, started 05:33:16Z on 25 Nov). Checked after: probe `release matches
+  newest tag v1.8.1`; `/api/synoptic/*` 404; `/api/health/ingest` 200; all 11 pages at 1366 px
+  and 390 px with no overflow, console error or failed request; notchpeak1's first upload after
+  the restart accepted at 05:35:37Z, none refused.
 
 ## 3. Next steps
 
 **John**
-1. **Deploy prod**, as root:
-   `cd /var/www/ubair-website && git pull --ff-only origin ops && npm install && pm2 restart ubair-site`
-   (fast-forwards to `e181086`). The restart matters this time: a route was removed. Then
-   `ss -ltnp 'sport = :3000'` and `scripts/probe.py www.basinwx.com`: `release matches newest
-   tag v1.8.1`. Then OK #445 and #446.
+1. **OK #445, #446 and this PR by number.** Prod is deployed and checked (§2).
 2. **Rangely on the homepage map, yes or no.** It is off: adding it zooms that map out a level
    (`home: true` on `K4V0` in `public/js/config.js`).
 3. **#311** in the UI: Settings → Rules → Rulesets → "Protecting dev" → add "Require status
@@ -67,10 +67,8 @@ before acting.
    and #291.
 
 **On the dev box**
-1. After the prod deploy: probe, load every page on `.com` at both widths and list failed
-   requests, check `/api/health/ingest` answers 200 within ten minutes and that
-   `/api/synoptic/stations` is a 404, then #445 and #446 on John's OK, then redeploy `.dev`
-   (it then reports 1.8.2-dev).
+1. #445 and #446 on John's OK, then redeploy `.dev` (it then reports 1.8.2-dev; package.json
+   only, but `/api/health` reads the version at start, so restart it clean).
 2. **When a real LLM file lands:** check the homepage and weather placements on `.dev`.
 3. Ready to pick up: #306 (only the roads page's unit switch, `roads/UnitsSystem.js`, still
    converts by itself; it is a classic script and needs the `window` shim the issue describes;
@@ -83,11 +81,12 @@ before acting.
    `2.0.0` rather than `1.8.2`.
 
 **On CHPC** (brc-tools). Full text in [`NWP-PRODUCER-HANDOFF-nov20.md`](NWP-PRODUCER-HANDOFF-nov20.md)
-and [`CHPC-INGEST-HANDOFF-nov21.md`](CHPC-INGEST-HANDOFF-nov21.md). Seen in the 24 Nov probes
+and [`CHPC-INGEST-HANDOFF-nov21.md`](CHPC-INGEST-HANDOFF-nov21.md). Seen in the 24 and 25 Nov probes
 of both boxes:
 1. **P1, P2: the LLM forecast text.** Still the critical path: no `llm_forecasts` file has
-   reached either box. The prose outlook (`llm_outlooks`) was last uploaded about 04:45Z on
-   24 Nov and is overdue on its 6-hourly schedule. `aircraft` has never been sent.
+   reached either box. The prose outlook (`llm_outlooks`) skipped three cycles: after the
+   23 Nov 18Z outlook the next was 24 Nov 18Z, which arrived about 04:50Z on 25 Nov, 11 h after
+   its cycle. `aircraft` has never been sent.
 2. `hrrr_surface_layers` arrives about every six hours, not hourly as the manifest declares:
    either the producer or the manifest is wrong.
 3. **Undeclared files:** `.dev` holds one `forecast_rrfs_surface_layers_20261121_0000Z.json`
